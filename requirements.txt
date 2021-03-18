@@ -1,0 +1,3 @@
+uvloop
+aiohttp~=3.7.3
+aiosocksy==0.1.2

@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: aiosocksy
+Version: 0.1.2
+Summary: SOCKS proxy client for aiohttp 3.0+
+Home-page: https://github.com/romis2012/aiosocksy
+Author: Roman Snegirev
+Author-email: snegiryev@gmail.com
+License: Apache 2
+Keywords: socks proxy aiohttp
+Platform: UNKNOWN
+Requires-Dist: aiohttp (>=3.0)
+
+SOCKS proxy client for aiohttp 3.0+. See https://github.com/romis2012/aiosocksy for more information
+
+
