@@ -1,6 +1,6 @@
 import time
 
-from glparser.data import WrapperData
+from glQiwiApi.data import WrapperData
 
 DEFAULT_QIWI_HEADERS = {
     'Content-Type': 'application/json',

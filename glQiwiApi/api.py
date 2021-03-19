@@ -8,7 +8,7 @@ from aiohttp.client import DEFAULT_TIMEOUT
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
-from glparser.data import Response, ProxyService, RequestAuthError
+from glQiwiApi.data import Response, ProxyService, RequestAuthError
 
 
 class Core:

@@ -2,9 +2,9 @@ import asyncio
 from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
-from glparser.api import HttpXParser
-from glparser.configs import *
-from glparser.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification
+from glQiwiApi.api import HttpXParser
+from glQiwiApi.configs import *
+from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification
 
 
 class QiwiDataFormatter:
