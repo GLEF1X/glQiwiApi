@@ -90,6 +90,7 @@ class Transaction:
     commission: Dict[str, int]
     total: Dict[str, int]
     to_account: str
+    comment: Optional[str] = None
 
 
 @dataclass(frozen=True)

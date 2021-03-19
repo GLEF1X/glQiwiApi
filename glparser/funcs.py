@@ -1,3 +1,4 @@
+import asyncio
 from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
@@ -261,3 +262,29 @@ class QiwiWrapper:
                 obj=Identification,
                 transfers=IDENTIFICATION_TRANSFER
             )
+
+    async def check_transaction(
+            self,
+            amount: Union[int, float],
+            sender_number: Optional[str] = None,
+            rows_num: int = 50,
+            comment: Optional[str] = None) -> bool:
+        """
+        Метод для проверки транзакции.\n Рекомендуется использовать только если вы не можете написать свой обработчик.\n
+        Данный метод использует self.transactions(rows_num=rows_num) для получения платежей.\n
+        Для небольшой оптимизации вы можете уменьшить rows_num задав его, однако это не гарантирует правильный результат
+
+        :param amount: сумма платежа
+        :param sender_number: номер получателя
+        :param rows_num: кол-во платежей, которое будет проверяться
+        :param comment: комментарий, по которому будет проверяться транзакция
+        :return: bool, есть ли такая транзакция в истории платежей
+        """
+        transactions = await self.transactions(rows_num=rows_num)
+        for transaction in transactions:
+            if float(transaction.sum.get('amount')) >= amount and transaction.type == 'IN':
+                if transaction.comment == comment and transaction.to_account == sender_number:
+                    return True
+                elif transaction.to_account == sender_number:
+                    return True
+        return False
