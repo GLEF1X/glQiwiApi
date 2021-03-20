@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="glQiwiApi",  # Replace with your own username
-    version="0.0.7",
+    version="0.0.8",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Parser for post and get requests",

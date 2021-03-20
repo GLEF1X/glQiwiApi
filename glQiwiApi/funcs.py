@@ -3,6 +3,9 @@ import uuid
 from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
+
+import aiofiles as aiofiles
+
 from glQiwiApi.api import HttpXParser
 from glQiwiApi.configs import *
 from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit, \
@@ -76,6 +79,12 @@ class QiwiWrapper:
                  phone_number: str,
                  secret_p2p: Optional[str] = None,
                  public_p2p: Optional[str] = None) -> None:
+        """
+        :param api_access_token: токен, полученный с https://qiwi.com/api
+        :param phone_number: номер вашего телефона с +
+        :param secret_p2p: секретный ключ, полученный с https://p2p.qiwi.com/
+        :param public_p2p: публичный ключ, полученный с https://p2p.qiwi.com/
+        """
         self._parser = HttpXParser()
         self.api_access_token = api_access_token
         self.phone_number = phone_number
@@ -93,7 +102,7 @@ class QiwiWrapper:
             self,
             trans_sum: Union[float, int],
             to_card: str
-    ) -> Response:
+    ) -> Union[Response, str]:
         """
         Метод для отправки средств на карту.
         Более подробная документация https://developer.qiwi.com/ru/qiwi-wallet-personal/#cards
@@ -113,7 +122,10 @@ class QiwiWrapper:
                 json=data.json,
                 get_json=True
         ):
-            return response
+            try:
+                return response.response_data.get('id')
+            except (KeyError, TypeError):
+                return response
 
     async def _detect_card_number(self, card_number: str) -> str:
         """
@@ -204,7 +216,7 @@ class QiwiWrapper:
             to_number: str,
             trans_sum: Union[str, float, int],
             currency: str = '643',
-            comment: str = '+comment+') -> Response:
+            comment: str = '+comment+') -> Union[str, Response]:
         """
         Метод для перевода денег на другой кошелек\n
         Подробная документация: https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#p2p
@@ -229,7 +241,10 @@ class QiwiWrapper:
                 json=data.json,
                 headers=data.headers
         ):
-            return response
+            try:
+                return response.response_data['transaction']['id']
+            except (KeyError, TypeError):
+                return response
 
     async def transaction_info(
             self,
@@ -543,3 +558,33 @@ class QiwiWrapper:
                 )[0]
             except IndexError:
                 raise ConnectionError('Не удалось создать p2p bill. Проверьте ваши токены.') from None
+
+    async def get_receipt(
+            self,
+            transaction_id: Union[str, int],
+            transaction_type: Literal['IN', 'OUT', 'QIWI_CARD'],
+            file_path: Optional[str] = None
+    ) -> Union[bytearray, int]:
+        """
+        Метод для получения чека в формате байтов или файлом.
+
+        :param transaction_id: айди транзакции, можно получить при вызове методе to_wallet, to_card
+        :param transaction_type: тип транзакции может быть 'IN', 'OUT', 'QIWI_CARD'
+        :param file_path: путь к файлу, куда вы хотите сохранить чек, если не указан, возвращает байты
+        :return: pdf файл в байтовом виде или номер записанных байтов
+        """
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        data = {
+            'type': transaction_type,
+            'format': 'PDF'
+        }
+        async for response in self._parser.fast().fetch(
+                url='https://edge.qiwi.com/payment-history/v1/transactions/' + transaction_id + '/cheque/file',
+                headers=headers,
+                method='GET',
+                data=data
+        ):
+            if not file_path:
+                return response.response_data
+            async with aiofiles.open(file_path + '.pdf', 'wb') as file:
+                return await file.write(response.response_data)
