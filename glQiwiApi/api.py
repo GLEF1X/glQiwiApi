@@ -5,6 +5,7 @@ from typing import Literal, Optional, Union, Dict, List, Tuple, Any, Type, Async
 from aiohttp import ClientTimeout, ClientSession, ContentTypeError, ClientRequest, ClientProxyConnectionError, \
     ServerDisconnectedError
 from aiohttp.client import DEFAULT_TIMEOUT
+from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
@@ -82,7 +83,7 @@ class HttpXParser:
             validate_django: bool = False,
             method: Literal['POST', 'GET'] = 'POST',
             set_timeout: bool = True,
-            cookies: Optional[dict] = None,
+            cookies: Optional[LooseCookies] = None,
             json: Optional[dict] = None,
             skip_exceptions: bool = False,
             proxy: Optional[ProxyService] = None,
@@ -134,6 +135,7 @@ class HttpXParser:
                         params=self._set_auth(data) if validate_django else data,
                         headers=headers,
                         json=json if isinstance(json, dict) else None,
+                        cookies=cookies,
                         **proxy_kwargs
                     )
                 except (ClientProxyConnectionError, SocksError, ServerDisconnectedError) as ex:

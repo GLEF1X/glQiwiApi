@@ -105,3 +105,6 @@ class Identification:
     snils: str
     oms: str
     type: str
+
+class InvalidData(Exception):
+    pass

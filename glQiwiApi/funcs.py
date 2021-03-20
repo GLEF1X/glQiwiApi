@@ -1,10 +1,9 @@
-import asyncio
 from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
 from glQiwiApi.api import HttpXParser
 from glQiwiApi.configs import *
-from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification
+from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData
 
 
 class QiwiDataFormatter:
@@ -24,8 +23,11 @@ class QiwiDataFormatter:
         return data
 
     @staticmethod
-    def format_objects(iterable_obj: Iterable, obj: Type, transfers: Dict[str, str]) -> Optional[
-        List[Union[Transaction, Identification]]]:
+    def format_objects(
+            iterable_obj: Iterable,
+            obj: Type,
+            transfers: Dict[str, str]
+    ) -> Optional[List[Union[Transaction, Identification]]]:
         kwargs = {}
         objects = []
         for transaction in iterable_obj:
@@ -44,6 +46,12 @@ class QiwiDataFormatter:
 
 
 class QiwiWrapper:
+    """
+    Класс, реализующий обработку запросов к киви, используя основной класс HttpXParser,
+    удобен он тем, что не просто отдает json подобные объекты, а всё это конвертирует в python датаклассы.
+    Вы также можете импортировать и пользоваться данным классом для парсинга и собственных целей,
+    по сути, это обвертка, и вы можете написать такие запросы для любой платежной системы или сайта
+    """
 
     def __init__(self, api_access_token: str, phone_number: str) -> None:
         self._parser = HttpXParser()
@@ -63,8 +71,8 @@ class QiwiWrapper:
             to_card: str
     ) -> Response:
         """
-        Метод для отправки средств на карту, по умолчанию отправляет на киви карту, однако, если вы хотите перевести
-        на карту другого типа, вы должны указать prv_id
+        Метод для отправки средств на карту.
+        Более подробная документация https://developer.qiwi.com/ru/qiwi-wallet-personal/#cards
 
         :param trans_sum: сумма перевода
         :param to_card: номер карты получателя
@@ -84,9 +92,11 @@ class QiwiWrapper:
             return response
 
     async def _detect_card_number(self, card_number: str) -> str:
-        """Метод для получения индентификатора карты
-         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#cards
-         """
+        """
+        Метод для получения индентификатора карты
+
+        https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#cards
+        """
         headers = deepcopy(DEFAULT_QIWI_HEADERS)
         headers.update(
             {
@@ -108,8 +118,7 @@ class QiwiWrapper:
 
     async def get_balance(self) -> Dict[str, int]:
         """Метод для получения баланса киви, принимает\n логин(номер телефона) и токен с https://qiwi.com/api"""
-        headers = deepcopy(DEFAULT_QIWI_HEADERS)
-        headers = self._auth_token(headers=headers)
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         async for response in self._parser.fast().fetch(
                 url='https://edge.qiwi.com/funding-sources/v2/persons/' + self.phone_number + '/accounts',
                 headers=headers,
@@ -120,7 +129,7 @@ class QiwiWrapper:
 
     async def transactions(
             self,
-            rows_num: int,
+            rows_num: int = 50,
             operation: Literal['ALL', 'IN', 'OUT', 'QIWI_CARD', 'ALL'] = 'ALL',
             start_date: Optional[Union[str, datetime]] = None,
             end_date: Optional[Union[str, datetime]] = None
@@ -135,10 +144,9 @@ class QiwiWrapper:
         :param end_date: онечная дата поиска платежей. Используется только вместе со startDate.
 
         """
-        headers = deepcopy(DEFAULT_QIWI_HEADERS)
-        headers = self._auth_token(
-            headers=headers
-        )
+        if rows_num > 50:
+            raise InvalidData('Можно проверять не более 50 транзакций')
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         payload_data = {
             'rows': rows_num,
             'operation': operation
@@ -173,7 +181,7 @@ class QiwiWrapper:
             trans_sum: Union[str, float, int],
             currency: str = '643',
             comment: str = '+comment+') -> Response:
-        """https://pypi.org/project/glparser2/0.0.4/
+        """
         Метод для перевода денег на другой кошелек\n
         Подробная документация: https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#p2p
 
@@ -203,19 +211,16 @@ class QiwiWrapper:
             self,
             transaction_id: Union[str, int],
             transaction_type: Literal['IN', 'OUT']) \
-            -> Union[dict, str, bytes, bytearray, Exception, None]:
+            -> Optional[Transaction]:
         """
-        Метод для получения полной информации о транзакции
+        Метод для получения полной информации о транзакции\n
         Подробная документация: https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#txn_info
 
         :param transaction_id: номер транзакции
         :param transaction_type: тип транзакции, может быть только IN или OUT
-        :return
+        :return: Transaction object
         """
-        headers = deepcopy(DEFAULT_QIWI_HEADERS)
-        headers = self._auth_token(
-            headers=headers
-        )
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         payload_data = {
             'type': transaction_type
         }
@@ -225,7 +230,11 @@ class QiwiWrapper:
                 data=payload_data,
                 method='GET'
         ):
-            return response.response_data
+            return self._formatter.format_objects(
+                iterable_obj=(response.response_data,),
+                obj=Transaction,
+                transfers=TRANSACTION_TRANSFER
+            )
 
     async def check_restriction(self) -> Union[List[Dict[str, str]], Exception]:
         """
@@ -234,8 +243,7 @@ class QiwiWrapper:
 
         :return: Список, где находиться словарь с ограничениями, если ограничений нет - возвращает пустой список
         """
-        headers = deepcopy(DEFAULT_QIWI_HEADERS)
-        headers = self._auth_token(headers=headers)
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         async for response in self._parser.fast().fetch(
                 url='https://edge.qiwi.com/person-profile/v1/persons/' + self.phone_number + '/status/restrictions',
                 headers=headers,
@@ -250,8 +258,7 @@ class QiwiWrapper:
 
         :return: Response object
         """
-        headers = deepcopy(DEFAULT_QIWI_HEADERS)
-        headers = self._auth_token(headers=headers)
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         async for response in self._parser.fast().fetch(
                 url='https://edge.qiwi.com/identification/v1/persons/' + self.phone_number + '/identification',
                 method='GET',
@@ -266,6 +273,7 @@ class QiwiWrapper:
     async def check_transaction(
             self,
             amount: Union[int, float],
+            transaction_type: Literal['IN', 'OUT', 'QIWI_CARD'] = 'IN',
             sender_number: Optional[str] = None,
             rows_num: int = 50,
             comment: Optional[str] = None) -> bool:
@@ -275,16 +283,27 @@ class QiwiWrapper:
         Для небольшой оптимизации вы можете уменьшить rows_num задав его, однако это не гарантирует правильный результат
 
         :param amount: сумма платежа
+        :param transaction_type: тип платежа
         :param sender_number: номер получателя
         :param rows_num: кол-во платежей, которое будет проверяться
         :param comment: комментарий, по которому будет проверяться транзакция
         :return: bool, есть ли такая транзакция в истории платежей
         """
+        if transaction_type not in ['IN', 'OUT', 'QIWI_CARD']:
+            raise InvalidData('Вы ввели неправильный метод транзакции')
+        elif rows_num > 50:
+            raise InvalidData('Можно проверять не более 50 транзакций')
         transactions = await self.transactions(rows_num=rows_num)
         for transaction in transactions:
-            if float(transaction.sum.get('amount')) >= amount and transaction.type == 'IN':
+            if float(transaction.sum.get('amount')) >= amount and transaction.type == transaction_type:
                 if transaction.comment == comment and transaction.to_account == sender_number:
                     return True
+                elif comment and sender_number:
+                    continue
                 elif transaction.to_account == sender_number:
+                    return True
+                elif sender_number:
+                    continue
+                elif transaction.comment == comment:
                     return True
         return False
