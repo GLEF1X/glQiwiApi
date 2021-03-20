@@ -81,7 +81,7 @@ class HttpXParser:
             url: Optional[str] = None,
             get_json: bool = False,
             validate_django: bool = False,
-            method: Literal['POST', 'GET'] = 'POST',
+            method: Literal['POST', 'GET', 'PUT'] = 'POST',
             set_timeout: bool = True,
             cookies: Optional[LooseCookies] = None,
             json: Optional[dict] = None,

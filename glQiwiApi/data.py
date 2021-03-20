@@ -120,3 +120,16 @@ class Limit:
     interval: Dict[str, str]
     limit_type: str
     limit_country_code: Optional[str] = None
+
+
+@dataclass
+class Bill:
+    site_id: str
+    bill_id: str
+    amount: Dict[str, str]
+    status: Dict[str, Union[str, Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']]]
+    creation_date_time: str
+    expiration_date_time: str
+    pay_url: str
+    custom_fields: Optional[Dict[str, str]] = None
+    customer: Optional[Dict[str, Union[str, int]]] = None

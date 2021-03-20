@@ -9,6 +9,12 @@ DEFAULT_QIWI_HEADERS = {
     'Host': 'edge.qiwi.com',
 }
 
+P2P_QIWI_HEADERS = {
+    'Authorization': 'Bearer {token}',
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+}
+
 QIWI_TO_CARD = WrapperData(
     json=
     {
@@ -27,6 +33,22 @@ QIWI_TO_CARD = WrapperData(
         }
     },
     headers=DEFAULT_QIWI_HEADERS
+)
+
+P2P_DATA = WrapperData(
+    json={
+        "amount": {
+            "currency": "RUB",
+            "value": "{amount}"
+        },
+        "comment": "{comment}",
+        "customFields": {
+            "paySourcesFilter": "qw",
+            "themeCode": "Yvan-YKaSh",
+        }
+    },
+
+    headers=P2P_QIWI_HEADERS
 )
 
 QIWI_TO_WALLET = WrapperData(
@@ -62,6 +84,15 @@ IDENTIFICATION_TRANSFER = {
     'birthDate': 'birth_date'
 }
 
+P2P_BILL_TRANSFER = {
+    'siteId': 'site_id',
+    'billId': 'bill_id',
+    'creationDateTime': 'creation_date_time',
+    'expirationDateTime': 'expiration_date_time',
+    'payUrl': 'pay_url',
+    'customFields': 'custom_fields'
+}
+
 LIMIT_TYPES = ['TURNOVER', 'REFILL', 'PAYMENTS_P2P', 'PAYMENTS_PROVIDER_INTERNATIONALS', 'PAYMENTS_PROVIDER_PAYOUT',
                'WITHDRAW_CASH']
 
@@ -71,4 +102,4 @@ LIMIT_TYPES_TRANSFER = {
 }
 
 __all__ = ['LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
-           'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER']
+           'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER']

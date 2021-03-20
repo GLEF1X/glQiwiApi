@@ -1,11 +1,12 @@
 import asyncio
+import uuid
 from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
 from glQiwiApi.api import HttpXParser
 from glQiwiApi.configs import *
-from glQiwiApi.configs import LIMIT_TYPES_TRANSFER
-from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit
+from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit, \
+    Bill
 
 
 class QiwiDataFormatter:
@@ -29,7 +30,7 @@ class QiwiDataFormatter:
             iterable_obj: Iterable,
             obj: Type,
             transfers: Dict[str, str]
-    ) -> Optional[List[Union[Transaction, Identification, Limit]]]:
+    ) -> Optional[List[Union[Transaction, Identification, Limit, Bill]]]:
         kwargs = {}
         objects = []
         for transaction in iterable_obj:
@@ -46,6 +47,21 @@ class QiwiDataFormatter:
             kwargs = {}
         return objects
 
+    def set_data_p2p_create(self, wrapped_data: WrapperData, amount: Union[str, int, float],
+                            comment: Optional[str] = None,
+                            theme_code: Optional[str] = None,
+                            pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
+                            ):
+        wrapped_data.json['amount']['value'] = str(amount)
+        wrapped_data.json['comment'] = comment
+        if pay_source_filter in ['qw', 'card', 'mobile']:
+            wrapped_data.json['customFields']['paySourcesFilter'] = pay_source_filter
+        if isinstance(theme_code, str):
+            wrapped_data.json['customFields']['theme_code'] = theme_code
+        if not isinstance(theme_code, str) and pay_source_filter not in ['qw', 'card', 'mobile']:
+            wrapped_data.json.pop('customFields')
+        return wrapped_data.json
+
 
 class QiwiWrapper:
     """
@@ -55,15 +71,21 @@ class QiwiWrapper:
     по сути, это обвертка, и вы можете написать такие запросы для любой платежной системы или сайта
     """
 
-    def __init__(self, api_access_token: str, phone_number: str) -> None:
+    def __init__(self,
+                 api_access_token: str,
+                 phone_number: str,
+                 secret_p2p: Optional[str] = None,
+                 public_p2p: Optional[str] = None) -> None:
         self._parser = HttpXParser()
         self.api_access_token = api_access_token
         self.phone_number = phone_number
         self._formatter = QiwiDataFormatter()
+        self.public_p2p = public_p2p
+        self.secret_p2p = secret_p2p
 
-    def _auth_token(self, headers: dict) -> dict:
+    def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
         headers['Authorization'] = headers['Authorization'].format(
-            token=self.api_access_token
+            token=self.api_access_token if not p2p else self.secret_p2p
         )
         return headers
 
@@ -410,3 +432,114 @@ class QiwiWrapper:
         ):
             if response.ok and response.status_code == 200:
                 return {'success': True}
+
+    async def p2p_orders(self):
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        async for response in self._parser.fast().fetch(
+                url='https://edge.qiwi.com/checkout-api/api/bill/search?statuses=READY_FOR_PAY&rows=50',
+                headers=headers,
+                method='GET'
+        ):
+            return response.response_data
+
+    async def create_p2p_bill(
+            self,
+            amount: int,
+            bill_id: Optional[str] = None,
+            comment: Optional[str] = None,
+            theme_code: Optional[str] = None,
+            pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None) -> Bill:
+        """
+        Метод для выставление p2p счёта.
+        Надежный способ для интеграции. Параметры передаются server2server с использованием авторизации.
+
+
+        :param amount: сумма платежа
+        :param bill_id: уникальный номер транзакции, если не передан, генерируется автоматически,
+        :param comment: комментарий к платёжу
+        :param theme_code: специальный код темы
+        :param pay_source_filter: При открытии формы будут отображаться только указанные способы перевода
+        """
+        if not self.public_p2p or not self.secret_p2p:
+            raise InvalidData('Не задан p2p токен')
+        if not bill_id:
+            bill_id = str(uuid.uuid4())
+        data = deepcopy(P2P_DATA)
+        headers = self._auth_token(data.headers, p2p=True)
+        payload = self._formatter.set_data_p2p_create(
+            wrapped_data=data,
+            amount=amount,
+            comment=comment,
+            theme_code=theme_code,
+            pay_source_filter=pay_source_filter
+        )
+        async for response in self._parser.fast().fetch(
+                url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}',
+                json=payload,
+                headers=headers,
+                method='PUT'
+        ):
+            try:
+                return self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    transfers=P2P_BILL_TRANSFER,
+                    obj=Bill
+                )[0]
+            except IndexError:
+                raise ConnectionError('Не удалось создать p2p bill. Проверьте ваши токены.') from None
+
+    async def check_p2p_bill_status(self, bill_id: str) -> Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']:
+        """
+        Метод для проверки статуса p2p транзакции.\n
+        Возможные типы транзакции: \n
+        WAITING	Счет выставлен, ожидает оплаты	\n
+        PAID	Счет оплачен	\n
+        REJECTED	Счет отклонен\n
+        EXPIRED	Время жизни счета истекло. Счет не оплачен\n
+        Более подробная документация https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
+
+        :param bill_id: номер p2p транзакции
+        :return: статус транзакции строкой
+        """
+        if not self.public_p2p or not self.secret_p2p:
+            raise InvalidData('Не задан p2p токен')
+        data = deepcopy(P2P_DATA)
+        headers = self._auth_token(data.headers, p2p=True)
+        async for response in self._parser.fast().fetch(
+                url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}',
+                method='GET',
+                headers=headers
+        ):
+            try:
+                return self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    transfers=P2P_BILL_TRANSFER,
+                    obj=Bill
+                )[0].status['value']
+            except (IndexError, KeyError):
+                raise ConnectionError('Не удалось создать p2p bill. Проверьте ваши токены.') from None
+
+    async def reject_p2p_bill(self, bill_id: str) -> Bill:
+        """
+        Метод для отмены транзакции.
+
+        :param bill_id: номер p2p транзакции
+        :return: транзакцию в датаклассе
+        """
+        if not self.public_p2p or not self.secret_p2p:
+            raise InvalidData('Не задан p2p токен')
+        data = deepcopy(P2P_DATA)
+        headers = self._auth_token(data.headers, p2p=True)
+        async for response in self._parser.fast().fetch(
+                url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}/reject',
+                method='POST',
+                headers=headers
+        ):
+            try:
+                return self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    transfers=P2P_BILL_TRANSFER,
+                    obj=Bill
+                )[0]
+            except IndexError:
+                raise ConnectionError('Не удалось создать p2p bill. Проверьте ваши токены.') from None
