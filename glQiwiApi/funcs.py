@@ -1,9 +1,11 @@
+import asyncio
 from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
 from glQiwiApi.api import HttpXParser
 from glQiwiApi.configs import *
-from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData
+from glQiwiApi.configs import LIMIT_TYPES_TRANSFER
+from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit
 
 
 class QiwiDataFormatter:
@@ -27,7 +29,7 @@ class QiwiDataFormatter:
             iterable_obj: Iterable,
             obj: Type,
             transfers: Dict[str, str]
-    ) -> Optional[List[Union[Transaction, Identification]]]:
+    ) -> Optional[List[Union[Transaction, Identification, Limit]]]:
         kwargs = {}
         objects = []
         for transaction in iterable_obj:
@@ -307,3 +309,104 @@ class QiwiWrapper:
                 elif transaction.comment == comment:
                     return True
         return False
+
+    async def get_limits(self) -> List[Limit]:
+        """
+        Функция для получения лимитов по счёту киви кошелька\n
+        Возвращает лимиты по кошельку в виде списка, если лимита по определенной стране нет, то не включает его в список
+        Подробная документация https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
+
+        :return: Limit object of dataclass
+        """
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+
+        payload = {}
+
+        for index, limit_type in enumerate(LIMIT_TYPES):
+            payload['types[' + str(index) + ']'] = limit_type
+
+        async for response in self._parser.fast().fetch(
+                url='https://edge.qiwi.com/qw-limits/v1/persons/'
+                    + self.phone_number.replace("+", "")
+                    + '/actual-limits',
+                get_json=True,
+                headers=headers,
+                data=payload,
+                method='GET'
+        ):
+            limits = []
+            for key, value in response.response_data.get('limits').items():
+                limit = self._formatter.format_objects(
+                    iterable_obj=value,
+                    transfers=LIMIT_TYPES_TRANSFER,
+                    obj=Limit
+                )
+                try:
+                    if isinstance(limit[0], Limit):
+                        limit[0].limit_country_code = key
+                        limits.append(limit[0])
+                except IndexError:
+                    continue
+
+            return limits
+
+    async def get_list_of_cards(self) -> dict:
+        """
+        Данный метод позволяет вам получить список ваших карт. Пока ещё в разработке, стабильность сомнительна
+
+        """
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        async for response in self._parser.fast().fetch(
+                url='https://edge.qiwi.com/cards/v1/cards?vas-alias=qvc-master',
+                method='GET',
+                headers=headers
+        ):
+            return response.response_data
+
+    async def authenticate(
+            self,
+            birth_date: str,
+            first_name: str,
+            last_name: str,
+            patronymic: str,
+            passport: str,
+            oms: str = "",
+            inn: str = "",
+            snils: str = ""
+    ) -> Optional[Dict[str, bool]]:
+        """
+        Данный запрос позволяет отправить данные для идентификации вашего QIWI кошелька.
+        Допускается идентифицировать не более 5 кошельков на одного владельца
+
+        Для идентификации кошелька вы обязательно должны отправить ФИО, серию/номер паспорта и дату рождения.\n
+        Если данные прошли проверку, то в ответе будет отображен ваш ИНН и упрощенная идентификация кошелька будет установлена.
+        В случае если данные не прошли проверку, кошелек остается в статусе "Минимальный".
+        :param birth_date: Дата рождения в виде строки формата 1998-02-11
+        :param first_name: Ваше имя
+        :param last_name: Ваша фамилия
+        :param patronymic: Ваше отчество
+        :param passport: Серия / Номер паспорта. Пример 4400111222
+        :param oms:
+        :param snils:
+        :param inn:
+        """
+        payload = {
+            "birthDate": birth_date,
+            "firstName": first_name,
+            "inn": inn,
+            "lastName": last_name,
+            "middleName": patronymic,
+            "oms": oms,
+            "passport": passport,
+            "snils": snils
+        }
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        async for response in self._parser.fast().fetch(
+                url='https://edge.qiwi.com/identification/v1/persons/' +
+                    self.phone_number.replace("+", "") +
+                    "/identification",
+                data=payload,
+                headers=headers
+        ):
+            if response.ok and response.status_code == 200:
+                return {'success': True}

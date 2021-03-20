@@ -61,3 +61,14 @@ IDENTIFICATION_TRANSFER = {
     'lastName': 'last_name',
     'birthDate': 'birth_date'
 }
+
+LIMIT_TYPES = ['TURNOVER', 'REFILL', 'PAYMENTS_P2P', 'PAYMENTS_PROVIDER_INTERNATIONALS', 'PAYMENTS_PROVIDER_PAYOUT',
+               'WITHDRAW_CASH']
+
+LIMIT_TYPES_TRANSFER = {
+    'max': 'max_limit',
+    'type': 'limit_type'
+}
+
+__all__ = ['LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
+           'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER']

@@ -106,5 +106,17 @@ class Identification:
     oms: str
     type: str
 
+
 class InvalidData(Exception):
     pass
+
+
+@dataclass
+class Limit:
+    currency: str
+    rest: Union[float, int]
+    max_limit: Union[float, int]
+    spent: Union[float, int]
+    interval: Dict[str, str]
+    limit_type: str
+    limit_country_code: Optional[str] = None
