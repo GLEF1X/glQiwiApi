@@ -101,5 +101,29 @@ LIMIT_TYPES_TRANSFER = {
     'type': 'limit_type'
 }
 
+ONLINE_COMMISSION_DATA = {
+    "account": "",
+    "paymentMethod": {
+        "type": "Account",
+        "accountId": "643"
+    },
+    "purchaseTotals":
+        {
+            "total":
+                {"amount": "",
+                 "currency": "643"
+                 }
+        }
+}
+
+COMMISSION_TRANSFER = {
+    'providerId': 'provider_id',
+    'withdrawSum': 'withdraw_sum',
+    'qwCommission': 'qw_commission',
+    'withdrawToEnrollmentRate': 'withdraw_to_enrollment_rate'
+}
+
 __all__ = ['LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
-           'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER']
+           'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',
+           'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER'
+           ]

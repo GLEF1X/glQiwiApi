@@ -8,8 +8,9 @@ import aiofiles as aiofiles
 
 from glQiwiApi.api import HttpXParser
 from glQiwiApi.configs import *
+from glQiwiApi.configs import ONLINE_COMMISSION_DATA, COMMISSION_TRANSFER
 from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit, \
-    Bill
+    Bill, Commission
 
 
 class QiwiDataFormatter:
@@ -33,7 +34,7 @@ class QiwiDataFormatter:
             iterable_obj: Iterable,
             obj: Type,
             transfers: Dict[str, str]
-    ) -> Optional[List[Union[Transaction, Identification, Limit, Bill]]]:
+    ) -> Optional[List[Union[Transaction, Identification, Limit, Bill, Commission]]]:
         kwargs = {}
         objects = []
         for transaction in iterable_obj:
@@ -145,6 +146,31 @@ class QiwiWrapper:
                 method='POST',
                 data={
                     'cardNumber': card_number
+                }
+        ):
+            try:
+                return response.response_data.get('message')
+            except KeyError:
+                raise InvalidCardNumber('Invalid card number or qiwi api is not response') from None
+
+    async def _detect_mobile_number(self, phone_number: str):
+        """
+        Метод для получения индентификатора телефона
+
+        https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#cards
+        """
+        headers = deepcopy(DEFAULT_QIWI_HEADERS)
+        headers.update(
+            {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        )
+        async for response in self._parser.fetch(
+                url='https://qiwi.com/mobile/detect.action',
+                headers=headers,
+                method='POST',
+                data={
+                    'phone': phone_number
                 }
         ):
             try:
@@ -588,3 +614,32 @@ class QiwiWrapper:
                 return response.response_data
             async with aiofiles.open(file_path + '.pdf', 'wb') as file:
                 return await file.write(response.response_data)
+
+    async def commission(self, to_account: str, pay_sum: Union[int, float]) -> Commission:
+        """
+        Возвращается полная комиссия QIWI Кошелька за платеж в пользу указанного провайдера
+        с учетом всех тарифов по заданному набору платежных реквизитов.
+
+        :param to_account: номер карты или киви кошелька
+        :param pay_sum: сумма, за которую вы хотите узнать коммиссию
+        :return: Commission object
+        """
+        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        json_payload = deepcopy(ONLINE_COMMISSION_DATA)
+        json_payload['purchaseTotals']['total']['amount'] = pay_sum
+        json_payload['account'] = to_account.replace('+', '')
+        special_code = "99" if len(to_account.replace('+', '')) <= 15 else (
+            await self._detect_card_number(card_number=to_account))
+        async for response in self._parser.fast().fetch(
+                url='https://edge.qiwi.com/sinap/providers/' + special_code + '/onlineCommission',
+                headers=headers,
+                json=json_payload
+        ):
+            try:
+                return self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    transfers=COMMISSION_TRANSFER,
+                    obj=Commission
+                )[0]
+            except IndexError:
+                raise ConnectionError('Не удалось получить коммиссию за платёж. Попробуйте ещё раз.') from None

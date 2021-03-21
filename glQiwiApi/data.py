@@ -133,3 +133,11 @@ class Bill:
     pay_url: str
     custom_fields: Optional[Dict[str, str]] = None
     customer: Optional[Dict[str, Union[str, int]]] = None
+
+
+@dataclass(frozen=True)
+class Commission:
+    provider_id: int
+    withdraw_sum: Dict[str, Union[float, str, int]]
+    qw_commission: Dict[str, Union[float, str, int]]
+    withdraw_to_enrollment_rate: int = 1
