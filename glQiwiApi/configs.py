@@ -9,6 +9,11 @@ DEFAULT_QIWI_HEADERS = {
     'Host': 'edge.qiwi.com',
 }
 
+DEFAULT_BTC_HEADERS = {
+    'Accept': 'application/json',
+    'Accept-Encoding': 'deflate, gzip'
+}
+
 P2P_QIWI_HEADERS = {
     'Authorization': 'Bearer {token}',
     'Accept': 'application/json',
@@ -41,6 +46,7 @@ P2P_DATA = WrapperData(
             "currency": "RUB",
             "value": "{amount}"
         },
+        "expirationDateTime": "",
         "comment": "{comment}",
         "customFields": {
             "paySourcesFilter": "qw",
@@ -123,7 +129,7 @@ COMMISSION_TRANSFER = {
     'withdrawToEnrollmentRate': 'withdraw_to_enrollment_rate'
 }
 
-__all__ = ['LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
+__all__ = ('LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
            'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',
-           'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER'
-           ]
+           'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER', 'DEFAULT_BTC_HEADERS'
+           )

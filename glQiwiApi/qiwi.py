@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union, Optional, Dict, Literal, List, Type, Iterable
 
 import aiofiles as aiofiles
@@ -11,6 +11,7 @@ from glQiwiApi.configs import *
 from glQiwiApi.configs import ONLINE_COMMISSION_DATA, COMMISSION_TRANSFER
 from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit, \
     Bill, Commission
+from glQiwiApi.utils import datetime_to_str_in_iso
 
 
 class QiwiDataFormatter:
@@ -51,13 +52,16 @@ class QiwiDataFormatter:
             kwargs = {}
         return objects
 
-    def set_data_p2p_create(self, wrapped_data: WrapperData, amount: Union[str, int, float],
+    def set_data_p2p_create(self, wrapped_data: WrapperData,
+                            amount: Union[str, int, float],
+                            life_time: str,
                             comment: Optional[str] = None,
                             theme_code: Optional[str] = None,
                             pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
                             ):
         wrapped_data.json['amount']['value'] = str(amount)
         wrapped_data.json['comment'] = comment
+        wrapped_data.json['expirationDateTime'] = life_time
         if pay_source_filter in ['qw', 'card', 'mobile']:
             wrapped_data.json['customFields']['paySourcesFilter'] = pay_source_filter
         if isinstance(theme_code, str):
@@ -488,6 +492,7 @@ class QiwiWrapper:
             amount: int,
             bill_id: Optional[str] = None,
             comment: Optional[str] = None,
+            life_time: Optional[datetime] = None,
             theme_code: Optional[str] = None,
             pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None) -> Bill:
         """
@@ -497,6 +502,7 @@ class QiwiWrapper:
 
         :param amount: сумма платежа
         :param bill_id: уникальный номер транзакции, если не передан, генерируется автоматически,
+        :param life_time: дата, до которой счет будет доступен для оплаты.
         :param comment: комментарий к платёжу
         :param theme_code: специальный код темы
         :param pay_source_filter: При открытии формы будут отображаться только указанные способы перевода
@@ -505,6 +511,7 @@ class QiwiWrapper:
             raise InvalidData('Не задан p2p токен')
         if not bill_id:
             bill_id = str(uuid.uuid4())
+        life_time = datetime_to_str_in_iso((datetime.now() + timedelta(days=2)) if not life_time else life_time)
         data = deepcopy(P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
         payload = self._formatter.set_data_p2p_create(
@@ -512,7 +519,8 @@ class QiwiWrapper:
             amount=amount,
             comment=comment,
             theme_code=theme_code,
-            pay_source_filter=pay_source_filter
+            pay_source_filter=pay_source_filter,
+            life_time=life_time
         )
         async for response in self._parser.fast().fetch(
                 url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}',

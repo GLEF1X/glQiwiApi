@@ -2,11 +2,11 @@ import setuptools
 
 setuptools.setup(
     name="glQiwiApi",  # Replace with your own username
-    version="0.1.3",
+    version="0.1.6",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Parser for post and get requests",
-    long_description='Base queries',
+    long_description='Light and fast wrapper for qiwi bills',
     long_description_content_type="text/x-rst",
     url="https://github.com/GLEF1X/parser",
     packages=['glQiwiApi'],
@@ -16,6 +16,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
+        "pytz==2021.1",
         "aiohttp==3.7.3",
         "aiosocksy==0.1.2",
         'aiofiles==0.6.0',
