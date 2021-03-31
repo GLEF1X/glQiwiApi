@@ -1,12 +1,11 @@
 import re
 import time
-from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import (TypeVar, Callable, Union, Any, Dict, Type, Iterable, List, Optional, Literal)
 import functools as ft
 from pytz.reference import Local
 from glQiwiApi.data import Transaction, Commission, Bill, Limit, Identification, WrapperData, AccountInfo, Operation, \
-    OperationDetails, PreProcessPaymentResponse
+    OperationDetails, PreProcessPaymentResponse, Payment, IncomingTransaction
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -21,9 +20,12 @@ def measure_time(func: F):
     return wrapper
 
 
-def datetime_to_str_in_iso(obj: datetime) -> Optional[str]:
+def datetime_to_str_in_iso(obj: datetime, yoo_money_format: bool = False) -> Optional[str]:
     if not isinstance(obj, datetime):
         return ''
+    if yoo_money_format:
+        obj = obj - timedelta(hours=3)
+        return obj.isoformat(' ').replace(" ", "T") + "Z"
     return obj.isoformat(' ').replace(" ", "T") + re.findall(r'[+]\d{2}[:]\d{2}', str(datetime.now(tz=Local)))[0]
 
 
@@ -74,7 +76,7 @@ class DataFormatter:
             transfers: Optional[Dict[str, str]] = None,
     ) -> Optional[
         List[Union[Transaction, Identification, Limit, Bill, Commission, AccountInfo, Operation, OperationDetails,
-                   PreProcessPaymentResponse]]]:
+                   PreProcessPaymentResponse, Payment, IncomingTransaction]]]:
         kwargs = {}
         objects = []
         for transaction in iterable_obj:

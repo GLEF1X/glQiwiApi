@@ -223,7 +223,7 @@ class PreProcessPaymentResponse:
 
 @dataclass
 class Payment:
-    status: Literal['success', 'refused']
+    status: Literal['success', 'refused', 'in_progress', 'ext_auth_required']
     payment_id: str
     credit_amount: Optional[float] = None
     payer: Optional[str] = None
@@ -238,6 +238,14 @@ class Payment:
     next_retry: Optional[int] = None
     digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
     protection_code: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class IncomingTransaction:
+    status: Literal['success', 'refused']
+    protection_code_attempts_available: int
+    ext_action_uri: Optional[str] = None
+    error: Optional[str] = None
 
 
 __all__ = (
