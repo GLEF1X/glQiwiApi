@@ -1,26 +1,25 @@
 import asyncio
 from datetime import datetime
-from typing import List, Dict, Any, Union, Optional, Tuple
+from typing import List, Dict, Any, Union, Optional, Tuple, Literal
 from glQiwiApi import HttpXParser
 
-from glQiwiApi.configs import BASE_YOOMONEY_URL, OPERATION_TRANSFER
-from glQiwiApi.data import AccountInfo, OperationType, ALL_OPERATION_TYPES, Operation
+from glQiwiApi.yoo_money.basic_yoomoney_config import *
+from glQiwiApi.data import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, Payment
 from glQiwiApi.exceptions import NoUrlFound, InvalidData
 from glQiwiApi.utils import parse_auth_link, parse_headers, DataFormatter, measure_time, datetime_to_str_in_iso
 
-TOKEN = '4100116602400968.44E1736C18ED0C1BFF6B1A0B468CDE971A25E0006B242F71591DB8B86C1BDAEB383E5B5BFF64BB82D7EA8060BFCFCE4388D0F2166A1F64E0822DE5C7DC9AFBC2E123A4C7C06F7645F047EBBEEB0C76B56B8BAD708151933C060891C3D6C5585F24029AFD57EBAB8A82C34405CAC9D208E8A1644F2879BA4A136A244A48AB56E9'
+TOKEN = '4100116602400968.67E45D8B0BEF430DBAEE8710C5A7D0F064402279B02D0FEF92E6B64831A274B7CCFF9351356271083D66C4B31B016AADEE43AB0726CB65956D60218ED792D50190B7F8B57E1B307A526346CE4AF4C6C76735A4F15F68FDAC77B3122EB184A1B799D4C83CE0A5772D3F56926EC7D718F38C6BDDA118ECCEB3AD5AB7EC53ED8CCA'
 
 
 class YooMoney(object):
 
     def __init__(self, api_access_token: str) -> None:
         """
-        Конструктор принимает только токен, полученный из класс методов этого же класса
+        Конструктор принимает только токен, полученный из класс метода get_access_token() этого же класса
 
         :param api_access_token: апи токен для запросов
         """
         self.api_access_token = api_access_token
-        self.__content_and_auth = {'content_json': True, 'auth': True}
         self._parser = HttpXParser()
         self._formatter = DataFormatter()
 
@@ -99,7 +98,7 @@ class YooMoney(object):
         ):
             return response.response_data.get('access_token')
 
-    async def revoke_api_token(self) -> bool:
+    async def revoke_api_token(self) -> Optional[Dict[str, bool]]:
         """
         Метод для отзывания токена, при этом все его права тоже пропадают
         Документация: https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
@@ -110,7 +109,8 @@ class YooMoney(object):
                 method='POST',
                 headers=headers
         ):
-            return response.ok
+            if response.ok:
+                return {'success': True}
 
     async def account_info(self) -> AccountInfo:
         """
@@ -119,7 +119,7 @@ class YooMoney(object):
 
         :return: объект AccountInfo
         """
-        headers = self._auth_token(parse_headers(**self.__content_and_auth))
+        headers = self._auth_token(parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/account-info',
                 headers=headers,
@@ -128,7 +128,7 @@ class YooMoney(object):
             try:
                 return self._formatter.format_objects(
                     iterable_obj=(response.response_data,),
-                    obj=AccountInfo
+                    obj=AccountInfo,
                 )[0]
             except IndexError:
                 raise InvalidData('Cannot fetch account info, check your token')
@@ -162,7 +162,7 @@ class YooMoney(object):
          Операции нумеруются с 0. Подробнее про постраничный вывод списка
         :param records:	int	Количество запрашиваемых записей истории операций. Допустимые значения: от 1 до 100, по умолчанию — 30.
         """
-        headers = self._auth_token(parse_headers(**self.__content_and_auth))
+        headers = self._auth_token(parse_headers(**content_and_auth))
 
         if records <= 0 or records > 100:
             raise InvalidData(
@@ -207,14 +207,14 @@ class YooMoney(object):
                 transfers=OPERATION_TRANSFER
             )
 
-    async def operation_details(self, operation_id: str):
+    async def get_operation_details(self, operation_id: str) -> OperationDetails:
         """
         Позволяет получить детальную информацию об операции из истории.
         Требуемые права токена: operation-details.
 
         :param operation_id: Идентификатор операции
         """
-        headers = self._auth_token(parse_headers(**self.__content_and_auth))
+        headers = self._auth_token(parse_headers(**content_and_auth))
         payload = {
             'operation_id': operation_id
         }
@@ -223,19 +223,161 @@ class YooMoney(object):
                 headers=headers,
                 data=payload
         ):
-            return response.response_data
+            try:
+                obj = self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    obj=OperationDetails,
+                    transfers=OPERATION_TRANSFER
+                )[0]
+                if obj.error:
+                    raise IndexError()
+                return obj
+            except (IndexError, AttributeError):
+                raise ConnectionError(
+                    'Не удалось получить объект, проверьте токен, который вы передаете в конструктор класса'
+                )
+
+    async def _pre_process_payment(
+            self,
+            to_account: str,
+            amount: Union[int, float],
+            comment_for_history: Optional[str] = None,
+            comment_for_receiver: Optional[str] = None,
+            protect: bool = False,
+            expire_period: int = 1
+    ) -> PreProcessPaymentResponse:
+        """
+        Создание платежа, проверка параметров и возможности приема платежа магазином или перевода средств на счет пользователя ЮMoney.\n
+        Данный метод не рекомендуется использовать напрямую, гораздо проще использовать send.
+        Требуемые права токена:
+        payment.to-account («идентификатор получателя», «тип идентификатора») или payment-p2p.
+
+        :param to_account: string Идентификатор получателя перевода (номер счета, номер телефона или email).
+        :param amount: Сумма к получению (придет на счет получателя счет после оплаты).
+        :param comment_for_history: Комментарий к переводу, отображается в истории отправителя.
+        :param comment_for_receiver:	string	Комментарий к переводу, отображается получателю.
+        :param protect: Значение параметра true — признак того, что перевод защищен кодом протекции.
+         По умолчанию параметр отсутствует (обычный перевод).
+        :param expire_period: Число дней, в течении которых:
+            получатель перевода может ввести код протекции и получить перевод на свой счет,
+            получатель перевода до востребования может получить перевод.
+            Значение параметра должно находиться в интервале от 1 до 365. Необязательный параметр. По умолчанию 1.
+        """
+        headers = self._auth_token(parse_headers(**content_and_auth))
+        payload = {
+            'pattern_id': 'p2p',
+            'to': to_account,
+            'amount_due': amount,
+            'comment': comment_for_history,
+            'message': comment_for_receiver,
+            'expire_period': expire_period,
+            'codepro': protect
+        }
+        async for response in self._parser.fast().fetch(
+                url=BASE_YOOMONEY_URL + '/api/request-payment',
+                headers=headers,
+                data=payload
+        ):
+            try:
+                obj = self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    obj=PreProcessPaymentResponse
+                )[0]
+                if obj.status != 'success':
+                    raise IndexError()
+                return obj
+            except (IndexError, AttributeError):
+                raise ConnectionError(
+                    'Не удалось создать pre_payment запрос, проверьте переданные параметры и попробуйте ещё раз'
+                )
+
+    async def send(
+            self,
+            to_account: str,
+            amount: Union[int, float],
+            money_source: Literal['wallet', 'card'] = 'wallet',
+            cvv2_code: str = '',
+            card_type: Optional[Literal['Visa', 'MasterCard', 'American Express', 'JCB']] = None,
+            protect: bool = False,
+            comment_for_history: Optional[str] = None,
+            comment_for_receiver: Optional[str] = None,
+            expire_period: int = 1
+    ):
+        """
+        Метод для отправки денег на аккаунт или карту другого человека
+
+        :param to_account: string Идентификатор получателя перевода (номер счета, номер телефона или email).
+        :param amount: Сумма к получению (придет на счет получателя счет после оплаты).
+        :param money_source: Запрашиваемый метод проведения платежа. wallet — со счета пользователя, если вы хотите использовать card,
+         тогда нужно будет передать card_type для поиска карты в списке ваших банковских карт, а также опционально cvv2 код для проведения платежа
+        :param comment_for_history: Комментарий к переводу, отображается в истории отправителя.
+        :param card_type: Тип банковской карты, нужно заполнять, только если вы хотите списать средства с вашей карты
+        :param cvv2_code: опционально, может быть не передан, однако, если для оплаты картой это требуется, параметр стоит передавать
+        :param comment_for_receiver:	string	Комментарий к переводу, отображается получателю.
+        :param protect: Значение параметра true — признак того, что перевод защищен кодом протекции.
+         По умолчанию параметр отсутствует (обычный перевод).
+        :param expire_period: Число дней, в течении которых:
+            получатель перевода может ввести код протекции и получить перевод на свой счет,
+            получатель перевода до востребования может получить перевод.
+            Значение параметра должно находиться в интервале от 1 до 365. Необязательный параметр. По умолчанию 1.
+        """
+        if amount < 2:
+            raise InvalidData('Введите сумму, которая больше минимальной(2 и выше)')
+        pre_payment = await self._pre_process_payment(
+            to_account=to_account,
+            amount=amount,
+            comment_for_history=comment_for_history,
+            comment_for_receiver=comment_for_receiver,
+            expire_period=expire_period,
+            protect=protect
+        )
+        headers = self._auth_token(parse_headers(**content_and_auth))
+
+        payload = {
+            'request_id': pre_payment.request_id,
+            'money_source': 'wallet'
+        }
+
+        if money_source == 'card' and isinstance(pre_payment, PreProcessPaymentResponse):
+            if pre_payment.money_source.get('cards').get('allowed') == 'true':
+                if not card_type:
+                    payload.update({
+                        'money_source': pre_payment.money_source.get('cards').get('items')[0].get('id'),
+                        'csc': cvv2_code
+                    })
+                else:
+                    cards = pre_payment.money_source.get('cards').get('items')
+                    for card in cards:
+                        if card.get('type') == card_type:
+                            payload.update(
+                                {'money_source': card.get('id'), 'csc': cvv2_code},
+                            )
+        async for response in self._parser.fast().fetch(
+                url=BASE_YOOMONEY_URL + '/api/process-payment',
+                method='POST',
+                headers=headers,
+                data=payload
+        ):
+            try:
+                obj = self._formatter.format_objects(
+                    iterable_obj=(response.response_data,),
+                    obj=Payment
+                )[0]
+                obj.protection_code = pre_payment.protection_code
+                return obj
+            except (IndexError, AttributeError):
+                raise ConnectionError(
+                    'Не удалось создать pre_payment запрос, проверьте переданные параметры и попробуйте ещё раз'
+                )
 
 
 @measure_time
 async def main():
-    wallet = YooMoney(
+    w = YooMoney(
         api_access_token=TOKEN
     )
-    history = await wallet.get_operation_history(
-        records=5,
-        operation_types=[OperationType.PAYMENT],
-    )
-    print(history)
+    detail_transaction = await w.account_info()
+    print(detail_transaction)
 
 
 if __name__ == '__main__':

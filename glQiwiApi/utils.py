@@ -5,9 +5,8 @@ from datetime import datetime
 from typing import (TypeVar, Callable, Union, Any, Dict, Type, Iterable, List, Optional, Literal)
 import functools as ft
 from pytz.reference import Local
-
-from glQiwiApi.configs import DEFAULT_YOOMONEY_HEADERS
-from glQiwiApi.data import Transaction, Commission, Bill, Limit, Identification, WrapperData, AccountInfo, Operation
+from glQiwiApi.data import Transaction, Commission, Bill, Limit, Identification, WrapperData, AccountInfo, Operation, \
+    OperationDetails, PreProcessPaymentResponse
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -37,7 +36,10 @@ def parse_headers(content_json: bool = False, auth: bool = False) -> Dict[Any, A
     Функция для добавления некоторых заголовков в запрос
 
     """
-    headers = deepcopy(DEFAULT_YOOMONEY_HEADERS)
+    headers = {
+        'Host': 'yoomoney.ru',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
     if content_json:
         headers.update(
             {'Accept': 'application/json'}
@@ -65,12 +67,14 @@ class DataFormatter:
         data.headers.update({'User-Agent': 'Android v3.2.0 MKT'})
         return data
 
-    @staticmethod
     def format_objects(
+            self,
             iterable_obj: Iterable,
             obj: Type,
             transfers: Optional[Dict[str, str]] = None,
-    ) -> Optional[List[Union[Transaction, Identification, Limit, Bill, Commission, AccountInfo, Operation]]]:
+    ) -> Optional[
+        List[Union[Transaction, Identification, Limit, Bill, Commission, AccountInfo, Operation, OperationDetails,
+                   PreProcessPaymentResponse]]]:
         kwargs = {}
         objects = []
         for transaction in iterable_obj:

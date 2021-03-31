@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from datetime import timedelta, datetime
 from enum import Enum
 from http.cookies import SimpleCookie
-from typing import Literal, Optional, Union, Dict
+from typing import Literal, Optional, Union, Dict, List
 from aiohttp.typedefs import RawHeaders
 from aiosocksy import Socks5Auth, Socks4Auth
 
@@ -163,7 +162,7 @@ class OperationType(Enum):
 ALL_OPERATION_TYPES = [OperationType.DEPOSITION, OperationType.PAYMENT, OperationType.INCOMING]
 
 
-@dataclass
+@dataclass(frozen=True)
 class Operation:
     operation_id: str
     status: str
@@ -176,8 +175,74 @@ class Operation:
     pattern_id: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class OperationDetails:
+    operation_id: Optional[str] = None
+    status: Optional[str] = None
+    amount: Optional[float] = None
+    operation_date: Optional[str] = None
+    operation_type: Optional[str] = None
+    direction: Optional[Literal['in', 'out']] = None
+    comment: Optional[str] = None
+    digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
+    details: Optional[str] = None
+    label: Optional[str] = None
+    answer_datetime: Optional[str] = None
+    expires: Optional[str] = None
+    protection_code: Optional[str] = None
+    codepro: Optional[bool] = None
+    message: Optional[str] = None
+    recipient_type: Optional[Literal['account', 'phone', 'email']] = None
+    recipient: Optional[str] = None
+    sender: Optional[str] = None
+    title: Optional[str] = None
+    fee: Optional[float] = None
+    amount_due: Optional[float] = None
+    pattern_id: Optional[str] = None
+    error: Optional[str] = None
+
+
+@dataclass
+class PreProcessPaymentResponse:
+    status: Literal['success', 'refused']
+    request_id: str
+    recipient_account_status: Literal['anonymous', 'named', 'identified']
+    fees: Dict[str, float]
+    balance: Optional[float] = None
+    recipient_account_type: Optional[Literal['personal', 'professional']] = None
+    recipient_identified: bool = False
+    recipient_masked_account: Optional[str] = None
+    multiple_recipients_found: Optional[str] = None
+    contract_amount: Optional[float] = None
+    error: Optional[str] = None
+    money_source: Optional[Dict[str, Dict[str, Union[str, bool, list]]]] = None
+    protection_code: Optional[str] = None
+    account_unblock_uri: Optional[str] = None
+    ext_action_uri: Optional[str] = None
+
+
+@dataclass
+class Payment:
+    status: Literal['success', 'refused']
+    payment_id: str
+    credit_amount: Optional[float] = None
+    payer: Optional[str] = None
+    payee: Optional[str] = None
+    payee_uid: Union[str, int, None] = None
+    invoice_id: Optional[str] = None
+    balance: Optional[float] = None
+    error: Optional[str] = None
+    account_unblock_uri: Optional[str] = None
+    acs_uri: Optional[str] = None
+    acs_params: Optional[str] = None
+    next_retry: Optional[int] = None
+    digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
+    protection_code: Optional[str] = None
+
+
 __all__ = (
     'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'InvalidCardNumber', 'WrapperData',
     'Transaction', 'ProxyService',
-    'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation'
+    'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation', 'OperationDetails',
+    'PreProcessPaymentResponse', 'Payment'
 )

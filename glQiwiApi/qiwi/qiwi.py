@@ -3,12 +3,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Union, Optional, Dict, Literal, List
 
-import aiofiles as aiofiles
+import aiofiles
 
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.api import HttpXParser
-from glQiwiApi.configs import *
-from glQiwiApi.configs import ONLINE_COMMISSION_DATA, COMMISSION_TRANSFER
+from glQiwiApi.qiwi.basic_qiwi_config import *
 from glQiwiApi.data import Response, InvalidCardNumber, Transaction, Identification, Limit, \
     Bill, Commission
 from glQiwiApi.exceptions import InvalidData
