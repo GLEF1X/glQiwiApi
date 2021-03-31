@@ -9,7 +9,8 @@ from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
-from glQiwiApi.data import Response, ProxyService, RequestAuthError
+from glQiwiApi.data import ProxyService, Response
+from glQiwiApi.exceptions import RequestProxyError, RequestAuthError
 
 
 class Core:
@@ -52,10 +53,6 @@ class Core:
         self._base_headers.update(
             {key: value}
         )
-
-
-class RequestProxyError(Exception):
-    """Возникает, если были переданы неправильные параметры запроса"""
 
 
 class HttpXParser:
@@ -132,7 +129,7 @@ class HttpXParser:
                     response = await self._session.request(
                         method=method,
                         url=self.url if not url else url,
-                        params=self._set_auth(data) if validate_django else data,
+                        data=self._set_auth(data) if validate_django else data,
                         headers=headers,
                         json=json if isinstance(json, dict) else None,
                         cookies=cookies,
@@ -158,7 +155,8 @@ class HttpXParser:
                     cookies=response.cookies,
                     ok=response.ok,
                     content_type=response.content_type,
-                    host=response.host
+                    host=response.host,
+                    url=response.url.__str__()
                 )
 
     @staticmethod

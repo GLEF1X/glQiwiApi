@@ -9,11 +9,6 @@ DEFAULT_QIWI_HEADERS = {
     'Host': 'edge.qiwi.com',
 }
 
-DEFAULT_BTC_HEADERS = {
-    'Accept': 'application/json',
-    'Accept-Encoding': 'deflate, gzip'
-}
-
 P2P_QIWI_HEADERS = {
     'Authorization': 'Bearer {token}',
     'Accept': 'application/json',
@@ -128,8 +123,22 @@ COMMISSION_TRANSFER = {
     'qwCommission': 'qw_commission',
     'withdrawToEnrollmentRate': 'withdraw_to_enrollment_rate'
 }
+# Ссылка для авторизации юмани
+BASE_YOOMONEY_URL = 'https://yoomoney.ru'
 
-__all__ = ('LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
-           'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',
-           'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER', 'DEFAULT_BTC_HEADERS'
-           )
+DEFAULT_YOOMONEY_HEADERS = {
+    'Host': 'yoomoney.ru',
+    'Content-Type': 'application/x-www-form-urlencoded'
+}
+
+OPERATION_TRANSFER = {
+    'datetime': 'operation_date',
+    'type': 'operation_type'
+}
+
+__all__ = (
+    'LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
+    'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',
+    'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER', 'DEFAULT_YOOMONEY_HEADERS',
+    'BASE_YOOMONEY_URL', 'OPERATION_TRANSFER'
+)

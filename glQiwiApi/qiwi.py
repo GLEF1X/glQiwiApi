@@ -1,77 +1,21 @@
-import asyncio
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import Union, Optional, Dict, Literal, List, Type, Iterable
+from typing import Union, Optional, Dict, Literal, List
 
 import aiofiles as aiofiles
 
+from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.api import HttpXParser
 from glQiwiApi.configs import *
 from glQiwiApi.configs import ONLINE_COMMISSION_DATA, COMMISSION_TRANSFER
-from glQiwiApi.data import Response, InvalidCardNumber, WrapperData, Transaction, Identification, InvalidData, Limit, \
+from glQiwiApi.data import Response, InvalidCardNumber, Transaction, Identification, Limit, \
     Bill, Commission
-from glQiwiApi.utils import datetime_to_str_in_iso
+from glQiwiApi.exceptions import InvalidData
+from glQiwiApi.utils import datetime_to_str_in_iso, DataFormatter
 
 
-class QiwiDataFormatter:
-
-    @staticmethod
-    def set_data_to_wallet(
-            data: WrapperData,
-            to_number: str,
-            trans_sum: Union[str, int, float],
-            comment: str,
-            currency: str = '643'):
-        data.json['sum']['amount'] = str(trans_sum)
-        data.json['sum']['currency'] = currency
-        data.json['fields']['account'] = to_number
-        data.json['comment'] = comment
-        data.headers.update({'User-Agent': 'Android v3.2.0 MKT'})
-        return data
-
-    @staticmethod
-    def format_objects(
-            iterable_obj: Iterable,
-            obj: Type,
-            transfers: Dict[str, str]
-    ) -> Optional[List[Union[Transaction, Identification, Limit, Bill, Commission]]]:
-        kwargs = {}
-        objects = []
-        for transaction in iterable_obj:
-            for key, value in transaction.items():
-                if key in obj.__dict__.get('__annotations__').keys():
-                    kwargs.update({
-                        key: value
-                    })
-                elif key in transfers.keys():
-                    kwargs.update({
-                        transfers.get(key): value
-                    })
-            objects.append(obj(**kwargs))
-            kwargs = {}
-        return objects
-
-    def set_data_p2p_create(self, wrapped_data: WrapperData,
-                            amount: Union[str, int, float],
-                            life_time: str,
-                            comment: Optional[str] = None,
-                            theme_code: Optional[str] = None,
-                            pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
-                            ):
-        wrapped_data.json['amount']['value'] = str(amount)
-        wrapped_data.json['comment'] = comment
-        wrapped_data.json['expirationDateTime'] = life_time
-        if pay_source_filter in ['qw', 'card', 'mobile']:
-            wrapped_data.json['customFields']['paySourcesFilter'] = pay_source_filter
-        if isinstance(theme_code, str):
-            wrapped_data.json['customFields']['theme_code'] = theme_code
-        if not isinstance(theme_code, str) and pay_source_filter not in ['qw', 'card', 'mobile']:
-            wrapped_data.json.pop('customFields')
-        return wrapped_data.json
-
-
-class QiwiWrapper:
+class QiwiWrapper(AbstractPaymentWrapper):
     """
     Класс, реализующий обработку запросов к киви, используя основной класс HttpXParser,
     удобен он тем, что не просто отдает json подобные объекты, а всё это конвертирует в python датаклассы.
@@ -93,7 +37,7 @@ class QiwiWrapper:
         self._parser = HttpXParser()
         self.api_access_token = api_access_token
         self.phone_number = phone_number
-        self._formatter = QiwiDataFormatter()
+        self._formatter = DataFormatter()
         self.public_p2p = public_p2p
         self.secret_p2p = secret_p2p
 
@@ -446,7 +390,8 @@ class QiwiWrapper:
         Допускается идентифицировать не более 5 кошельков на одного владельца
 
         Для идентификации кошелька вы обязательно должны отправить ФИО, серию/номер паспорта и дату рождения.\n
-        Если данные прошли проверку, то в ответе будет отображен ваш ИНН и упрощенная идентификация кошелька будет установлена.
+        Если данные прошли проверку, то в ответе будет отображен
+        ваш ИНН и упрощенная идентификация кошелька будет установлена.
         В случае если данные не прошли проверку, кошелек остается в статусе "Минимальный".
         :param birth_date: Дата рождения в виде строки формата 1998-02-11
         :param first_name: Ваше имя

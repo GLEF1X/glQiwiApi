@@ -1,17 +1,19 @@
 from dataclasses import dataclass
+from datetime import timedelta, datetime
+from enum import Enum
 from http.cookies import SimpleCookie
 from typing import Literal, Optional, Union, Dict
-
 from aiohttp.typedefs import RawHeaders
 from aiosocksy import Socks5Auth, Socks4Auth
 
-ProxyError = Exception()
+from glQiwiApi.exceptions import ProxyError
 
 
 @dataclass(frozen=True)
 class Response:
     status_code: int
     response_data: Optional[Union[dict, str, bytes, bytearray, Exception]]
+    url: str
     raw_headers: Optional[RawHeaders] = None
     cookies: Optional[SimpleCookie] = None
     ok: bool = False
@@ -50,13 +52,6 @@ class ProxyService:
             proxy_auth=self.proxy_auth,
             proxy=self.socks_url
         )
-
-
-class RequestAuthError(Exception):
-    """
-    Ошибка при неправильной аунтефикации POST or GET data
-
-    """
 
 
 proxy_list = (
@@ -107,10 +102,6 @@ class Identification:
     type: str
 
 
-class InvalidData(Exception):
-    pass
-
-
 @dataclass
 class Limit:
     currency: str
@@ -143,8 +134,50 @@ class Commission:
     withdraw_to_enrollment_rate: int = 1
 
 
+@dataclass
+class AccountInfo:
+    account: str
+    balance: float
+    currency: str
+    account_type: str
+    identified: bool
+    account_status: str
+    balance_details: Dict[str, float]
+
+
+class OperationType(Enum):
+    """
+    Типы операций YooMoney
+
+    deposition — пополнение счета (приход);
+    payment — платежи со счета (расход);
+    incoming_transfers_unaccepted —
+    непринятые входящие P2P-переводы любого типа.
+
+    """
+    DEPOSITION = 'deposition'
+    PAYMENT = 'payment'
+    INCOMING = 'incoming-transfers-unaccepted'
+
+
+ALL_OPERATION_TYPES = [OperationType.DEPOSITION, OperationType.PAYMENT, OperationType.INCOMING]
+
+
+@dataclass
+class Operation:
+    operation_id: str
+    status: str
+    operation_date: str
+    title: str
+    direction: str
+    amount: Union[int, float]
+    operation_type: str
+    label: Optional[str] = None
+    pattern_id: Optional[str] = None
+
+
 __all__ = (
-    'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'InvalidData', 'InvalidCardNumber', 'WrapperData',
+    'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'InvalidCardNumber', 'WrapperData',
     'Transaction', 'ProxyService',
-    'RequestAuthError', 'proxy_list'
+    'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation'
 )
