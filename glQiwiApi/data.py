@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from http.cookies import SimpleCookie
-from typing import Literal, Optional, Union, Dict, List
+from typing import Literal, Optional, Union, Dict, List, Any
 from aiohttp.typedefs import RawHeaders
 from aiosocksy import Socks5Auth, Socks4Auth
 
@@ -255,6 +255,8 @@ class Operation:
 
     pattern_id: Optional[str] = None
     """Идентификатор шаблона, по которому совершен платеж. Присутствует только для платежей."""
+
+    details: Optional[Any] = None
 
 
 @dataclass(frozen=True)

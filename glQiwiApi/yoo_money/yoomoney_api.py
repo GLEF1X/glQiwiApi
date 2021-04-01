@@ -176,7 +176,7 @@ class YooMoneyAPI(object):
             )
 
         data = {
-            'records': records,
+            'records': records
         }
 
         if operation_types:
@@ -310,7 +310,7 @@ class YooMoneyAPI(object):
             card_type: Optional[Literal['Visa', 'MasterCard', 'American Express', 'JCB']] = None,
             protect: bool = False,
             comment_for_history: Optional[str] = None,
-            comment_for_receiver: Optional[str] = None,
+            comment: Optional[str] = None,
             expire_period: int = 1
     ) -> Payment:
         """
@@ -327,7 +327,7 @@ class YooMoneyAPI(object):
         :param comment_for_history: Комментарий к переводу, отображается в истории отправителя.
         :param card_type: Тип банковской карты, нужно заполнять, только если вы хотите списать средства с вашей карты
         :param cvv2_code: опционально, может быть не передан, однако, если для оплаты картой это требуется, параметр стоит передавать
-        :param comment_for_receiver:	string	Комментарий к переводу, отображается получателю.
+        :param comment:	Комментарий к переводу, отображается получателю.
         :param protect: Значение параметра true — признак того, что перевод защищен кодом протекции.
          По умолчанию параметр отсутствует (обычный перевод).
         :param expire_period: Число дней, в течении которых:
@@ -341,7 +341,7 @@ class YooMoneyAPI(object):
             to_account=to_account,
             amount=amount,
             comment_for_history=comment_for_history,
-            comment_for_receiver=comment_for_receiver,
+            comment_for_receiver=comment,
             expire_period=expire_period,
             protect=protect,
             pattern_id=pattern_id
@@ -446,3 +446,43 @@ class YooMoneyAPI(object):
                 get_json=True
         ):
             return response.response_data
+
+    async def check_transaction(
+            self,
+            amount: Union[int, float],
+            transaction_type: Literal['in', 'out'] = 'in',
+            comment: Optional[str] = None,
+            rows_num: int = 100,
+            sender_number: Optional[str] = None
+    ) -> bool:
+        """
+        Метод для проверки транзакции.\n Рекомендуется использовать только если вы не можете написать свой обработчик.\n
+        Данный метод использует self.transactions(rows_num=rows_num) для получения платежей.\n
+        Для небольшой оптимизации вы можете уменьшить rows_num задав его, однако это не гарантирует правильный результат
+
+        :param amount: сумма платежа
+        :param transaction_type: тип платежа
+        :param sender_number: номер получателя
+        :param rows_num: кол-во платежей, которое будет проверяться
+        :param comment: комментарий, по которому будет проверяться транзакция
+        :return: bool, есть ли такая транзакция в истории платежей
+        """
+        transactions = await self.transactions(
+            operation_types=[OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT],
+            records=rows_num
+        )
+
+        for transaction in transactions:
+            details_transaction = await self.get_transaction_info(transaction.operation_id)
+            detail_amount = details_transaction.amount if transaction_type == 'in' else details_transaction.amount_due
+            detail_comment = details_transaction.comment if transaction_type == 'in' else details_transaction.message
+            if detail_amount >= amount and details_transaction.direction == transaction_type:
+                if transaction.status == 'success':
+                    if detail_comment == comment and details_transaction.sender == sender_number:
+                        return True
+                    elif isinstance(comment, str) and isinstance(sender_number, str):
+                        continue
+                    elif detail_comment == comment:
+                        return True
+
+        return False
