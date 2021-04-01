@@ -146,7 +146,7 @@ class YooMoneyAPI(object):
             start_record: Optional[int] = None,
             records: int = 30,
             label: Optional[Union[str, int]] = None
-    ):
+    ) -> List[Operation]:
         """
         Подробная документация: https://yoomoney.ru/docs/wallet/user-account/operation-history\n
         Метод позволяет просматривать историю операций (полностью или частично) в постраничном режиме.\n
