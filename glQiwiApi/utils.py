@@ -3,6 +3,8 @@ import time
 from datetime import datetime, timedelta
 from typing import (TypeVar, Callable, Union, Any, Dict, Type, Iterable, List, Optional, Literal)
 import functools as ft
+
+import pytz
 from pytz.reference import Local
 from glQiwiApi.data import Transaction, Commission, Bill, Limit, Identification, WrapperData, AccountInfo, Operation, \
     OperationDetails, PreProcessPaymentResponse, Payment, IncomingTransaction
@@ -24,8 +26,8 @@ def datetime_to_str_in_iso(obj: datetime, yoo_money_format: bool = False) -> Opt
     if not isinstance(obj, datetime):
         return ''
     if yoo_money_format:
-        obj = obj - timedelta(hours=3)
-        return obj.isoformat(' ').replace(" ", "T") + "Z"
+        # Приводим время к UTC, так как юмани апи принимает именно в таком формате
+        return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(' ').replace(" ", "T") + "Z"
     return obj.isoformat(' ').replace(" ", "T") + re.findall(r'[+]\d{2}[:]\d{2}', str(datetime.now(tz=Local)))[0]
 
 

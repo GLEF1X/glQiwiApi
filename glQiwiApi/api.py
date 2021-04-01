@@ -86,6 +86,7 @@ class HttpXParser:
             proxy: Optional[ProxyService] = None,
             data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
             headers: Optional[Dict[str, Union[str, int]]] = None,
+            params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
             session: Optional[Type[ClientSession]] = None,
             **client_kwargs) -> Response:
         """
@@ -133,6 +134,7 @@ class HttpXParser:
                         headers=headers,
                         json=json if isinstance(json, dict) else None,
                         cookies=cookies,
+                        params=params,
                         **proxy_kwargs
                     )
                 except (ClientProxyConnectionError, SocksError, ServerDisconnectedError) as ex:
@@ -264,4 +266,3 @@ class HttpXParser:
         import random
         random.shuffle(proxies)
         return proxies
-

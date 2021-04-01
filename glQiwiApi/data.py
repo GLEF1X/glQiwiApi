@@ -133,15 +133,57 @@ class Commission:
     withdraw_to_enrollment_rate: int = 1
 
 
+# YooMoney object
+
 @dataclass
 class AccountInfo:
     account: str
+    """Номер счета"""
+
     balance: float
+    """Баланс счета"""
+
     currency: str
-    account_type: str
+    """Код валюты счета пользователя. Всегда 643 (рубль РФ по стандарту ISO 4217)."""
+
     identified: bool
+    """Индентификацирован ли кошелек"""
+
+    account_type: str
+    """
+    Тип счета пользователя. Возможные значения:
+    personal — счет пользователя в ЮMoney;
+    professional — профессиональный счет в ЮMoney
+    """
+
     account_status: str
+    """
+    Статус пользователя. Возможные значения:
+    anonymous — анонимный счет;
+    named — именной счет;
+    identified — идентифицированный счет.
+    """
+
     balance_details: Dict[str, float]
+    """
+    Расширенная информация о балансе. 
+    По умолчанию этот блок отсутствует.
+    Блок появляется, если сейчас или когда-либо ранее были зачисления в очереди, задолженности, блокировки средств.
+    """
+
+    cards_linked: Optional[List[Dict[str, str]]] = None
+    """
+    Информация о привязанных банковских картах.
+    Если к счету не привязано ни одной карты, параметр отсутствует.
+    Если к счету привязана хотя бы одна карта, параметр содержит список данных о привязанных картах.
+    pan_fragment	string	Маскированный номер карты.
+    type	string	
+    Тип карты. Может отсутствовать, если неизвестен. Возможные значения:
+    - VISA;
+    - MasterCard;
+    - AmericanExpress;
+    - JCB.
+    """
 
 
 class OperationType(Enum):
@@ -155,8 +197,13 @@ class OperationType(Enum):
 
     """
     DEPOSITION = 'deposition'
+    """Пополнение счета (приход);"""
+
     PAYMENT = 'payment'
+    """Платежи со счета (расход)"""
+
     INCOMING = 'incoming-transfers-unaccepted'
+    """непринятые входящие P2P-переводы любого типа."""
 
 
 ALL_OPERATION_TYPES = [OperationType.DEPOSITION, OperationType.PAYMENT, OperationType.INCOMING]
@@ -165,45 +212,168 @@ ALL_OPERATION_TYPES = [OperationType.DEPOSITION, OperationType.PAYMENT, Operatio
 @dataclass(frozen=True)
 class Operation:
     operation_id: str
+    """Идентификатор операции."""
+
     status: str
+    """
+    Статус платежа (перевода). Может принимать следующие значения:
+    - success — платеж завершен успешно;
+    - refused — платеж отвергнут получателем или отменен отправителем;
+    - in_progress — платеж не завершен, перевод не принят получателем или ожидает ввода кода протекции.
+    """
+
     operation_date: str
+    """Дата и время совершения операции в формате строки в ISO формате с часовым поясом UTC."""
+
     title: str
+    """Краткое описание операции (название магазина или источник пополнения)."""
+
     direction: str
+    """
+    Направление движения средств. Может принимать значения:
+    - in (приход);
+    - out (расход).
+    """
+
     amount: Union[int, float]
+    """Сумма операции."""
+
     operation_type: str
+    """Тип операции. Возможные значения:
+    payment-shop — исходящий платеж в магазин;
+    outgoing-transfer — исходящий P2P-перевод любого типа;
+    deposition — зачисление;
+    incoming-transfer — входящий перевод или перевод до востребования;
+    incoming-transfer-protected — входящий перевод с кодом протекции.
+    """
+
     label: Optional[str] = None
+    """Метка платежа.
+     Присутствует для входящих и исходящих переводов другим пользователям ЮMoney,
+     у которых был указан параметр label вызова send()
+     """
+
     pattern_id: Optional[str] = None
+    """Идентификатор шаблона, по которому совершен платеж. Присутствует только для платежей."""
 
 
 @dataclass(frozen=True)
 class OperationDetails:
     operation_id: Optional[str] = None
+    """Идентификатор операции. Можно получить при вызове метода history()"""
+
     status: Optional[str] = None
+    """Статус платежа (перевода). Можно получить при вызове метода history()"""
+
     amount: Optional[float] = None
+    """Сумма операции (сумма списания со счета)."""
+
     operation_date: Optional[str] = None
+    """Дата и время совершения операции в формате строки в ISO формате с часовым поясом UTC."""
+
     operation_type: Optional[str] = None
+    """Тип операции. Возможные значения:
+    payment-shop — исходящий платеж в магазин;
+    outgoing-transfer — исходящий P2P-перевод любого типа;
+    deposition — зачисление;
+    incoming-transfer — входящий перевод или перевод до востребования;
+    incoming-transfer-protected — входящий перевод с кодом протекции.
+    """
+
     direction: Optional[Literal['in', 'out']] = None
+    """
+    Направление движения средств. Может принимать значения:
+    - in (приход);
+    - out (расход).
+    """
+
     comment: Optional[str] = None
+    """Комментарий к переводу или пополнению. Присутствует в истории отправителя перевода или получателя пополнения."""
+
     digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
+    """
+    Данные о цифровом товаре (пин-коды и бонусы игр, iTunes, Xbox, etc.)
+    Поле присутствует при успешном платеже в магазины цифровых товаров.
+    Описание формата: https://yoomoney.ru/docs/wallet/process-payments/process-payment#digital-goods
+    """
+
     details: Optional[str] = None
+    """
+    Детальное описание платежа.
+    Строка произвольного формата, может содержать любые символы и переводы строк.
+    Необязательный параметр.
+    """
+
     label: Optional[str] = None
+    """Метка платежа."""
+
     answer_datetime: Optional[str] = None
+    """
+    Дата и время приема или отмены перевода, защищенного кодом протекции.
+    Присутствует для входящих и исходящих переводов, защищенных кодом протекции,
+     если при вызове метода апи send вы указали protect=True в агрументах.
+    Если перевод еще не принят или не отвергнут получателем, поле отсутствует.
+    """
+
     expires: Optional[str] = None
+    """
+    Дата и время истечения срока действия кода протекции.
+    Присутствует для входящих и исходящих переводов (от/другим) пользователям, защищенных кодом протекции,
+    если при вызове метода апи send вы указали protect=True в агрументах.
+    """
+
     protection_code: Optional[str] = None
+    """Код протекции. Присутствует для исходящих переводов, защищенных кодом протекции."""
+
     codepro: Optional[bool] = None
+    """Перевод защищен кодом протекции. Присутствует для переводов другим пользователям."""
+
     message: Optional[str] = None
+    """Сообщение получателю перевода. Присутствует для переводов другим пользователям."""
+
     recipient_type: Optional[Literal['account', 'phone', 'email']] = None
+    """
+    Тип идентификатора получателя перевода. Возможные значения:
+    account — номер счета получателя в сервисе ЮMoney;
+    phone — номер привязанного мобильного телефона получателя;
+    email — электронная почта получателя перевода.
+    Присутствует для исходящих переводов другим пользователям.
+    """
+
     recipient: Optional[str] = None
+    """Идентификатор получателя перевода. Присутствует для исходящих переводов другим пользователям."""
+
     sender: Optional[str] = None
+    """Номер счета отправителя перевода. Присутствует для входящих переводов от других пользователей."""
+
     title: Optional[str] = None
+    """Краткое описание операции (название магазина или источник пополнения)."""
+
     fee: Optional[float] = None
+    """Сумма комиссии. Присутствует для исходящих переводов другим пользователям."""
+
     amount_due: Optional[float] = None
+    """Сумма к получению. Присутствует для исходящих переводов другим пользователям."""
+
     pattern_id: Optional[str] = None
+    """Идентификатор шаблона платежа, по которому совершен платеж. Присутствует только для платежей."""
+
     error: Optional[str] = None
+    """
+    Код ошибки, присутствует при ошибке выполнения запрос
+    Возможные ошибки:
+    illegal_param_operation_id - неверное значение параметра operation_id
+    Все прочие значения - техническая ошибка, повторите вызов метода позднее.
+    """
 
 
 @dataclass
 class PreProcessPaymentResponse:
+    """
+    Объект, который вы получаете при вызове _pre_process_payment.
+    При вызове данного метода вы не списываете деньги со своего счёта, а условно подготавливаете его к отправке.
+    Для отправки денег на счёт используйте метод send()
+    """
     status: Literal['success', 'refused']
     request_id: str
     recipient_account_status: Literal['anonymous', 'named', 'identified']
@@ -224,20 +394,71 @@ class PreProcessPaymentResponse:
 @dataclass
 class Payment:
     status: Literal['success', 'refused', 'in_progress', 'ext_auth_required']
+    """
+    Код результата выполнения операции. Возможные значения:
+    success — успешное выполнение (платеж проведен). Это конечное состояние платежа.
+    refused — отказ в проведении платежа. Причина отказа возвращается в поле error. Это конечное состояние платежа.
+    in_progress — авторизация платежа не завершена. Приложению следует повторить запрос с теми же параметрами спустя некоторое время.
+    ext_auth_required — для завершения авторизации платежа с использованием банковской карты требуется аутентификация по технологии 3‑D Secure.
+    все прочие значения — состояние платежа неизвестно. Приложению следует повторить запрос с теми же параметрами спустя некоторое время.
+    """
+
     payment_id: str
+    """Идентификатор проведенного платежа. Присутствует только при успешном выполнении метода send()."""
+
     credit_amount: Optional[float] = None
+    """
+    Сумма, поступившая на счет получателя.
+    Присутствует при успешном переводе средств на счет другого пользователя ЮMoney.
+    """
+
     payer: Optional[str] = None
+    """
+    Номер счета плательщика. Присутствует при успешном переводе средств на счет другого пользователя ЮMoney.
+    """
+
     payee: Optional[str] = None
+    """
+    Номер счета получателя. Присутствует при успешном переводе средств на счет другого пользователя ЮMoney.
+    """
+
     payee_uid: Union[str, int, None] = None
+    """Служебное значение, не фигурирует в документации"""
+
     invoice_id: Optional[str] = None
+    """Номер транзакции магазина в ЮMoney. Присутствует при успешном выполнении платежа в магазин."""
+
     balance: Optional[float] = None
+    """
+    Баланс счета пользователя после проведения платежа. Присутствует только при выполнении следующих условий:
+    - метод выполнен успешно;
+    - токен авторизации обладает правом account-info.
+    """
+
     error: Optional[str] = None
+    """
+    Код ошибки при проведении платежа (пояснение к полю status). Присутствует только при ошибках.
+    """
     account_unblock_uri: Optional[str] = None
+    """
+    Адрес, на который необходимо отправить пользователя для разблокировки счета. Поле присутствует в случае ошибки account_blocked.
+    """
+
     acs_uri: Optional[str] = None
+
     acs_params: Optional[str] = None
+
     next_retry: Optional[int] = None
+    """
+    Рекомендуемое время, спустя которое следует повторить запрос, в миллисекундах. Поле присутствует при status=in_progress.
+    """
+
     digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
+
     protection_code: Optional[str] = None
+    """
+    Код протекции, который был сгенерирован, если при вызове метода апи send вы указали protect=True в агрументах
+    """
 
 
 @dataclass(frozen=True)
@@ -252,5 +473,5 @@ __all__ = (
     'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'InvalidCardNumber', 'WrapperData',
     'Transaction', 'ProxyService',
     'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation', 'OperationDetails',
-    'PreProcessPaymentResponse', 'Payment'
+    'PreProcessPaymentResponse', 'Payment', 'IncomingTransaction'
 )

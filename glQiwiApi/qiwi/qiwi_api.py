@@ -23,8 +23,8 @@ class QiwiWrapper(AbstractPaymentWrapper):
     """
 
     def __init__(self,
-                 api_access_token: str,
-                 phone_number: str,
+                 api_access_token: Optional[str],
+                 phone_number: Optional[str],
                  secret_p2p: Optional[str] = None,
                  public_p2p: Optional[str] = None) -> None:
         """
@@ -171,7 +171,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 url='https://edge.qiwi.com/payment-history/v2/persons/' +
                     self.phone_number.replace('+', '')
                     + '/payments',
-                data=payload_data,
+                params=payload_data,
                 headers=headers,
                 method='GET'
         ):
@@ -239,7 +239,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
         async for response in self._parser.fast().fetch(
                 url='https://edge.qiwi.com/payment-history/v1/transactions/' + str(transaction_id),
                 headers=headers,
-                data=payload_data,
+                params=payload_data,
                 method='GET'
         ):
             return self._formatter.format_objects(
@@ -341,7 +341,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                     + '/actual-limits',
                 get_json=True,
                 headers=headers,
-                data=payload,
+                params=payload,
                 method='GET'
         ):
             limits = []
@@ -560,7 +560,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 url='https://edge.qiwi.com/payment-history/v1/transactions/' + transaction_id + '/cheque/file',
                 headers=headers,
                 method='GET',
-                data=data
+                params=data
         ):
             if not file_path:
                 return response.response_data
