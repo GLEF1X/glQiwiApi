@@ -1,4 +1,4 @@
-[![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-green)](https://www.python.org/downloads/) [![Upload Python Package](https://github.com/fonco/aiogram_broadcaster/actions/workflows/main.yml/badge.svg)](https://github.com/fonco/aiogram_broadcaster/actions/workflows/main.yml)
+[![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-green)](https://www.python.org/downloads/) [![Upload Python Package](https://github.com/GLEF1X/glQiwiApi/actions/workflows/main.yml/badge.svg)](https://github.com/GLEF1X/glQiwiApi/actions/workflows/main.yml)
 
 # :rainbow:glQiwiApi
 
