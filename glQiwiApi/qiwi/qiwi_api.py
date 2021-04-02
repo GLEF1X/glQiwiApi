@@ -7,10 +7,10 @@ import aiofiles
 
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.api import HttpXParser
-from glQiwiApi.qiwi.basic_qiwi_config import *
-from glQiwiApi.data import Response, InvalidCardNumber, Transaction, Identification, Limit, \
+from glQiwiApi.data import Response, Transaction, Identification, Limit, \
     Bill, Commission
-from glQiwiApi.exceptions import InvalidData
+from glQiwiApi.exceptions import InvalidData, InvalidCardNumber
+from glQiwiApi.qiwi.basic_qiwi_config import *
 from glQiwiApi.utils import datetime_to_str_in_iso, DataFormatter
 
 
@@ -140,8 +140,8 @@ class QiwiWrapper(AbstractPaymentWrapper):
             self,
             rows_num: int = 50,
             operation: Literal['ALL', 'IN', 'OUT', 'QIWI_CARD', 'ALL'] = 'ALL',
-            start_date: Optional[Union[str, datetime]] = None,
-            end_date: Optional[Union[str, datetime]] = None
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None
     ) -> Union[Optional[List[Transaction]], dict]:
         """
         Метод для получения транзакций на счёту
@@ -149,8 +149,8 @@ class QiwiWrapper(AbstractPaymentWrapper):
 
         :param rows_num: кол-во транзакций, которые вы хотите получить
         :param operation: Тип операций в отчете, для отбора.
-        :param start_date:Начальная дата поиска платежей. Используется только вместе с endDate.
-        :param end_date: онечная дата поиска платежей. Используется только вместе со startDate.
+        :param start_date:Начальная дата поиска платежей. Используется только вместе с end_date.
+        :param end_date: онечная дата поиска платежей. Используется только вместе со start_date.
 
         """
         if rows_num > 50:
@@ -160,11 +160,11 @@ class QiwiWrapper(AbstractPaymentWrapper):
             'rows': rows_num,
             'operation': operation
         }
-        if isinstance(start_date, (datetime, str)) and isinstance(end_date, (datetime, str)):
+        if isinstance(start_date, datetime) and isinstance(end_date, datetime):
             payload_data.update(
                 {
-                    'startDate': start_date,
-                    'endDate': end_date
+                    'startDate': datetime_to_str_in_iso(start_date),
+                    'endDate': datetime_to_str_in_iso(end_date)
                 }
             )
         async for response in self._parser.fast().fetch(
@@ -307,7 +307,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
             raise InvalidData('Можно проверять не более 50 транзакций')
         transactions = await self.transactions(rows_num=rows_num)
         for transaction in transactions:
-            if float(transaction.sum.get('amount')) >= amount and transaction.type == transaction_type:
+            if float(transaction.sum.amount) >= amount and transaction.type == transaction_type:
                 if transaction.comment == comment and transaction.to_account == sender_number:
                     return True
                 elif comment and sender_number:
@@ -508,7 +508,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                     iterable_obj=(response.response_data,),
                     transfers=P2P_BILL_TRANSFER,
                     obj=Bill
-                )[0].status['value']
+                )[0].status.value
             except (IndexError, KeyError):
                 raise ConnectionError('Не удалось создать p2p bill. Проверьте ваши токены.') from None
 

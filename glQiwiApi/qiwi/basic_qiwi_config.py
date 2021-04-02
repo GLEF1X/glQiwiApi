@@ -91,7 +91,8 @@ P2P_BILL_TRANSFER = {
     'creationDateTime': 'creation_date_time',
     'expirationDateTime': 'expiration_date_time',
     'payUrl': 'pay_url',
-    'customFields': 'custom_fields'
+    'customFields': 'custom_fields',
+    'value': 'amount'
 }
 
 LIMIT_TYPES = ['TURNOVER', 'REFILL', 'PAYMENTS_P2P', 'PAYMENTS_PROVIDER_INTERNATIONALS', 'PAYMENTS_PROVIDER_PAYOUT',

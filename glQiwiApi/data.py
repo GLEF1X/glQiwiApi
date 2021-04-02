@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from http.cookies import SimpleCookie
 from typing import Literal, Optional, Union, Dict, List, Any
+
 from aiohttp.typedefs import RawHeaders
 from aiosocksy import Socks5Auth, Socks4Auth
 
@@ -70,26 +71,47 @@ class WrapperData:
     cookies: Optional[Dict[str, Union[str, int]]] = None
 
 
-class InvalidCardNumber(Exception):
-    pass
-
-
 @dataclass
 class Sum:
-    amount: Union[int, float]
+    amount: Union[int, float, str]
     currency: str
 
 
 @dataclass(frozen=True)
 class Transaction:
     transaction_id: int
+    """	ID транзакции в сервисе QIWI Кошелек"""
+
     person_id: int
+    """Номер кошелька"""
+
     date: str
+    """
+    Для запросов истории платежей - Дата/время платежа, во временной зоне запроса (см. параметр startDate).
+    Для запросов данных о транзакции - Дата/время платежа, время московское
+    """
+
     type: Literal['IN', 'OUT', 'QIWI_CARD']
+    """
+    Тип платежа. Возможные значения:
+    IN - пополнение,
+    OUT - платеж,
+    QIWI_CARD - платеж с карт QIWI (QVC, QVP).
+    """
     sum: Sum
+    """Данные о сумме платежа или пополнения."""
+
     commission: Sum
+    """Данные о комиссии"""
+
     total: Sum
+    """Общие данные о платеже в формате объекта Sum"""
+
     to_account: str
+    """
+    Для платежей - номер счета получателя.
+    Для пополнений - номер отправителя, терминала или название агента пополнения кошелька
+    """
     comment: Optional[str] = None
 
 
@@ -126,7 +148,7 @@ class Limit:
 
 @dataclass
 class BillStatus:
-    status: Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']
+    value: Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']
     changedDateTime: str
 
 
@@ -512,7 +534,7 @@ class IncomingTransaction:
 
 
 __all__ = (
-    'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'InvalidCardNumber', 'WrapperData',
+    'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'WrapperData',
     'Transaction', 'ProxyService',
     'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation', 'OperationDetails',
     'PreProcessPaymentResponse', 'Payment', 'IncomingTransaction'
