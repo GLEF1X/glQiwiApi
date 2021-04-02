@@ -1,15 +1,21 @@
 import setuptools
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setuptools.setup(
+    packages=setuptools.find_packages(),
+    include_package_data=True,
     name="glQiwiApi",  # Replace with your own username
-    version="0.1.6",
+    version="0.1.8",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Parser for post and get requests",
-    long_description='Light and fast wrapper for qiwi bills',
-    long_description_content_type="text/x-rst",
-    url="https://github.com/GLEF1X/parser",
-    packages=['glQiwiApi'],
+    # Длинное описание, которое будет отображаться на странице PyPi. Использует README.md репозитория для заполнения.
+    long_description=long_description,
+    # Определяет тип контента, используемый в long_description.
+    long_description_content_type="text/markdown",
+    url="https://github.com/GLEF1X/glQiwiApi",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -22,5 +28,5 @@ setuptools.setup(
         'aiofiles==0.6.0',
         "wheel",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )

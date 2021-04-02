@@ -17,7 +17,7 @@ class RequestAuthError(Exception):
 
 
 class InvalidData(Exception):
-    pass
+    """Ошибка возникает, если были переданы или получены невалид данные при запросе"""
 
 
 __all__ = ('InvalidData', 'NoUrlFound', 'RequestAuthError', 'RequestProxyError', 'ProxyError')

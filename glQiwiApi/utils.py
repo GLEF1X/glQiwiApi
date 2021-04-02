@@ -1,18 +1,15 @@
 import re
 import time
 from datetime import datetime
-from typing import (TypeVar, Callable, Union, Any, Dict, Type, Iterable, List, Optional, Literal)
 import functools as ft
 
 import pytz
-from pytz.reference import Local
-from glQiwiApi.data import Transaction, Commission, Bill, Limit, Identification, WrapperData, AccountInfo, Operation, \
-    OperationDetails, PreProcessPaymentResponse, Payment, IncomingTransaction
+from pytz.reference import LocalTimezone
 
-F = TypeVar('F', bound=Callable[..., Any])
+Local = LocalTimezone()
 
 
-def measure_time(func: F):
+def measure_time(func):
     @ft.wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.monotonic()
@@ -22,7 +19,7 @@ def measure_time(func: F):
     return wrapper
 
 
-def datetime_to_str_in_iso(obj: datetime, yoo_money_format: bool = False) -> Optional[str]:
+def datetime_to_str_in_iso(obj, yoo_money_format):
     if not isinstance(obj, datetime):
         return ''
     if yoo_money_format:
@@ -31,11 +28,11 @@ def datetime_to_str_in_iso(obj: datetime, yoo_money_format: bool = False) -> Opt
     return obj.isoformat(' ').replace(" ", "T") + re.findall(r'[+]\d{2}[:]\d{2}', str(datetime.now(tz=Local)))[0]
 
 
-def parse_auth_link(response_data: Union[str, bytes]) -> str:
+def parse_auth_link(response_data):
     return re.findall(r'https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+', str(response_data))[0]
 
 
-def parse_headers(content_json: bool = False, auth: bool = False) -> Dict[Any, Any]:
+def parse_headers(content_json=False, auth=False):
     """
     Функция для добавления некоторых заголовков в запрос
 
@@ -58,12 +55,7 @@ def parse_headers(content_json: bool = False, auth: bool = False) -> Dict[Any, A
 class DataFormatter:
 
     @staticmethod
-    def set_data_to_wallet(
-            data: WrapperData,
-            to_number: str,
-            trans_sum: Union[str, int, float],
-            comment: str,
-            currency: str = '643'):
+    def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
         data.json['sum']['amount'] = str(trans_sum)
         data.json['sum']['currency'] = currency
         data.json['fields']['account'] = to_number
@@ -71,14 +63,8 @@ class DataFormatter:
         data.headers.update({'User-Agent': 'Android v3.2.0 MKT'})
         return data
 
-    def format_objects(
-            self,
-            iterable_obj: Iterable,
-            obj: Type,
-            transfers: Optional[Dict[str, str]] = None,
-    ) -> Optional[
-        List[Union[Transaction, Identification, Limit, Bill, Commission, AccountInfo, Operation, OperationDetails,
-                   PreProcessPaymentResponse, Payment, IncomingTransaction]]]:
+    def format_objects(self, iterable_obj, obj, transfers=None):
+        """Метод для форматирования объектов, которые приходят от апи"""
         kwargs = {}
         objects = []
         for transaction in iterable_obj:
@@ -95,13 +81,7 @@ class DataFormatter:
             kwargs = {}
         return objects
 
-    def set_data_p2p_create(self, wrapped_data: WrapperData,
-                            amount: Union[str, int, float],
-                            life_time: str,
-                            comment: Optional[str] = None,
-                            theme_code: Optional[str] = None,
-                            pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
-                            ):
+    def set_data_p2p_create(self, wrapped_data, amount, life_time, comment, theme_code, pay_source_filter):
         wrapped_data.json['amount']['value'] = str(amount)
         wrapped_data.json['comment'] = comment
         wrapped_data.json['expirationDateTime'] = life_time

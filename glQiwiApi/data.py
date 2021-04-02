@@ -12,7 +12,7 @@ from glQiwiApi.exceptions import ProxyError
 class Response:
     status_code: int
     response_data: Optional[Union[dict, str, bytes, bytearray, Exception]]
-    url: str
+    url: Optional[str] = None
     raw_headers: Optional[RawHeaders] = None
     cookies: Optional[SimpleCookie] = None
     ok: bool = False

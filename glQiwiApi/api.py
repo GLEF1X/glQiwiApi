@@ -4,13 +4,15 @@ from typing import Literal, Optional, Union, Dict, List, Tuple, Any, Type, Async
 
 from aiohttp import ClientTimeout, ClientSession, ContentTypeError, ClientRequest, ClientProxyConnectionError, \
     ServerDisconnectedError
-from aiohttp.client import DEFAULT_TIMEOUT
 from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
 from glQiwiApi.data import ProxyService, Response
 from glQiwiApi.exceptions import RequestProxyError, RequestAuthError
+
+DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
+USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
 
 
 class Core:
@@ -64,7 +66,7 @@ class HttpXParser:
 
     def __init__(self):
         self._base_headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36',
+            'User-Agent': USER_AGENT,
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
         self._core = Core()
@@ -92,7 +94,8 @@ class HttpXParser:
         """
         Метод для отправки запроса,
         может возвращать в Response ProxyError в качестве response_data, это означает, что вы имеете проблемы с прокси,
-        возможно нужно добавить дополнительные post данные, если вы используете method = POST, или headers, если запрос GET
+        возможно нужно добавить дополнительные post данные, если вы используете method = POST, или headers,
+        если запрос GET
 
 
         :param url: ссылка, куда вы хотите отправить ваш запрос
