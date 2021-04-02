@@ -39,7 +39,7 @@ class YooMoneyTest(AioTestCase):
             protect=True,
             amount=2,
             comment_for_history='test_comment_for_history',
-            comment_for_receiver='test_comment_for_receiver'
+            comment='test_comment_for_receiver'
         )
         self.assertEqual(isinstance(payment, Payment), True)
         self.assertEqual(hasattr(payment, 'payment_id'), True)

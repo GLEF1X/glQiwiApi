@@ -74,15 +74,21 @@ class InvalidCardNumber(Exception):
     pass
 
 
+@dataclass
+class Sum:
+    amount: Union[int, float]
+    currency: str
+
+
 @dataclass(frozen=True)
 class Transaction:
     transaction_id: int
     person_id: int
     date: str
     type: Literal['IN', 'OUT', 'QIWI_CARD']
-    sum: Dict[str, int]
-    commission: Dict[str, int]
-    total: Dict[str, int]
+    sum: Sum
+    commission: Sum
+    total: Sum
     to_account: str
     comment: Optional[str] = None
 
@@ -102,38 +108,67 @@ class Identification:
 
 
 @dataclass
+class Interval:
+    dateFrom: str
+    dateTill: str
+
+
+@dataclass
 class Limit:
     currency: str
     rest: Union[float, int]
     max_limit: Union[float, int]
     spent: Union[float, int]
-    interval: Dict[str, str]
+    interval: Interval
     limit_type: str
     limit_country_code: Optional[str] = None
+
+
+@dataclass
+class BillStatus:
+    status: Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']
+    changedDateTime: str
+
+
+@dataclass
+class Customer:
+    phone: str
+    email: str
+    account: str
 
 
 @dataclass
 class Bill:
     site_id: str
     bill_id: str
-    amount: Dict[str, str]
-    status: Dict[str, Union[str, Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']]]
+    amount: Sum
+    status: BillStatus
     creation_date_time: str
     expiration_date_time: str
     pay_url: str
     custom_fields: Optional[Dict[str, str]] = None
-    customer: Optional[Dict[str, Union[str, int]]] = None
+    customer: Optional[Customer] = None
 
 
 @dataclass(frozen=True)
 class Commission:
     provider_id: int
-    withdraw_sum: Dict[str, Union[float, str, int]]
-    qw_commission: Dict[str, Union[float, str, int]]
+    withdraw_sum: Sum
+    qw_commission: Sum
     withdraw_to_enrollment_rate: int = 1
 
 
-# YooMoney object
+# YooMoney objects
+
+@dataclass
+class BalanceDetails:
+    total: float
+    available: float
+    deposition_pending: Optional[float] = None
+    blocked: Optional[float] = None
+    debt: Optional[float] = None
+    hold: Optional[float] = None
+
 
 @dataclass
 class AccountInfo:
@@ -164,7 +199,7 @@ class AccountInfo:
     identified — идентифицированный счет.
     """
 
-    balance_details: Dict[str, float]
+    balance_details: BalanceDetails
     """
     Расширенная информация о балансе. 
     По умолчанию этот блок отсутствует.
@@ -400,9 +435,12 @@ class Payment:
     Код результата выполнения операции. Возможные значения:
     success — успешное выполнение (платеж проведен). Это конечное состояние платежа.
     refused — отказ в проведении платежа. Причина отказа возвращается в поле error. Это конечное состояние платежа.
-    in_progress — авторизация платежа не завершена. Приложению следует повторить запрос с теми же параметрами спустя некоторое время.
-    ext_auth_required — для завершения авторизации платежа с использованием банковской карты требуется аутентификация по технологии 3‑D Secure.
-    все прочие значения — состояние платежа неизвестно. Приложению следует повторить запрос с теми же параметрами спустя некоторое время.
+    in_progress — авторизация платежа не завершена.
+     Приложению следует повторить запрос с теми же параметрами спустя некоторое время.
+    ext_auth_required — для завершения авторизации платежа с использованием банковской карты
+     требуется аутентификация по технологии 3‑D Secure.
+    все прочие значения — состояние платежа неизвестно. Приложению следует
+     повторить запрос с теми же параметрами спустя некоторое время.
     """
 
     payment_id: str
@@ -443,7 +481,8 @@ class Payment:
     """
     account_unblock_uri: Optional[str] = None
     """
-    Адрес, на который необходимо отправить пользователя для разблокировки счета. Поле присутствует в случае ошибки account_blocked.
+    Адрес, на который необходимо отправить пользователя для разблокировки счета.
+    Поле присутствует в случае ошибки account_blocked.
     """
 
     acs_uri: Optional[str] = None
@@ -452,7 +491,8 @@ class Payment:
 
     next_retry: Optional[int] = None
     """
-    Рекомендуемое время, спустя которое следует повторить запрос, в миллисекундах. Поле присутствует при status=in_progress.
+    Рекомендуемое время, спустя которое следует повторить запрос, в миллисекундах.
+     Поле присутствует при status=in_progress.
     """
 
     digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None

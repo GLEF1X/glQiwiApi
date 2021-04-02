@@ -25,11 +25,11 @@ class Core:
         """
         Method, which can get an attribute of base_headers by this method
 
-        :param item: key name of _base_headers dict data
+        :param item: key name of base_headers dict data
         :return:
         """
         try:
-            return self._base_headers.get(item)
+            return self.base_headers.get(item)
         except KeyError:
             """Returning None"""
 
@@ -41,7 +41,7 @@ class Core:
         :return: bool
         """
         if isinstance(other, HttpXParser):
-            if other.url == self.url and other._base_headers == self._base_headers:
+            if other.url == self.url and other.base_headers == self.base_headers:
                 return True
         return False
 
@@ -52,7 +52,7 @@ class Core:
         :param value: value of base_headers dict
         :return: None
         """
-        self._base_headers.update(
+        self.base_headers.update(
             {key: value}
         )
 
@@ -65,7 +65,7 @@ class HttpXParser:
     _sleep_time = 2
 
     def __init__(self):
-        self._base_headers = {
+        self.base_headers = {
             'User-Agent': USER_AGENT,
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
@@ -109,7 +109,7 @@ class HttpXParser:
         :param client_kwargs: key/value for aiohttp.ClientSession initialization
         :return: Response instance
         """
-        headers = headers if isinstance(headers, dict) else self._base_headers
+        headers = headers if isinstance(headers, dict) else self.base_headers
 
         if isinstance(proxy, ProxyService):
             self._connector = ProxyConnector()
@@ -231,7 +231,7 @@ class HttpXParser:
         """
         Method, which can get an attribute of base_headers by this method
 
-        :param item: key name of _base_headers dict data
+        :param item: key name of base_headers dict data
         :return:
         """
         return self._core.__getattr__(item)

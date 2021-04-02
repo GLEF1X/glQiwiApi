@@ -24,10 +24,11 @@ async def basic_usage():
     transactions = await wallet.transactions()
     print(transactions)
     # Отправка денег на карту с киви кошелька
-    transaction_id2 = await wallet.to_card(
+    card_transaction_id = await wallet.to_card(
         trans_sum=1,
         to_card='номер карты без пробелов'
     )
+    print(card_transaction_id)
     # Упрощенный метод для проверки транзакции, в функции уже реализована логика проверки
     answer = await wallet.check_transaction(
         comment='комментарий платежа, которого вы хотите проверить',

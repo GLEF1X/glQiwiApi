@@ -17,7 +17,7 @@ def parse_headers(content_json: bool = False, auth: bool = False) -> Dict[Any, A
 
 
 class DataFormatter:
-    def format_objects(self, iterable_obj: Union[list, tuple], obj: Type[types.BasicTypes],
+    def format_objects(self, iterable_obj: Union[list, tuple], obj: Type,
                        transfers: Optional[Dict[str, str]] = None) -> Optional[List[types.BasicTypes]]: ...
 
     def set_data_to_wallet(self, data: basic_types.WrapperData,

@@ -1,7 +1,10 @@
 import re
 import time
+from copy import deepcopy
+from dataclasses import is_dataclass
 from datetime import datetime
 import functools as ft
+from typing import Optional, Union, Type
 
 import pytz
 from pytz.reference import LocalTimezone
@@ -69,14 +72,16 @@ class DataFormatter:
         objects = []
         for transaction in iterable_obj:
             for key, value in transaction.items():
-                if key in obj.__dict__.get('__annotations__').keys():
-                    kwargs.update({
-                        key: value
-                    })
-                elif key in transfers.keys():
-                    kwargs.update({
-                        transfers.get(key): value
-                    })
+                if key in obj.__dict__.get('__annotations__').keys() or key in transfers.keys():
+                    try:
+                        fill_key = key if not transfers.get(key) else transfers.get(key)
+                    except AttributeError:
+                        fill_key = key
+                    sp_obj: Optional[Union[str, Type]] = obj.__dict__.get('__annotations__').get(fill_key)
+                    if is_dataclass(sp_obj):
+                        kwargs.update({fill_key: sp_obj(**value)})
+                        continue
+                    kwargs.update({fill_key: value})
             objects.append(obj(**kwargs))
             kwargs = {}
         return objects
