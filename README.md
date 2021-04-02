@@ -208,7 +208,7 @@ from glQiwiApi import YooMoneyAPI
 
 
 async def get_token() -> None:
-    print(await YooMoneyAPI.build_url_for_auth(
+    print(await YooMoneyAPI.get_access_token(
         code='код полученный из ссылки, как на скрине выше',
         client_id='айди приложения, полученое при регистрации',
         redirect_uri='ссылка, указанная при регистрации'
