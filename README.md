@@ -287,6 +287,6 @@ async def main():
     print(account_info.balance)
 
 
-asyncio.run(main())
+asyncio.run(main()) 
 
 ```
