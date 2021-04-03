@@ -1,4 +1,5 @@
 import functools as ft
+import json
 import re
 import time
 from dataclasses import is_dataclass
@@ -6,6 +7,7 @@ from datetime import datetime
 from typing import Optional, Union, Type
 
 import pytz
+from pydantic import ValidationError
 from pytz.reference import LocalTimezone
 
 Local = LocalTimezone()
@@ -108,3 +110,30 @@ class DataFormatter:
         if not isinstance(theme_code, str) and pay_source_filter not in ['qw', 'card', 'mobile']:
             wrapped_data.json.pop('customFields')
         return wrapped_data.json
+
+
+#
+def multiply_objects_parse(lst_of_objects, model):
+    objects = []
+    for obj in lst_of_objects:
+        try:
+            if isinstance(obj, dict):
+                objects.append(model.parse_raw(str(json.dumps(obj)).replace("'", '"')))
+                continue
+            for detached_obj in obj:
+                objects.append(model.parse_raw(str(json.dumps(detached_obj))))
+        except ValidationError as ex:
+            print(ex.json(indent=4), '\n\n',  obj)
+    return objects
+
+
+def only_json(func):
+    """Метод для точного получения json данных в запросе"""
+
+    @ft.wraps(func)
+    async def wrapper(*args, **kwargs):
+        kwargs.update({'get_json': True})
+        response = await func(*args, **kwargs)
+        return response
+
+    return wrapper

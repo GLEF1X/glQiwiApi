@@ -1,23 +1,20 @@
 import abc
 import asyncio
 import unittest
+from typing import AsyncGenerator
 
 
 class AbstractPaymentWrapper(abc.ABC):
     @abc.abstractmethod
+    async def transactions(self, *args, **kw) -> None:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def transaction_info(self, *args, **kwargs) -> None:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     async def get_balance(self) -> None:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def _auth_token(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    async def to_card(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    async def to_wallet(self, *args, **kwargs) -> None:
         raise NotImplementedError()
 
 
@@ -42,3 +39,18 @@ class AioTestCase(unittest.TestCase):
                 self._function_cache[item] = self.coroutine_function_decorator(attr)
             return self._function_cache[item]
         return attr
+
+
+class AbstractParser(abc.ABC):
+
+    @abc.abstractmethod
+    async def _request(self, *args, **kwargs) -> None:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def fetch(self, *args, **kwargs) -> AsyncGenerator:
+        raise NotImplementedError()
+
+    @staticmethod
+    async def raise_exception(*args, **kwargs) -> None:
+        """Метод для кастомной обработки исключений и лучшего логирования"""

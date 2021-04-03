@@ -2,11 +2,23 @@ import time
 
 from glQiwiApi.data import WrapperData
 
+BASE_QIWI_URL = 'https://edge.qiwi.com'
+
 DEFAULT_QIWI_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Authorization': 'Bearer {token}',
-    'Host': 'edge.qiwi.com',
+    'Host': 'edge.qiwi_models.com',
+}
+
+ERROR_CODE_NUMBERS = {
+    "400": "Ошибка синтаксиса запроса (неправильный формат данных)",
+    "401": "Неверный токен или истек срок действия токена API",
+    "403": "Нет прав на данный запрос (недостаточно разрешений у токена API)",
+    "404": "Не найдена транзакция или отсутствуют платежи с указанными признаками",
+    "423": "Слишком много запросов, сервис временно недоступен",
+    "405": "Ошибка, связанная с типом запроса к апи, обратитесь к разработчику или откройте issue",
+    "500": "Внутренняя ошибка сервиса"
 }
 
 P2P_QIWI_HEADERS = {
@@ -127,5 +139,5 @@ COMMISSION_TRANSFER = {
 __all__ = (
     'LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
     'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',
-    'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER'
+    'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER', 'ERROR_CODE_NUMBERS', 'BASE_QIWI_URL'
 )

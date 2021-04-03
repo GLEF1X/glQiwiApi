@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import List, Dict, Any, Union, Optional, Tuple, Literal
 
 from glQiwiApi import HttpXParser
+from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.data import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, \
     Payment, IncomingTransaction
 from glQiwiApi.exceptions import NoUrlFound, InvalidData
@@ -10,7 +11,7 @@ from glQiwiApi.utils import parse_auth_link, parse_headers, DataFormatter, datet
 from glQiwiApi.yoo_money.basic_yoomoney_config import *
 
 
-class YooMoneyAPI(object):
+class YooMoneyAPI(AbstractPaymentWrapper):
     """
     Класс, реализующий обработку запросов к YooMoney, используя основной класс HttpXParser,
     удобен он тем, что не просто отдает json подобные объекты, а всё это конвертирует в python датаклассы.
@@ -215,7 +216,7 @@ class YooMoneyAPI(object):
                 transfers=OPERATION_TRANSFER
             )
 
-    async def get_transaction_info(self, operation_id: str) -> OperationDetails:
+    async def transaction_info(self, operation_id: str) -> OperationDetails:
         """
         Позволяет получить детальную информацию об операции из истории.
         Требуемые права токена: operation-details.
@@ -393,8 +394,7 @@ class YooMoneyAPI(object):
                     'Не удалось создать запрос на перевод средств, проверьте переданные параметры и попробуйте ещё раз'
                 )
 
-    @property
-    async def balance(self) -> Optional[Union[float, int]]:
+    async def get_balance(self) -> Optional[Union[float, int]]:
         """Метод для получения баланса на кошельке юмани"""
         return (await self.account_info()).balance
 

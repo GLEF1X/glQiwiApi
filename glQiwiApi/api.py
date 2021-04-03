@@ -2,14 +2,15 @@ import asyncio
 from itertools import repeat
 from typing import Literal, Optional, Union, Dict, List, Tuple, Any, Type, AsyncGenerator
 
-from aiohttp import ClientTimeout, ClientSession, ContentTypeError, ClientRequest, ClientProxyConnectionError, \
-    ServerDisconnectedError
+from aiohttp import ClientTimeout, ClientSession, ClientRequest, ClientProxyConnectionError, \
+    ServerDisconnectedError, ContentTypeError
 from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
+from glQiwiApi.abstracts import AbstractParser
 from glQiwiApi.data import ProxyService, Response
-from glQiwiApi.exceptions import RequestProxyError, RequestAuthError
+from glQiwiApi.exceptions import RequestProxyError
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
@@ -57,7 +58,7 @@ class Core:
         )
 
 
-class HttpXParser:
+class HttpXParser(AbstractParser):
     """
     Представляет собой апи, для парсинга сайта с определенными изменениями и плюшками
 
@@ -144,14 +145,14 @@ class HttpXParser:
                     if not skip_exceptions:
                         raise ConnectionError() from ex
                     return Response.bad_response()
-                # Get content from site
+                # Get content and return response
                 try:
                     data = await response.json(
                         content_type="application/json"
                     )
-                except ContentTypeError as ex:
+                except ContentTypeError:
                     if get_json:
-                        raise RequestAuthError() from ex
+                        return Response(status_code=response.status)
                     data = await response.read()
                 return Response(
                     status_code=response.status,

@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Any, Union, Optional, Dict, Type, List, Literal, MutableMapping
+from typing import Any, Union, Optional, Dict, Type, List, Literal, MutableMapping, Tuple
 
 from glQiwiApi import data as basic_types, types
+from glQiwiApi.types import F
 
 
 def measure_time(func: types.F) -> None: ...
@@ -37,3 +38,11 @@ class DataFormatter:
             theme_code: Optional[str] = None,
             pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
     ) -> Dict[MutableMapping, Any]: ...
+
+
+def multiply_objects_parse(
+        lst_of_objects: Union[List[str], Tuple[str, ...]], model: Type[types.PydanticTypes]
+) -> List[types.PydanticTypes]: ...
+
+
+def only_json(func: F) -> F: ...

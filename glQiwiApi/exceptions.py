@@ -20,8 +20,30 @@ class RequestAuthError(Exception):
     """
 
 
+class InvalidToken(Exception):
+    """Ошибка, возникающая, если был передан неверный токен"""
+
+
 class InvalidData(Exception):
     """Ошибка возникает, если были переданы или получены невалид данные при запросе"""
 
 
-__all__ = ('InvalidData', 'NoUrlFound', 'RequestAuthError', 'RequestProxyError', 'ProxyError', 'InvalidCardNumber')
+class RequestError(Exception):
+    """Возникает при ошибках сервиса или неправильной передаче параметров"""
+
+    def __init__(self, message: str, status_code: str, *args):
+        super().__init__(*args)
+        self.message = message
+        self.status_code = status_code
+
+    def __str__(self) -> str:
+        return f"code={self.status_code} traceback={self.message}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
+__all__ = [
+    'InvalidData', 'NoUrlFound', 'RequestAuthError', 'RequestProxyError',
+    'ProxyError', 'InvalidCardNumber', 'InvalidToken', 'RequestError'
+]

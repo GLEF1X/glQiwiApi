@@ -9,10 +9,10 @@ from aiosocksy import Socks5Auth, Socks4Auth
 from glQiwiApi.exceptions import ProxyError
 
 
-@dataclass(frozen=True)
+@dataclass
 class Response:
     status_code: int
-    response_data: Optional[Union[dict, str, bytes, bytearray, Exception]]
+    response_data: Optional[Union[dict, str, bytes, bytearray, Exception]] = None
     url: Optional[str] = None
     raw_headers: Optional[RawHeaders] = None
     cookies: Optional[SimpleCookie] = None
@@ -71,50 +71,6 @@ class WrapperData:
     cookies: Optional[Dict[str, Union[str, int]]] = None
 
 
-@dataclass
-class Sum:
-    amount: Union[int, float, str]
-    currency: str
-
-
-@dataclass(frozen=True)
-class Transaction:
-    transaction_id: int
-    """	ID транзакции в сервисе QIWI Кошелек"""
-
-    person_id: int
-    """Номер кошелька"""
-
-    date: str
-    """
-    Для запросов истории платежей - Дата/время платежа, во временной зоне запроса (см. параметр startDate).
-    Для запросов данных о транзакции - Дата/время платежа, время московское
-    """
-
-    type: Literal['IN', 'OUT', 'QIWI_CARD']
-    """
-    Тип платежа. Возможные значения:
-    IN - пополнение,
-    OUT - платеж,
-    QIWI_CARD - платеж с карт QIWI (QVC, QVP).
-    """
-    sum: Sum
-    """Данные о сумме платежа или пополнения."""
-
-    commission: Sum
-    """Данные о комиссии"""
-
-    total: Sum
-    """Общие данные о платеже в формате объекта Sum"""
-
-    to_account: str
-    """
-    Для платежей - номер счета получателя.
-    Для пополнений - номер отправителя, терминала или название агента пополнения кошелька
-    """
-    comment: Optional[str] = None
-
-
 @dataclass(frozen=True)
 class Identification:
     identification_id: int
@@ -127,58 +83,6 @@ class Identification:
     snils: str
     oms: str
     type: str
-
-
-@dataclass
-class Interval:
-    dateFrom: str
-    dateTill: str
-
-
-@dataclass
-class Limit:
-    currency: str
-    rest: Union[float, int]
-    max_limit: Union[float, int]
-    spent: Union[float, int]
-    interval: Interval
-    limit_type: str
-    limit_country_code: Optional[str] = None
-
-
-@dataclass
-class BillStatus:
-    value: Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']
-    changedDateTime: str
-
-
-@dataclass
-class Customer:
-    phone: str
-    email: str
-    account: str
-
-
-@dataclass
-class Bill:
-    site_id: str
-    bill_id: str
-    amount: Sum
-    status: BillStatus
-    creation_date_time: str
-    expiration_date_time: str
-    pay_url: str
-    custom_fields: Optional[Dict[str, str]] = None
-    customer: Optional[Customer] = None
-
-
-@dataclass(frozen=True)
-class Commission:
-    provider_id: int
-    withdraw_sum: Sum
-    qw_commission: Sum
-    withdraw_to_enrollment_rate: int = 1
-
 
 # YooMoney objects
 
@@ -534,8 +438,8 @@ class IncomingTransaction:
 
 
 __all__ = (
-    'Response', 'Bill', 'Commission', 'Limit', 'Identification', 'WrapperData',
-    'Transaction', 'ProxyService',
-    'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation', 'OperationDetails',
+    'Response', 'Identification', 'WrapperData',
+    'ProxyService', 'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation',
+    'OperationDetails',
     'PreProcessPaymentResponse', 'Payment', 'IncomingTransaction'
 )
