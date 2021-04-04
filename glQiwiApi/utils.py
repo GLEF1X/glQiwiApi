@@ -118,22 +118,33 @@ def multiply_objects_parse(lst_of_objects, model):
     for obj in lst_of_objects:
         try:
             if isinstance(obj, dict):
-                objects.append(model.parse_raw(str(json.dumps(obj)).replace("'", '"')))
+                obj: str
+                objects.append(model.parse_raw(obj))
                 continue
             for detached_obj in obj:
-                objects.append(model.parse_raw(str(json.dumps(detached_obj))))
+                objects.append(model.parse_raw(detached_obj))
         except ValidationError as ex:
-            print(ex.json(indent=4), '\n\n',  obj)
+            print(ex.json(indent=4))
     return objects
 
 
-def only_json(func):
-    """Метод для точного получения json данных в запросе"""
+def simple_multiply_parse(lst_of_objects, model):
+    objects = []
+    for obj in lst_of_objects:
+        objects.append(model.parse_raw(obj))
+    return objects
+
+
+def dump_response(func):
+    """Декоратор, который гарантирует получения json данных в запросе"""
 
     @ft.wraps(func)
     async def wrapper(*args, **kwargs):
         kwargs.update({'get_json': True})
-        response = await func(*args, **kwargs)
-        return response
+        return await func(*args, **kwargs)
 
     return wrapper
+
+
+def custom_load(data):
+    return json.loads(json.dumps(data))

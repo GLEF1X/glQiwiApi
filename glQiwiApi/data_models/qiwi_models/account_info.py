@@ -2,7 +2,8 @@ from typing import Optional, List
 
 from pydantic import Field, BaseModel
 
-from glQiwiApi.models.basics import Sum
+from glQiwiApi.data_models.basics import Sum
+from glQiwiApi.utils import custom_load
 
 
 class PassInfo(BaseModel):
@@ -87,6 +88,9 @@ class QiwiAccountInfo(BaseModel):
     auth_info: Optional[AuthInfo] = Field(alias="authInfo", const=None)
     contract_info: Optional[ContractInfo] = Field(alias="contractInfo", const=None)
     user_info: Optional[UserInfo] = Field(alias="userInfo", const=None)
+
+    class Config:
+        json_loads = custom_load
 
 
 __all__ = [

@@ -2,8 +2,9 @@ from datetime import datetime
 from functools import lru_cache
 from typing import List, Dict, Any, Union, Optional, Tuple, Literal
 
-from glQiwiApi import HttpXParser
+from glQiwiApi.api import HttpXParser
 from glQiwiApi.abstracts import AbstractPaymentWrapper
+from glQiwiApi.aiohttp_custom_api import CustomParser
 from glQiwiApi.data import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, \
     Payment, IncomingTransaction
 from glQiwiApi.exceptions import NoUrlFound, InvalidData
@@ -18,15 +19,27 @@ class YooMoneyAPI(AbstractPaymentWrapper):
     Для работы с данным классом, необходимо загестрировать токен по такому
     """
 
-    def __init__(self, api_access_token: str) -> None:
+    def __init__(self, api_access_token: str, without_context: bool = False) -> None:
         """
-        Конструктор принимает только токен, полученный из класс метода get_access_token() этого же класса
+        Конструктор принимает токен, олученный из класс метода get_access_token() этого же класса
+        и специальный аттрибут without_context,
 
         :param api_access_token: апи токен для запросов
+        :param without_context: булевая переменная, указывающая будет ли объект класса "глобальной" переменной
+         или будет использована в async with контексте
         """
         self.api_access_token = api_access_token
-        self._parser = HttpXParser()
+        self._parser = CustomParser(without_context=without_context, messages=ERROR_CODE_NUMBERS)
         self._formatter = DataFormatter()
+
+    async def __aenter__(self) -> 'YooMoneyAPI':
+        """Создаем сессию, чтобы не пересоздавать её много раз"""
+        self._parser.create_session()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Закрываем сессию при выходе"""
+        await self._parser.session.close()
 
     def _auth_token(self, headers: dict) -> Dict[Any, Any]:
         headers['Authorization'] = headers['Authorization'].format(
@@ -482,7 +495,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         )
 
         for transaction in transactions:
-            details_transaction = await self.get_transaction_info(transaction.operation_id)
+            details_transaction = await self.transaction_info(transaction.operation_id)
             detail_amount = details_transaction.amount if transaction_type == 'in' else details_transaction.amount_due
             detail_comment = details_transaction.comment if transaction_type == 'in' else details_transaction.message
             if detail_amount >= amount and details_transaction.direction == transaction_type:

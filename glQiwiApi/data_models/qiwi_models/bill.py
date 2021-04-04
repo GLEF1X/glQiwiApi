@@ -2,7 +2,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.models.basics import OptionalSum
+from glQiwiApi.data_models.basics import OptionalSum, BillMixin
+from glQiwiApi.utils import custom_load
 
 
 class Customer(BaseModel):
@@ -29,8 +30,11 @@ class BillError(BaseModel):
     datetime: str = Field(alias="dateTime")
     trace_id: str = Field(alias="traceId")
 
+    class Config:
+        json_loads = custom_load
 
-class Bill(BaseModel):
+
+class Bill(BaseModel, BillMixin):
     site_id: str = Field(alias="siteId")
     bill_id: str = Field(alias="billId")
     amount: OptionalSum
@@ -40,6 +44,10 @@ class Bill(BaseModel):
     pay_url: str = Field(alias="payUrl")
     custom_fields: Optional[CustomFields] = Field(alias="customFields", const=None)
     customer: Optional[Customer] = None
+
+    class Config:
+        extra = 'allow'
+        json_loads = custom_load
 
 
 __all__ = [

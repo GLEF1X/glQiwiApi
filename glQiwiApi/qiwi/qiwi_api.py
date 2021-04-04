@@ -1,5 +1,4 @@
 import functools
-import json
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -8,13 +7,13 @@ from typing import Union, Optional, Dict, Literal, List
 import aiofiles
 
 from glQiwiApi.abstracts import AbstractPaymentWrapper
+from glQiwiApi.aiohttp_custom_api import CustomParser
 from glQiwiApi.data import Response, Identification
 from glQiwiApi.exceptions import InvalidData, InvalidCardNumber
-from glQiwiApi.models import QiwiAccountInfo, Transaction, Bill, BillError, Statistic, Limit, Account
-from glQiwiApi.models.basics import Sum, Commission
-from glQiwiApi.qiwi.aiohttp_api import QiwiParser
+from glQiwiApi.data_models import QiwiAccountInfo, Transaction, Bill, BillError, Statistic, Limit, Account
+from glQiwiApi.data_models.basics import Sum, Commission
 from glQiwiApi.qiwi.basic_qiwi_config import *
-from glQiwiApi.utils import datetime_to_str_in_iso, DataFormatter, multiply_objects_parse
+from glQiwiApi.utils import datetime_to_str_in_iso, DataFormatter, multiply_objects_parse, simple_multiply_parse
 
 
 class QiwiWrapper(AbstractPaymentWrapper):
@@ -26,22 +25,34 @@ class QiwiWrapper(AbstractPaymentWrapper):
     """
 
     def __init__(self,
-                 api_access_token: Optional[str],
-                 phone_number: Optional[str],
+                 api_access_token: Optional[str] = None,
+                 phone_number: Optional[str] = None,
                  secret_p2p: Optional[str] = None,
-                 public_p2p: Optional[str] = None) -> None:
+                 public_p2p: Optional[str] = None,
+                 without_context: bool = False) -> None:
         """
         :param api_access_token: токен, полученный с https://qiwi.com/api
         :param phone_number: номер вашего телефона с +
         :param secret_p2p: секретный ключ, полученный с https://p2p.qiwi.com/
         :param public_p2p: публичный ключ, полученный с https://p2p.qiwi.com/
+        :param without_context: булевая переменная, указывающая будет ли объект класса "глобальной" переменной
+         или будет использована в async with контексте
         """
-        self._parser = QiwiParser()
+        self._parser = CustomParser(without_context=without_context, messages=ERROR_CODE_NUMBERS)
         self.api_access_token = api_access_token
         self.phone_number = phone_number
         self._formatter = DataFormatter()
         self.public_p2p = public_p2p
         self.secret_p2p = secret_p2p
+
+    async def __aenter__(self) -> 'QiwiWrapper':
+        """Создаем сессию, чтобы не пересоздавать её много раз"""
+        self._parser.create_session()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Закрываем сессию при выходе"""
+        await self._parser.session.close()
 
     def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
         headers['Authorization'] = headers['Authorization'].format(
@@ -137,7 +148,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 method='GET',
                 get_json=True
         ):
-            return Sum.parse_raw(str(json.dumps(response.response_data['accounts'][0]['balance'])))
+            return Sum.parse_raw(response.response_data['accounts'][0]['balance'])
 
     async def transactions(
             self,
@@ -246,7 +257,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 method='GET',
                 get_json=True
         ):
-            return Transaction.parse_raw(str(response.response_data))
+            return Transaction.parse_raw(response.response_data)
 
     async def check_restriction(self) -> Union[List[Dict[str, str]], Exception]:
         """
@@ -336,9 +347,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
             payload['types[' + str(index) + ']'] = limit_type
 
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/qw-limits/v1/persons/'
-                    + self.phone_number.replace("+", "")
-                    + '/actual-limits',
+                url=BASE_QIWI_URL + '/qw-limits/v1/persons/' + self.phone_number.replace("+", "") + '/actual-limits',
                 get_json=True,
                 headers=headers,
                 params=payload,
@@ -348,7 +357,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
             for code, limit in response.response_data.get("limits").items():
                 if not limit:
                     continue
-                limits.update({code: Limit.parse_raw(str(json.dumps(limit[0])))})
+                limits.update({code: Limit.parse_raw(limit[0])})
             return limits
 
     async def get_list_of_cards(self) -> dict:
@@ -392,6 +401,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
         :param snils:
         :param inn:
         """
+
         payload = {
             "birthDate": birth_date,
             "firstName": first_name,
@@ -404,16 +414,22 @@ class QiwiWrapper(AbstractPaymentWrapper):
         }
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/identification/v1/persons/' +
-                    self.phone_number.replace("+", "") +
-                    "/identification",
+                url=BASE_QIWI_URL + '/identification/v1/persons/' + self.phone_number.replace("+",
+                                                                                              "") + "/identification",
                 data=payload,
                 headers=headers
         ):
             if response.ok and response.status_code == 200:
                 return {'success': True}
 
-    async def p2p_orders(self, rows: int):
+    async def get_bills(self, rows: int) -> List[Bill]:
+        """
+        Метод получения списка неоплаченных счетов вашего кошелька.
+        Список строится в обратном хронологическом порядке.
+        По умолчанию, список разбивается на страницы по 50 элементов в каждой, но вы можете задать другое количество
+        элементов (не более 50). В запросе можно использовать фильтры по времени выставления счета,
+        начальному идентификатору счета.
+        """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         if rows > 50:
             raise InvalidData('Можно получить не более 50 счетов')
@@ -426,7 +442,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 method='GET',
                 params=params
         ):
-            return response.response_data
+            return simple_multiply_parse(response.response_data.get("bills"), Bill)
 
     async def create_p2p_bill(
             self,
@@ -451,8 +467,10 @@ class QiwiWrapper(AbstractPaymentWrapper):
         """
         if not self.public_p2p or not self.secret_p2p:
             raise InvalidData('Не задан p2p токен')
+
         if not bill_id:
             bill_id = str(uuid.uuid4())
+
         life_time = datetime_to_str_in_iso((datetime.now() + timedelta(days=2)) if not life_time else life_time)
         data = deepcopy(P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
@@ -470,10 +488,8 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 headers=headers,
                 method='PUT'
         ):
-            unparsed_data = str(json.dumps(response.response_data))
-            if response.status_code != 200:
-                return BillError.parse_raw(unparsed_data)
-            return Bill.parse_raw(unparsed_data)
+            # unparsed_data = str(json.dumps(response.response_data))
+            return Bill.parse_raw(response.response_data).initialize(self)
 
     async def check_p2p_bill_status(self, bill_id: str) -> Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']:
         """
@@ -497,7 +513,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 method='GET',
                 headers=headers
         ):
-            return Bill.parse_raw(str(json.dumps(response.response_data))).status.value
+            return Bill.parse_raw(response.response_data).status.value
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
         """
@@ -515,10 +531,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 method='POST',
                 headers=headers
         ):
-            try:
-                return Bill.parse_raw(str(json.dumps(response.response_data)))
-            except IndexError:
-                raise ConnectionError('Не удалось создать p2p bill. Проверьте ваши API токены.') from None
+            return Bill.parse_raw(response.response_data)
 
     @functools.lru_cache
     async def get_receipt(
@@ -548,6 +561,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
         ):
             if not file_path:
                 return response.response_data
+
             async with aiofiles.open(file_path + '.pdf', 'wb') as file:
                 return await file.write(response.response_data)
 
@@ -571,7 +585,7 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 headers=headers,
                 json=json_payload
         ):
-            return Commission.parse_raw(str(json.dumps(response.response_data)))
+            return Commission.parse_raw(response.response_data)
 
     async def account_info(self) -> QiwiAccountInfo:
         """Метод для получения информации об аккаунте"""
@@ -582,15 +596,16 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 method='GET',
                 get_json=True
         ):
-            return QiwiAccountInfo.parse_raw(str(json.dumps(response.response_data)))
+            return QiwiAccountInfo.parse_raw(response.response_data)
 
     async def fetch_statistics(
-            self, start_date: datetime, end_date: datetime,
+            self, start_date: Union[datetime, timedelta], end_date: Union[datetime, timedelta],
             operation: Literal['ALL', 'IN', 'OUT', 'QIWI_CARD'] = 'ALL',
             sources: Optional[List[Literal['QW_RUB', 'CARD', 'QW_USD', 'QW_EUR', 'MK']]] = None
     ) -> Statistic:
         """
-        Данный запрос используется для получения сводной статистики по суммам платежей за заданный период.
+        Данный запрос используется для получения сводной статистики по суммам платежей за заданный период.\n
+        Более подробная документация: https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#payments_list
 
         :param start_date: Начальная дата периода статистики. Обязательный параметр
         :param end_date: Конечная дата периода статистики. Обязательный параметр
@@ -632,17 +647,17 @@ class QiwiWrapper(AbstractPaymentWrapper):
                 get_json=True,
                 method='GET'
         ):
-            return Statistic.parse_raw(str(json.dumps(response.response_data)))
+            return Statistic.parse_raw(response.response_data)
 
     async def list_of_balances(self) -> List[Account]:
-        """Запрос выгружает текущие балансы счетов вашего QIWI Кошелька."""
+        """
+        Запрос выгружает текущие балансы счетов вашего QIWI Кошелька.
+        Более подробная документация: https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#balances_list
+        """
 
         async for response in self._parser.fast().fetch(
                 url=BASE_QIWI_URL + '/funding-sources/v2/persons/' + self.phone_number.replace("+", "") + '/accounts',
                 headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
                 method='GET'
         ):
-            accounts = []
-            for account in response.response_data.get("accounts"):
-                accounts.append(Account.parse_raw(str(json.dumps(account))))
-            return accounts
+            return simple_multiply_parse(response.response_data.get('accounts'), Account)

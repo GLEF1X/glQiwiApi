@@ -2,7 +2,8 @@ from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.models.basics import Sum
+from glQiwiApi.data_models.basics import Sum
+from glQiwiApi.utils import custom_load
 
 
 class Provider(BaseModel):
@@ -95,3 +96,6 @@ class Transaction(BaseModel):
 
     currency_rate: int = Field(alias="currencyRate")
     """Курс конвертации (если применяется в транзакции)"""
+
+    class Config:
+        json_loads = custom_load

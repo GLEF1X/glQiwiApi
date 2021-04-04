@@ -1,6 +1,7 @@
+import abc
 import asyncio
 from itertools import repeat
-from typing import Literal, Optional, Union, Dict, List, Tuple, Any, Type, AsyncGenerator
+from typing import Literal, Optional, Union, Dict, List, Tuple, Any, AsyncGenerator
 
 from aiohttp import ClientTimeout, ClientSession, ClientRequest, ClientProxyConnectionError, \
     ServerDisconnectedError, ContentTypeError
@@ -29,10 +30,7 @@ class Core:
         :param item: key name of base_headers dict data
         :return:
         """
-        try:
-            return self.base_headers.get(item)
-        except KeyError:
-            """Returning None"""
+        return super().__getattribute__(item)
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -71,7 +69,7 @@ class HttpXParser(AbstractParser):
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
         self._core = Core()
-        self._session: Optional[ClientSession] = None
+        self.session: Optional[ClientSession] = None
         self.url = 'http://127.0.0.1/api/'
         self._timeout = ClientTimeout(total=2 * 15, connect=None, sock_connect=5, sock_read=None)
         self._connector: Optional[ProxyConnector] = None
@@ -90,7 +88,6 @@ class HttpXParser(AbstractParser):
             data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
             headers: Optional[Dict[str, Union[str, int]]] = None,
             params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
-            session: Optional[Type[ClientSession]] = None,
             **client_kwargs) -> Response:
         """
         Метод для отправки запроса,
@@ -120,50 +117,55 @@ class HttpXParser(AbstractParser):
             proxy_kwargs = proxy.get_proxy()
         except AttributeError:
             proxy_kwargs = {}
+        client_session_create_kwargs = {
+            'timeout': self._timeout if set_timeout else DEFAULT_TIMEOUT,
+            'connector': self._connector,
+            'request_class': self.request_class if isinstance(proxy,
+                                                              ProxyService) else ClientRequest,
+            **client_kwargs
+        }
+        # Create new session if old was closed
+        if not self.session:
+            self.create_session(**client_session_create_kwargs)
+        elif isinstance(self.session, ClientSession):
+            if self.session.closed:
+                self.create_session(**client_session_create_kwargs)
 
-        if not isinstance(session, ClientSession):
-            # Sending query
-            async with ClientSession(
-                    timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT,
-                    connector=self._connector,
-                    request_class=self.request_class if isinstance(proxy, ProxyService) else ClientRequest,
-                    **client_kwargs
-            ) as session:
-                self._session = session
-                try:
-                    response = await self._session.request(
-                        method=method,
-                        url=self.url if not url else url,
-                        data=self._set_auth(data) if validate_django else data,
-                        headers=headers,
-                        json=json if isinstance(json, dict) else None,
-                        cookies=cookies,
-                        params=params,
-                        **proxy_kwargs
-                    )
-                except (ClientProxyConnectionError, SocksError, ServerDisconnectedError) as ex:
-                    if not skip_exceptions:
-                        raise ConnectionError() from ex
-                    return Response.bad_response()
-                # Get content and return response
-                try:
-                    data = await response.json(
-                        content_type="application/json"
-                    )
-                except ContentTypeError:
-                    if get_json:
-                        return Response(status_code=response.status)
-                    data = await response.read()
-                return Response(
-                    status_code=response.status,
-                    response_data=data,
-                    raw_headers=response.raw_headers,
-                    cookies=response.cookies,
-                    ok=response.ok,
-                    content_type=response.content_type,
-                    host=response.host,
-                    url=response.url.__str__()
-                )
+        # sending query
+        try:
+            response = await self.session.request(
+                method=method,
+                url=self.url if not url else url,
+                data=self._set_auth(data) if validate_django else data,
+                headers=headers,
+                json=json if isinstance(json, dict) else None,
+                cookies=cookies,
+                params=params,
+                **proxy_kwargs
+            )
+        except (ClientProxyConnectionError, SocksError, ServerDisconnectedError) as ex:
+            if not skip_exceptions:
+                raise ConnectionError() from ex
+            return Response.bad_response()
+            # Get content and return response
+        try:
+            data = await response.json(
+                content_type="application/json"
+            )
+        except ContentTypeError:
+            if get_json:
+                return Response(status_code=response.status)
+            data = await response.read()
+        return Response(
+            status_code=response.status,
+            response_data=data,
+            raw_headers=response.raw_headers,
+            cookies=response.cookies,
+            ok=response.ok,
+            content_type=response.content_type,
+            host=response.host,
+            url=response.url.__str__()
+        )
 
     @staticmethod
     def _set_auth(
@@ -190,6 +192,9 @@ class HttpXParser(AbstractParser):
             }
         )
         return data
+
+    def create_session(self, **kwargs):
+        self.session = ClientSession(**kwargs)
 
     async def fetch(self, *, times: int = 1, **kwargs) -> AsyncGenerator[Response, None]:
         """

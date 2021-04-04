@@ -6,7 +6,7 @@ from typing import AsyncGenerator
 
 class AbstractPaymentWrapper(abc.ABC):
     @abc.abstractmethod
-    async def transactions(self, *args, **kw) -> None:
+    async def transactions(self, *args, **kwargs) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -15,6 +15,10 @@ class AbstractPaymentWrapper(abc.ABC):
 
     @abc.abstractmethod
     async def get_balance(self) -> None:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def account_info(self, *args, **kwargs) -> None:
         raise NotImplementedError()
 
 
@@ -51,6 +55,5 @@ class AbstractParser(abc.ABC):
     async def fetch(self, *args, **kwargs) -> AsyncGenerator:
         raise NotImplementedError()
 
-    @staticmethod
-    async def raise_exception(*args, **kwargs) -> None:
+    async def raise_exception(self, *args, **kwargs) -> None:
         """Метод для кастомной обработки исключений и лучшего логирования"""

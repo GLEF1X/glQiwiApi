@@ -2,15 +2,17 @@ from typing import Union, Any, Callable, TypeVar
 
 from glQiwiApi.data import Identification, AccountInfo, Operation, \
     OperationDetails, PreProcessPaymentResponse, Payment, IncomingTransaction, WrapperData
-from glQiwiApi.models import Transaction, QiwiAccountInfo, Account, Limit, Bill, BillError, Statistic
+from glQiwiApi.data_models import Transaction, QiwiAccountInfo, Account, Limit, Bill, BillError, Statistic
 
 BasicTypes = Union[
     Transaction, Identification, AccountInfo, Operation, OperationDetails,
-    PreProcessPaymentResponse, Payment, IncomingTransaction, Account, Limit, Bill, BillError, Statistic
+    PreProcessPaymentResponse, Payment, IncomingTransaction
 ]
 
-PydanticTypes = Union[Transaction, QiwiAccountInfo]
+PydanticTypes = Union[
+    Transaction, QiwiAccountInfo, Account, Limit, Bill, BillError, Statistic
+]
 
 F = TypeVar('F', bound=Callable[..., Any])
 
-__all__ = ('BasicTypes', 'F', 'WrapperData')
+__all__ = ('BasicTypes', 'F', 'WrapperData', 'PydanticTypes')

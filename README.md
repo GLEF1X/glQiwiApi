@@ -2,7 +2,7 @@
 
 # glQiwiApi
 
-## New feature. Add YooMoney support to library!:fireworks:
+### New feature. Add YooMoney support to library!
 
 ### Installation
 
@@ -20,6 +20,7 @@ pip install glQiwiApi
 |aiofiles | saving receipts in pdf                         |  
 |aiosocks | to connect a SOCKS5 proxy                      |
 |uvloop   | Optional(can boost API), but work only on Linux|
+|pydantic | Json data validator. Very fast instead of custom|
 
 ---
 
@@ -32,12 +33,21 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
+    # If you want to use qiwi wrapper without async context just 
+    # pass on "without_context=True"
     wallet = QiwiWrapper(
         api_access_token='your_token',
-        phone_number='+number'
+        phone_number='+number',
+        without_context=True
     )
-    # Данным вызовом вы получите словарь с 2 ключами, текущим балансом и currency(код валюты)
-    print(await wallet.get_balance())
+    print((await wallet.get_balance()).amount)
+    # OR(x3 performance boost with async context,
+    # because it use only 1 aiohttp session to get response for all requests
+    # in async with context manager)
+    async with QiwiWrapper(api_access_token='your_token') as w:
+        w.phone_number = '+number'
+        # Данным вызовом вы получите текущий баланс кошелька. 
+        print((await w.get_balance()).amount)
 
 
 asyncio.run(main())
@@ -54,18 +64,16 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-    wallet = QiwiWrapper(
-        api_access_token='your_token',
-        phone_number='+number'
-    )
-    # Таким образом мы проверим, была ли транзакция на сумму 999 рублей с комментарием
-    # 'I like glQiwiApi!' и отправителем с номером +7904832168
-    is_paid = await wallet.check_transaction(
-        amount=999,
-        comment='I like glQiwiApi!',
-        sender_number='+7904832168'
-    )
-    print(is_paid)
+    async with QiwiWrapper(api_access_token='your_token') as w:
+        w.phone_number = '+number'
+        # Таким образом мы проверим, была ли транзакция на сумму 999 рублей с комментарием
+        # 'I like glQiwiApi!' и отправителем с номером +7904832168
+        is_paid = await w.check_transaction(
+            amount=999,
+            comment='I like glQiwiApi!',
+            sender_number='+7904832168'
+        )
+        print(is_paid)
 
 
 asyncio.run(main())
@@ -80,21 +88,22 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-    wallet = QiwiWrapper(
-        api_access_token='your_token',
-        phone_number='+number'
-    )
-    # Таким образом можно создать p2p счет
-    # В примере указан счёт на 1 рубль с комментарием some_comment
-    bill = await wallet.create_p2p_bill(
-        amount=1,
-        comment='my_comm'
-    )
-    # Проверка на статус "оплачено" созданного p2p счёта
-    if (await wallet.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
-        print('Успешно оплачено')
-    else:
-        print('Транзакция не найдена')
+    # You can pass on only p2p tokens, if you want to use only p2p api
+    async with QiwiWrapper(
+            public_p2p="your_p2p",
+            secret_p2p="your_secret_p2p"
+    ) as w:
+        # Таким образом можно создать p2p счет
+        # В примере указан счёт на 1 рубль с комментарием some_comment
+        bill = await w.create_p2p_bill(
+            amount=1,
+            comment='my_comm'
+        )
+        # Проверка на статус "оплачено" созданного p2p счёта
+        if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
+            print('Успешно оплачено')
+        else:
+            print('Транзакция не найдена')
 
 
 asyncio.run(main())
@@ -113,23 +122,21 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-    wallet = QiwiWrapper(
-        api_access_token='your_token',
-        phone_number='+number'
-    )
-    # Так выглядит перевод на другой киви кошелек
-    # в примере перевод будет на номер +7904832168 с комментарием "На шоколадку" и суммой 1 рубль
-    trans_id = await wallet.to_wallet(
-        to_number='+7904832168',
-        comment='На шоколадку',
-        trans_sum=1
-    )
-    # В данном примере мы сохраним чек в директории, где вы запускаете скрипт как my_receipt.pdf
-    await wallet.get_receipt(
-        transaction_id=trans_id,
-        transaction_type='OUT',
-        file_path='my_receipt'
-    )
+    async with QiwiWrapper(api_access_token="token") as w:
+        w.phone_number = "+number"
+        # Так выглядит перевод на другой киви кошелек
+        # в примере перевод будет на номер +7904832168 с комментарием "На шоколадку" и суммой 1 рубль
+        trans_id = await w.to_wallet(
+            to_number='+7904832168',
+            comment='На шоколадку',
+            trans_sum=1
+        )
+        # В данном примере мы сохраним чек в директории, где вы запускаете скрипт как my_receipt.pdf
+        await w.get_receipt(
+            transaction_id=trans_id,
+            transaction_type='OUT',
+            file_path='my_receipt'
+        )
 
 
 asyncio.run(main())
@@ -145,28 +152,48 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-    wallet = QiwiWrapper(
-        api_access_token='your_token',
-        phone_number='+number'
-    )
-    # Так можно отправлять средства на карты разных банков, получая при этом айди транзакции
-    trans_id = await wallet.to_card(
-        trans_sum=1,
-        to_card='4731219185432123'
-    )
-    print(trans_id)
-    # Так можно предварительно расчитать комиссию за транзакцию
-    commission = await wallet.commission(
-        to_account='4731219185432123',
-        pay_sum=1
-    )
-    print(commission.qw_commission)
+    async with QiwiWrapper(api_access_token="token") as w:
+        w.phone_number = "+number"
+        # Так можно отправлять средства на карты разных банков, получая при этом айди транзакции
+        trans_id = await w.to_card(
+            trans_sum=1,
+            to_card='4731219185432123'
+        )
+        print(trans_id)
+        # Так можно предварительно расчитать комиссию за транзакцию
+        commission = await w.commission(
+            to_account='4731219185432123',
+            pay_sum=1
+        )
+        print(commission.qiwi_commission.amount)
 
 
 asyncio.run(main())
 
 ```
-# YooMoney API 
+
+## Handling exceptions
+
+```python
+import asyncio
+
+from glQiwiApi import QiwiWrapper, RequestError
+
+
+async def main():
+    async with QiwiWrapper(api_access_token='your_token') as w:
+        w.phone_number = '+number'
+        try:
+            await w.to_card(to_card="some_card", trans_sum=2)
+        except RequestError as ex:
+            # Its give u full traceback from api if response was bad
+            print(ex.json())
+
+
+asyncio.run(main())
+```
+
+# YooMoney API
 ---
 
 ## Important. How to get YooMoney access token
@@ -234,8 +261,11 @@ async def main():
     wallet = YooMoneyAPI(
         api_access_token=TOKEN
     )
+    # OR(x3 performance boost)
     transactions = await wallet.transactions()
     print(transactions)
+    async with YooMoneyAPI(api_access_token=TOKEN) as w:
+        print(await w.transactions(records=50))
 
 
 asyncio.run(main())
@@ -287,6 +317,6 @@ async def main():
     print(account_info.balance)
 
 
-asyncio.run(main()) 
+asyncio.run(main())
 
 ```

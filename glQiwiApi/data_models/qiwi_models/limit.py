@@ -2,6 +2,8 @@ from typing import Union
 
 from pydantic import BaseModel, Field
 
+from glQiwiApi.utils import custom_load
+
 
 class Interval(BaseModel):
     date_from: str = Field(alias="dateFrom")
@@ -15,6 +17,9 @@ class Limit(BaseModel):
     spent: Union[float, int]
     interval: Interval
     limit_type: str = Field(alias="type")
+
+    class Config:
+        json_loads = custom_load
 
 
 __all__ = [
