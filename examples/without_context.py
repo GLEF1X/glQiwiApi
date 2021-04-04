@@ -5,8 +5,8 @@ from glQiwiApi import QiwiWrapper
 
 # Создаем объект кошелька и обязательно передаем without_context = True, иначе будут проблемы с aiohttp.ClientSession
 wallet = QiwiWrapper(
-    api_access_token='7f8e514786b0cd326cf604223ec91861',
-    phone_number="+380968317459",
+    api_access_token='YOUR_TOKEN',
+    phone_number="+YOUR_NUMBER",
     without_context=True
 )
 
