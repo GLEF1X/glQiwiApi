@@ -1,8 +1,9 @@
+# <h1 align="center">:ocean:glQiwiApi</h1>
+
 [![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-green)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi)
 
-# :ocean:glQiwiApi
 
-### :loudspeaker:New feature. Add YooMoney support to library!
+### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
 
 ### :floppy_disk:Installation
 
