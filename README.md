@@ -1,10 +1,10 @@
 [![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-green)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi)
 
-# glQiwiApi
+# :ocean:glQiwiApi
 
-### New feature. Add YooMoney support to library!
+### :loudspeaker:New feature. Add YooMoney support to library!
 
-### Installation
+### :floppy_disk:Installation
 
 ```bash
 pip install glQiwiApi
@@ -12,7 +12,7 @@ pip install glQiwiApi
 
 ---
 
-## Dependencies
+## :bulb:Dependencies
 
 | Library | Description                                    |
 |:-------:|:----------------------------------------------:|
@@ -24,7 +24,7 @@ pip install glQiwiApi
 
 ---
 
-## Dive-in Examples
+## :pencil2:Dive-in Examples
 
 ```python
 import asyncio
@@ -55,7 +55,7 @@ asyncio.run(main())
 
 ---
 
-## Checking transactions
+## :scroll:Checking transactions
 
 ```python
 import asyncio
@@ -79,7 +79,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## Create & check p2p bills
+## :city_sunset:Create & check p2p bills
 
 ```python
 import asyncio
@@ -113,7 +113,7 @@ asyncio.run(main())
 
 ![form](https://i.ibb.co/T0C5RYz/2021-03-21-14-58-33.png)
 
-## Send to another wallet & get receipt(получение чека транзакции)
+## :rocket:Send to another wallet & get receipt(получение чека транзакции)
 
 ```python
 import asyncio
@@ -172,7 +172,7 @@ asyncio.run(main())
 
 ```
 
-## Handling exceptions
+## :warning:Handling exceptions
 
 ```python
 import asyncio
