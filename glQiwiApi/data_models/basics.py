@@ -43,7 +43,8 @@ class BillMixin:
         return self
 
     async def check(self) -> bool:
-        return (await self._w.check_p2p_bill_status(bill_id=self.bill_id)) == 'PAID'
+        async with self._w:
+            return (await self._w.check_p2p_bill_status(bill_id=self.bill_id)) == 'PAID'
 
 
 __all__ = [

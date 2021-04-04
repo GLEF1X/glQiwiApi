@@ -50,6 +50,18 @@ async def main():
         print((await w.get_balance()).amount)
 
 
+# Also you can use it like here
+my_wallet = QiwiWrapper(
+    api_access_token='your_token',
+    phone_number='+phone_number'
+)
+
+
+async def main_2():
+    async with my_wallet as w:
+        print(await w.get_balance())
+
+
 asyncio.run(main())
 ```
 

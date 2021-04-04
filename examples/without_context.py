@@ -11,8 +11,14 @@ wallet = QiwiWrapper(
 )
 
 
-async def old_usage():
-    print(await wallet.get_balance())
+async def main():
+    async with QiwiWrapper(secret_p2p='my_p2p') as w:
+        w.public_p2p = 'my_public_p2p'
+        bill = await w.create_p2p_bill(amount=1)
+        # new version
+        new_status = await bill.check()
+        # old version
+        old_status = (await w.check_p2p_bill_status(bill.bill_id)) == 'PAID'
 
 
-asyncio.run(old_usage())
+asyncio.run(main())

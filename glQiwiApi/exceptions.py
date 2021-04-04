@@ -50,10 +50,10 @@ class RequestError(Exception):
 
     def json(self) -> str:
         import json
-        return json.dumps(
-            self._json_info, indent=2,
-            ensure_ascii=False
-        ) if self._json_info is not None else self.__str__()
+
+        if isinstance(self._json_info, dict):
+            return json.dumps(self._json_info, indent=2, ensure_ascii=False)
+        return self.__str__()
 
 
 __all__ = [
