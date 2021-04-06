@@ -9,9 +9,6 @@ __pycache__/
 glQiwiApi/test.py
 bot
 
-setup.*
-setup.py
-
 # Distribution / packaging
 .Python
 build/

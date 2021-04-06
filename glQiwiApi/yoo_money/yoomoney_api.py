@@ -140,7 +140,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         """
         headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/account-info',
+                url=BASE_YOOMONEY_URL + '/api/account.rst-info',
                 headers=headers,
                 method='POST'
         ):
@@ -150,7 +150,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                     obj=AccountInfo,
                 )[0]
             except IndexError:
-                raise InvalidData('Cannot fetch account info, check your token')
+                raise InvalidData('Cannot fetch account.rst info, check your token')
 
     @functools.lru_cache
     async def transactions(
@@ -278,7 +278,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         на счет пользователя ЮMoney.\n
         Данный метод не рекомендуется использовать напрямую, гораздо проще использовать send.
         Требуемые права токена:
-        payment.to-account («идентификатор получателя», «тип идентификатора») или payment-p2p.
+        payment.to-account.rst («идентификатор получателя», «тип идентификатора») или payment-p2p.
 
         :param pattern_id: Идентификатор шаблона платежа
         :param to_account: string Идентификатор получателя перевода (номер счета, номер телефона или email).

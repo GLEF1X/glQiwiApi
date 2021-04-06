@@ -3,13 +3,11 @@
 
 
 .. toctree::
-   :maxdepth: 2
    :caption: Контент:
 
    installation
-   usage
-   modules
-   contributing
+   quick_start
+   qiwi/index
    api
 
 Индекс

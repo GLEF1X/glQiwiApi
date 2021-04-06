@@ -39,7 +39,7 @@ QIWI_TO_CARD = WrapperData(
             "type": "Account", "accountId": "643"
         },
         "fields": {
-            "account": ""
+            "account.rst": ""
         }
     },
     headers=DEFAULT_QIWI_HEADERS
@@ -75,7 +75,7 @@ QIWI_TO_WALLET = WrapperData(
         },
         "comment": "",
         "fields": {
-            "account": ""
+            "account.rst": ""
         }
     },
     headers=DEFAULT_QIWI_HEADERS
@@ -84,7 +84,7 @@ QIWI_TO_WALLET = WrapperData(
 TRANSACTION_TRANSFER = {
     'txnId': 'transaction_id',
     'personId': 'person_id',
-    'account': 'to_account'
+    'account.rst': 'to_account'
 }
 
 IDENTIFICATION_TRANSFER = {
@@ -114,7 +114,7 @@ LIMIT_TYPES_TRANSFER = {
 }
 
 ONLINE_COMMISSION_DATA = {
-    "account": "",
+    "account.rst": "",
     "paymentMethod": {
         "type": "Account",
         "accountId": "643"

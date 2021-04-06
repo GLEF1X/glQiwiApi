@@ -70,7 +70,7 @@ def format_objects_for_fill(data, transfers):
 def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
     data.json['sum']['amount'] = str(trans_sum)
     data.json['sum']['currency'] = currency
-    data.json['fields']['account'] = to_number
+    data.json['fields']['account.rst'] = to_number
     data.json['comment'] = comment
     data.headers.update({'User-Agent': 'Android v3.2.0 MKT'})
     return data

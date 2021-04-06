@@ -13,7 +13,7 @@ class YooMoneyTest(AioTestCase):
 
     async def test_build_url_to_get_token(self):
         url = await YooMoneyAPI.build_url_for_auth(
-            scope=['account-info', "operation-history", 'operation-details'],
+            scope=['account.rst-info', "operation-history", 'operation-details'],
             client_id='some_client_id'
         )
         self.assertEqual(isinstance(url, str), True)

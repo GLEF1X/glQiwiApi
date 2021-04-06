@@ -69,7 +69,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         data = deepcopy(QIWI_TO_CARD)
         data.json['sum']['amount'] = trans_sum
-        data.json['fields']['account'] = to_card
+        data.json['fields']['account.rst'] = to_card
         data.headers = self._auth_token(headers=data.headers)
         privat_card_id = await self._detect_card_number(card_number=to_card)
         async for response in self._parser.fast().fetch(
@@ -343,7 +343,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         payload = {}
 
         for index, limit_type in enumerate(LIMIT_TYPES):
-            payload['types[' + str(index) + ']'] = limit_type
+            payload['qiwi[' + str(index) + ']'] = limit_type
 
         async for response in self._parser.fast().fetch(
                 url=BASE_QIWI_URL + '/qw-limits/v1/persons/' + self.phone_number.replace("+", "") + '/actual-limits',
@@ -582,7 +582,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         json_payload = deepcopy(ONLINE_COMMISSION_DATA)
         json_payload['purchaseTotals']['total']['amount'] = pay_sum
-        json_payload['account'] = to_account.replace('+', '')
+        json_payload['account.rst'] = to_account.replace('+', '')
         special_code = "99" if len(to_account.replace('+', '')) <= 15 else (
             await self._detect_card_number(card_number=to_account))
         async for response in self._parser.fast().fetch(

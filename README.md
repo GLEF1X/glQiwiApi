@@ -229,8 +229,8 @@ async def get_url_to_auth() -> None:
     # Получаем ссылку для авторизации, переходим по ней, если получаем invalid_request или какую-то ошибку
     # значит либо неправильно передан scope параметр, нужно уменьшить список прав или попробовать пересоздать приложение
     print(await YooMoneyAPI.build_url_for_auth(
-        # Для платежей, проверки аккаунта и истории платежей, нужно указать scope=["account-info", "operation-history", "operation-details", "payment-p2p"]
-        scope=["account-info", "operation-history"],
+        # Для платежей, проверки аккаунта и истории платежей, нужно указать scope=["account.rst-info", "operation-history", "operation-details", "payment-p2p"]
+        scope=["account.rst-info", "operation-history"],
         client_id='айди, полученный при регистрации приложения выше',
         redirect_uri='ссылка, указаная при регистрации выше в поле Redirect URI'
     ))
