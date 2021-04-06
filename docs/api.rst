@@ -10,9 +10,9 @@ glQiwiApi
 .. automodule:: glQiwiApi
     :members:
 
-Types
+YooMoney types
 -----
-.. automodule:: glQiwiApi.types
+.. automodule:: glQiwiApi.types.yoomoney_types.types
    :members:
 
 Exceptions
