@@ -2,7 +2,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.data_models.basics import OptionalSum, BillMixin
+from glQiwiApi.types.basics import OptionalSum
+from glQiwiApi.mixins import BillMixin
 from glQiwiApi.utils import custom_load
 
 
@@ -48,6 +49,7 @@ class Bill(BaseModel, BillMixin):
     class Config:
         extra = 'allow'
         json_loads = custom_load
+        allow_mutation = True
 
 
 __all__ = [

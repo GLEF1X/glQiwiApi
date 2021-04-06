@@ -1,90 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
-from http.cookies import SimpleCookie
 from typing import Literal, Optional, Union, Dict, List, Any
 
-from aiohttp.typedefs import RawHeaders
-from aiosocksy import Socks5Auth, Socks4Auth
-
-from glQiwiApi.exceptions import ProxyError
-
-
-@dataclass
-class Response:
-    status_code: int
-    response_data: Optional[Union[dict, str, bytes, bytearray, Exception]] = None
-    url: Optional[str] = None
-    raw_headers: Optional[RawHeaders] = None
-    cookies: Optional[SimpleCookie] = None
-    ok: bool = False
-    content_type: Optional[str] = None
-    host: Optional[str] = None
-
-    @classmethod
-    def bad_response(cls) -> 'Response':
-        return cls(
-            status_code=500,
-            response_data=ProxyError
-        )
-
-
-@dataclass
-class ProxyService:
-    login: str
-    password: str
-    ip_address: str
-    service_type: Literal['SOCKS5', 'SOCKS4'] = 'SOCKS5'
-    proxy_auth: Optional[Socks5Auth] = None
-    socks_url: Optional[str] = None
-
-    def get_proxy(self) -> Dict[str, Union[str, Socks5Auth]]:
-        if not isinstance(self.proxy_auth, (Socks5Auth, Socks4Auth)):
-            self.proxy_auth = Socks5Auth(
-                login=self.login,
-                password=self.password
-            )
-
-        self.socks_url = '{socks_type}://{ip_address}'.format(
-            socks_type=self.service_type.lower(),
-            ip_address=self.ip_address
-        )
-        return dict(
-            proxy_auth=self.proxy_auth,
-            proxy=self.socks_url
-        )
-
-
-proxy_list = (
-    ProxyService(
-        login='6TA3h0',
-        password='3qHCjh',
-        ip_address='91.241.47.240:8000'
-    ),
-)
-
-
-@dataclass
-class WrapperData:
-    headers: Dict[str, Union[str, int]]
-    data: Dict[str, Union[str, Dict[str, str]]] = None
-    json: Dict[str, Union[str, Dict[str, str]]] = None
-    cookies: Optional[Dict[str, Union[str, int]]] = None
-
-
-@dataclass(frozen=True)
-class Identification:
-    identification_id: int
-    first_name: str
-    middle_name: str
-    last_name: str
-    birth_date: str
-    passport: str
-    inn: str
-    snils: str
-    oms: str
-    type: str
-
-# YooMoney objects
 
 @dataclass
 class BalanceDetails:
@@ -108,7 +25,7 @@ class AccountInfo:
     """Код валюты счета пользователя. Всегда 643 (рубль РФ по стандарту ISO 4217)."""
 
     identified: bool
-    """Индентификацирован ли кошелек"""
+    """Верифицирован ли кошелек"""
 
     account_type: str
     """
@@ -274,7 +191,7 @@ class OperationDetails:
     """
     Дата и время приема или отмены перевода, защищенного кодом протекции.
     Присутствует для входящих и исходящих переводов, защищенных кодом протекции,
-     если при вызове метода апи send вы указали protect=True в агрументах.
+     если при вызове метода апи send вы указали protect=True при передаче аргументов.
     Если перевод еще не принят или не отвергнут получателем, поле отсутствует.
     """
 
@@ -282,7 +199,7 @@ class OperationDetails:
     """
     Дата и время истечения срока действия кода протекции.
     Присутствует для входящих и исходящих переводов (от/другим) пользователям, защищенных кодом протекции,
-    если при вызове метода апи send вы указали protect=True в агрументах.
+    если при вызове метода апи send вы указали protect=True при передаче аргументов.
     """
 
     protection_code: Optional[str] = None
@@ -425,7 +342,8 @@ class Payment:
 
     protection_code: Optional[str] = None
     """
-    Код протекции, который был сгенерирован, если при вызове метода апи send вы указали protect=True в агрументах
+    Код протекции, который был сгенерирован, если при вызове метода апи send вы указали protect=True 
+    при передаче аргументов
     """
 
 
@@ -438,8 +356,7 @@ class IncomingTransaction:
 
 
 __all__ = (
-    'Response', 'Identification', 'WrapperData',
-    'ProxyService', 'proxy_list', 'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation',
+    'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation',
     'OperationDetails',
     'PreProcessPaymentResponse', 'Payment', 'IncomingTransaction'
 )

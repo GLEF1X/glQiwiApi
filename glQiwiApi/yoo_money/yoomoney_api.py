@@ -2,35 +2,34 @@ from datetime import datetime
 from functools import lru_cache
 from typing import List, Dict, Any, Union, Optional, Tuple, Literal
 
-from glQiwiApi.api import HttpXParser
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.data import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, \
+from glQiwiApi.api import HttpXParser
+from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
+from glQiwiApi.types import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, \
     Payment, IncomingTransaction
-from glQiwiApi.exceptions import NoUrlFound, InvalidData
-from glQiwiApi.utils import parse_auth_link, parse_headers, DataFormatter, datetime_to_str_in_iso
+import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.yoo_money.basic_yoomoney_config import *
 
 
 class YooMoneyAPI(AbstractPaymentWrapper):
     """
     Класс, реализующий обработку запросов к YooMoney, используя основной класс HttpXParser,
-    удобен он тем, что не просто отдает json подобные объекты, а всё это конвертирует в python датаклассы.
-    Для работы с данным классом, необходимо загестрировать токен по такому
+    удобен он тем, что не просто отдает json подобные объекты, а всё это конвертирует в python dataclasses.
+    Для работы с данным классом, необходимо зарегистрировать токен по такому
     """
 
     def __init__(self, api_access_token: str, without_context: bool = False) -> None:
         """
-        Конструктор принимает токен, олученный из класс метода get_access_token() этого же класса
+        Конструктор принимает токен, полученный из класс метода get_access_token() этого же класса
         и специальный аттрибут without_context,
 
         :param api_access_token: апи токен для запросов
-        :param without_context: булевая переменная, указывающая будет ли объект класса "глобальной" переменной
+        :param without_context: bool, указывающая будет ли объект класса "глобальной" переменной
          или будет использована в async with контексте
         """
         self.api_access_token = api_access_token
         self._parser = CustomParser(without_context=without_context, messages=ERROR_CODE_NUMBERS)
-        self._formatter = DataFormatter()
 
     async def __aenter__(self) -> 'YooMoneyAPI':
         """Создаем сессию, чтобы не пересоздавать её много раз"""
@@ -59,20 +58,20 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         4. Пользователь вводит свой логин и пароль,
            просматривает список запрашиваемых прав и подтверждает, либо отклоняет запрос авторизации.
         5. Приложение получает ответ Authorization Response
-         в виде HTTP Redirect со временным токеном для получения доступа или кодом ошибки.\n
+         в виде HTTP Redirect со временным token значением для получения доступа или кодом ошибки.\n
         6. Приложение, используя полученный временный токен доступа,
            отправляет запрос на получение токена авторизации (Access Token Request).\n
         7. Ответ содержит токен авторизации (access_token).\n
         8. Приложение сообщает пользователю результат авторизации.\n
-        Подробно это описано в оффициальной документации:
+        Подробно это описано в официальной документации:
         https://yoomoney.ru/docs/wallet/using-api/authorization/request-access-token
 
         :param scope: OAuth2-авторизации приложения пользователем, права перечисляются через пробел.
         :param client_id: идентификатор приложения, тип string
-        :param redirect_uri: воронка, куда прийдет временный код, который нужен для получения основного токена
+        :param redirect_uri: воронка, куда попадет временный код, который нужен для получения основного токена
         :return: ссылку, по которой нужно перейти и сделать авторизацию через логин/пароль
         """
-        headers = parse_headers()
+        headers = api_helper.parse_headers()
         params = {
             'client_id': client_id,
             'response_type': 'code',
@@ -86,9 +85,9 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 method='POST'
         ):
             try:
-                return parse_auth_link(response.response_data)
+                return api_helper.parse_auth_link(response.response_data)
             except IndexError:
-                raise NoUrlFound('Не удалось найти ссылку для авторизации в ответе от апи, проверятьте client_id')
+                raise NoUrlFound('Не удалось найти ссылку для авторизации в ответе от апи, проверьте client_id')
 
     @classmethod
     async def get_access_token(cls, code: str, client_id: str, redirect_uri: str = 'https://example.com') -> str:
@@ -97,10 +96,10 @@ class YooMoneyAPI(AbstractPaymentWrapper):
 
         :param code: временный код, который был получен в методе base_authorize()
         :param client_id: идентификатор приложения, тип string
-        :param redirect_uri: воронка, куда прийдет временный код, который нужен для получения основного токена
+        :param redirect_uri: воронка, куда попадет временный код, который нужен для получения основного токена
         :return: YooMoney API TOKEN
         """
-        headers = parse_headers(content_json=True)
+        headers = api_helper.parse_headers(content_json=True)
         params = {
             'code': code,
             'client_id': client_id,
@@ -118,10 +117,10 @@ class YooMoneyAPI(AbstractPaymentWrapper):
 
     async def revoke_api_token(self) -> Optional[Dict[str, bool]]:
         """
-        Метод для отзывания токена, при этом все его права тоже пропадают
+        Метод для отмены прав токена, при этом все его права тоже пропадают
         Документация: https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
         """
-        headers = self._auth_token(parse_headers(auth=True))
+        headers = self._auth_token(api_helper.parse_headers(auth=True))
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/revoke',
                 method='POST',
@@ -138,14 +137,14 @@ class YooMoneyAPI(AbstractPaymentWrapper):
 
         :return: объект AccountInfo
         """
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/account-info',
                 headers=headers,
                 method='POST'
         ):
             try:
-                return self._formatter.format_objects(
+                return api_helper.format_objects(
                     iterable_obj=(response.response_data,),
                     obj=AccountInfo,
                 )[0]
@@ -154,7 +153,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
 
     async def transactions(
             self,
-            operation_types: Optional[Union[List[OperationType], Tuple[OperationType]]] = None,
+            operation_types: Optional[Union[List[OperationType], Tuple[OperationType, ...]]] = None,
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None,
             start_record: Optional[int] = None,
@@ -184,7 +183,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         :param records:	int	Количество запрашиваемых записей истории операций.
          Допустимые значения: от 1 до 100, по умолчанию — 30.
         """
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
 
         if records <= 0 or records > 100:
             raise InvalidData(
@@ -209,12 +208,12 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         if start_date:
             if not isinstance(start_date, datetime):
                 raise InvalidData('Параметр start_date был передан неправильным типом данных')
-            data.update({'from': datetime_to_str_in_iso(start_date, yoo_money_format=True)})
+            data.update({'from': api_helper.datetime_to_str_in_iso(start_date, yoo_money_format=True)})
 
         if end_date:
             if not isinstance(end_date, datetime):
                 raise InvalidData('Параметр end_date был передан неправильным типом данных')
-            data.update({'till': datetime_to_str_in_iso(end_date, yoo_money_format=True)})
+            data.update({'till': api_helper.datetime_to_str_in_iso(end_date, yoo_money_format=True)})
 
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/operation-history',
@@ -223,7 +222,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 data=data,
                 get_json=True
         ):
-            return self._formatter.format_objects(
+            return api_helper.format_objects(
                 iterable_obj=response.response_data.get('operations'),
                 obj=Operation,
                 transfers=OPERATION_TRANSFER
@@ -237,7 +236,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
 
         :param operation_id: Идентификатор операции
         """
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         payload = {
             'operation_id': operation_id
         }
@@ -247,7 +246,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 data=payload
         ):
             try:
-                obj = self._formatter.format_objects(
+                obj = api_helper.format_objects(
                     iterable_obj=(response.response_data,),
                     obj=OperationDetails,
                     transfers=OPERATION_TRANSFER
@@ -290,7 +289,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             получатель перевода до востребования может получить перевод.
             Значение параметра должно находиться в интервале от 1 до 365. Необязательный параметр. По умолчанию 1.
         """
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         payload = {
             'pattern_id': pattern_id,
             'to': to_account,
@@ -306,7 +305,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 data=payload
         ):
             try:
-                obj = self._formatter.format_objects(
+                obj = api_helper.format_objects(
                     iterable_obj=(response.response_data,),
                     obj=PreProcessPaymentResponse
                 )[0]
@@ -368,7 +367,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             protect=protect,
             pattern_id=pattern_id
         )
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
 
         payload = {
             'request_id': pre_payment.request_id,
@@ -396,7 +395,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 data=payload
         ):
             try:
-                obj = self._formatter.format_objects(
+                obj = api_helper.format_objects(
                     iterable_obj=(response.response_data,),
                     obj=Payment
                 )[0]
@@ -408,7 +407,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 )
 
     async def get_balance(self) -> Optional[Union[float, int]]:
-        """Метод для получения баланса на кошельке юмани"""
+        """Метод для получения баланса на кошельке yoomoney"""
         return (await self.account_info()).balance
 
     async def accept_incoming_transaction(
@@ -427,7 +426,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         :param protection_code: Код протекции. Строка из 4-х десятичных цифр.
          Указывается для входящего перевода, защищенного кодом протекции. Для переводов до востребования отсутствует.
         """
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         payload = {
             'operation_id': operation_id,
             'protection_code': protection_code
@@ -440,12 +439,12 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 get_json=True
         ):
             try:
-                return self._formatter.format_objects(
+                return api_helper.format_objects(
                     iterable_obj=(response.response_data,),
                     obj=IncomingTransaction
                 )[0]
             except IndexError:
-                raise ConnectionError('Такая транзакция не найдена или были переданы невалид данные')
+                raise ConnectionError('Такая транзакция не найдена или были переданы невалидные данные')
 
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
         """
@@ -459,7 +458,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         :param operation_id: Идентификатор операции, значение параметра operation_id ответа метода history().
         :return: словарь в json формате с ответом от апи
         """
-        headers = self._auth_token(parse_headers(**content_and_auth))
+        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/incoming-transfer-reject',
                 headers=headers,

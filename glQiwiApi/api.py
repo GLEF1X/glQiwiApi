@@ -1,6 +1,6 @@
 import asyncio
 from itertools import repeat
-from typing import Literal, Optional, Union, Dict, List, Tuple, Any, AsyncGenerator
+from typing import Optional, Union, Dict, List, Tuple, Any, AsyncGenerator
 
 from aiohttp import ClientTimeout, ClientSession, ClientRequest, ClientProxyConnectionError, \
     ServerDisconnectedError, ContentTypeError
@@ -9,8 +9,8 @@ from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
 from glQiwiApi.abstracts import AbstractParser
-from glQiwiApi.data import ProxyService, Response
-from glQiwiApi.exceptions import RequestProxyError
+from glQiwiApi.types import ProxyService, Response
+from glQiwiApi.utils.exceptions import RequestProxyError
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
@@ -57,7 +57,8 @@ class Core:
 
 class HttpXParser(AbstractParser):
     """
-    Представляет собой апи, для парсинга сайта с определенными изменениями и плюшками
+    Представляет собой апи запросов для дальнейшего использования в запросах к разным
+    платежным системам
 
     """
     _sleep_time = 2
@@ -70,15 +71,14 @@ class HttpXParser(AbstractParser):
         self._core = Core()
         self.session: Optional[ClientSession] = None
         self.url = 'http://127.0.0.1/api/'
-        self._timeout = ClientTimeout(total=2 * 15, connect=None, sock_connect=5, sock_read=None)
+        self._timeout = ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None)
         self._connector: Optional[ProxyConnector] = None
 
     async def _request(
             self,
             url: Optional[str] = None,
             get_json: bool = False,
-            validate_django: bool = False,
-            method: Literal['POST', 'GET', 'PUT'] = 'POST',
+            method: str = 'POST',
             set_timeout: bool = True,
             cookies: Optional[LooseCookies] = None,
             json: Optional[dict] = None,
@@ -97,7 +97,7 @@ class HttpXParser(AbstractParser):
 
         :param url: ссылка, куда вы хотите отправить ваш запрос
         :param get_json: указывает на то, хотите ли вы получить ответ в формате json
-        :param method: POST or GET(тип запроса)
+        :param method: Тип запроса(любой от обычного GET до PUT, DELETE)
         :param proxy: instance of ProxyService
         :param data: post data
         :param cookies:
@@ -135,7 +135,7 @@ class HttpXParser(AbstractParser):
             response = await self.session.request(
                 method=method,
                 url=self.url if not url else url,
-                data=self._set_auth(data) if validate_django else data,
+                data=data,
                 headers=headers,
                 json=json if isinstance(json, dict) else None,
                 cookies=cookies,
@@ -146,7 +146,7 @@ class HttpXParser(AbstractParser):
             if not skip_exceptions:
                 raise ConnectionError() from ex
             return Response.bad_response()
-            # Get content and return response
+        # Get content and return response
         try:
             data = await response.json(
                 content_type="application/json"
@@ -166,34 +166,12 @@ class HttpXParser(AbstractParser):
             url=response.url.__str__()
         )
 
-    @staticmethod
-    def _set_auth(
-            data: Optional[
-                Dict[str, Union[str, int, List[Union[str, int]], Tuple[Union[str, int]]]]
-            ] = None) -> Optional[Dict[str, str]]:
-        """
-        Метод валидации для джанго апи
-
-        :param data: It must be dict(your headers or data)
-        :return: validated data or headers
-        """
-        try:
-            from djangoProject.settings import SECRET_KEY, SECRET_CODE
-        except ImportError:
-            SECRET_KEY = None
-            SECRET_CODE = None
-        if not isinstance(data, dict):
-            data = {}
-        data.update(
-            {
-                'SECRET_KEY': SECRET_KEY,
-                'SECRET_CODE': SECRET_CODE
-            }
-        )
-        return data
-
-    def create_session(self, **kwargs):
-        self.session = ClientSession(**kwargs)
+    def create_session(self, **kwargs) -> None:
+        if not self.session:
+            self.session = ClientSession(**kwargs)
+        elif isinstance(self.session, ClientSession):
+            if self.session.closed:
+                self.session = ClientSession(**kwargs)
 
     async def fetch(self, *, times: int = 1, **kwargs) -> AsyncGenerator[Response, None]:
         """
@@ -231,33 +209,6 @@ class HttpXParser(AbstractParser):
             from asyncio import DefaultEventLoopPolicy as EventLoopPolicy
             asyncio.set_event_loop_policy(EventLoopPolicy())
         return self
-
-    def __getattr__(self, item: Any) -> Any:
-        """
-        Method, which can get an attribute of base_headers by this method
-
-        :param item: key name of base_headers dict data
-        :return:
-        """
-        return self._core.__getattr__(item)
-
-    def __eq__(self, other: Any) -> bool:
-        """
-        Method to compare instances of parsers
-
-        :param other: other object
-        :return: bool
-        """
-        return self._core.__eq__(other)
-
-    def __setitem__(self, key, value) -> None:
-        """
-
-        :param key: key of base_headers dict
-        :param value: value of base_headers dict
-        :return: None
-        """
-        self._core.__setitem__(key, value)
 
     @staticmethod
     def combine_proxies(

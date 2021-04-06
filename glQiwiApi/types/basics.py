@@ -1,8 +1,8 @@
-from typing import Union, Optional, Any
+from typing import Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.utils import custom_load
+from glQiwiApi.utils.basics import custom_load
 
 
 class Sum(BaseModel):
@@ -34,19 +34,6 @@ class Type(BaseModel):
     title: str
 
 
-class BillMixin:
-    _w = None
-    bill_id: Optional[str] = None
-
-    def initialize(self, w: Any):
-        self._w = w
-        return self
-
-    async def check(self) -> bool:
-        async with self._w:
-            return (await self._w.check_p2p_bill_status(bill_id=self.bill_id)) == 'PAID'
-
-
 __all__ = [
-    'Sum', 'OptionalSum', 'Commission', 'Type', 'BillMixin'
+    'Sum', 'OptionalSum', 'Commission', 'Type'
 ]

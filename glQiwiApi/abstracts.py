@@ -56,4 +56,4 @@ class AbstractParser(abc.ABC):
         raise NotImplementedError()
 
     async def raise_exception(self, *args, **kwargs) -> None:
-        """Метод для кастомной обработки исключений и лучшего логирования"""
+        """Метод для обработки исключений и лучшего логирования"""

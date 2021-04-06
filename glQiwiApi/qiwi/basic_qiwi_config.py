@@ -1,6 +1,6 @@
 import time
 
-from glQiwiApi.data import WrapperData
+from glQiwiApi.types import WrapperData
 
 BASE_QIWI_URL = 'https://edge.qiwi.com'
 
@@ -8,7 +8,7 @@ DEFAULT_QIWI_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Authorization': 'Bearer {token}',
-    'Host': 'edge.qiwi_models.com',
+    'Host': 'edge.qiwi_types.com',
 }
 
 ERROR_CODE_NUMBERS = {

@@ -18,7 +18,7 @@ class InvalidCardNumber(Exception):
 
 class RequestAuthError(Exception):
     """
-    Ошибка при неправильной аунтефикации POST or GET data
+    Ошибка при неправильной аутентификации POST or GET data
 
     """
 
@@ -28,7 +28,7 @@ class InvalidToken(Exception):
 
 
 class InvalidData(Exception):
-    """Ошибка возникает, если были переданы или получены невалид данные при запросе"""
+    """Ошибка возникает, если были переданы или получены невалидные данные при запросе"""
 
 
 class RequestError(Exception):
@@ -40,7 +40,7 @@ class RequestError(Exception):
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info
-        self._json_info = json_info
+        self.json_info = json_info
 
     def __str__(self) -> str:
         return f"code={self.status_code} doc={self.message}, additional_info={self.additional_info}"""
@@ -50,10 +50,8 @@ class RequestError(Exception):
 
     def json(self) -> str:
         import json
-
-        if isinstance(self._json_info, dict):
-            return json.dumps(self._json_info, indent=2, ensure_ascii=False)
-        return self.__str__()
+        return json.dumps(self.__str__() if not isinstance(self.json_info, dict) else self.__str__(), indent=2,
+                          ensure_ascii=False)
 
 
 __all__ = [

@@ -1,4 +1,4 @@
-# Ссылка для авторизации юмани
+# Ссылка для отправки запросов yoomoney
 BASE_YOOMONEY_URL = 'https://yoomoney.ru'
 
 DEFAULT_YOOMONEY_HEADERS = {

@@ -2,7 +2,7 @@ from typing import Dict, Optional, Any
 
 import glQiwiApi
 from glQiwiApi.api import HttpXParser
-from glQiwiApi.exceptions import RequestError
+from glQiwiApi.utils.exceptions import RequestError
 
 
 class CustomParser(HttpXParser):
@@ -23,6 +23,6 @@ class CustomParser(HttpXParser):
         return response
 
     def raise_exception(self, status_code: str, json_info: Optional[Dict[str, Any]] = None) -> None:
-        message = self.messages.get(str(status_code))
+        message = self.messages.get(str(status_code), "Unknown")
         raise RequestError(message, status_code, additional_info=f"{glQiwiApi.__version__} version api",
                            json_info=json_info)

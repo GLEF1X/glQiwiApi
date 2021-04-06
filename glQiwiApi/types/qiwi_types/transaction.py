@@ -2,7 +2,7 @@ from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.data_models.basics import Sum
+from glQiwiApi.types.basics import Sum
 from glQiwiApi.utils import custom_load
 
 
