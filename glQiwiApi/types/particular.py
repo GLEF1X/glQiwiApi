@@ -5,7 +5,7 @@ from typing import Literal, Optional, Union, Dict
 from aiohttp.typedefs import RawHeaders
 from aiosocksy import Socks5Auth, Socks4Auth
 
-from glQiwiApi.exceptions import ProxyError
+from glQiwiApi.utils.exceptions import ProxyError
 
 
 @dataclass

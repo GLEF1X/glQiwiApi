@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.mixins import BillMixin
-from glQiwiApi.utils import custom_load
+from glQiwiApi.utils.basics import custom_load
 
 
 class Customer(BaseModel):

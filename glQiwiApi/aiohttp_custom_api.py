@@ -16,7 +16,6 @@ class CustomParser(HttpXParser):
         response = await super(CustomParser, self)._request(*args, **kwargs)
         if response.status_code != 200:
             self.raise_exception(str(response.status_code), json_info=response.response_data)
-
         if self._without_context:
             await self.session.close()
 

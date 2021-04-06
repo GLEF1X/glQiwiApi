@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from glQiwiApi.utils import custom_load
+from glQiwiApi.utils.basics import custom_load
 
 
 class Balance(BaseModel):

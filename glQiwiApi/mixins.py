@@ -1,10 +1,12 @@
 import copy
 from typing import Optional, Any
 
-from glQiwiApi.api import HttpXParser
-
 
 class BillMixin(object):
+    """
+    Примесь, позволяющая проверять счет, не используя метод QiwiWrapper,
+    добавляя метод check() объекту Bill
+    """
     _w = None
     bill_id: Optional[str] = None
 
@@ -18,7 +20,7 @@ class BillMixin(object):
 
 
 class ToolsMixin(object):
-    _parser: Optional[HttpXParser] = None
+    _parser = None
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
@@ -48,5 +50,5 @@ class ToolsMixin(object):
         return result
 
     @property
-    def parser(self) -> HttpXParser:
+    def parser(self):
         return self._parser

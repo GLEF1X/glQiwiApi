@@ -30,18 +30,14 @@ P2P_QIWI_HEADERS = {
 }
 
 QIWI_TO_CARD = WrapperData(
-    json=
-    {
+    json={
         "id": str(int(time.time() * 1000)),
-        "sum":
-            {
-                "amount": "", "currency": "643"
-            },
-
-        "paymentMethod":
-            {
-                "type": "Account", "accountId": "643"
-            },
+        "sum": {
+            "amount": "", "currency": "643"
+        },
+        "paymentMethod": {
+            "type": "Account", "accountId": "643"
+        },
         "fields": {
             "account": ""
         }
@@ -129,8 +125,7 @@ ONLINE_COMMISSION_DATA = {
                 {"amount": "",
                  "currency": "643"
                  }
-        }
-}
+        }}
 
 COMMISSION_TRANSFER = {
     'providerId': 'provider_id',
@@ -138,6 +133,7 @@ COMMISSION_TRANSFER = {
     'qwCommission': 'qw_commission',
     'withdrawToEnrollmentRate': 'withdraw_to_enrollment_rate'
 }
+
 __all__ = (
     'LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
     'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',

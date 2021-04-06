@@ -2,7 +2,7 @@ from typing import Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.utils import custom_load
+from glQiwiApi.utils.basics import custom_load
 
 
 class Interval(BaseModel):

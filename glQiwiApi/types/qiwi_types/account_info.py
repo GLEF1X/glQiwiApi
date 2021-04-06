@@ -3,7 +3,7 @@ from typing import Optional, List
 from pydantic import Field, BaseModel
 
 from glQiwiApi.types.basics import Sum
-from glQiwiApi.utils import custom_load
+from glQiwiApi.utils.basics import custom_load
 
 
 class PassInfo(BaseModel):

@@ -1,15 +1,16 @@
+import functools
 from datetime import datetime
-from functools import lru_cache
 from typing import List, Dict, Any, Union, Optional, Tuple, Literal
 
+import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.aiohttp_custom_api import CustomParser
 from glQiwiApi.api import HttpXParser
-from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
 from glQiwiApi.types import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, \
     Payment, IncomingTransaction
-import glQiwiApi.utils.basics as api_helper
-from glQiwiApi.yoo_money.basic_yoomoney_config import *
+from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
+from glQiwiApi.yoo_money.basic_yoomoney_config import BASE_YOOMONEY_URL, ERROR_CODE_NUMBERS, content_and_auth, \
+    OPERATION_TRANSFER
 
 
 class YooMoneyAPI(AbstractPaymentWrapper):
@@ -129,7 +130,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             if response.ok:
                 return {'success': True}
 
-    @lru_cache
+    @functools.lru_cache
     async def account_info(self) -> AccountInfo:
         """
         Метод для получения информации об аккаунте пользователя
@@ -151,6 +152,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             except IndexError:
                 raise InvalidData('Cannot fetch account info, check your token')
 
+    @functools.lru_cache
     async def transactions(
             self,
             operation_types: Optional[Union[List[OperationType], Tuple[OperationType, ...]]] = None,
@@ -228,6 +230,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 transfers=OPERATION_TRANSFER
             )
 
+    @functools.lru_cache
     async def transaction_info(self, operation_id: str) -> OperationDetails:
         """
         Позволяет получить детальную информацию об операции из истории.
@@ -406,10 +409,12 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                     'Не удалось создать запрос на перевод средств, проверьте переданные параметры и попробуйте ещё раз'
                 )
 
+    @functools.lru_cache
     async def get_balance(self) -> Optional[Union[float, int]]:
         """Метод для получения баланса на кошельке yoomoney"""
         return (await self.account_info()).balance
 
+    @functools.lru_cache
     async def accept_incoming_transaction(
             self,
             operation_id: str,
@@ -446,6 +451,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             except IndexError:
                 raise ConnectionError('Такая транзакция не найдена или были переданы невалидные данные')
 
+    @functools.lru_cache
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
         """
         Отмена входящих переводов, защищенных кодом протекции, если вы передали в метод send параметр protect,
@@ -468,6 +474,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         ):
             return response.response_data
 
+    @functools.lru_cache
     async def check_transaction(
             self,
             amount: Union[int, float],

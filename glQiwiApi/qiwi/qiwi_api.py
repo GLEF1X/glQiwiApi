@@ -9,11 +9,12 @@ import aiofiles
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.utils.exceptions import InvalidData, InvalidCardNumber
 from glQiwiApi.mixins import ToolsMixin
-from glQiwiApi.qiwi.basic_qiwi_config import *
+from glQiwiApi.qiwi.basic_qiwi_config import BASE_QIWI_URL, ERROR_CODE_NUMBERS, QIWI_TO_CARD, DEFAULT_QIWI_HEADERS, \
+    P2P_DATA, QIWI_TO_WALLET, ONLINE_COMMISSION_DATA, LIMIT_TYPES
 from glQiwiApi.types import QiwiAccountInfo, Transaction, Bill, BillError, Statistic, Limit, Account, Balance, \
     Identification, Response, Sum, Commission
+from glQiwiApi.utils.exceptions import InvalidData, InvalidCardNumber
 
 DEFAULT_BILL_TIME = datetime.now() + timedelta(days=2)
 
@@ -82,6 +83,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             except (KeyError, TypeError):
                 return response
 
+    @functools.lru_cache
     async def _detect_card_number(self, card_number: str) -> str:
         """
         Метод для получения идентификатора карты
@@ -107,6 +109,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             except KeyError:
                 raise InvalidCardNumber('Invalid card number or qiwi_types api is not response') from None
 
+    @functools.lru_cache
     async def _detect_mobile_number(self, phone_number: str):
         """
         Метод для получения идентификатора телефона
@@ -132,6 +135,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             except KeyError:
                 raise InvalidCardNumber('Invalid card number or qiwi_types api is not response') from None
 
+    @functools.lru_cache
     async def get_balance(self) -> Sum:
         """Метод для получения баланса киви"""
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
@@ -143,6 +147,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Sum.parse_raw(response.response_data['accounts'][0]['balance'])
 
+    @functools.lru_cache
     async def transactions(
             self,
             rows_num: int = 50,
@@ -226,6 +231,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             except (KeyError, TypeError):
                 return response
 
+    @functools.lru_cache
     async def transaction_info(
             self,
             transaction_id: Union[str, int],
@@ -252,6 +258,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Transaction.parse_raw(response.response_data)
 
+    @functools.lru_cache
     async def check_restriction(self) -> Union[List[Dict[str, str]], Exception]:
         """
         Метод для проверки ограничений на вашем киви кошельке\n
@@ -267,6 +274,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return response.response_data
 
+    @functools.lru_cache
     async def get_identification(self) -> Identification:
         """
         Функция, которая позволяет получить данные идентификации вашего киви кошелька
@@ -282,6 +290,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Identification.parse_raw(response.response_data)
 
+    @functools.lru_cache
     async def check_transaction(
             self,
             amount: Union[int, float],
@@ -320,6 +329,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                     return True
         return False
 
+    @functools.lru_cache
     async def get_limits(self) -> Dict[str, Limit]:
         """
         Функция для получения лимитов по счёту киви кошелька\n
@@ -349,6 +359,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 limits.update({code: Limit.parse_raw(limit[0])})
             return limits
 
+    @functools.lru_cache
     async def get_list_of_cards(self) -> dict:
         """
         Данный метод позволяет вам получить список ваших карт. Пока ещё в разработке, стабильность сомнительна
@@ -362,6 +373,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return response.response_data
 
+    @functools.lru_cache
     async def authenticate(
             self,
             birth_date: str,
@@ -411,6 +423,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             if response.ok and response.status_code == 200:
                 return {'success': True}
 
+    @functools.lru_cache
     async def get_bills(self, rows: int) -> List[Bill]:
         """
         Метод получения списка неоплаченных счетов вашего кошелька.
@@ -433,6 +446,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return api_helper.simple_multiply_parse(response.response_data.get("bills"), Bill)
 
+    @functools.lru_cache
     async def create_p2p_bill(
             self,
             amount: int,
@@ -479,6 +493,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Bill.parse_raw(response.response_data).initialize(self)
 
+    @functools.lru_cache
     async def check_p2p_bill_status(self, bill_id: str) -> Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']:
         """
         Метод для проверки статуса p2p транзакции.\n
@@ -503,6 +518,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Bill.parse_raw(response.response_data).status.value
 
+    @functools.lru_cache
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
         """
         Метод для отмены транзакции.
@@ -553,6 +569,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             async with aiofiles.open(file_path + '.pdf', 'wb') as file:
                 return await file.write(response.response_data)
 
+    @functools.lru_cache
     async def commission(self, to_account: str, pay_sum: Union[int, float]) -> Commission:
         """
         Возвращается полная комиссия QIWI Кошелька за платеж в пользу указанного провайдера
@@ -575,6 +592,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Commission.parse_raw(response.response_data)
 
+    @functools.lru_cache
     async def account_info(self) -> QiwiAccountInfo:
         """Метод для получения информации об аккаунте"""
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
@@ -637,6 +655,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Statistic.parse_raw(response.response_data)
 
+    @functools.lru_cache
     async def list_of_balances(self) -> List[Account]:
         """
         Запрос выгружает текущие балансы счетов вашего QIWI Кошелька.
@@ -650,6 +669,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return api_helper.simple_multiply_parse(response.response_data.get('accounts'), Account)
 
+    @functools.lru_cache
     @api_helper.allow_response_code(201)
     async def create_new_balance(self, currency_alias: str) -> Optional[Dict[str, bool]]:
         """
@@ -670,6 +690,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return response.response_data
 
+    @functools.lru_cache
     async def available_balances(self) -> List[Balance]:
         """
         Запрос отображает псевдонимы счетов, доступных для создания в вашем QIWI Кошельке в виде списка объектов Balance
@@ -687,6 +708,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return api_helper.simple_multiply_parse(lst_of_objects=response.response_data, model=Balance)
 
+    @functools.lru_cache
     @api_helper.allow_response_code(204)
     async def set_default_balance(self, currency_alias: str) -> Any:
         """
