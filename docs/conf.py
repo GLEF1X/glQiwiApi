@@ -52,6 +52,8 @@ templates_path = ['templates']
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
+latex_engine = 'xelatex'
+
 # The master toctree document.
 master_doc = 'index'
 
