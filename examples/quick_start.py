@@ -12,6 +12,9 @@ async def main():
         without_context=True
     )
     print((await wallet.get_balance()).amount)
+
+
+async def main_boost():
     # OR(x3 performance boost with async context,
     # because it use only 1 aiohttp session to get response for all requests
     # in async with context manager)
@@ -20,4 +23,5 @@ async def main():
         # Данным вызовом вы получите текущий баланс кошелька.
         print((await w.get_balance()).amount)
 
-asyncio.run(main())
+
+asyncio.run(main_boost())
