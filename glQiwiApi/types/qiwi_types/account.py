@@ -8,9 +8,9 @@ from glQiwiApi.utils.basics import custom_load
 
 class Account(BaseModel):
     alias: str
+    title: str
     fs_alias: str = Field(alias="fsAlias")
     bank_alias: str = Field(alias="bankAlias")
-    title: str
     has_balance: bool = Field(alias="hasBalance")
     balance: Optional[Sum] = Field(const=None)
     currency: int

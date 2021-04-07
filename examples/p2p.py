@@ -2,8 +2,8 @@ import asyncio
 
 from glQiwiApi import QiwiWrapper, RequestError
 
-PUBLIC_KEY = '48e7qUxn9T7RyYE1MVZswX1FRSbE6iyCj2gCRwwF3Dnh5XrasNTx3BGPiMsyXQFNKQhvukniQG8RTVhYm3iPpzd6T6fUwiBX4WcjnHgoqxERdngWnH6EYfc7uBsGKPq4MF23dW4nUoixGqkoHj1YhjM7JyGfvh1o6fUdCHfX2uY8cfMxUFDwj8qRQgwPF'
-SECRET_KEY = 'eyJ2ZXJzaW9uIjoiUDJQIiwiZGF0YSI6eyJwYXlpbl9tZXJjaGFudF9zaXRlX3VpZCI6ImJuMXZmNy0wMCIsInVzZXJfaWQiOiIzODA5NjgzMTc0NTkiLCJzZWNyZXQiOiI1MWY2MDc1MzkzYzgwZWZiY2FiM2Q5ZTVhNThjNjQ1NmE3ZWY4NjkxNDJkZjI0NjczNWYzNzZmZjkwODQwM2U4In19'
+PUBLIC_KEY = 'P2P PUBLIC_KEY'
+SECRET_KEY = 'P2P SECRET_KEY'
 
 
 async def p2p_usage():
@@ -28,8 +28,8 @@ async def p2p_usage():
         except RequestError as ex:
             print(ex)
         # Переназначаем токены
-        w.api_access_token = '7f8e514786b0cd326cf604223ec91861'
-        w.phone_number = '+380968317459'
+        w.api_access_token = 'TOKEN from https://qiwi.api'
+        w.phone_number = '+NUMBER'
         print(await w.get_bills(rows=20))
 
 

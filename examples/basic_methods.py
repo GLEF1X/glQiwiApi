@@ -34,7 +34,7 @@ async def basic_usage():
             comment="I love glQiwiApi"
         )
         print(payment_id)
-        # handling api exceptions and get json representation
+        # handling types exceptions and get json representation
         try:
             await wallet.to_wallet(to_number="+WRONG_NUMBER", trans_sum=999)
         except RequestError as ex:

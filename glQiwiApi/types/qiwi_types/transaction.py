@@ -70,7 +70,7 @@ class Transaction(BaseModel):
     trm_transaction_id: str = Field(alias="trmTxnId")
     """Клиентский ID транзакции"""
 
-    to_account: str = Field(alias="account.rst")
+    to_account: str = Field(alias="account")
     """
     Для платежей - номер счета получателя.
     Для пополнений - номер отправителя, терминала или название агента пополнения кошелька

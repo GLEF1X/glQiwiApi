@@ -123,7 +123,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         """
         headers = self._auth_token(api_helper.parse_headers(auth=True))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/revoke',
+                url=BASE_YOOMONEY_URL + '/types/revoke',
                 method='POST',
                 headers=headers
         ):
@@ -140,7 +140,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         """
         headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/account.rst-info',
+                url=BASE_YOOMONEY_URL + '/types/account-info',
                 headers=headers,
                 method='POST'
         ):
@@ -150,7 +150,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                     obj=AccountInfo,
                 )[0]
             except IndexError:
-                raise InvalidData('Cannot fetch account.rst info, check your token')
+                raise InvalidData('Cannot fetch account info, check your token')
 
     @functools.lru_cache
     async def transactions(
@@ -218,7 +218,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             data.update({'till': api_helper.datetime_to_str_in_iso(end_date, yoo_money_format=True)})
 
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/operation-history',
+                url=BASE_YOOMONEY_URL + '/types/operation-history',
                 method='POST',
                 headers=headers,
                 data=data,
@@ -244,7 +244,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             'operation_id': operation_id
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/operation-details',
+                url=BASE_YOOMONEY_URL + '/types/operation-details',
                 headers=headers,
                 data=payload
         ):
@@ -303,7 +303,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             'codepro': protect
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/request-payment',
+                url=BASE_YOOMONEY_URL + '/types/request-payment',
                 headers=headers,
                 data=payload
         ):
@@ -392,7 +392,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                                 {'money_source': card.get('id'), 'csc': cvv2_code},
                             )
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/process-payment',
+                url=BASE_YOOMONEY_URL + '/types/process-payment',
                 method='POST',
                 headers=headers,
                 data=payload
@@ -437,7 +437,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             'protection_code': protection_code
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/incoming-transfer-accept',
+                url=BASE_YOOMONEY_URL + '/types/incoming-transfer-accept',
                 headers=headers,
                 data=payload,
                 method='POST',
@@ -466,7 +466,7 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         """
         headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/incoming-transfer-reject',
+                url=BASE_YOOMONEY_URL + '/types/incoming-transfer-reject',
                 headers=headers,
                 data={'operation_id': operation_id},
                 method='POST',
