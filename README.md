@@ -8,7 +8,7 @@
 
 ## Official aiogram resources:
    * __:fire:Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
-   * 🖱️ __Contact the developer: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
+   * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### :floppy_disk:Installation
 
