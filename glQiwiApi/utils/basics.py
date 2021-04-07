@@ -6,7 +6,6 @@ from dataclasses import is_dataclass
 from datetime import datetime
 from typing import Optional, Union, Type
 
-import orjson
 import pytz
 from pydantic import ValidationError
 from pytz.reference import LocalTimezone
@@ -149,7 +148,8 @@ def dump_response(func):
 
 
 def custom_load(data):
-    return orjson.loads(orjson.dumps(data))
+    import json
+    return json.loads(json.dumps(data))
 
 
 def allow_response_code(status_code):
