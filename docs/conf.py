@@ -142,17 +142,12 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'aiogram.tex', 'aiogram Documentation',
-     'Illemius / Alex Root Junior', 'manual'),
-]
-
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'aiogram', 'aiogram Documentation',
+    (master_doc, 'glQiwiApi', 'glQiwiApi Documentation',
      [author], 1)
 ]
 
@@ -161,11 +156,6 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'aiogram', 'aiogram Documentation',
-     author, 'aiogram', 'Asynchonyously Python framework for Telegram Bot API',
-     'Miscellaneous'),
-]
 
 autoclass_content = "both"
 autodoc_member_order = "bysource"
