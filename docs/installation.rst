@@ -40,4 +40,19 @@
     $ python setup.py install
 
 
+Recommendations
+---------------
+You can speedup api by following next instructions:
+
+- Use `uvloop <https://github.com/MagicStack/uvloop>`_ instead of default asyncio loop.
+
+    *uvloop* is a fast, drop-in replacement of the built-in asyncio event loop. uvloop is implemented in Cython and uses libuv under the hood.
+
+    **Installation:**
+
+        .. code-block:: bash
+
+            $ pip install uvloop
+
+
 .. _GitHub репозитория: https://github.com/GLEF1X/glQiwiApi
