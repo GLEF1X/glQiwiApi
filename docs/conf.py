@@ -87,7 +87,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -120,6 +120,12 @@ html_static_path = ['static']
 htmlhelp_basename = 'glQiwiApiDocs'
 
 # -- Options for LaTeX output ---------------------------------------------
+
+latex_documents = [
+    (master_doc, 'glQiwiApi.tex',
+     u'glQiwiApi Documentation',
+     u'Levent Duivel', 'manual'),
+]
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
