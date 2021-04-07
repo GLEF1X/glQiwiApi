@@ -7,8 +7,8 @@
 ### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
 
 ### Official aiogram resources:
-    * :fire:Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)
-    * 🖱️ Contact the developer: [![Dev-Telegram](https://img.shields.io/badge/Chat%20on-Telegram-brightgreen.svg)](https://t.me/GLEF1X)
+   * :fire:Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)
+   * 🖱️ Contact the developer: [![Dev-Telegram](https://img.shields.io/badge/Chat%20on-Telegram-brightgreen.svg)](https://t.me/GLEF1X)
 
 ### :floppy_disk:Installation
 
