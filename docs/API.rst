@@ -10,7 +10,7 @@ Payment wrappers
     :members:
 
 Low level API
-_____________
+-------------
 .. autoclass:: glQiwiApi.api.HttpXParser
    :members:
 
