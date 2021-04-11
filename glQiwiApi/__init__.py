@@ -1,5 +1,5 @@
-from glQiwiApi.utils.exceptions import RequestError
 from glQiwiApi.qiwi import QiwiWrapper
+from glQiwiApi.utils.exceptions import RequestError
 from glQiwiApi.yoo_money import YooMoneyAPI
 
 __all__ = [

@@ -158,9 +158,16 @@ class HttpXParser(AbstractParser):
                 params=params,
                 **proxy_kwargs
             )
-        except (ClientProxyConnectionError, SocksError, ServerDisconnectedError) as ex:
+        except (
+                ClientProxyConnectionError,
+                SocksError,
+                ServerDisconnectedError
+        ) as ex:
             if not skip_exceptions:
-                self.raise_exception(status_code='400_special_bad_proxy', json_info=ex)
+                self.raise_exception(
+                    status_code='400_special_bad_proxy',
+                    json_info=ex
+                )
             return Response.bad_response()
         # Get content and return response
         try:

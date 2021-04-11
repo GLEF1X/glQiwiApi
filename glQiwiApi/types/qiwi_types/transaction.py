@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -48,7 +48,7 @@ class Transaction(BaseModel):
     error: Optional[str] = None
     """Описание ошибки"""
 
-    status: Literal['WAITING', 'SUCCESS', 'ERROR']
+    status: str
     """
     Статус платежа. Возможные значения:
     WAITING - платеж проводится,
@@ -56,7 +56,7 @@ class Transaction(BaseModel):
     ERROR - ошибка платежа.
     """
 
-    type: Literal['IN', 'OUT', 'QIWI_CARD']
+    type: str
     """
     Тип платежа. Возможные значения:
     IN - пополнение,

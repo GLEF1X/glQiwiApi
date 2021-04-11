@@ -1,5 +1,4 @@
 import functools as ft
-import json
 import re
 import time
 from dataclasses import is_dataclass
@@ -10,8 +9,6 @@ import orjson
 import pytz
 from pydantic import ValidationError
 from pytz.reference import LocalTimezone
-
-from glQiwiApi import RequestError
 
 Local = LocalTimezone()
 
@@ -157,6 +154,7 @@ def allow_response_code(status_code):
 
     def wrap_func(func):
         async def wrapper(*args, **kwargs):
+            from glQiwiApi import RequestError
             try:
                 await func(*args, **kwargs)
             except RequestError as error:

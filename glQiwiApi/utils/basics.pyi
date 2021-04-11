@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Union, Optional, Dict, Type, List, Literal, MutableMapping, Tuple
+from typing import Any, Union, Optional, Dict, Type, List, MutableMapping, Tuple
 
 from glQiwiApi import types
 
@@ -36,7 +36,7 @@ def set_data_p2p_create(
         life_time: str,
         comment: Optional[str] = None,
         theme_code: Optional[str] = None,
-        pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
+        pay_source_filter: Optional[str] = None
 ) -> Dict[MutableMapping, Any]: ...
 
 

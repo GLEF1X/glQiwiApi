@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal, Optional, Union, Dict, List, Any
+from typing import Optional, Union, Dict, List, Any
 
 
 @dataclass
@@ -160,9 +160,9 @@ class OperationDetails:
     incoming-transfer-protected — входящий перевод с кодом протекции.
     """
 
-    direction: Optional[Literal['in', 'out']] = None
+    direction: Optional[str] = None
     """
-    Направление движения средств. Может принимать значения:
+    направление движения средств. может принимать значения:
     - in (приход);
     - out (расход).
     """
@@ -211,7 +211,7 @@ class OperationDetails:
     message: Optional[str] = None
     """Сообщение получателю перевода. Присутствует для переводов другим пользователям."""
 
-    recipient_type: Optional[Literal['account', 'phone', 'email']] = None
+    recipient_type: Optional[str] = None
     """
     Тип идентификатора получателя перевода. Возможные значения:
     account — номер счета получателя в сервисе ЮMoney;
@@ -254,12 +254,12 @@ class PreProcessPaymentResponse:
     При вызове данного метода вы не списываете деньги со своего счёта, а условно подготавливаете его к отправке.
     Для отправки денег на счёт используйте метод send()
     """
-    status: Literal['success', 'refused']
+    status: str
     request_id: str
-    recipient_account_status: Literal['anonymous', 'named', 'identified']
+    recipient_account_status: str
     fees: Dict[str, float]
     balance: Optional[float] = None
-    recipient_account_type: Optional[Literal['personal', 'professional']] = None
+    recipient_account_type: Optional[str] = None
     recipient_identified: bool = False
     recipient_masked_account: Optional[str] = None
     multiple_recipients_found: Optional[str] = None
@@ -273,7 +273,7 @@ class PreProcessPaymentResponse:
 
 @dataclass
 class Payment:
-    status: Literal['success', 'refused', 'in_progress', 'ext_auth_required']
+    status: str
     """
     Код результата выполнения операции. Возможные значения:
     success — успешное выполнение (платеж проведен). Это конечное состояние платежа.
@@ -349,7 +349,7 @@ class Payment:
 
 @dataclass(frozen=True)
 class IncomingTransaction:
-    status: Literal['success', 'refused']
+    status: str
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None
     error: Optional[str] = None

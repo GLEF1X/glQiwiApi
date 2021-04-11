@@ -2,7 +2,7 @@ import functools
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import Union, Optional, Dict, Literal, List, Any
+from typing import Union, Optional, Dict, List, Any
 
 import aiofiles
 
@@ -14,7 +14,8 @@ from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
     QIWI_TO_CARD, DEFAULT_QIWI_HEADERS,
     P2P_DATA, QIWI_TO_WALLET,
-    COMMISSION_DATA, LIMIT_TYPES)
+    COMMISSION_DATA, LIMIT_TYPES
+)
 from glQiwiApi.types import (
     QiwiAccountInfo,
     Transaction,
@@ -56,8 +57,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param phone_number: номер вашего телефона с +
         :param secret_p2p: секретный ключ, полученный с https://p2p.qiwi.com/
         :param public_p2p: публичный ключ, полученный с https://p2p.qiwi.com/
-        :param without_context: bool, указывает будет ли объект класса "глобальной" переменной
-         или будет использована в async with контексте
+        :param without_context: bool, указывает будет ли объект класса
+         глобальной" переменной или будет использована в async with контексте
         """
         super(AbstractPaymentWrapper, self).__init__()
 
@@ -171,7 +172,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     async def transactions(
             self,
             rows_num: int = 50,
-            operation: Literal['ALL', 'IN', 'OUT', 'QIWI_CARD', 'ALL'] = 'ALL',
+            operation: str = 'ALL',
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None
     ) -> Union[Optional[List[Transaction]], dict]:
@@ -265,7 +266,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     async def transaction_info(
             self,
             transaction_id: Union[str, int],
-            transaction_type: Literal['IN', 'OUT']
+            transaction_type: str
     ) -> Optional[Transaction]:
         """
         Метод для получения полной информации о транзакции\n
@@ -325,7 +326,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     async def check_transaction(
             self,
             amount: Union[int, float],
-            transaction_type: Literal['IN', 'OUT', 'QIWI_CARD'] = 'IN',
+            transaction_type: str = 'IN',
             sender_number: Optional[str] = None,
             rows_num: int = 50,
             comment: Optional[str] = None) -> bool:
@@ -483,7 +484,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             comment: Optional[str] = None,
             life_time: Optional[datetime] = None,
             theme_code: Optional[str] = None,
-            pay_source_filter: Optional[Literal['qw', 'card', 'mobile']] = None
+            pay_source_filter: Optional[str] = None
     ) -> Union[Bill, BillError]:
         """
         Метод для выставление p2p счёта.
@@ -522,7 +523,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Bill.parse_raw(response.response_data).initialize(self)
 
-    async def check_p2p_bill_status(self, bill_id: str) -> Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']:
+    async def check_p2p_bill_status(self, bill_id: str) -> str:
         """
         Метод для проверки статуса p2p транзакции.\n
         Возможные типы транзакции: \n
@@ -568,7 +569,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     async def get_receipt(
             self,
             transaction_id: Union[str, int],
-            transaction_type: Literal['IN', 'OUT', 'QIWI_CARD'],
+            transaction_type: str,
             file_path: Optional[str] = None
     ) -> Union[bytearray, int]:
         """
@@ -632,8 +633,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
     async def fetch_statistics(
             self, start_date: Union[datetime, timedelta], end_date: Union[datetime, timedelta],
-            operation: Literal['ALL', 'IN', 'OUT', 'QIWI_CARD'] = 'ALL',
-            sources: Optional[List[Literal['QW_RUB', 'CARD', 'QW_USD', 'QW_EUR', 'MK']]] = None
+            operation: str = 'ALL',
+            sources: Optional[List[str]] = None
     ) -> Statistic:
         """
         Данный запрос используется для получения сводной статистики по суммам платежей за заданный период.\n
@@ -779,10 +780,10 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param json_bill_data:
         :return: RefundBill object
         """
-        url = 'https://api.qiwi.com/partner/bill/v1/bills/' + str(bill_id) + ' /refunds/' + refund_id
+        url = 'https://api.qiwi.com/partner/bill/v1/bills/' + str(bill_id)
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS), p2p=True)
         async for response in self._parser.fast().fetch(
-                url=url,
+                url=url + ' /refunds/' + refund_id,
                 headers=headers,
                 method='PUT',
                 json=json_bill_data if isinstance(json_bill_data, dict) else json_bill_data.json()

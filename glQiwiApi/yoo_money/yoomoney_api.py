@@ -266,9 +266,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             expire_period: int = 1
     ) -> PreProcessPaymentResponse:
         """
-        Более подробная документация: https://yoomoney.ru/docs/wallet/process-payments/request-payment\n
-        Создание платежа, проверка параметров и возможности приема платежа магазином или перевода средств
-        на счет пользователя ЮMoney.\n
+        Более подробная документация:
+        https://yoomoney.ru/docs/wallet/process-payments/request-payment\n
+        Создание платежа, проверка параметров и возможности приема платежа магазином или
+        перевода средств на счет пользователя ЮMoney.\n
         Данный метод не рекомендуется использовать напрямую, гораздо проще использовать send.
         Требуемые права токена:
         payment.to-account.rst («идентификатор получателя», «тип идентификатора») или payment-p2p.
@@ -317,7 +318,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             self,
             to_account: str,
             amount: Union[int, float],
-            money_source: Literal['wallet', 'card'] = 'wallet',
+            money_source: str = 'wallet',
             pattern_id: str = 'p2p',
             cvv2_code: str = '',
             card_type: Optional[Literal['Visa', 'MasterCard', 'American Express', 'JCB']] = None,
@@ -349,7 +350,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          отображается в истории отправителя.
         :param card_type: Тип банковской карты, нужно заполнять,
          только если вы хотите списать средства с вашей карты
-        :param cvv2_code: опционально, может быть не передан, однако, если для оплаты картой это требуется,
+        :param cvv2_code: опционально, может быть не передан, однако,
+         если для оплаты картой это требуется,
          параметр стоит передавать
         :param comment:	Комментарий к переводу, отображается получателю.
         :param protect: Значение параметра true — признак того, что перевод защищен кодом протекции.
@@ -357,7 +359,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :param expire_period: Число дней, в течении которых:
             получатель перевода может ввести код протекции и получить перевод на свой счет,
             получатель перевода до востребования может получить перевод.
-            Значение параметра должно находиться в интервале от 1 до 365. Необязательный параметр. По умолчанию 1.
+            Значение параметра должно находиться в интервале от 1 до 365.
+            Необязательный параметр. По умолчанию 1.
         """
         if amount < 2:
             raise InvalidData('Введите сумму, которая больше минимальной(2 и выше)')
@@ -458,7 +461,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         При отмене перевода он возвращается отправителю. \n
         Требуемые права токена: incoming-transfers
 
-        Более подробная документация: https://yoomoney.ru/docs/wallet/process-payments/incoming-transfer-reject
+        Более подробная документация:
+        https://yoomoney.ru/docs/wallet/process-payments/incoming-transfer-reject
 
         :param operation_id: Идентификатор операции, значение параметра operation_id ответа метода history().
         :return: словарь в json формате с ответом от апи
@@ -476,15 +480,16 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
     async def check_transaction(
             self,
             amount: Union[int, float],
-            transaction_type: Literal['in', 'out'] = 'in',
+            transaction_type: str = 'in',
             comment: Optional[str] = None,
             rows_num: int = 100,
             sender_number: Optional[str] = None
     ) -> bool:
         """
-        Метод для проверки транзакции.\n Рекомендуется использовать только если вы не можете написать свой обработчик.\n
+        Метод для проверки транзакции.\n
         Данный метод использует self.transactions(rows_num=rows_num) для получения платежей.\n
-        Для небольшой оптимизации вы можете уменьшить rows_num задав его, однако это не гарантирует правильный результат
+        Для небольшой оптимизации вы можете уменьшить rows_num задав его,
+        однако это не гарантирует правильный результат
 
         :param amount: сумма платежа
         :param transaction_type: тип платежа
@@ -494,7 +499,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :return: bool, есть ли такая транзакция в истории платежей
         """
         transactions = await self.transactions(
-            operation_types=[OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT],
+            operation_types=[
+                OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT
+            ],
             records=rows_num
         )
 

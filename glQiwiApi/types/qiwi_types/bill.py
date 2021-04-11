@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class Customer(BaseModel):
 
 
 class BillStatus(BaseModel):
-    value: Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']
+    value: str
     changed_datetime: str = Field(alias="changedDateTime")
 
 
