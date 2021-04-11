@@ -13,14 +13,19 @@ DEFAULT_QIWI_HEADERS = {
 
 ERROR_CODE_NUMBERS = {
     "400": "Ошибка синтаксиса запроса (неправильный формат данных)."
-           "Если вы используете to_wallet или to_card, вероятно, у вас недостаточно"
-           "денег для перевода или вы указали неверный номер счета для перевода",
+           "Если вы используете to_wallet или to_card,"
+           "вероятно, у вас недостаточно денег для перевода"
+           "или вы указали неверный номер счета для перевода",
     "401": "Неверный токен или истек срок действия токена API",
-    "403": "Нет прав на данный запрос (недостаточно разрешений у токена API)",
-    "404": "Не найдена транзакция или отсутствуют платежи с указанными признаками",
+    "403": "Нет прав на данный запрос"
+           "(недостаточно разрешений у токена API)",
+    "404": "Не найдена транзакция или"
+           "отсутствуют платежи с указанными признаками",
     "423": "Слишком много запросов, сервис временно недоступен",
-    "405": "Ошибка, связанная с типом запроса к апи, обратитесь к разработчику или откройте issue",
-    "500": "Внутренняя ошибка сервиса"
+    "405": "Ошибка, связанная с типом запроса к апи,"
+           "обратитесь к разработчику или откройте issue",
+    "500": "Внутренняя ошибка сервиса",
+    "400_special_bad_proxy": "Ошибка, связанная с использованием прокси"
 }
 
 P2P_QIWI_HEADERS = {
@@ -105,27 +110,35 @@ P2P_BILL_TRANSFER = {
     'value': 'amount'
 }
 
-LIMIT_TYPES = ['TURNOVER', 'REFILL', 'PAYMENTS_P2P', 'PAYMENTS_PROVIDER_INTERNATIONALS', 'PAYMENTS_PROVIDER_PAYOUT',
-               'WITHDRAW_CASH']
+LIMIT_TYPES = [
+    'TURNOVER',
+    'REFILL',
+    'PAYMENTS_P2P',
+    'PAYMENTS_PROVIDER_INTERNATIONALS',
+    'PAYMENTS_PROVIDER_PAYOUT',
+    'WITHDRAW_CASH'
+]
 
 LIMIT_TYPES_TRANSFER = {
     'max': 'max_limit',
     'type': 'limit_type'
 }
-
-ONLINE_COMMISSION_DATA = {
-    "account": "",
-    "paymentMethod": {
-        "type": "Account",
-        "accountId": "643"
-    },
-    "purchaseTotals":
-        {
-            "total":
-                {"amount": "",
-                 "currency": "643"
-                 }
-        }}
+COMMISSION_DATA = WrapperData(
+    json={
+        "account": "",
+        "paymentMethod": {
+            "type": "Account",
+            "accountId": "643"
+        },
+        "purchaseTotals":
+            {
+                "total":
+                    {"amount": "",
+                     "currency": "643"
+                     }
+            }},
+    headers=DEFAULT_QIWI_HEADERS
+)
 
 COMMISSION_TRANSFER = {
     'providerId': 'provider_id',
@@ -135,7 +148,18 @@ COMMISSION_TRANSFER = {
 }
 
 __all__ = (
-    'LIMIT_TYPES', 'TRANSACTION_TRANSFER', 'IDENTIFICATION_TRANSFER', 'QIWI_TO_WALLET', 'QIWI_TO_CARD',
-    'DEFAULT_QIWI_HEADERS', 'LIMIT_TYPES_TRANSFER', 'P2P_QIWI_HEADERS', 'P2P_DATA', 'P2P_BILL_TRANSFER',
-    'ONLINE_COMMISSION_DATA', 'COMMISSION_TRANSFER', 'ERROR_CODE_NUMBERS', 'BASE_QIWI_URL'
+    'LIMIT_TYPES',
+    'TRANSACTION_TRANSFER',
+    'IDENTIFICATION_TRANSFER',
+    'QIWI_TO_WALLET',
+    'QIWI_TO_CARD',
+    'DEFAULT_QIWI_HEADERS',
+    'LIMIT_TYPES_TRANSFER',
+    'P2P_QIWI_HEADERS',
+    'P2P_DATA',
+    'P2P_BILL_TRANSFER',
+    'COMMISSION_DATA',
+    'COMMISSION_TRANSFER',
+    'ERROR_CODE_NUMBERS',
+    'BASE_QIWI_URL'
 )

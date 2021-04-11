@@ -2,7 +2,7 @@ import unittest
 
 from glQiwiApi import YooMoneyAPI
 from glQiwiApi.abstracts import AioTestCase
-from glQiwiApi.data import Payment, AccountInfo, Operation
+from glQiwiApi.types import Payment, AccountInfo, Operation
 
 TOKEN = 'some_token'
 
@@ -13,7 +13,8 @@ class YooMoneyTest(AioTestCase):
 
     async def test_build_url_to_get_token(self):
         url = await YooMoneyAPI.build_url_for_auth(
-            scope=['account.rst-info', "operation-history", 'operation-details'],
+            scope=['account.rst-info', "operation-history",
+                   'operation-details'],
             client_id='some_client_id'
         )
         self.assertEqual(isinstance(url, str), True)
@@ -31,7 +32,11 @@ class YooMoneyTest(AioTestCase):
 
     async def test_transaction_history(self) -> None:
         transactions = await self.w.transactions()
-        self.assertEqual(all(isinstance(transaction, Operation) for transaction in transactions), True)
+        self.assertEqual(
+            all(
+                isinstance(
+                    transaction, Operation
+                ) for transaction in transactions), True)
 
     async def test_send(self):
         payment = await self.w.send(

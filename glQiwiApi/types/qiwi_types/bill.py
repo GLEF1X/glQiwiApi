@@ -2,8 +2,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.mixins import BillMixin
+from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.utils.basics import custom_load
 
 
@@ -43,7 +43,9 @@ class Bill(BaseModel, BillMixin):
     creation_date_time: str = Field(alias="creationDateTime")
     expiration_date_time: str = Field(alias="expirationDateTime")
     pay_url: str = Field(alias="payUrl")
-    custom_fields: Optional[CustomFields] = Field(alias="customFields", const=None)
+    custom_fields: Optional[
+        CustomFields
+    ] = Field(alias="customFields", const=None)
     customer: Optional[Customer] = None
 
     class Config:
@@ -52,6 +54,13 @@ class Bill(BaseModel, BillMixin):
         allow_mutation = True
 
 
+class RefundBill(BaseModel):
+    amount: OptionalSum
+    datetime: str
+    refund_id: str = Field(..., alias="refundId")
+    status: str
+
+
 __all__ = [
-    'Bill', 'BillError'
+    'Bill', 'BillError', 'RefundBill'
 ]

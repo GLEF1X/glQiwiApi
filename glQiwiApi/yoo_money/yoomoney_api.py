@@ -1,28 +1,43 @@
-import functools
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple, Literal
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.api import HttpXParser
-from glQiwiApi.types import AccountInfo, OperationType, Operation, OperationDetails, PreProcessPaymentResponse, \
-    Payment, IncomingTransaction
+from glQiwiApi.basic_requests_api import HttpXParser
+from glQiwiApi.mixins import ToolsMixin
+from glQiwiApi.types import (
+    AccountInfo,
+    OperationType,
+    Operation,
+    OperationDetails,
+    PreProcessPaymentResponse,
+    Payment,
+    IncomingTransaction
+)
 from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.basic_yoomoney_config import BASE_YOOMONEY_URL, ERROR_CODE_NUMBERS, content_and_auth, \
     OPERATION_TRANSFER
 
 
-class YooMoneyAPI(AbstractPaymentWrapper):
+class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
     """
-    Класс, реализующий обработку запросов к YooMoney, используя основной класс HttpXParser,
-    удобен он тем, что не просто отдает json подобные объекты, а всё это конвертирует в python dataclasses.
-    Для работы с данным классом, необходимо зарегистрировать токен по такому
+    Класс, реализующий обработку запросов к YooMoney
+    Удобен он тем, что не просто отдает json подобные объекты,
+    а всё это конвертирует в python dataclasses.
+    Для работы с данным классом, необходимо зарегистрировать токен,
+    используя гайд на официальном гитхабе проекта
     """
 
-    def __init__(self, api_access_token: str, without_context: bool = False) -> None:
+    __slots__ = ("api_access_token", "without_context", "_parser")
+
+    def __init__(
+            self,
+            api_access_token: str,
+            without_context: bool = False
+    ) -> None:
         """
-        Конструктор принимает токен, полученный из класс метода get_access_token() этого же класса
+        Конструктор принимает токен, полученный из класс метода get_access_token()
         и специальный аттрибут without_context,
 
         :param api_access_token: апи токен для запросов
@@ -31,15 +46,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         """
         self.api_access_token = api_access_token
         self._parser = CustomParser(without_context=without_context, messages=ERROR_CODE_NUMBERS)
-
-    async def __aenter__(self) -> 'YooMoneyAPI':
-        """Создаем сессию, чтобы не пересоздавать её много раз"""
-        self._parser.create_session()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Закрываем сессию при выходе"""
-        await self._parser.session.close()
 
     def _auth_token(self, headers: dict) -> Dict[Any, Any]:
         headers['Authorization'] = headers['Authorization'].format(
@@ -52,20 +58,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                                  redirect_uri: str = 'https://example.com') -> str:
         """
         Метод для получения ссылки для дальнейшей авторизации и получения токена yoomoney\n
-        Сценарий авторизации, взятый из документации, приложения пользователем:\n
-        1. Пользователь инициирует авторизацию приложения для управления своим счетом.\n
-        2. Приложение отправляет запрос Authorization Request на сервер ЮMoney.\n
-        3. ЮMoney перенаправляют пользователя на страницу авторизации.\n
-        4. Пользователь вводит свой логин и пароль,
-           просматривает список запрашиваемых прав и подтверждает, либо отклоняет запрос авторизации.
-        5. Приложение получает ответ Authorization Response
-         в виде HTTP Redirect со временным token значением для получения доступа или кодом ошибки.\n
-        6. Приложение, используя полученный временный токен доступа,
-           отправляет запрос на получение токена авторизации (Access Token Request).\n
-        7. Ответ содержит токен авторизации (access_token).\n
-        8. Приложение сообщает пользователю результат авторизации.\n
-        Подробно это описано в официальной документации:
-        https://yoomoney.ru/docs/wallet/using-api/authorization/request-access-token
 
         :param scope: OAuth2-авторизации приложения пользователем, права перечисляются через пробел.
         :param client_id: идентификатор приложения, тип string
@@ -130,7 +122,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             if response.ok:
                 return {'success': True}
 
-    @functools.lru_cache
     async def account_info(self) -> AccountInfo:
         """
         Метод для получения информации об аккаунте пользователя
@@ -152,7 +143,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             except IndexError:
                 raise InvalidData('Cannot fetch account info, check your token')
 
-    @functools.lru_cache
     async def transactions(
             self,
             operation_types: Optional[Union[List[OperationType], Tuple[OperationType, ...]]] = None,
@@ -164,7 +154,8 @@ class YooMoneyAPI(AbstractPaymentWrapper):
     ) -> List[Operation]:
         """
         Подробная документация: https://yoomoney.ru/docs/wallet/user-account/operation-history\n
-        Метод позволяет просматривать историю операций (полностью или частично) в постраничном режиме.\n
+        Метод позволяет просматривать историю операций (полностью или частично)
+        в постраничном режиме.\n
         Записи истории выдаются в обратном хронологическом порядке: от последних к более ранним.\n
         Перечень типов операций, которые требуется отобразить. Возможные значения:\n
         DEPOSITION — пополнение счета (приход);\n
@@ -175,12 +166,15 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         :param label: string.
         Отбор платежей по значению метки.
          Выбираются платежи, у которых указано заданное значение параметра label вызова request-payment.
-        :param start_date: datetime	Вывести операции от момента времени (операции, равные start_date, или более поздние)
+        :param start_date: datetime	Вывести операции от момента времени
+         (операции, равные start_date, или более поздние)
         Если параметр отсутствует, выводятся все операции.
-        :param end_date: datetime	Вывести операции до момента времени (операции более ранние, чем end_date).
+        :param end_date: datetime	Вывести операции до момента времени
+         (операции более ранние, чем end_date).
          Если параметр отсутствует, выводятся все операции.
         :param start_record: string
-         Если параметр присутствует, то будут отображены операции, начиная с номера start_record.
+         Если параметр присутствует, то будут отображены операции, начиная
+          с номера start_record.
          Операции нумеруются с 0. Подробнее про постраничный вывод списка
         :param records:	int	Количество запрашиваемых записей истории операций.
          Допустимые значения: от 1 до 100, по умолчанию — 30.
@@ -230,7 +224,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                 transfers=OPERATION_TRANSFER
             )
 
-    @functools.lru_cache
     async def transaction_info(self, operation_id: str) -> OperationDetails:
         """
         Позволяет получить детальную информацию об операции из истории.
@@ -334,21 +327,28 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             expire_period: int = 1
     ) -> Payment:
         """
-        Метод для отправки денег на аккаунт или карту другого человека. Данная функция делает сразу 2 запроса,
-        из-за этого вы можете почувствовать небольшую потерю производительности, вы можете использовать метод
+        Метод для отправки денег на аккаунт или карту другого человека.
+        Данная функция делает сразу 2 запроса, из-за этого
+         вы можете почувствовать небольшую потерю производительности, вы можете использовать метод
         _pre_process_payment и получать объект PreProcessPaymentResponse,
         в котором есть информация о ещё неподтвержденном платеже\n
-        Более подробная документация: https://yoomoney.ru/docs/wallet/process-payments/process-payment
+        Более подробная документация:
+        https://yoomoney.ru/docs/wallet/process-payments/process-payment
 
         :param pattern_id: Идентификатор шаблона платежа
-        :param to_account: string Идентификатор получателя перевода (номер счета, номер телефона или email).
-        :param amount: Сумма к получению (придет на счет получателя счет после оплаты). МИНИМАЛЬНАЯ СУММА 2.
+        :param to_account: string Идентификатор получателя перевода
+         (номер счета, номер телефона или email).
+        :param amount: Сумма к получению
+         (придет на счет получателя счет после оплаты). МИНИМАЛЬНАЯ СУММА 2.
         :param money_source: Запрашиваемый метод проведения платежа.
          wallet — со счета пользователя, если вы хотите использовать card,
-         тогда нужно будет передать card_type для поиска карты в списке ваших банковских карт,
+         тогда нужно будет передать card_type
+         для поиска карты в списке ваших банковских карт,
          а также опционально cvv2 код для проведения платежа
-        :param comment_for_history: Комментарий к переводу, отображается в истории отправителя.
-        :param card_type: Тип банковской карты, нужно заполнять, только если вы хотите списать средства с вашей карты
+        :param comment_for_history: Комментарий к переводу,
+         отображается в истории отправителя.
+        :param card_type: Тип банковской карты, нужно заполнять,
+         только если вы хотите списать средства с вашей карты
         :param cvv2_code: опционально, может быть не передан, однако, если для оплаты картой это требуется,
          параметр стоит передавать
         :param comment:	Комментарий к переводу, отображается получателю.
@@ -409,23 +409,23 @@ class YooMoneyAPI(AbstractPaymentWrapper):
                     'Не удалось создать запрос на перевод средств, проверьте переданные параметры и попробуйте ещё раз'
                 )
 
-    @functools.lru_cache
     async def get_balance(self) -> Optional[Union[float, int]]:
         """Метод для получения баланса на кошельке yoomoney"""
         return (await self.account_info()).balance
 
-    @functools.lru_cache
     async def accept_incoming_transaction(
             self,
             operation_id: str,
             protection_code: str
     ) -> IncomingTransaction:
         """
-        Прием входящих переводов, защищенных кодом протекции, если вы передали в метод send параметр protect,
-        и переводов до востребования.
+        Прием входящих переводов, защищенных кодом протекции,
+        если вы передали в метод send параметр protect
         Количество попыток приема входящего перевода с кодом протекции ограничено.
-        При исчерпании количества попыток, перевод автоматически отвергается (перевод возвращается отправителю).
-        Более подробная документация: https://yoomoney.ru/docs/wallet/process-payments/incoming-transfer-accept
+        При исчерпании количества попыток, перевод автоматически отвергается
+         (перевод возвращается отправителю).
+        Более подробная документация:
+        https://yoomoney.ru/docs/wallet/process-payments/incoming-transfer-accept
 
         :param operation_id: Идентификатор операции, значение параметра operation_id ответа метода history()
         :param protection_code: Код протекции. Строка из 4-х десятичных цифр.
@@ -451,7 +451,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
             except IndexError:
                 raise ConnectionError('Такая транзакция не найдена или были переданы невалидные данные')
 
-    @functools.lru_cache
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
         """
         Отмена входящих переводов, защищенных кодом протекции, если вы передали в метод send параметр protect,
@@ -474,7 +473,6 @@ class YooMoneyAPI(AbstractPaymentWrapper):
         ):
             return response.response_data
 
-    @functools.lru_cache
     async def check_transaction(
             self,
             amount: Union[int, float],

@@ -2,17 +2,22 @@ import asyncio
 from itertools import repeat
 from typing import Optional, Union, Dict, List, Tuple, Any, AsyncGenerator
 
-from aiohttp import ClientTimeout, ClientSession, ClientRequest, ClientProxyConnectionError, \
-    ServerDisconnectedError, ContentTypeError
+from aiohttp import (
+    ClientTimeout,
+    ClientRequest,
+    ClientProxyConnectionError,
+    ServerDisconnectedError,
+    ContentTypeError
+)
 from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
 from glQiwiApi.abstracts import AbstractParser
 from glQiwiApi.types import ProxyService, Response
-from glQiwiApi.utils.exceptions import RequestProxyError
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
+
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
 
 
@@ -39,7 +44,7 @@ class Core:
         :return: bool
         """
         if isinstance(other, HttpXParser):
-            if other.url == self.url and other.base_headers == self.base_headers:
+            if other.base_headers == self.base_headers:
                 return True
         return False
 
@@ -57,21 +62,24 @@ class Core:
 
 class HttpXParser(AbstractParser):
     """
-    Представляет собой апи запросов для дальнейшего использования в запросах к разным
-    платежным системам
+    Обвертка над aiohttp
 
     """
     _sleep_time = 2
 
     def __init__(self):
+        super(HttpXParser, self).__init__()
         self.base_headers = {
             'User-Agent': USER_AGENT,
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
         self._core = Core()
-        self.session: Optional[ClientSession] = None
-        self.url = 'http://127.0.0.1/api/'
-        self._timeout = ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None)
+        self._timeout = ClientTimeout(
+            total=5,
+            connect=None,
+            sock_connect=5,
+            sock_read=None
+        )
         self._connector: Optional[ProxyConnector] = None
 
     async def _request(
@@ -84,26 +92,38 @@ class HttpXParser(AbstractParser):
             json: Optional[dict] = None,
             skip_exceptions: bool = False,
             proxy: Optional[ProxyService] = None,
-            data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+            data: Optional[Dict[str, Union[
+                str, int, List[
+                    Union[str, int]
+                ]]]
+            ] = None,
             headers: Optional[Dict[str, Union[str, int]]] = None,
-            params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+            params: Optional[
+                Dict[str, Union[str, int, List[
+                    Union[str, int]
+                ]]]
+            ] = None,
             **client_kwargs) -> Response:
         """
         Метод для отправки запроса,
-        может возвращать в Response ProxyError в качестве response_data, это означает, что вы имеете проблемы с прокси,
-        возможно нужно добавить дополнительные post данные, если вы используете method = POST, или headers,
+        может возвращать в Response ProxyError в качестве response_data,
+        это означает, что вы имеете проблемы с подключением к прокси,
+        возможно нужно добавить дополнительные post данные,
+         если вы используете method = POST, или headers,
         если запрос GET
 
 
         :param url: ссылка, куда вы хотите отправить ваш запрос
-        :param get_json: указывает на то, хотите ли вы получить ответ в формате json
-        :param method: Тип запроса(любой от обычного GET до PUT, DELETE)
+        :param get_json: указывает на то, хотите ли вы получить ответ
+         в формате json
+        :param method: Тип запроса
         :param proxy: instance of ProxyService
-        :param data: post data
+        :param data: payload data
         :param cookies:
         :param headers:
         :param session: aiohttp.ClientSession object
-        :param client_kwargs: key/value for aiohttp.ClientSession initialization
+        :param client_kwargs: key/value for
+         aiohttp.ClientSession initialization
         :return: Response instance
         """
         headers = headers if isinstance(headers, dict) else self.base_headers
@@ -112,29 +132,25 @@ class HttpXParser(AbstractParser):
             self._connector = ProxyConnector()
             self.request_class = ProxyClientRequest
 
-        try:
-            proxy_kwargs = proxy.get_proxy()
-        except AttributeError:
-            proxy_kwargs = {}
-        client_session_create_kwargs = {
-            'timeout': self._timeout if set_timeout else DEFAULT_TIMEOUT,
-            'connector': self._connector,
-            'request_class': self.request_class if isinstance(proxy,
-                                                              ProxyService) else ClientRequest,
-            **client_kwargs
-        }
-        # Create new session if old was closed
-        if not self.session:
-            self.create_session(**client_session_create_kwargs)
-        elif isinstance(self.session, ClientSession):
-            if self.session.closed:
-                self.create_session(**client_session_create_kwargs)
+        # Get "true" dict representation of ProxyService
+        proxy_kwargs = proxy.get_proxy() \
+            if isinstance(proxy, ProxyService) else {}
 
-        # sending query
+        # Create new session if old was closed
+        self.create_session(
+            timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT,
+            connector=self._connector,
+            request_class=self.request_class if isinstance(
+                proxy, ProxyService
+            ) else ClientRequest,
+            **client_kwargs
+        )
+
+        # sending query to some endpoint url
         try:
             response = await self.session.request(
                 method=method,
-                url=self.url if not url else url,
+                url=url,
                 data=data,
                 headers=headers,
                 json=json if isinstance(json, dict) else None,
@@ -144,7 +160,7 @@ class HttpXParser(AbstractParser):
             )
         except (ClientProxyConnectionError, SocksError, ServerDisconnectedError) as ex:
             if not skip_exceptions:
-                raise ConnectionError() from ex
+                self.raise_exception(status_code='400_special_bad_proxy', json_info=ex)
             return Response.bad_response()
         # Get content and return response
         try:
@@ -166,14 +182,12 @@ class HttpXParser(AbstractParser):
             url=response.url.__str__()
         )
 
-    def create_session(self, **kwargs) -> None:
-        if not self.session:
-            self.session = ClientSession(**kwargs)
-        elif isinstance(self.session, ClientSession):
-            if self.session.closed:
-                self.session = ClientSession(**kwargs)
-
-    async def fetch(self, *, times: int = 1, **kwargs) -> AsyncGenerator[Response, None]:
+    async def fetch(
+            self,
+            *,
+            times: int = 1,
+            **kwargs
+    ) -> AsyncGenerator[Response, None]:
         """
         Basic usage: \n
         parser = HttpXParser() \n
@@ -184,12 +198,6 @@ class HttpXParser(AbstractParser):
         :param kwargs: HttpXParser._request kwargs
         :return:
         """
-        try:
-            django_support = kwargs.get('validate_django')
-            if django_support and kwargs.get('proxy'):
-                raise RequestProxyError('Invalid params. You cant use proxy with django localhost')
-        except KeyError:
-            pass
         coroutines = [self._request(**kwargs) for _ in repeat(None, times)]
         for future in asyncio.as_completed(fs=coroutines):
             yield await future
@@ -197,7 +205,8 @@ class HttpXParser(AbstractParser):
     def fast(self) -> 'HttpXParser':
         """
         Method to fetching faster with using faster event loop(uvloop) \n
-        USE IT ONLY ON LINUX SYSTEMS, on windows or mac its dont give performance!
+        USE IT ONLY ON LINUX SYSTEMS,
+        on Windows or Mac its dont give performance!
 
         :return:
         """
@@ -205,7 +214,7 @@ class HttpXParser(AbstractParser):
             from uvloop import EventLoopPolicy
             asyncio.set_event_loop_policy(EventLoopPolicy())
         except ImportError:
-            "Catching import error and forsake standard policy"
+            # Catching import error and forsake standard policy
             from asyncio import DefaultEventLoopPolicy as EventLoopPolicy
             asyncio.set_event_loop_policy(EventLoopPolicy())
         return self

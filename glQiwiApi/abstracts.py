@@ -1,7 +1,9 @@
 import abc
 import asyncio
 import unittest
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional, Dict, Any, Union
+
+from aiohttp import ClientSession
 
 
 class AbstractPaymentWrapper(abc.ABC):
@@ -40,12 +42,17 @@ class AioTestCase(unittest.TestCase):
         attr = object.__getattribute__(self, item)
         if asyncio.iscoroutinefunction(attr):
             if item not in self._function_cache:
-                self._function_cache[item] = self.coroutine_function_decorator(attr)
+                self._function_cache[
+                    item
+                ] = self.coroutine_function_decorator(attr)
             return self._function_cache[item]
         return attr
 
 
 class AbstractParser(abc.ABC):
+
+    def __init__(self):
+        self.session: Optional[ClientSession] = None
 
     @abc.abstractmethod
     async def _request(self, *args, **kwargs) -> None:
@@ -55,5 +62,16 @@ class AbstractParser(abc.ABC):
     async def fetch(self, *args, **kwargs) -> AsyncGenerator:
         raise NotImplementedError()
 
-    async def raise_exception(self, *args, **kwargs) -> None:
+    def raise_exception(
+            self,
+            status_code: Union[str, int],
+            json_info: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Метод для обработки исключений и лучшего логирования"""
+
+    def create_session(self, **kwargs) -> None:
+        if not self.session:
+            self.session = ClientSession(**kwargs)
+        elif isinstance(self.session, ClientSession):
+            if self.session.closed:
+                self.session = ClientSession(**kwargs)
