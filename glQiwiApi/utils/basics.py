@@ -1,14 +1,23 @@
 import functools as ft
 import re
 import time
+import warnings
 from dataclasses import is_dataclass
 from datetime import datetime
 from typing import Optional, Union, Type
 
-import orjson
 import pytz
 from pydantic import ValidationError
 from pytz.reference import LocalTimezone
+
+try:
+    import orjson
+except (ModuleNotFoundError, ImportError):
+    warnings.warn(
+        'You should install orjson module to improve performance.',
+        ResourceWarning
+    )
+    import json as orjson
 
 Local = LocalTimezone()
 

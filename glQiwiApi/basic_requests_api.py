@@ -1,4 +1,5 @@
 import asyncio
+import time
 from itertools import repeat
 from typing import (
     Optional, Union, Dict,
@@ -18,6 +19,8 @@ from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
 from glQiwiApi.abstracts import AbstractParser
 from glQiwiApi.types import ProxyService, Response
+from glQiwiApi.types.basics import CachedResponse, Attributes
+from glQiwiApi.utils.exceptions import InvalidData
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
 
@@ -245,3 +248,84 @@ class HttpXParser(AbstractParser):
         import random
         random.shuffle(proxies)
         return proxies
+
+
+class SimpleCache(object):
+    """
+    Класс, позволяющий кэшировать результаты запросов
+
+    """
+    # Доступные критерии, по которым проходит валидацию кэш
+    available = ('params', 'json', 'data', 'headers')
+
+    __slots__ = ('_cache', '_cache_time')
+
+    def __init__(self, cache_time: Union[float, int]) -> None:
+        if cache_time < 0:
+            raise InvalidData("Время кэширования не может быть меньше нуля")
+
+        self._cache: Optional[Dict[str, CachedResponse]] = dict()
+        self._cache_time = cache_time
+
+    def __del__(self) -> None:
+        del self._cache
+
+    def get_current(self, key: str) -> Optional[CachedResponse]:
+        return self._cache.get(key)
+
+    def _clear(self, key: str) -> None:
+        self._cache.pop(key)
+
+    def set(
+            self,
+            result: Any,
+            kwargs: Any,
+            status_code: Union[str, int]
+    ) -> None:
+        """
+        Метод, который добавляет результат запроса в кэш
+
+        """
+        uncached = ['https://api.qiwi.com/partner/bill', '/sinap/api/v2/']
+        url = kwargs.get('url')
+        if not self._cache_time < 0.1:
+            if not any(
+                    url.startswith(contain_match) or contain_match in url
+                    for contain_match in uncached
+            ):
+                self._cache.update({
+                    url: CachedResponse(
+                        Attributes.format(kwargs, self.available),
+                        result,
+                        status_code,
+                        url,
+                        kwargs.get('method')
+                    )
+                })
+
+    def validate(self, kwargs: Dict[str, Any]) -> bool:
+        """
+        Метод для валидации кэша
+
+        """
+        # Если параметры и ссылка запроса совпадает
+        cached = self._cache.get(kwargs.get('url'))
+        if isinstance(cached, CachedResponse):
+            # Проверяем, не вышло ли время кэша
+            if time.monotonic() - cached.cached_in > self._cache_time:
+                self._clear(kwargs.get('url'))
+                return False
+
+            # Проверяем запрос методом GET на кэш
+            elif cached.method == 'GET':
+                if kwargs.get('headers') == cached.kwargs.headers:
+                    if kwargs.get('params') == cached.kwargs.params:
+                        return True
+            elif any(
+                    getattr(cached.kwargs, key) == kwargs.get(key, '')
+                    for key in self.available if key != 'headers'
+            ):
+
+                return True
+
+        return False

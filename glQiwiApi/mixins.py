@@ -1,7 +1,9 @@
 import copy
-from typing import Optional, Any
+import time
+from typing import Optional, Any, Union
 
-from glQiwiApi.types.basics import Attributes
+from glQiwiApi.types.basics import CachedResponse
+from glQiwiApi.utils.exceptions import InvalidData
 
 
 class BillMixin(object):
@@ -56,29 +58,3 @@ class ToolsMixin(object):
     @property
     def parser(self):
         return self._parser
-
-
-class SimpleCache(object):
-
-    def __init__(self) -> None:
-        self._cache: Optional[Attributes] = None
-
-    def __del__(self) -> None:
-        del self._cache
-
-    def get(self) -> Optional[Attributes]:
-        return self._cache
-
-    def set(self, result: Any, kwargs: Any) -> None:
-        data = kwargs.get('json') \
-            if kwargs.get('json') is not None else kwargs.get('data')
-        self._cache = Attributes(data, result)
-
-    def validate(self, kwargs) -> bool:
-        if isinstance(self._cache, Attributes):
-            json = kwargs.get('json')
-            data = kwargs.get('data')
-            if isinstance(json, dict) or isinstance(data, dict):
-                if data == self._cache.kwargs or json == self._cache.kwargs:
-                    return True
-        return False
