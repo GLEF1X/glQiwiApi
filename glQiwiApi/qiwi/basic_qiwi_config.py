@@ -8,7 +8,7 @@ DEFAULT_QIWI_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Authorization': 'Bearer {token}',
-    'Host': 'edge.qiwi_types.com',
+    'Host': 'edge.qiwi.com',
 }
 
 ERROR_CODE_NUMBERS = {

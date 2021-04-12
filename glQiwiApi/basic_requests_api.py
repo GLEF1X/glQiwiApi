@@ -1,6 +1,9 @@
 import asyncio
 from itertools import repeat
-from typing import Optional, Union, Dict, List, Tuple, Any, AsyncGenerator
+from typing import (
+    Optional, Union, Dict,
+    List, Tuple, Any, AsyncGenerator
+)
 
 from aiohttp import (
     ClientTimeout,
@@ -18,7 +21,8 @@ from glQiwiApi.types import ProxyService, Response
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
 
-USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
+USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
+             '(KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
 
 
 class Core:

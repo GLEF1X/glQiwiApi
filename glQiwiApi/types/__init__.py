@@ -1,4 +1,4 @@
-from typing import Union, TypeVar, Callable, Any
+from typing import Union
 
 from .basics import (
     Type, Sum, Commission, OptionalSum
@@ -16,8 +16,13 @@ from .qiwi_types import (
     Transaction
 )
 from .yoomoney_types import (
-    OperationType, OperationDetails, PreProcessPaymentResponse, Operation, Payment, IncomingTransaction, AccountInfo,
-    ALL_OPERATION_TYPES
+    OperationType,
+    OperationDetails,
+    PreProcessPaymentResponse,
+    Operation,
+    Payment,
+    IncomingTransaction,
+    AccountInfo
 )
 
 BasicTypes = Union[
@@ -30,7 +35,6 @@ PydanticTypes = Union[
     Bill, BillError, Statistic, Balance, Identification
 ]
 
-F = TypeVar('F', bound=Callable[..., Any])
 __all__ = [
     'QiwiAccountInfo',
     'Transaction',
@@ -43,7 +47,6 @@ __all__ = [
     'Balance',
     'AccountInfo',
     'OperationType',
-    'ALL_OPERATION_TYPES',
     'Operation',
     'OperationDetails',
     'PreProcessPaymentResponse',
@@ -58,6 +61,5 @@ __all__ = [
     'OptionalSum',
     'Commission',
     'BasicTypes',
-    'F',
     'PydanticTypes'
 ]

@@ -1,4 +1,5 @@
-from typing import Union
+from dataclasses import dataclass
+from typing import Union, Any
 
 from pydantic import BaseModel, Field
 
@@ -32,6 +33,12 @@ class Commission(BaseModel):
 class Type(BaseModel):
     id: str
     title: str
+
+
+@dataclass
+class Attributes:
+    kwargs: dict
+    result: Any
 
 
 __all__ = [

@@ -10,8 +10,12 @@ SECRET_KEY = 'YOUR_SECRET_P2P_TOKEN'
 
 
 async def basic_usage():
-    async with QiwiWrapper(api_access_token=TOKEN, phone_number=WALLET, public_p2p=PUBLIC_KEY,
-                           secret_p2p=SECRET_KEY) as wallet:
+    async with QiwiWrapper(
+            api_access_token=TOKEN,
+            phone_number=WALLET,
+            public_p2p=PUBLIC_KEY,
+            secret_p2p=SECRET_KEY
+    ) as wallet:
         # Так вы можете получить информацию по транзакции, зная её айди и тип
         print(await wallet.transaction_info(
             transaction_type='OUT', transaction_id=21249852701

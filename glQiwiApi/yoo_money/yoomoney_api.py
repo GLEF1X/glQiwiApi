@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import List, Dict, Any, Union, Optional, Tuple, Literal
+from typing import List, Dict, Any, Union, Optional, Tuple
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.abstracts import AbstractPaymentWrapper
 from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.basic_requests_api import HttpXParser
 from glQiwiApi.mixins import ToolsMixin
 from glQiwiApi.types import (
     AccountInfo,
@@ -16,8 +15,12 @@ from glQiwiApi.types import (
     IncomingTransaction
 )
 from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
-from glQiwiApi.yoo_money.basic_yoomoney_config import BASE_YOOMONEY_URL, ERROR_CODE_NUMBERS, content_and_auth, \
+from glQiwiApi.yoo_money.basic_yoomoney_config import (
+    BASE_YOOMONEY_URL,
+    ERROR_CODE_NUMBERS,
+    content_and_auth,
     OPERATION_TRANSFER
+)
 
 
 class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
@@ -71,11 +74,13 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'redirect_uri': redirect_uri,
             'scope': " ".join(scope)
         }
-        async for response in HttpXParser().fast().fetch(
-                url=BASE_YOOMONEY_URL + '/oauth/authorize',
-                headers=headers,
-                data=params,
-                method='POST'
+        async for response in CustomParser(
+                without_context=True, messages=ERROR_CODE_NUMBERS
+        ).fast().fetch(
+            url=BASE_YOOMONEY_URL + '/oauth/authorize',
+            headers=headers,
+            data=params,
+            method='POST'
         ):
             try:
                 return api_helper.parse_auth_link(response.response_data)
@@ -99,12 +104,14 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'grant_type': 'authorization_code',
             'redirect_uri': redirect_uri
         }
-        async for response in HttpXParser().fast().fetch(
-                url=BASE_YOOMONEY_URL + '/oauth/token',
-                headers=headers,
-                data=params,
-                method='POST',
-                get_json=True
+        async for response in CustomParser(
+                without_context=True, messages=ERROR_CODE_NUMBERS
+        ).fast().fetch(
+            url=BASE_YOOMONEY_URL + '/oauth/token',
+            headers=headers,
+            data=params,
+            method='POST',
+            get_json=True
         ):
             return response.response_data.get('access_token')
 
@@ -115,7 +122,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(api_helper.parse_headers(auth=True))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/revoke',
+                url=BASE_YOOMONEY_URL + '/api/revoke',
                 method='POST',
                 headers=headers
         ):
@@ -131,7 +138,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/account-info',
+                url=BASE_YOOMONEY_URL + '/api/account-info',
                 headers=headers,
                 method='POST'
         ):
@@ -212,7 +219,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             data.update({'till': api_helper.datetime_to_str_in_iso(end_date, yoo_money_format=True)})
 
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/operation-history',
+                url=BASE_YOOMONEY_URL + '/api/operation-history',
                 method='POST',
                 headers=headers,
                 data=data,
@@ -237,7 +244,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'operation_id': operation_id
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/operation-details',
+                url=BASE_YOOMONEY_URL + '/api/operation-details',
                 headers=headers,
                 data=payload
         ):
@@ -297,7 +304,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'codepro': protect
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/request-payment',
+                url=BASE_YOOMONEY_URL + '/api/request-payment',
                 headers=headers,
                 data=payload
         ):
@@ -321,7 +328,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             money_source: str = 'wallet',
             pattern_id: str = 'p2p',
             cvv2_code: str = '',
-            card_type: Optional[Literal['Visa', 'MasterCard', 'American Express', 'JCB']] = None,
+            card_type: Optional[str] = None,
             protect: bool = False,
             comment_for_history: Optional[str] = None,
             comment: Optional[str] = None,
@@ -382,7 +389,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
         if money_source == 'card' and isinstance(pre_payment, PreProcessPaymentResponse):
             if pre_payment.money_source.get('cards').get('allowed') == 'true':
-                if not card_type:
+                if not isinstance(card_type, str):
                     payload.update({
                         'money_source': pre_payment.money_source.get('cards').get('items')[0].get('id'),
                         'csc': cvv2_code
@@ -395,7 +402,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                                 {'money_source': card.get('id'), 'csc': cvv2_code},
                             )
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/process-payment',
+                url=BASE_YOOMONEY_URL + '/api/process-payment',
                 method='POST',
                 headers=headers,
                 data=payload
@@ -440,7 +447,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'protection_code': protection_code
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/incoming-transfer-accept',
+                url=BASE_YOOMONEY_URL + '/api/incoming-transfer-accept',
                 headers=headers,
                 data=payload,
                 method='POST',
@@ -469,7 +476,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/types/incoming-transfer-reject',
+                url=BASE_YOOMONEY_URL + '/api/incoming-transfer-reject',
                 headers=headers,
                 data={'operation_id': operation_id},
                 method='POST',
@@ -483,7 +490,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             transaction_type: str = 'in',
             comment: Optional[str] = None,
             rows_num: int = 100,
-            sender_number: Optional[str] = None
+            sender_number: Optional[str] = None,
+            **kwargs
     ) -> bool:
         """
         Метод для проверки транзакции.\n
@@ -496,15 +504,14 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :param sender_number: номер получателя
         :param rows_num: кол-во платежей, которое будет проверяться
         :param comment: комментарий, по которому будет проверяться транзакция
+        :param kwargs: Дополнительные аргументы для использования
+         метода transactions
         :return: bool, есть ли такая транзакция в истории платежей
         """
         transactions = await self.transactions(
-            operation_types=[
-                OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT
-            ],
+            operation_types=[OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT],
             records=rows_num
         )
-
         for transaction in transactions:
             details_transaction = await self.transaction_info(transaction.operation_id)
             detail_amount = details_transaction.amount if transaction_type == 'in' else details_transaction.amount_due

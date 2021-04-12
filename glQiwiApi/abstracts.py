@@ -70,7 +70,7 @@ class AbstractParser(abc.ABC):
         """Метод для обработки исключений и лучшего логирования"""
 
     def create_session(self, **kwargs) -> None:
-        if not self.session:
+        if self.session is None:
             self.session = ClientSession(**kwargs)
         elif isinstance(self.session, ClientSession):
             if self.session.closed:

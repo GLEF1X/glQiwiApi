@@ -1,4 +1,3 @@
-import functools
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -42,9 +41,17 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     Класс, реализующий обработку запросов к киви, удобен он тем,
     что не просто отдает json подобные объекты, а
     конвертирует ответ апи в pydantic модель.
+
     """
 
-    __slots__ = ('api_access_token', 'phone_number', 'secret_p2p', 'public_p2p', 'without_context', '_parser')
+    __slots__ = (
+        'api_access_token',
+        'phone_number',
+        'secret_p2p',
+        'public_p2p',
+        'without_context',
+        '_parser'
+    )
 
     def __init__(self,
                  api_access_token: Optional[str] = None,
@@ -58,7 +65,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param secret_p2p: секретный ключ, полученный с https://p2p.qiwi.com/
         :param public_p2p: публичный ключ, полученный с https://p2p.qiwi.com/
         :param without_context: bool, указывает будет ли объект класса
-         глобальной" переменной или будет использована в async with контексте
+         "глобальной" переменной или будет использована в async with контексте
         """
         super(AbstractPaymentWrapper, self).__init__()
 
@@ -88,7 +95,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     ) -> Union[Response, str]:
         """
         Метод для отправки средств на карту.
-        Более подробная документация https://developer.qiwi.com/ru/qiwi-wallet-personal/#cards
+        Более подробная документация:
+        https://developer.qiwi.com/ru/qiwi-wallet-personal/#cards
 
         :param trans_sum: сумма перевода
         :param to_card: номер карты получателя
@@ -99,7 +107,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         data.json['fields']['account'] = to_card
         data.headers = self._auth_token(headers=data.headers)
         privat_card_id = await self._detect_card_number(card_number=to_card)
-        base_url = BASE_QIWI_URL + '/sinap/types/v2/terms/' + privat_card_id
+        base_url = BASE_QIWI_URL + '/sinap/api/v2/terms/' + privat_card_id
         async for response in self._parser.fast().fetch(
                 url=base_url + '/payments',
                 headers=data.headers,
@@ -134,7 +142,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             try:
                 return response.response_data.get('message')
             except KeyError:
-                raise InvalidCardNumber('Invalid card number or qiwi_types types is not response') from None
+                raise InvalidCardNumber('Invalid card number or qiwi api is not response') from None
 
     async def _detect_mobile_number(self, phone_number: str):
         """
@@ -181,6 +189,12 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         Более подробная документация:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#payments_list
 
+        Возможные значения параметра operation:
+         - 'ALL'
+         - 'IN'
+         - 'OUT'
+         - 'QIWI_CARD'
+
         :param rows_num: кол-во транзакций, которые вы хотите получить
         :param operation: Тип операций в отчете, для отбора.
         :param start_date:Начальная дата поиска платежей.
@@ -192,7 +206,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         if rows_num > 50:
             raise InvalidData('Можно проверять не более 50 транзакций')
 
-        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        headers = self._auth_token(deepcopy(
+            DEFAULT_QIWI_HEADERS
+        ))
         payload_data = {
             'rows': rows_num,
             'operation': operation
@@ -216,8 +232,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 )
             else:
                 raise InvalidData('end_date не может быть больше чем start_date')
+        base_url = BASE_QIWI_URL + '/payment-history/v2/persons/'
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/payment-history/v2/persons/' + self.phone_number.replace('+', '') + '/payments',
+                url=base_url + self.phone_number.replace('+', '') + '/payments',
                 params=payload_data,
                 headers=headers,
                 method='GET',
@@ -254,7 +271,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             headers=data.headers
         )
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/sinap/types/v2/terms/99/payments',
+                url=BASE_QIWI_URL + '/sinap/api/v2/terms/99/payments',
                 json=data.json,
                 headers=data.headers
         ):
@@ -335,6 +352,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         Данный метод использует self.transactions(rows_num=rows_num) для получения платежей.\n
         Для небольшой оптимизации вы можете уменьшить rows_num задав его,
         однако это не гарантирует правильный результат
+        Возможные значения параметра transaction_type:
+         - 'IN'
+         - 'OUT'
+         - 'QIWI_CARD'
+
 
         :param amount: сумма платежа
         :param transaction_type: тип платежа
@@ -367,7 +389,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         Функция для получения лимитов по счёту киви кошелька\n
         Возвращает лимиты по кошельку в виде списка,
         если лимита по определенной стране нет, то не включает его в список
-        Подробная документация https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
+        Подробная документация:
+        https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
 
         :return: Limit object of Limit(pydantic)
         """
@@ -470,7 +493,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             'rows': rows
         }
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/checkout-types/types/bill/search?statuses=READY_FOR_PAY',
+                url=BASE_QIWI_URL + '/checkout-api/api/bill/search?statuses=READY_FOR_PAY',
                 headers=headers,
                 method='GET',
                 params=params
@@ -489,19 +512,23 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         Метод для выставление p2p счёта.
         Надежный способ для интеграции. Параметры передаются server2server с использованием авторизации.
-
+        Возможные значения pay_source_filter:
+          - 'qw'
+          - 'card'
+          - 'mobile'
 
         :param amount: сумма платежа
         :param bill_id: уникальный номер транзакции, если не передан, генерируется автоматически,
         :param life_time: дата, до которой счет будет доступен для оплаты.
         :param comment: комментарий к платежу
         :param theme_code: специальный код темы
-        :param pay_source_filter: При открытии формы будут отображаться только указанные способы перевода
+        :param pay_source_filter: При открытии формы будут отображаться
+         только указанные способы перевода
         """
         if not self.public_p2p or not self.secret_p2p:
             raise InvalidData('Не задан p2p токен')
 
-        if not bill_id:
+        if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
 
         life_time = api_helper.datetime_to_str_in_iso(DEFAULT_BILL_TIME if not life_time else life_time)
@@ -565,7 +592,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return Bill.parse_raw(response.response_data)
 
-    @functools.lru_cache
     async def get_receipt(
             self,
             transaction_id: Union[str, int],
@@ -573,7 +599,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             file_path: Optional[str] = None
     ) -> Union[bytearray, int]:
         """
-        Метод для получения чека в формате байтов или файлом.
+        Метод для получения чека в формате байтов или файлом.\n
+        Возможные значения transaction_type:
+         - 'IN'
+         - 'OUT'
+         - 'QIWI_CARD'
 
         :param transaction_id: str or int, id транзакции, можно получить при вызове методе to_wallet, to_card
         :param transaction_type: тип транзакции может быть 'IN', 'OUT', 'QIWI_CARD'
@@ -781,7 +811,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :return: RefundBill object
         """
         url = 'https://api.qiwi.com/partner/bill/v1/bills/' + str(bill_id)
-        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS), p2p=True)
+        headers = self._auth_token(
+            deepcopy(DEFAULT_QIWI_HEADERS), True
+        )
         async for response in self._parser.fast().fetch(
                 url=url + ' /refunds/' + refund_id,
                 headers=headers,

@@ -11,7 +11,8 @@ setuptools.setup(
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Parser for post and get requests",
-    # Длинное описание, которое будет отображаться на странице PyPi. Использует README.md репозитория для заполнения.
+    # Длинное описание, которое будет отображаться на странице PyPi.
+    # Использует README.md репозитория для заполнения.
     long_description=long_description,
     # Определяет тип контента, используемый в long_description.
     long_description_content_type="text/markdown",

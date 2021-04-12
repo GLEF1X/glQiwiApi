@@ -14,6 +14,10 @@ Local = LocalTimezone()
 
 
 def measure_time(func):
+    """
+    Декоратор для замера времени выполнения функции
+    """
+
     @ft.wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.monotonic()
@@ -33,7 +37,10 @@ def datetime_to_str_in_iso(obj, yoo_money_format=False):
 
 
 def parse_auth_link(response_data):
-    return re.findall(r'https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+', str(response_data))[0]
+    regexp = re.compile(
+        r'https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+'
+    )
+    return re.findall(regexp, str(response_data))[0]
 
 
 def parse_headers(content_json=False, auth=False):
