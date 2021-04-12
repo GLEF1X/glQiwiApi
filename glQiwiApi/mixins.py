@@ -1,15 +1,12 @@
 import copy
-import time
-from typing import Optional, Any, Union
-
-from glQiwiApi.types.basics import CachedResponse
-from glQiwiApi.utils.exceptions import InvalidData
+from typing import Optional, Any
 
 
 class BillMixin(object):
     """
     Примесь, позволяющая проверять счет, не используя метод QiwiWrapper,
     добавляя метод check() объекту Bill
+
     """
     _w = None
     bill_id: Optional[str] = None
@@ -38,17 +35,13 @@ class ToolsMixin(object):
         if self._parser.session:
             await self._parser.session.close()
 
-    def __copy__(self):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-        return result
-
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> 'ToolsMixin':
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
-        for k, v in self.__dict__.items():
+        values = [getattr(self, slot) for slot in self.__slots__]
+        items = zip(self.__slots__, values)
+        for k, v in items:
             if k == '_parser':
                 v.session = None
             setattr(result, k, copy.deepcopy(v, memo))

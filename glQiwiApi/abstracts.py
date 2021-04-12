@@ -6,6 +6,30 @@ from typing import AsyncGenerator, Optional, Dict, Any, Union
 from aiohttp import ClientSession
 
 
+class AbstractCacheController(abc.ABC):
+    """
+    Абстрактный класс контроллера кэша
+
+    """
+    __slots__ = ('_cache', '_cache_time')
+
+    @abc.abstractmethod
+    def get_current(self, key: str) -> Any:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def _clear(self, key: str) -> None:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def set(self, *args, **kwargs) -> None:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def validate(self, kwargs: Dict[str, Any]) -> bool:
+        raise NotImplementedError()
+
+
 class AbstractPaymentWrapper(abc.ABC):
     @abc.abstractmethod
     async def transactions(self, *args, **kwargs) -> None:

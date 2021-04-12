@@ -50,9 +50,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         'phone_number',
         'secret_p2p',
         'public_p2p',
-        'without_context',
         '_parser',
-        'cache_time'
     )
 
     def __init__(
@@ -71,8 +69,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param public_p2p: публичный ключ, полученный с https://p2p.qiwi.com/
         :param without_context: bool, указывает будет ли объект класса
          "глобальной" переменной или будет использована в async with контексте
-        :param cache_time: Время кэширование запросов в секундах, по умолчанию 0,
-         соответственно запрос не попадает в кэш
+        :param cache_time: Время кэширование запросов в секундах,
+         по умолчанию 0, соответственно,
+         запрос не будет использовать кэш по дефолту
         """
         super(AbstractPaymentWrapper, self).__init__()
 
@@ -178,8 +177,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     async def get_balance(self) -> Sum:
         """Метод для получения баланса киви"""
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/funding-sources/v2/persons/' + self.phone_number + '/accounts',
+                url=url + self.phone_number + '/accounts',
                 headers=headers,
                 method='GET',
                 get_json=True
@@ -344,8 +344,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :return: Response object
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        url = BASE_QIWI_URL + '/identification/v1/persons/'
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/identification/v1/persons/' + self.phone_number + '/identification',
+                url=url + self.phone_number + '/identification',
                 method='GET',
                 headers=headers
         ):
@@ -633,9 +634,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
          - 'OUT'
          - 'QIWI_CARD'
 
-        :param transaction_id: str or int, id транзакции, можно получить при вызове методе to_wallet, to_card
+        :param transaction_id: str or int, id транзакции,
+         можно получить при вызове методе to_wallet, to_card
         :param transaction_type: тип транзакции может быть 'IN', 'OUT', 'QIWI_CARD'
-        :param file_path: путь к файлу, куда вы хотите сохранить чек, если не указан, возвращает байты
+        :param file_path: путь к файлу, куда вы хотите сохранить чек,
+         если не указан, возвращает байты
         :return: pdf файл в байтовом виде или номер записанных байтов
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
@@ -723,7 +726,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             CARD - привязанные и непривязанные к кошельку банковские карты,
             MK - счет мобильного оператора. Если не указан, учитываются все источники платежа.
         """
-        headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        headers = self._auth_token(
+            deepcopy(DEFAULT_QIWI_HEADERS)
+        )
 
         if isinstance(
                 start_date, (datetime, timedelta)

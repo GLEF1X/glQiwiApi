@@ -12,6 +12,7 @@ class CustomParser(HttpXParser):
     под платежные системы и кэширование запросов
 
     """
+    __slots__ = ('_without_context', 'messages', '_cache')
 
     def __init__(
             self,

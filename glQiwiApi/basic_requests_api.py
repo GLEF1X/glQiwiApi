@@ -17,7 +17,7 @@ from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
-from glQiwiApi.abstracts import AbstractParser
+from glQiwiApi.abstracts import AbstractParser, AbstractCacheController
 from glQiwiApi.types import ProxyService, Response
 from glQiwiApi.types.basics import CachedResponse, Attributes
 from glQiwiApi.utils.exceptions import InvalidData
@@ -250,15 +250,13 @@ class HttpXParser(AbstractParser):
         return proxies
 
 
-class SimpleCache(object):
+class SimpleCache(AbstractCacheController):
     """
     Класс, позволяющий кэшировать результаты запросов
 
     """
     # Доступные критерии, по которым проходит валидацию кэш
     available = ('params', 'json', 'data', 'headers')
-
-    __slots__ = ('_cache', '_cache_time')
 
     def __init__(self, cache_time: Union[float, int]) -> None:
         if cache_time < 0:
