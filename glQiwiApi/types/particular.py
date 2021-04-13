@@ -7,11 +7,13 @@ from aiosocksy import Socks5Auth, Socks4Auth
 
 from glQiwiApi.utils.exceptions import ProxyError
 
+response_type = Union[dict, str, bytes, bytearray, Exception]
+
 
 @dataclass
 class Response:
     status_code: int
-    response_data: Optional[Union[dict, str, bytes, bytearray, Exception]] = None
+    response_data: Optional[response_type] = None
     url: Optional[str] = None
     raw_headers: Optional[RawHeaders] = None
     cookies: Optional[SimpleCookie] = None

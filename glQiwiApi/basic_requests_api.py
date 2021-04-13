@@ -275,7 +275,7 @@ class SimpleCache(AbstractCacheController):
         return self.tmp_data.get(key)
 
     def clear(self, key: Optional[str] = None, force: bool = False) -> Any:
-        if not force:
+        if force:
             return self.tmp_data.clear()
         return self.tmp_data.pop(key)
 

@@ -43,11 +43,12 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             cache_time: Union[float, int] = DEFAULT_CACHE_TIME
     ) -> None:
         """
-        Конструктор принимает токен, полученный из класс метода get_access_token()
+        Конструктор принимает токен, полученный из класс метода get_access_token
         и специальный аттрибут without_context,
 
         :param api_access_token: апи токен для запросов
-        :param without_context: bool, указывающая будет ли объект класса "глобальной" переменной
+        :param without_context: bool, указывающая будет
+         ли объект класса "глобальной" переменной
          или будет использована в async with контексте
         :param cache_time: Время кэширование запросов в секундах,
          по умолчанию 0, соответственно,
@@ -74,12 +75,15 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             redirect_uri: str = 'https://example.com'
     ) -> str:
         """
-        Метод для получения ссылки для дальнейшей авторизации и получения токена yoomoney\n
+        Метод для получения ссылки для дальнейшей авторизации и получения токена
 
-        :param scope: OAuth2-авторизации приложения пользователем, права перечисляются через пробел.
+        :param scope: OAuth2-авторизации приложения пользователем,
+         права передаются списком.
         :param client_id: идентификатор приложения, тип string
-        :param redirect_uri: воронка, куда попадет временный код, который нужен для получения основного токена
-        :return: ссылку, по которой нужно перейти и сделать авторизацию через логин/пароль
+        :param redirect_uri: воронка, куда попадет временный код, который нужен
+         для получения основного токена
+        :return: ссылку, по которой нужно перейти
+         и сделать авторизацию через логин/пароль
         """
         headers = api_helper.parse_headers()
         params = {
@@ -102,7 +106,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 return api_helper.parse_auth_link(response.response_data)
             except IndexError:
                 raise NoUrlFound(
-                    'Не удалось найти ссылку для авторизации в ответе от апи, проверьте client_id'
+                    'Не удалось найти ссылку для авторизации '
+                    'в ответе от апи, проверьте client_id'
                 )
 
     @classmethod
@@ -115,7 +120,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         Метод для получения токена для запросов к YooMoney API
 
-        :param code: временный код, который был получен в методе base_authorize()
+        :param code: временный код, который был получен в методе base_authorize
         :param client_id: идентификатор приложения, тип string
         :param redirect_uri: воронка, куда попадет временный код,
          который нужен для получения основного токена
@@ -176,13 +181,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 headers=headers,
                 method='POST'
         ):
-            try:
-                return api_helper.format_objects(
-                    iterable_obj=(response.response_data,),
-                    obj=AccountInfo,
-                )[0]
-            except IndexError:
-                raise InvalidData('Cannot fetch account info, check your token')
+            return api_helper.format_objects(
+                iterable_obj=(response.response_data,),
+                obj=AccountInfo,
+            )[0]
 
     async def transactions(
             self,
@@ -200,19 +202,23 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         https://yoomoney.ru/docs/wallet/user-account/operation-history\n
         Метод позволяет просматривать историю операций (полностью или частично)
         в постраничном режиме.\n
-        Записи истории выдаются в обратном хронологическом порядке: от последних к более ранним.\n
-        Перечень типов операций, которые требуется отобразить. Возможные значения:\n
+        Записи истории выдаются в обратном хронологическом порядке: от последних
+         к более ранним.\n
+        Перечень типов операций, которые требуется отобразить.\n
+        Возможные значения:
         DEPOSITION — пополнение счета (приход);\n
         PAYMENT — платежи со счета (расход);\n
-        INCOMING(incoming-transfers-unaccepted) — непринятые входящие P2P-переводы любого типа.\n
+        INCOMING(incoming-transfers-unaccepted) —
+         непринятые входящие P2P-переводы любого типа.\n
 
         :param operation_types: Тип операций
         :param label: string.
-        Отбор платежей по значению метки.
-         Выбираются платежи, у которых указано заданное значение параметра label вызова request-payment.
+         Отбор платежей по значению метки.
+         Выбираются платежи, у которых указано заданное значение параметра
+         label вызова request-payment.
         :param start_date: datetime	Вывести операции от момента времени
          (операции, равные start_date, или более поздние)
-        Если параметр отсутствует, выводятся все операции.
+         Если параметр отсутствует, выводятся все операции.
         :param end_date: datetime	Вывести операции до момента времени
          (операции более ранние, чем end_date).
          Если параметр отсутствует, выводятся все операции.
@@ -240,10 +246,15 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
         if operation_types:
             if all(
-                    isinstance(operation_type, OperationType) for operation_type in operation_types
+                    isinstance(
+                        operation_type, OperationType
+                    ) for operation_type in operation_types
             ):
+                op_types = [
+                    operation_type.value for operation_type in operation_types
+                ]
                 data.update({'type': ' '.join(
-                    [operation_type.value for operation_type in operation_types])}
+                    op_types)}
                 )
 
         if isinstance(start_record, int):
@@ -263,7 +274,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
         if end_date:
             if not isinstance(end_date, datetime):
-                raise InvalidData('Параметр end_date был передан неправильным типом данных')
+                raise InvalidData(
+                    'Параметр end_date был передан неправильным типом данных'
+                )
             data.update({'till': api_helper.datetime_to_str_in_iso(
                 end_date, True
             )})
@@ -285,7 +298,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         Позволяет получить детальную информацию об операции из истории.
         Требуемые права токена: operation-details.
-        Более подробная документация: https://yoomoney.ru/docs/wallet/user-account/operation-details
+        Более подробная документация:
+        https://yoomoney.ru/docs/wallet/user-account/operation-details
 
         :param operation_id: Идентификатор операции
         """
@@ -300,19 +314,11 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 headers=headers,
                 data=payload
         ):
-            try:
-                obj = api_helper.format_objects(
-                    iterable_obj=(response.response_data,),
-                    obj=OperationDetails,
-                    transfers=OPERATION_TRANSFER
-                )[0]
-                if obj.error:
-                    raise IndexError()
-                return obj
-            except (IndexError, AttributeError):
-                raise ConnectionError(
-                    'Не удалось получить объект, проверьте токен, который вы передаете в конструктор класса'
-                )
+            return api_helper.format_objects(
+                iterable_obj=(response.response_data,),
+                obj=OperationDetails,
+                transfers=OPERATION_TRANSFER
+            )[0]
 
     async def _pre_process_payment(
             self,
@@ -327,23 +333,31 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         Более подробная документация:
         https://yoomoney.ru/docs/wallet/process-payments/request-payment\n
-        Создание платежа, проверка параметров и возможности приема платежа магазином или
-        перевода средств на счет пользователя ЮMoney.\n
-        Данный метод не рекомендуется использовать напрямую, гораздо проще использовать send.
+        Создание платежа, проверка параметров и возможности приема
+        платежа магазином или перевода средств на счет пользователя ЮMoney.\n
+        Данный метод не рекомендуется использовать напрямую, гораздо
+        проще использовать send.
         Требуемые права токена:
-        payment.to-account.rst («идентификатор получателя», «тип идентификатора») или payment-p2p.
+        to-account («идентификатор получателя», «тип идентификатора»)
 
         :param pattern_id: Идентификатор шаблона платежа
-        :param to_account: string Идентификатор получателя перевода (номер счета, номер телефона или email).
-        :param amount: Сумма к получению (придет на счет получателя счет после оплаты).
-        :param comment_for_history: Комментарий к переводу, отображается в истории отправителя.
-        :param comment_for_receiver:	string	Комментарий к переводу, отображается получателю.
-        :param protect: Значение параметра true — признак того, что перевод защищен кодом протекции.
+        :param to_account: string Идентификатор получателя перевода
+         (номер счета, номер телефона или email).
+        :param amount: Сумма к получению
+         (придет на счет получателя счет после оплаты).
+        :param comment_for_history: Комментарий к переводу,
+         отображается в истории отправителя.
+        :param comment_for_receiver:	string	Комментарий к переводу,
+         отображается получателю.
+        :param protect: Значение параметра true — признак того,
+         что перевод защищен кодом протекции.
          По умолчанию параметр отсутствует (обычный перевод).
         :param expire_period: Число дней, в течении которых:
-            получатель перевода может ввести код протекции и получить перевод на свой счет,
+            получатель перевода может ввести код протекции
+            и получить перевод на свой счет,
             получатель перевода до востребования может получить перевод.
-            Значение параметра должно находиться в интервале от 1 до 365. Необязательный параметр. По умолчанию 1.
+            Значение параметра должно находиться в интервале от 1 до 365.
+            Необязательный параметр. По умолчанию 1.
         """
         headers = self._auth_token(
             api_helper.parse_headers(**content_and_auth))
@@ -391,7 +405,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         Метод для отправки денег на аккаунт или карту другого человека.
         Данная функция делает сразу 2 запроса, из-за этого
-         вы можете почувствовать небольшую потерю производительности, вы можете использовать метод
+         вы можете почувствовать небольшую потерю производительности,
+          вы можете использовать метод
         _pre_process_payment и получать объект PreProcessPaymentResponse,
         в котором есть информация о ещё неподтвержденном платеже\n
         Более подробная документация:
@@ -415,16 +430,20 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          если для оплаты картой это требуется,
          параметр стоит передавать
         :param comment:	Комментарий к переводу, отображается получателю.
-        :param protect: Значение параметра true — признак того, что перевод защищен кодом протекции.
+        :param protect: Значение параметра true — признак того,
+         что перевод защищен кодом протекции.
          По умолчанию параметр отсутствует (обычный перевод).
         :param expire_period: Число дней, в течении которых:
-            получатель перевода может ввести код протекции и получить перевод на свой счет,
+            получатель перевода может ввести код протекции и
+            получить перевод на свой счет,
             получатель перевода до востребования может получить перевод.
             Значение параметра должно находиться в интервале от 1 до 365.
             Необязательный параметр. По умолчанию 1.
         """
         if amount < 2:
-            raise InvalidData('Введите сумму, которая больше минимальной(2 и выше)')
+            raise InvalidData(
+                'Введите сумму, которая больше минимальной(2 и выше)'
+            )
         pre_payment = await self._pre_process_payment(
             to_account=to_account,
             amount=amount,
@@ -434,18 +453,20 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             protect=protect,
             pattern_id=pattern_id
         )
-        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
+        headers = self._auth_token(
+            api_helper.parse_headers(**content_and_auth))
 
         payload = {
             'request_id': pre_payment.request_id,
             'money_source': 'wallet'
         }
-
-        if money_source == 'card' and isinstance(pre_payment, PreProcessPaymentResponse):
+        expression = isinstance(pre_payment, PreProcessPaymentResponse)
+        if money_source == 'card' and expression:
             if pre_payment.money_source.get('cards').get('allowed') == 'true':
                 if not isinstance(card_type, str):
+                    cards = pre_payment.money_source['cards']
                     payload.update({
-                        'money_source': pre_payment.money_source['cards']['items'][0]['id'],
+                        'money_source': cards['items'][0]['id'],
                         'csc': cvv2_code
                     })
                 else:
@@ -453,7 +474,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                     for card in cards:
                         if card.get('type') == card_type:
                             payload.update(
-                                {'money_source': card.get('id'), 'csc': cvv2_code},
+                                {
+                                    'money_source': card.get('id'),
+                                    'csc': cvv2_code
+                                },
                             )
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/process-payment',
@@ -461,17 +485,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 headers=headers,
                 data=payload
         ):
-            try:
-                obj = api_helper.format_objects(
-                    iterable_obj=(response.response_data,),
-                    obj=Payment
-                )[0]
-                obj.protection_code = pre_payment.protection_code
-                return obj
-            except (IndexError, AttributeError):
-                raise ConnectionError(
-                    'Не удалось создать запрос на перевод средств, проверьте переданные параметры и попробуйте ещё раз'
-                )
+            return api_helper.format_objects(
+                iterable_obj=(response.response_data,),
+                obj=Payment
+            )[0].initialize(pre_payment.protection_code)
 
     async def get_balance(self) -> Optional[Union[float, int]]:
         """Метод для получения баланса на кошельке yoomoney"""
@@ -485,17 +502,21 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         Прием входящих переводов, защищенных кодом протекции,
         если вы передали в метод send параметр protect
-        Количество попыток приема входящего перевода с кодом протекции ограничено.
+        Количество попыток приема
+        входящего перевода с кодом протекции ограничено.
         При исчерпании количества попыток, перевод автоматически отвергается
-         (перевод возвращается отправителю).
+        (перевод возвращается отправителю).
         Более подробная документация:
         https://yoomoney.ru/docs/wallet/process-payments/incoming-transfer-accept
 
-        :param operation_id: Идентификатор операции, значение параметра operation_id ответа метода history()
+        :param operation_id: Идентификатор операции,
+         значение параметра operation_id ответа метода history()
         :param protection_code: Код протекции. Строка из 4-х десятичных цифр.
-         Указывается для входящего перевода, защищенного кодом протекции. Для переводов до востребования отсутствует.
+         Указывается для входящего перевода, защищенного кодом протекции.
+         Для переводов до востребования отсутствует.
         """
-        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
+        headers = self._auth_token(
+            api_helper.parse_headers(**content_and_auth))
         payload = {
             'operation_id': operation_id,
             'protection_code': protection_code
@@ -507,17 +528,15 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 method='POST',
                 get_json=True
         ):
-            try:
-                return api_helper.format_objects(
-                    iterable_obj=(response.response_data,),
-                    obj=IncomingTransaction
-                )[0]
-            except IndexError:
-                raise ConnectionError('Такая транзакция не найдена или были переданы невалидные данные')
+            return api_helper.format_objects(
+                iterable_obj=(response.response_data,),
+                obj=IncomingTransaction
+            )[0]
 
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
         """
-        Отмена входящих переводов, защищенных кодом протекции, если вы передали в метод send параметр protect,
+        Отмена входящих переводов, защищенных кодом протекции, если вы передали
+         в метод send параметр protect,
         и переводов до востребования. \n
         При отмене перевода он возвращается отправителю. \n
         Требуемые права токена: incoming-transfers
@@ -525,10 +544,12 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         Более подробная документация:
         https://yoomoney.ru/docs/wallet/process-payments/incoming-transfer-reject
 
-        :param operation_id: Идентификатор операции, значение параметра operation_id ответа метода history().
+        :param operation_id: Идентификатор операции, значение параметра
+         operation_id ответа метода history().
         :return: словарь в json формате с ответом от апи
         """
-        headers = self._auth_token(api_helper.parse_headers(**content_and_auth))
+        headers = self._auth_token(
+            api_helper.parse_headers(**content_and_auth))
         async for response in self._parser.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/incoming-transfer-reject',
                 headers=headers,
@@ -548,7 +569,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
     ) -> bool:
         """
         Метод для проверки транзакции.\n
-        Данный метод использует self.transactions(rows_num=rows_num) для получения платежей.\n
+        Данный метод использует self.transactions(rows_num=rows_num)
+         для получения платежей.\n
         Для небольшой оптимизации вы можете уменьшить rows_num задав его,
         однако это не гарантирует правильный результат
 
@@ -559,21 +581,30 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :param comment: комментарий, по которому будет проверяться транзакция
         :return: bool, есть ли такая транзакция в истории платежей
         """
+        types = [
+            OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT
+        ]
         transactions = await self.transactions(
-            operation_types=[OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT],
+            operation_types=types,
             records=rows_num
         )
         for transaction in transactions:
-            details_transaction = await self.transaction_info(transaction.operation_id)
+            details_transaction = await self.transaction_info(
+                transaction.operation_id
+            )
             detail_amount = details_transaction.amount if transaction_type == 'in' else details_transaction.amount_due
             detail_comment = details_transaction.comment if transaction_type == 'in' else details_transaction.message
-            if detail_amount >= amount and details_transaction.direction == transaction_type:
-                if transaction.status == 'success':
-                    if detail_comment == comment and details_transaction.sender == sender_number:
-                        return True
-                    elif isinstance(comment, str) and isinstance(sender_number, str):
-                        continue
-                    elif detail_comment == comment:
-                        return True
+            if detail_amount >= amount:
+                if details_transaction.direction == transaction_type:
+                    if transaction.status == 'success':
+                        if detail_comment == comment:
+                            if details_transaction.sender == sender_number:
+                                return True
+                        elif isinstance(comment, str) and isinstance(
+                                sender_number,
+                                str):
+                            continue
+                        elif detail_comment == comment:
+                            return True
 
         return False

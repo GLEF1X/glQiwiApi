@@ -14,7 +14,7 @@ class PassInfo(BaseModel):
 
 
 class MobilePinInfo(BaseModel):
-    last_mobile_pin_change: Optional[str] = Field(alias="lastMobilePinChange")
+    last_mobile_pin_change: Optional[datetime] = Field(alias="lastMobilePinChange")
     mobile_pin_used: bool = Field(alias="mobilePinUsed")
     next_mobile_pin_change: str = Field(alias="nextMobilePinChange")
 
@@ -60,15 +60,17 @@ class NickName(BaseModel):
 class Feature(BaseModel):
     feature_id: int = Field(alias="featureId")
     feature_value: str = Field(alias="featureValue")
-    start_date: datetime = Field(alias="startDate")
-    end_date: datetime = Field(alias="endDate")
+    start_date: str = Field(alias="startDate")
+    end_date: str = Field(alias="endDate")
 
 
 class ContractInfo(BaseModel):
     blocked: bool = False
     contract_id: int = Field(alias="contractId")
     creation_date: datetime = Field(alias="creationDate")
-    identification_info: List[IdentificationInfo] = Field(alias="identificationInfo")
+    identification_info: List[
+        IdentificationInfo
+    ] = Field(alias="identificationInfo")
     sms_notification: SmsNotification = Field(alias="smsNotification")
     nickname: NickName
     features: Optional[List[Feature]] = None

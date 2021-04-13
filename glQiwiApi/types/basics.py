@@ -10,6 +10,10 @@ DEFAULT_CACHE_TIME = 0
 
 
 class Sum(BaseModel):
+    """
+    Сумма платежа
+
+    """
     amount: Union[int, float, str]
     currency: str
 
@@ -23,6 +27,10 @@ class OptionalSum(BaseModel):
 
 
 class Commission(BaseModel):
+    """
+    Комиссия за платеж
+
+    """
     provider_id: int = Field(alias="providerId")
     withdraw_sum: Sum = Field(alias="withdrawSum")
     enrollment_sum: Sum = Field(alias="enrollmentSum")
@@ -34,6 +42,10 @@ class Commission(BaseModel):
 
 
 class Type(BaseModel):
+    """
+    Базовая модель типа данных
+
+    """
     id: str
     title: str
 
@@ -52,7 +64,8 @@ class Attributes:
     @classmethod
     def format(cls, kwargs: dict, args: tuple):
         return cls(
-            **{key: kwargs.get(key) for key in args if isinstance(kwargs.get(key), dict)}
+            **{k: kwargs.get(k) for k in args if
+               isinstance(kwargs.get(k), dict)}
         )
 
 

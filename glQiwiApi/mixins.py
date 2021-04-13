@@ -1,4 +1,5 @@
 import copy
+import itertools as it
 from typing import Optional, Any
 
 
@@ -41,7 +42,7 @@ class ToolsMixin(object):
         result = cls.__new__(cls)
         memo[id(self)] = result
         values = [getattr(self, slot) for slot in self.__slots__]
-        items = zip(self.__slots__, values)
+        items = it.zip_longest(self.__slots__, values)
         for k, v in items:
             if k == '_parser':
                 v.session = None
