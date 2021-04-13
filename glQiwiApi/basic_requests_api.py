@@ -261,7 +261,8 @@ class SimpleCache(AbstractCacheController):
         if isinstance(cache_time, (int, float)):
             if cache_time > 60 or cache_time < 0:
                 raise InvalidData(
-                    "Время кэширования должно быть в пределах от 0 до 60 секунд"
+                    "Время кэширования должно быть в пределах"
+                    " от 0 до 60 секунд"
                 )
 
         self.tmp_data: Optional[Dict[str, CachedResponse]] = dict()

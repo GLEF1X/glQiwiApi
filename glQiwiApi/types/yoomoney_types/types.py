@@ -335,7 +335,10 @@ class Payment:
     """Служебное значение, не фигурирует в документации"""
 
     invoice_id: Optional[str] = None
-    """Номер транзакции магазина в ЮMoney. Присутствует при успешном выполнении платежа в магазин."""
+    """
+    Номер транзакции магазина в ЮMoney.
+    Присутствует при успешном выполнении платежа в магазин.
+    """
 
     balance: Optional[float] = None
     """
@@ -370,8 +373,8 @@ class Payment:
 
     protection_code: Optional[str] = None
     """
-    Код протекции, который был сгенерирован, 
-    если при вызове метода апи send вы указали protect=True 
+    Код протекции, который был сгенерирован,
+    если при вызове метода апи send вы указали protect=True
     при передаче аргументов
     """
 
@@ -385,7 +388,7 @@ class IncomingTransaction:
 
 
 __all__ = (
-    'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation',
+    'AccountInfo', 'OperationType', 'Operation',
     'OperationDetails',
     'PreProcessPaymentResponse', 'Payment', 'IncomingTransaction'
 )
