@@ -329,7 +329,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         Подробная документация:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#restrictions
 
-        :return: Список, где находиться словарь с ограничениями, если ограничений нет - возвращает пустой список
+        :return: Список, где находиться словарь с ограничениями,
+         если ограничений нет - возвращает пустой список
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/person-profile/v1/persons/'
@@ -367,7 +368,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     ) -> bool:
         """
         Метод для проверки транзакции.\n
-        Данный метод использует self.transactions(rows_num=rows_num) для получения платежей.\n
+        Данный метод использует self.transactions(rows_num=rows_num)
+        для получения платежей.\n
         Для небольшой оптимизации вы можете уменьшить rows_num задав его,
         однако это не гарантирует правильный результат
         Возможные значения параметра transaction_type:

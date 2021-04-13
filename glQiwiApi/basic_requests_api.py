@@ -288,11 +288,15 @@ class SimpleCache(AbstractCacheController):
         Метод, который добавляет результат запроса в кэш
 
         """
-        uncached = ('https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/')
+        uncached = (
+            'https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/'
+        )
         url = kwargs.get('url')
         if not self._cache_time < 0.1:
             if not any(
-                    url.startswith(contain_match) or contain_match in url
+                    url.startswith(
+                        contain_match
+                    ) or contain_match in url
                     for contain_match in uncached
             ):
                 self.tmp_data.update({

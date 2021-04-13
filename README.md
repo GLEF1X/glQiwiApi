@@ -2,7 +2,7 @@
 <img src="https://cdn1.savepice.ru/uploads/2021/4/4/ca2c9284c789dfa15cb92a0f42f3e4ab-full.png" width="200"></img>
 </h2>
 
-[![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi)
+[![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-blue)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi)
 
 
 ### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
@@ -121,6 +121,8 @@ async def main():
             print('Успешно оплачено')
         else:
             print('Транзакция не найдена')
+        # Или, начиная с версии апи 0.2.0
+        print(await bill.check())  # This will print you bool answer
 
 
 asyncio.run(main())
@@ -189,6 +191,43 @@ asyncio.run(main())
 
 ```
 
+## 🚀Query caching (beta)
+```python
+import asyncio
+
+from glQiwiApi import QiwiWrapper
+
+# Кэширование по умолчанию отключено, так как
+# эта функция все ещё находиться в бета тестировании и
+# константа DEFAULT_CACHE_TIME = 0, чтобы это исправить и включить кэширование
+# нужно передать cache_time в конструктор класса QiwiWrapper
+# или YooMoneyAPI
+wallet = QiwiWrapper(
+    api_access_token='token',  # Токен, полученный с https://qiwi.com/api
+    phone_number='+phone_number',  # Номер вашего мобильного номера с "+"
+    cache_time=5  # Время кэширование запроса в секундах(пока ещё в бета тестировании)
+)
+
+
+async def cache_test():
+    async with wallet:
+        print(await wallet.transactions(rows_num=50))  # Результат заноситься в кэш
+        print(await wallet.transactions(rows_num=50))  # Этот запрос возьмется из кэша
+
+        # Такие запросы не будут браться из кэша,
+        # причиной тому есть разница в параметрах запроса
+        print(len(await wallet.transactions(rows_num=30)) == 30)  # Результат все также заноситься в кэш
+        # Однако, повторный запрос к апи будет выполнен, поскольку
+        # при попытке взятие результата из кэша валидатор сравнивает
+        # параметры запроса, если они не совпадают, то
+        # кэш игнорируется
+        print(len(await wallet.transactions(rows_num=10)) == 10)  # Повторный запрос к апи
+
+
+asyncio.run(cache_test())
+
+```
+
 ## :warning:Handling exceptions
 
 ```python
@@ -232,7 +271,7 @@ async def get_url_to_auth() -> None:
     # значит либо неправильно передан scope параметр, нужно уменьшить список прав или попробовать пересоздать приложение
     print(await YooMoneyAPI.build_url_for_auth(
         # Для платежей, проверки аккаунта и истории платежей, нужно указать scope=["account.rst-info", "operation-history", "operation-details", "payment-p2p"]
-        scope=["account.rst-info", "operation-history"],
+        scope=["account-info", "operation-history"],
         client_id='айди, полученный при регистрации приложения выше',
         redirect_uri='ссылка, указаная при регистрации выше в поле Redirect URI'
     ))
@@ -276,11 +315,12 @@ TOKEN = 'some_token'
 
 async def main():
     wallet = YooMoneyAPI(
-        api_access_token=TOKEN
+        api_access_token=TOKEN,
+        without_context=True
     )
-    # OR(x3 performance boost)
     transactions = await wallet.transactions()
     print(transactions)
+    # OR(x3 performance boost)
     async with YooMoneyAPI(api_access_token=TOKEN) as w:
         print(await w.transactions(records=50))
 
@@ -301,15 +341,16 @@ TOKEN = 'your_token'
 
 async def main():
     w = YooMoneyAPI(TOKEN)
-    # Так вы можете отослать средства на другой счет, в примере это перевод на аккаунт 4100116602400968
-    # на сумму 2 рубля с комментарием "I LOVE glQiwiApi"
-    payment = await w.send(
-        to_account='4100116602400968',
-        comment='I LOVE glQiwiApi',
-        amount=2
-    )
-    # Опционально, так вы можете проверить транзакцию, поступила ли она человеку на счёт
-    print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi', transaction_type='out'))
+    async with w:
+        # Так вы можете отослать средства на другой счет, в примере это перевод на аккаунт 4100116602400968
+        # на сумму 2 рубля с комментарием "I LOVE glQiwiApi"
+        payment = await w.send(
+            to_account='4100116602400968',
+            comment='I LOVE glQiwiApi',
+            amount=2
+        )
+        # Опционально, так вы можете проверить транзакцию, поступила ли она человеку на счёт
+        print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi', transaction_type='out'))
 
 
 asyncio.run(main())
@@ -328,10 +369,11 @@ TOKEN = 'your_token'
 
 async def main():
     w = YooMoneyAPI(TOKEN)
-    # Так вы получаете информацию об аккаунте в виде объекта AccountInfo
-    account_info = await w.account_info()
-    print(account_info.account_status)
-    print(account_info.balance)
+    async with w:
+        # Так вы получаете информацию об аккаунте в виде объекта AccountInfo
+        account_info = await w.account_info()
+        print(account_info.account_status)
+        print(account_info.balance)
 
 
 asyncio.run(main())

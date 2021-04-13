@@ -371,7 +371,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 return obj
             except (IndexError, AttributeError):
                 raise ConnectionError(
-                    'Не удалось создать pre_payment запрос, проверьте переданные параметры и попробуйте ещё раз'
+                    'Не удалось создать pre_payment запрос, '
+                    'проверьте переданные параметры и попробуйте ещё раз'
                 )
 
     async def send(

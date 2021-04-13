@@ -26,7 +26,9 @@ class PinInfo(BaseModel):
 class AuthInfo(BaseModel):
     ip: str
     bound_email: Optional[str] = Field(alias="boundEmail", const=None)
-    last_login_date: Optional[datetime] = Field(alias="lastLoginDate", const=None)
+    last_login_date: Optional[
+        datetime
+    ] = Field(alias="lastLoginDate", const=None)
     email_settings: Optional[dict] = Field(alias="emailSettings", const=None)
     mobile_pin_info: MobilePinInfo = Field(alias="mobilePinInfo")
     pass_info: PassInfo = Field(alias="passInfo")
@@ -75,20 +77,28 @@ class ContractInfo(BaseModel):
 
 class UserInfo(BaseModel):
     default_pay_currency: str = Field(alias="defaultPayCurrency")
-    default_pay_source: Optional[int] = Field(alias="defaultPaySource", const=None)
-    default_pay_account_alias: Optional[str] = Field(alias="defaultPayAccountAlias", const=None)
+    default_pay_source: Optional[
+        int
+    ] = Field(alias="defaultPaySource", const=None)
+    default_pay_account_alias: Optional[
+        str
+    ] = Field(alias="defaultPayAccountAlias", const=None)
     email: Optional[str] = None
     first_transaction_id: int = Field(alias="firstTxnId")
     language: str
     operator: str
     phone_hash: str = Field(alias="phoneHash")
-    promo_enabled: Optional[bool] = Field(alias="promoEnabled", const=None)
+    promo_enabled: Optional[
+        bool
+    ] = Field(alias="promoEnabled", const=None)
 
 
 class QiwiAccountInfo(BaseModel):
     """Информация об аккаунте"""
     auth_info: Optional[AuthInfo] = Field(alias="authInfo", const=None)
-    contract_info: Optional[ContractInfo] = Field(alias="contractInfo", const=None)
+    contract_info: Optional[
+        ContractInfo
+    ] = Field(alias="contractInfo", const=None)
     user_info: Optional[UserInfo] = Field(alias="userInfo", const=None)
 
     class Config:
