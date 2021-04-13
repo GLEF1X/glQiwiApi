@@ -274,10 +274,10 @@ class SimpleCache(AbstractCacheController):
     def get_current(self, key: str) -> Optional[CachedResponse]:
         return self.tmp_data.get(key)
 
-    def clear(self, key: Optional[str] = None, force: bool = False) -> None:
+    def clear(self, key: Optional[str] = None, force: bool = False) -> Any:
         if not force:
             return self.tmp_data.clear()
-        self.tmp_data.pop(key)
+        return self.tmp_data.pop(key)
 
     def update_data(
             self,

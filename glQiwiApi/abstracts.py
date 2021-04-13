@@ -21,7 +21,7 @@ class AbstractCacheController(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def clear(self, key: str, force: bool = False) -> None:
+    def clear(self, key: str, force: bool = False) -> Any:
         raise NotImplementedError()
 
     @abc.abstractmethod
