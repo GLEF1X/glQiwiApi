@@ -175,7 +175,8 @@ def dump_response(func):
 
 
 def custom_load(data):
-    return orjson.loads(orjson.dumps(data))
+    import json
+    return json.loads(json.dumps(data))
 
 
 def allow_response_code(status_code):

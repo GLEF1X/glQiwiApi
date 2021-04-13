@@ -10,7 +10,7 @@ Payment wrappers
     :members:
 
 Low level API
-_____________
+-------------
 .. automodule:: glQiwiApi.basic_requests_api
    :members:
 

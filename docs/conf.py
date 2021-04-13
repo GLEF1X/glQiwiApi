@@ -52,8 +52,6 @@ templates_path = ['templates']
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
-latex_engine = 'xelatex'
-
 # The master toctree document.
 master_doc = 'index'
 
@@ -89,7 +87,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -123,38 +121,39 @@ htmlhelp_basename = 'glQiwiApiDocs'
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
+# latex_documents = [
+#     (master_doc, 'glQiwiApi.tex',
+#      u'glQiwiApi Documentation',
+#      u'Levent Duivel', 'manual'),
+# ]
 
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
+# latex_elements = {
+#     # The paper size ('letterpaper' or 'a4paper').
+#     #
+#     # 'papersize': 'letterpaper',
 
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
+#     # The font size ('10pt', '11pt' or '12pt').
+#     #
+#     # 'pointsize': '10pt',
 
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
+#     # Additional stuff for the LaTeX preamble.
+#     #
+#     # 'preamble': '',
+
+#     # Latex figure (float) alignment
+#     #
+#     # 'figure_align': 'htbp',
+# }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'aiogram.tex', 'aiogram Documentation',
-     'Illemius / Alex Root Junior', 'manual'),
-]
-
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'aiogram', 'aiogram Documentation',
+    (master_doc, 'glQiwiApi', 'glQiwiApi Documentation',
      [author], 1)
 ]
 
@@ -163,11 +162,6 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'aiogram', 'aiogram Documentation',
-     author, 'aiogram', 'Asynchonyously Python framework for Telegram Bot API',
-     'Miscellaneous'),
-]
 
 autoclass_content = "both"
 autodoc_member_order = "bysource"

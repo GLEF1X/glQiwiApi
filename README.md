@@ -4,10 +4,11 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-blue)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi) ![docs](https://readthedocs.org/projects/pip/badge/?version=latest)
 
-
 ### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
 
-### :fire:Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)
+## Official api resources:
+   * __:fire:Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+   * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### :floppy_disk:Installation
 
