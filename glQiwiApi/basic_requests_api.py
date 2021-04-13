@@ -88,6 +88,9 @@ class HttpXParser(AbstractParser):
             sock_read=None
         )
         self._connector: Optional[ProxyConnector] = None
+        self.request_class: Optional[
+            Union[ClientRequest, ProxyClientRequest]
+        ] = None
 
     async def _request(
             self,
@@ -109,8 +112,7 @@ class HttpXParser(AbstractParser):
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ] = None,
-            **client_kwargs) -> Response:
+            ] = None) -> Response:
         """
         Метод для отправки запроса,
         может возвращать в Response ProxyError в качестве response_data,
@@ -128,8 +130,6 @@ class HttpXParser(AbstractParser):
         :param data: payload data
         :param cookies:
         :param headers:
-        :param session: aiohttp.ClientSession object
-        :param client_kwargs: key/value for
          aiohttp.ClientSession initialization
         :return: Response instance
         """
@@ -149,8 +149,7 @@ class HttpXParser(AbstractParser):
             connector=self._connector,
             request_class=self.request_class if isinstance(
                 proxy, ProxyService
-            ) else ClientRequest,
-            **client_kwargs
+            ) else ClientRequest
         )
 
         # sending query to some endpoint url
@@ -260,14 +259,12 @@ class SimpleCache(AbstractCacheController):
 
     def __init__(self, cache_time: Union[float, int]) -> None:
         if isinstance(cache_time, (int, float)):
-            if cache_time < 0:
+            if cache_time > 60 or cache_time < 0:
                 raise InvalidData(
-                    "Время кэширования не может быть меньше нуля"
+                    "Время кэширования должно быть в пределах"
+                    " от 0 до 60 секунд"
                 )
-            elif cache_time > 60:
-                raise InvalidData(
-                    "Время кэширование должно быть не больше 80-ти секунд"
-                )
+
         self.tmp_data: Optional[Dict[str, CachedResponse]] = dict()
         self._cache_time = cache_time
 
@@ -277,8 +274,10 @@ class SimpleCache(AbstractCacheController):
     def get_current(self, key: str) -> Optional[CachedResponse]:
         return self.tmp_data.get(key)
 
-    def clear(self, key: Optional[str] = None, force: bool = False) -> None:
-        self.tmp_data.pop(key) if not force else self.tmp_data.clear()
+    def clear(self, key: Optional[str] = None, force: bool = False) -> Any:
+        if force:
+            return self.tmp_data.clear()
+        return self.tmp_data.pop(key)
 
     def update_data(
             self,
@@ -329,7 +328,7 @@ class SimpleCache(AbstractCacheController):
                 return False
 
             # Проверяем запрос методом GET на кэш
-            elif cached.method == 'GET':
+            if cached.method == 'GET':
                 if kwargs.get('headers') == cached.kwargs.headers:
                     if kwargs.get('params') == cached.kwargs.params:
                         return True

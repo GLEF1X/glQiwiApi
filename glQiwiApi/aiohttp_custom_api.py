@@ -2,6 +2,7 @@ from typing import Dict, Optional, Any, Union
 
 import glQiwiApi
 from glQiwiApi.basic_requests_api import HttpXParser, SimpleCache
+from glQiwiApi.types import Response
 from glQiwiApi.types.basics import CachedResponse
 from glQiwiApi.utils.exceptions import RequestError
 
@@ -28,7 +29,7 @@ class CustomParser(HttpXParser):
     def clear_cache(self) -> None:
         self._cache.clear(force=True)
 
-    async def _request(self, *args, **kwargs):
+    async def _request(self, *args, **kwargs) -> Response:
         # Получаем текущий кэш используя ссылку как ключ
         response = self._cache.get_current(kwargs.get('url'))
         if not self._cache.validate(kwargs):

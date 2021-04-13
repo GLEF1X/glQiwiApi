@@ -35,7 +35,7 @@ class InvalidToken(Exception):
 
 class InvalidData(Exception):
     """
-    Ошибка возникает, если были переданы или получены невалидные данные при запросе
+    Ошибка возникает, если были переданы или получены невалидные данные
 
     """
 
@@ -58,9 +58,9 @@ class RequestError(Exception):
             message: str,
             status_code: str,
             additional_info: Optional[str] = None,
-            json_info: Optional[Dict[str, Any]] = None, *args
+            json_info: Optional[Dict[str, Any]] = None
     ) -> None:
-        super().__init__(*args)
+        super().__init__()
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info

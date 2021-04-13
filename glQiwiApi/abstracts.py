@@ -1,9 +1,12 @@
 import abc
 import asyncio
 import unittest
-from typing import AsyncGenerator, Optional, Dict, Any, Union
+from typing import AsyncGenerator, Optional, Dict, Any, Union, List
 
 from aiohttp import ClientSession
+from aiohttp.typedefs import LooseCookies
+
+from glQiwiApi.types import ProxyService, Response
 
 
 class AbstractCacheController(abc.ABC):
@@ -18,11 +21,16 @@ class AbstractCacheController(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def clear(self, key: str, force: bool = False) -> None:
+    def clear(self, key: str, force: bool = False) -> Any:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def update_data(self, *args, **kwargs) -> None:
+    def update_data(
+            self,
+            result: Any,
+            kwargs: Any,
+            status_code: Union[str, int]
+    ) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -79,11 +87,36 @@ class AbstractParser(abc.ABC):
         self.session: Optional[ClientSession] = None
 
     @abc.abstractmethod
-    async def _request(self, *args, **kwargs) -> None:
+    async def _request(
+            self,
+            url: Optional[str],
+            get_json: bool,
+            method: str,
+            set_timeout: bool,
+            cookies: Optional[LooseCookies],
+            json: Optional[dict],
+            skip_exceptions: bool,
+            proxy: Optional[ProxyService],
+            data: Optional[Dict[str, Union[
+                str, int, List[
+                    Union[str, int]
+                ]]]
+            ],
+            headers: Optional[Dict[str, Union[str, int]]],
+            params: Optional[
+                Dict[str, Union[str, int, List[
+                    Union[str, int]
+                ]]]
+            ]) -> Response:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def fetch(self, *args, **kwargs) -> AsyncGenerator:
+    async def fetch(
+            self,
+            *,
+            times: int = 1,
+            **kwargs
+    ) -> AsyncGenerator[Response, None]:
         raise NotImplementedError()
 
     def raise_exception(
