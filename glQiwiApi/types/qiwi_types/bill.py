@@ -56,6 +56,10 @@ class Bill(BaseModel, BillMixin):
 
 
 class RefundBill(BaseModel):
+    """
+    Модель счёта киви апи
+
+    """
     amount: OptionalSum
     datetime: datetime
     refund_id: str = Field(..., alias="refundId")

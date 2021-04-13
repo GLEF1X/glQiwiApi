@@ -55,7 +55,6 @@ def parse_auth_link(response_data):
 def parse_headers(content_json=False, auth=False):
     """
     Функция для добавления некоторых заголовков в запрос
-
     """
     headers = {
         'Host': 'yoomoney.ru',

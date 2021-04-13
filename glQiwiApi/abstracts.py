@@ -22,7 +22,12 @@ class AbstractCacheController(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def update_data(self, *args, **kwargs) -> None:
+    def update_data(
+            self,
+            result: Any,
+            kwargs: Any,
+            status_code: Union[str, int]
+    ) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod

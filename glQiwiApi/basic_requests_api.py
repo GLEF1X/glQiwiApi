@@ -260,14 +260,11 @@ class SimpleCache(AbstractCacheController):
 
     def __init__(self, cache_time: Union[float, int]) -> None:
         if isinstance(cache_time, (int, float)):
-            if cache_time < 0:
+            if cache_time > 60 or cache_time < 0:
                 raise InvalidData(
-                    "Время кэширования не может быть меньше нуля"
+                    "Время кэширования должно быть в пределах от 0 до 60 секунд"
                 )
-            elif cache_time > 60:
-                raise InvalidData(
-                    "Время кэширование должно быть не больше 80-ти секунд"
-                )
+
         self.tmp_data: Optional[Dict[str, CachedResponse]] = dict()
         self._cache_time = cache_time
 
@@ -329,7 +326,7 @@ class SimpleCache(AbstractCacheController):
                 return False
 
             # Проверяем запрос методом GET на кэш
-            elif cached.method == 'GET':
+            if cached.method == 'GET':
                 if kwargs.get('headers') == cached.kwargs.headers:
                     if kwargs.get('params') == cached.kwargs.params:
                         return True

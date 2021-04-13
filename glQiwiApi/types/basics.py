@@ -40,18 +40,26 @@ class Type(BaseModel):
 
 @dataclass
 class Attributes:
+    """
+    Аттрибуты кэшированного запроса
+
+    """
     headers: Optional[dict] = None
     json: Optional[dict] = None
     params: Optional[dict] = None
     data: Optional[dict] = None
 
     @classmethod
-    def format(cls, kwargs: dict, available: tuple):
-        return cls(**{key: kwargs.get(key) for key in available if isinstance(kwargs.get(key), dict)})
+    def format(cls, kwargs: dict, av: tuple):
+        return cls(**{key: kwargs.get(key) for key in av if isinstance(kwargs.get(key), dict)})
 
 
 @dataclass
 class CachedResponse:
+    """
+    Объект кэшированного запроса
+
+    """
     kwargs: Attributes
     response_data: Any
     status_code: Union[str, int]
