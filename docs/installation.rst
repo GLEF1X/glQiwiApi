@@ -63,5 +63,4 @@ You can speedup api by following next instructions:
         .. code-block:: bash
 
             $ pip install orjson
-
 .. _GitHub репозитория: https://github.com/GLEF1X/glQiwiApi
