@@ -1,6 +1,6 @@
+from datetime import datetime
 from typing import Optional
 
-from datetime import datetime
 from pydantic import BaseModel, Field
 
 from glQiwiApi.mixins import BillMixin
@@ -64,6 +64,13 @@ class RefundBill(BaseModel):
     datetime: datetime
     refund_id: str = Field(..., alias="refundId")
     status: str
+
+    def as_str(self) -> str:
+        return f"№{self.refund_id} {self.status} {self.amount} {self.datetime}"
+
+    @property
+    def amount(self) -> OptionalSum:
+        return self.amount
 
 
 __all__ = [

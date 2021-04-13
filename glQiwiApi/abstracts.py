@@ -1,9 +1,12 @@
 import abc
 import asyncio
 import unittest
-from typing import AsyncGenerator, Optional, Dict, Any, Union
+from typing import AsyncGenerator, Optional, Dict, Any, Union, List
 
 from aiohttp import ClientSession
+from aiohttp.typedefs import LooseCookies
+
+from glQiwiApi.types import ProxyService, Response
 
 
 class AbstractCacheController(abc.ABC):
@@ -84,11 +87,36 @@ class AbstractParser(abc.ABC):
         self.session: Optional[ClientSession] = None
 
     @abc.abstractmethod
-    async def _request(self, *args, **kwargs) -> None:
+    async def _request(
+            self,
+            url: Optional[str] = None,
+            get_json: bool = False,
+            method: str = 'POST',
+            set_timeout: bool = True,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[dict] = None,
+            skip_exceptions: bool = False,
+            proxy: Optional[ProxyService] = None,
+            data: Optional[Dict[str, Union[
+                str, int, List[
+                    Union[str, int]
+                ]]]
+            ] = None,
+            headers: Optional[Dict[str, Union[str, int]]] = None,
+            params: Optional[
+                Dict[str, Union[str, int, List[
+                    Union[str, int]
+                ]]]
+            ] = None) -> Response:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def fetch(self, *args, **kwargs) -> AsyncGenerator:
+    async def fetch(
+            self,
+            *,
+            times: int = 1,
+            **kwargs
+    ) -> AsyncGenerator[Response, None]:
         raise NotImplementedError()
 
     def raise_exception(

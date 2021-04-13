@@ -88,6 +88,9 @@ class HttpXParser(AbstractParser):
             sock_read=None
         )
         self._connector: Optional[ProxyConnector] = None
+        self.request_class: Optional[
+            Union[ClientRequest, ProxyClientRequest]
+        ] = None
 
     async def _request(
             self,
@@ -109,8 +112,7 @@ class HttpXParser(AbstractParser):
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ] = None,
-            **client_kwargs) -> Response:
+            ] = None) -> Response:
         """
         Метод для отправки запроса,
         может возвращать в Response ProxyError в качестве response_data,
@@ -128,8 +130,6 @@ class HttpXParser(AbstractParser):
         :param data: payload data
         :param cookies:
         :param headers:
-        :param session: aiohttp.ClientSession object
-        :param client_kwargs: key/value for
          aiohttp.ClientSession initialization
         :return: Response instance
         """
@@ -149,8 +149,7 @@ class HttpXParser(AbstractParser):
             connector=self._connector,
             request_class=self.request_class if isinstance(
                 proxy, ProxyService
-            ) else ClientRequest,
-            **client_kwargs
+            ) else ClientRequest
         )
 
         # sending query to some endpoint url
