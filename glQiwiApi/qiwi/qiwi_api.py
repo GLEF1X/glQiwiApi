@@ -74,7 +74,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
          запрос не будет использовать кэш по дефолту, максимальное время
          кэширование 60 секунд
         """
-        super(AbstractPaymentWrapper, self).__init__()
+        super().__init__()
 
         if isinstance(phone_number, str):
             self.phone_number = phone_number.replace('+', '')
