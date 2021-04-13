@@ -50,8 +50,10 @@ class Attributes:
     data: Optional[dict] = None
 
     @classmethod
-    def format(cls, kwargs: dict, av: tuple):
-        return cls(**{key: kwargs.get(key) for key in av if isinstance(kwargs.get(key), dict)})
+    def format(cls, kwargs: dict, args: tuple):
+        return cls(
+            **{key: kwargs.get(key) for key in args if isinstance(kwargs.get(key), dict)}
+        )
 
 
 @dataclass

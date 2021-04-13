@@ -60,7 +60,7 @@ class RequestError(Exception):
             additional_info: Optional[str] = None,
             json_info: Optional[Dict[str, Any]] = None
     ) -> None:
-        super(Exception, self).__init__()
+        super().__init__()
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info

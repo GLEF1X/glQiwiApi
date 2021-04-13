@@ -89,25 +89,25 @@ class AbstractParser(abc.ABC):
     @abc.abstractmethod
     async def _request(
             self,
-            url: Optional[str] = None,
-            get_json: bool = False,
-            method: str = 'POST',
-            set_timeout: bool = True,
-            cookies: Optional[LooseCookies] = None,
-            json: Optional[dict] = None,
-            skip_exceptions: bool = False,
-            proxy: Optional[ProxyService] = None,
+            url: Optional[str],
+            get_json: bool,
+            method: str,
+            set_timeout: bool,
+            cookies: Optional[LooseCookies],
+            json: Optional[dict],
+            skip_exceptions: bool,
+            proxy: Optional[ProxyService],
             data: Optional[Dict[str, Union[
                 str, int, List[
                     Union[str, int]
                 ]]]
-            ] = None,
-            headers: Optional[Dict[str, Union[str, int]]] = None,
+            ],
+            headers: Optional[Dict[str, Union[str, int]]],
             params: Optional[
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ] = None) -> Response:
+            ]) -> Response:
         raise NotImplementedError()
 
     @abc.abstractmethod

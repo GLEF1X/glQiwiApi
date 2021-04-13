@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -68,9 +68,8 @@ class RefundBill(BaseModel):
     def as_str(self) -> str:
         return f"№{self.refund_id} {self.status} {self.amount} {self.datetime}"
 
-    @property
-    def amount(self) -> OptionalSum:
-        return self.amount
+    def get_value(self) -> Union[float, int]:
+        return self.amount.value
 
 
 __all__ = [
