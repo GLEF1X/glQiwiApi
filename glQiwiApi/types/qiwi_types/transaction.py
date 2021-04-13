@@ -1,4 +1,5 @@
-from typing import Literal, Optional, Union
+from datetime import datetime
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -36,9 +37,10 @@ class Transaction(BaseModel):
     person_id: int = Field(alias="personId")
     """Номер кошелька"""
 
-    date: str
+    date: datetime
     """
-    Для запросов истории платежей - Дата/время платежа, во временной зоне запроса (см. параметр startDate).
+    Для запросов истории платежей - Дата/время платежа,
+    во временной зоне запроса (см. параметр startDate).
     Для запросов данных о транзакции - Дата/время платежа, время московское
     """
 
@@ -48,7 +50,7 @@ class Transaction(BaseModel):
     error: Optional[str] = None
     """Описание ошибки"""
 
-    status: Literal['WAITING', 'SUCCESS', 'ERROR']
+    status: str
     """
     Статус платежа. Возможные значения:
     WAITING - платеж проводится,
@@ -56,7 +58,7 @@ class Transaction(BaseModel):
     ERROR - ошибка платежа.
     """
 
-    type: Literal['IN', 'OUT', 'QIWI_CARD']
+    type: str
     """
     Тип платежа. Возможные значения:
     IN - пополнение,
@@ -73,7 +75,8 @@ class Transaction(BaseModel):
     to_account: str = Field(alias="account")
     """
     Для платежей - номер счета получателя.
-    Для пополнений - номер отправителя, терминала или название агента пополнения кошелька
+    Для пополнений - номер отправителя,
+    терминала или название агента пополнения кошелька
     """
 
     sum: Sum
@@ -99,3 +102,10 @@ class Transaction(BaseModel):
 
     class Config:
         json_loads = custom_load
+
+    def as_str(self):
+        return f"""Статус транзакции: {self.status}
+Дата проведения платежа: {self.date}
+Сумма платежа: {self.sum.amount}
+Комментарий: {self.comment if isinstance(self.comment, str) else '-'}
+"""

@@ -1,9 +1,10 @@
-from typing import Literal, Optional
+from datetime import datetime
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.mixins import BillMixin
+from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.utils.basics import custom_load
 
 
@@ -14,8 +15,8 @@ class Customer(BaseModel):
 
 
 class BillStatus(BaseModel):
-    value: Literal['WAITING', 'PAID', 'REJECTED', 'EXPIRED']
-    changed_datetime: str = Field(alias="changedDateTime")
+    value: str
+    changed_datetime: datetime = Field(alias="changedDateTime")
 
 
 class CustomFields(BaseModel):
@@ -40,10 +41,12 @@ class Bill(BaseModel, BillMixin):
     bill_id: str = Field(alias="billId")
     amount: OptionalSum
     status: BillStatus
-    creation_date_time: str = Field(alias="creationDateTime")
-    expiration_date_time: str = Field(alias="expirationDateTime")
+    creation_date_time: datetime = Field(alias="creationDateTime")
+    expiration_date_time: datetime = Field(alias="expirationDateTime")
     pay_url: str = Field(alias="payUrl")
-    custom_fields: Optional[CustomFields] = Field(alias="customFields", const=None)
+    custom_fields: Optional[
+        CustomFields
+    ] = Field(alias="customFields", const=None)
     customer: Optional[Customer] = None
 
     class Config:
@@ -52,6 +55,23 @@ class Bill(BaseModel, BillMixin):
         allow_mutation = True
 
 
+class RefundBill(BaseModel):
+    """
+    Модель счёта киви апи
+
+    """
+    amount: OptionalSum
+    datetime: datetime
+    refund_id: str = Field(..., alias="refundId")
+    status: str
+
+    def as_str(self) -> str:
+        return f"№{self.refund_id} {self.status} {self.amount} {self.datetime}"
+
+    def get_value(self) -> Union[float, int]:
+        return self.amount.value
+
+
 __all__ = [
-    'Bill', 'BillError'
+    'Bill', 'BillError', 'RefundBill'
 ]

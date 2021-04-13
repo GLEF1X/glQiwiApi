@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -10,7 +11,7 @@ class Identification(BaseModel):
     first_name: str = Field(..., alias="firstName")
     middle_name: str = Field(..., alias="middleName")
     last_name: str = Field(..., alias="lastName")
-    birth_date: str = Field(..., alias="birthDate")
+    birth_date: date = Field(..., alias="birthDate")
     passport: str
     inn: Optional[str]
     snils: Optional[str]

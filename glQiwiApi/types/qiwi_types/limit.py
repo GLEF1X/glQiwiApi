@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Union
 
 from pydantic import BaseModel, Field
@@ -6,8 +7,8 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Interval(BaseModel):
-    date_from: str = Field(alias="dateFrom")
-    date_till: str = Field(alias="dateTill")
+    date_from: datetime = Field(alias="dateFrom")
+    date_till: datetime = Field(alias="dateTill")
 
 
 class Limit(BaseModel):

@@ -5,12 +5,11 @@ from .types import (
     PreProcessPaymentResponse,
     Payment,
     AccountInfo,
-    ALL_OPERATION_TYPES,
     IncomingTransaction
 )
 
 __all__ = (
-    'AccountInfo', 'OperationType', 'ALL_OPERATION_TYPES', 'Operation',
+    'AccountInfo', 'OperationType', 'Operation',
     'OperationDetails',
     'PreProcessPaymentResponse', 'Payment', 'IncomingTransaction'
 )

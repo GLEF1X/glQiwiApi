@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from http.cookies import SimpleCookie
-from typing import Literal, Optional, Union, Dict
+from typing import Optional, Union, Dict
 
 from aiohttp.typedefs import RawHeaders
 from aiosocksy import Socks5Auth, Socks4Auth
@@ -32,7 +32,7 @@ class ProxyService:
     login: str
     password: str
     ip_address: str
-    service_type: Literal['SOCKS5', 'SOCKS4'] = 'SOCKS5'
+    service_type: str = 'SOCKS5'
     proxy_auth: Optional[Socks5Auth] = None
     socks_url: Optional[str] = None
 

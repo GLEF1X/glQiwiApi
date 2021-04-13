@@ -9,7 +9,7 @@
     :target: https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard
     :alt: code inspector code quality
 
-..  image:: https://img.shields.io/badge/Python-3.8+-blue?style=flat-square
+..  image:: https://img.shields.io/badge/Python-3.7+-blue?style=flat-square
     :target: https://pypi.python.org/pypi/glQiwiApi
     :alt: python version
 

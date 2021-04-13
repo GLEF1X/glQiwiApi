@@ -1,8 +1,12 @@
-from typing import Union
+import time
+from dataclasses import dataclass
+from typing import Union, Any, Optional
 
 from pydantic import BaseModel, Field
 
 from glQiwiApi.utils.basics import custom_load
+
+DEFAULT_CACHE_TIME = 0
 
 
 class Sum(BaseModel):
@@ -34,6 +38,44 @@ class Type(BaseModel):
     title: str
 
 
+@dataclass
+class Attributes:
+    """
+    Аттрибуты кэшированного запроса
+
+    """
+    headers: Optional[dict] = None
+    json: Optional[dict] = None
+    params: Optional[dict] = None
+    data: Optional[dict] = None
+
+    @classmethod
+    def format(cls, kwargs: dict, args: tuple):
+        return cls(
+            **{key: kwargs.get(key) for key in args if isinstance(kwargs.get(key), dict)}
+        )
+
+
+@dataclass
+class CachedResponse:
+    """
+    Объект кэшированного запроса
+
+    """
+    kwargs: Attributes
+    response_data: Any
+    status_code: Union[str, int]
+    url: str
+    method: str
+    cached_in: float = time.monotonic()
+
+
 __all__ = [
-    'Sum', 'OptionalSum', 'Commission', 'Type'
+    'Sum',
+    'OptionalSum',
+    'Commission',
+    'Type',
+    'CachedResponse',
+    'DEFAULT_CACHE_TIME',
+    'Attributes'
 ]
