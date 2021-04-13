@@ -261,7 +261,9 @@ class SimpleCache(AbstractCacheController):
     def __init__(self, cache_time: Union[float, int]) -> None:
         if isinstance(cache_time, (int, float)):
             if cache_time < 0:
-                raise InvalidData("Время кэширования не может быть меньше нуля")
+                raise InvalidData(
+                    "Время кэширования не может быть меньше нуля"
+                )
             elif cache_time > 60:
                 raise InvalidData(
                     "Время кэширование должно быть не больше 80-ти секунд"
