@@ -31,14 +31,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
     а всё это конвертирует в python dataclasses.
     Для работы с данным классом, необходимо зарегистрировать токен,
     используя гайд на официальном гитхабе проекта
+
     """
 
-    __slots__ = (
-        "api_access_token",
-        "without_context",
-        "_parser",
-        "cache_time"
-    )
+    __slots__ = ("api_access_token", "_parser",)
 
     def __init__(
             self,
@@ -53,7 +49,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :param api_access_token: апи токен для запросов
         :param without_context: bool, указывающая будет ли объект класса "глобальной" переменной
          или будет использована в async with контексте
-        :param cache_time: Время кэширование запросов в секундах
+        :param cache_time: Время кэширование запросов в секундах,
+         по умолчанию 0, соответственно,
+         запрос не будет использовать кэш по дефолту, максимальное время
+         кэширование 60 секунд
         """
         self.api_access_token = api_access_token
         self._parser = CustomParser(

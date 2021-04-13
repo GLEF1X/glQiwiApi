@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, Union
 
 from pydantic import BaseModel, Field
@@ -36,7 +37,7 @@ class Transaction(BaseModel):
     person_id: int = Field(alias="personId")
     """Номер кошелька"""
 
-    date: str
+    date: datetime
     """
     Для запросов истории платежей - Дата/время платежа, во временной зоне запроса (см. параметр startDate).
     Для запросов данных о транзакции - Дата/время платежа, время московское
@@ -99,3 +100,10 @@ class Transaction(BaseModel):
 
     class Config:
         json_loads = custom_load
+
+    def as_str(self):
+        return f"""Статус транзакции: {self.status}
+Дата проведения платежа: {self.date}
+Сумма платежа: {self.sum.amount}
+Комментарий: {self.comment if isinstance(self.comment, str) else '-'}
+"""

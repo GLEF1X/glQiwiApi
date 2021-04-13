@@ -11,7 +11,7 @@ Payment wrappers
 
 Low level API
 _____________
-.. autoclass:: glQiwiApi.api.HttpXParser
+.. automodule:: glQiwiApi.basic_requests_api
    :members:
 
 Exceptions

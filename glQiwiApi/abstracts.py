@@ -11,18 +11,18 @@ class AbstractCacheController(abc.ABC):
     Абстрактный класс контроллера кэша
 
     """
-    __slots__ = ('_cache', '_cache_time')
+    __slots__ = ('tmp_data', '_cache_time')
 
     @abc.abstractmethod
     def get_current(self, key: str) -> Any:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _clear(self, key: str) -> None:
+    def clear(self, key: str, force: bool = False) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def set(self, *args, **kwargs) -> None:
+    def update_data(self, *args, **kwargs) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod

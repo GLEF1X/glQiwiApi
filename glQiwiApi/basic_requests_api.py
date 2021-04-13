@@ -259,22 +259,26 @@ class SimpleCache(AbstractCacheController):
     available = ('params', 'json', 'data', 'headers')
 
     def __init__(self, cache_time: Union[float, int]) -> None:
-        if cache_time < 0:
-            raise InvalidData("Время кэширования не может быть меньше нуля")
-
-        self._cache: Optional[Dict[str, CachedResponse]] = dict()
+        if isinstance(cache_time, (int, float)):
+            if cache_time < 0:
+                raise InvalidData("Время кэширования не может быть меньше нуля")
+            elif cache_time > 60:
+                raise InvalidData(
+                    "Время кэширование должно быть не больше 80-ти секунд"
+                )
+        self.tmp_data: Optional[Dict[str, CachedResponse]] = dict()
         self._cache_time = cache_time
 
     def __del__(self) -> None:
-        del self._cache
+        del self.tmp_data
 
     def get_current(self, key: str) -> Optional[CachedResponse]:
-        return self._cache.get(key)
+        return self.tmp_data.get(key)
 
-    def _clear(self, key: str) -> None:
-        self._cache.pop(key)
+    def clear(self, key: Optional[str] = None, force: bool = False) -> None:
+        self.tmp_data.pop(key) if not force else self.tmp_data.clear()
 
-    def set(
+    def update_data(
             self,
             result: Any,
             kwargs: Any,
@@ -284,14 +288,14 @@ class SimpleCache(AbstractCacheController):
         Метод, который добавляет результат запроса в кэш
 
         """
-        uncached = ['https://api.qiwi.com/partner/bill', '/sinap/api/v2/']
+        uncached = ('https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/')
         url = kwargs.get('url')
         if not self._cache_time < 0.1:
             if not any(
                     url.startswith(contain_match) or contain_match in url
                     for contain_match in uncached
             ):
-                self._cache.update({
+                self.tmp_data.update({
                     url: CachedResponse(
                         Attributes.format(kwargs, self.available),
                         result,
@@ -300,18 +304,22 @@ class SimpleCache(AbstractCacheController):
                         kwargs.get('method')
                     )
                 })
+            elif uncached[1] in url:
+                self.clear(url, True)
 
     def validate(self, kwargs: Dict[str, Any]) -> bool:
         """
-        Метод для валидации кэша
+        Метод, который по некоторым условиям
+        проверяет актуальность кэша и в некоторых
+        случая его чистит.
 
         """
         # Если параметры и ссылка запроса совпадает
-        cached = self._cache.get(kwargs.get('url'))
+        cached = self.tmp_data.get(kwargs.get('url'))
         if isinstance(cached, CachedResponse):
             # Проверяем, не вышло ли время кэша
             if time.monotonic() - cached.cached_in > self._cache_time:
-                self._clear(kwargs.get('url'))
+                self.clear(kwargs.get('url'))
                 return False
 
             # Проверяем запрос методом GET на кэш
@@ -319,11 +327,11 @@ class SimpleCache(AbstractCacheController):
                 if kwargs.get('headers') == cached.kwargs.headers:
                     if kwargs.get('params') == cached.kwargs.params:
                         return True
+
             elif any(
                     getattr(cached.kwargs, key) == kwargs.get(key, '')
                     for key in self.available if key != 'headers'
             ):
-
                 return True
 
         return False

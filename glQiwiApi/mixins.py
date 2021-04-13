@@ -31,9 +31,10 @@ class ToolsMixin(object):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Закрываем сессию при выходе"""
+        """Закрываем сессию и очищаем кэш при выходе"""
         if self._parser.session:
             await self._parser.session.close()
+            self._parser.clear_cache()
 
     def __deepcopy__(self, memo) -> 'ToolsMixin':
         cls = self.__class__

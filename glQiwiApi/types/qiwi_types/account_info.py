@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 
 from pydantic import Field, BaseModel
@@ -25,20 +26,20 @@ class PinInfo(BaseModel):
 class AuthInfo(BaseModel):
     ip: str
     bound_email: Optional[str] = Field(alias="boundEmail", const=None)
-    last_login_date: Optional[str] = Field(alias="lastLoginDate", const=None)
+    last_login_date: Optional[datetime] = Field(alias="lastLoginDate", const=None)
     email_settings: Optional[dict] = Field(alias="emailSettings", const=None)
     mobile_pin_info: MobilePinInfo = Field(alias="mobilePinInfo")
     pass_info: PassInfo = Field(alias="passInfo")
     person_id: int = Field(alias="personId")
     pin_info: PinInfo = Field(alias="pinInfo")
-    registration_date: str = Field(alias="registrationDate")
+    registration_date: datetime = Field(alias="registrationDate")
 
 
 class SmsNotification(BaseModel):
     price: Sum
     enabled: bool
     active: bool
-    end_date: Optional[str] = Field(alias="endDate", const=None)
+    end_date: Optional[datetime] = Field(alias="endDate", const=None)
 
 
 class IdentificationInfo(BaseModel):
@@ -57,14 +58,14 @@ class NickName(BaseModel):
 class Feature(BaseModel):
     feature_id: int = Field(alias="featureId")
     feature_value: str = Field(alias="featureValue")
-    start_date: str = Field(alias="startDate")
-    end_date: str = Field(alias="endDate")
+    start_date: datetime = Field(alias="startDate")
+    end_date: datetime = Field(alias="endDate")
 
 
 class ContractInfo(BaseModel):
     blocked: bool = False
     contract_id: int = Field(alias="contractId")
-    creation_date: str = Field(alias="creationDate")
+    creation_date: datetime = Field(alias="creationDate")
     identification_info: List[IdentificationInfo] = Field(alias="identificationInfo")
     sms_notification: SmsNotification = Field(alias="smsNotification")
     nickname: NickName

@@ -1,5 +1,6 @@
 from typing import Optional
 
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 from glQiwiApi.mixins import BillMixin
@@ -15,7 +16,7 @@ class Customer(BaseModel):
 
 class BillStatus(BaseModel):
     value: str
-    changed_datetime: str = Field(alias="changedDateTime")
+    changed_datetime: datetime = Field(alias="changedDateTime")
 
 
 class CustomFields(BaseModel):
@@ -40,8 +41,8 @@ class Bill(BaseModel, BillMixin):
     bill_id: str = Field(alias="billId")
     amount: OptionalSum
     status: BillStatus
-    creation_date_time: str = Field(alias="creationDateTime")
-    expiration_date_time: str = Field(alias="expirationDateTime")
+    creation_date_time: datetime = Field(alias="creationDateTime")
+    expiration_date_time: datetime = Field(alias="expirationDateTime")
     pay_url: str = Field(alias="payUrl")
     custom_fields: Optional[
         CustomFields
@@ -56,7 +57,7 @@ class Bill(BaseModel, BillMixin):
 
 class RefundBill(BaseModel):
     amount: OptionalSum
-    datetime: str
+    datetime: datetime
     refund_id: str = Field(..., alias="refundId")
     status: str
 

@@ -28,7 +28,6 @@ setuptools.setup(
         "aiosocksy==0.1.2",
         'aiofiles==0.6.0',
         "pydantic==1.8.1",
-        "orjson==3.5.1",
         "wheel",
     ],
     python_requires=">=3.7",

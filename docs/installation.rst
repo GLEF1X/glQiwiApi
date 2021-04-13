@@ -54,5 +54,14 @@ You can speedup api by following next instructions:
 
             $ pip install uvloop
 
+- Use `orjson <https://github.com/ijl/orjson>`_ instead of the default json module.
+
+    orjson is a fast, correct JSON library for Python. It benchmarks as the fastest Python library for JSON and is more correct than the standard json library or other third-party libraries
+
+    **Installation:**
+
+        .. code-block:: bash
+
+            $ pip install orjson
 
 .. _GitHub репозитория: https://github.com/GLEF1X/glQiwiApi

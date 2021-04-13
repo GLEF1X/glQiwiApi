@@ -71,7 +71,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
          "глобальной" переменной или будет использована в async with контексте
         :param cache_time: Время кэширование запросов в секундах,
          по умолчанию 0, соответственно,
-         запрос не будет использовать кэш по дефолту
+         запрос не будет использовать кэш по дефолту, максимальное время
+         кэширование 60 секунд
         """
         super(AbstractPaymentWrapper, self).__init__()
 
@@ -184,7 +185,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 method='GET',
                 get_json=True
         ):
-            return Sum.parse_raw(response.response_data['accounts'][0]['balance'])
+            return Sum.parse_raw(
+                response.response_data['accounts'][0]['balance']
+            )
 
     async def transactions(
             self,
@@ -240,7 +243,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                     }
                 )
             else:
-                raise InvalidData('end_date не может быть больше чем start_date')
+                raise InvalidData(
+                    'end_date не может быть больше чем start_date'
+                )
         base_url = BASE_QIWI_URL + '/payment-history/v2/persons/'
         async for response in self._parser.fast().fetch(
                 url=base_url + self.phone_number.replace('+', '') + '/payments',
@@ -489,9 +494,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         headers = self._auth_token(
             deepcopy(DEFAULT_QIWI_HEADERS)
         )
+        url = BASE_QIWI_URL + '/identification/v1/persons/'
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/identification/v1/persons/' + self.phone_number.replace("+",
-                                                                                              "") + "/identification",
+                url=url + self.phone_number.replace("+", "") + "/identification",
                 data=payload,
                 headers=headers
         ):
@@ -560,8 +565,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         life_time = api_helper.datetime_to_str_in_iso(
             DEFAULT_BILL_TIME if not life_time else life_time
         )
+
         data = deepcopy(P2P_DATA)
+
         headers = self._auth_token(data.headers, p2p=True)
+
         payload = api_helper.set_data_p2p_create(
             wrapped_data=data,
             amount=amount,
@@ -570,6 +578,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             pay_source_filter=pay_source_filter,
             life_time=life_time
         )
+
         async for response in self._parser.fast().fetch(
                 url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}',
                 json=payload,
@@ -594,6 +603,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         if not self.public_p2p or not self.secret_p2p:
             raise InvalidData('Не задан p2p токен')
+
         data = deepcopy(P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
         async for response in self._parser.fast().fetch(
@@ -753,9 +763,10 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         if sources:
             params.update({'sources': ' '.join(sources)})
+        url = BASE_QIWI_URL + '/payment-history/v2/persons/'
         async for response in self._parser.fast().fetch(
-                url=BASE_QIWI_URL + '/payment-history/v2/persons/' + self.phone_number.replace("+",
-                                                                                               "") + '/payments/total',
+                url=url + self.phone_number.replace("+",
+                                                    "") + '/payments/total',
                 params=params,
                 headers=headers,
                 get_json=True,
@@ -768,6 +779,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         Запрос выгружает текущие балансы счетов вашего QIWI Кошелька.
         Более подробная документация:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#balances_list
+
         """
 
         async for response in self._parser.fast().fetch(
@@ -805,6 +817,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         class Balance(BaseModel):
             alias: str
             currency: int
+
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         async for response in self._parser.fast().fetch(

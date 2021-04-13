@@ -3,7 +3,7 @@ from typing import Dict, Optional, Any, Union
 import glQiwiApi
 from glQiwiApi.basic_requests_api import HttpXParser, SimpleCache
 from glQiwiApi.types.basics import CachedResponse
-from glQiwiApi.utils.exceptions import RequestError, InvalidData
+from glQiwiApi.utils.exceptions import RequestError
 
 
 class CustomParser(HttpXParser):
@@ -21,21 +21,20 @@ class CustomParser(HttpXParser):
             cache_time: Union[float, int]
     ) -> None:
         super(CustomParser, self).__init__()
-        if isinstance(cache_time, (int, float)):
-            if cache_time > 80:
-                raise InvalidData(
-                    "Время кэширование должно быть не больше 80-ти секунд"
-                )
         self._without_context = without_context
         self.messages = messages
         self._cache = SimpleCache(cache_time)
+
+    def clear_cache(self) -> None:
+        self._cache.clear(force=True)
 
     async def _request(self, *args, **kwargs):
         # Получаем текущий кэш используя ссылку как ключ
         response = self._cache.get_current(kwargs.get('url'))
         if not self._cache.validate(kwargs):
             response = await super()._request(*args, **kwargs)
-
+        # Проверяем, не был ли запрос в кэше, если нет,
+        # то проверяем статус код и если он не 200 - выбрасываем ошибку
         if not isinstance(response, CachedResponse):
             if response.status_code != 200:
                 self.raise_exception(
@@ -46,7 +45,7 @@ class CustomParser(HttpXParser):
             if self._without_context:
                 await self.session.close()
 
-        self._cache.set(
+        self._cache.update_data(
             result=response.response_data,
             kwargs=kwargs,
             status_code=response.status_code
