@@ -222,13 +222,13 @@ async def cache_test():
         # Запросы ниже не будут браться из кэша,
         # причиной тому есть разница в параметрах запроса
         # Результат все также заноситься в кэш
-        print(len(await wallet.transactions(rows_num=30)) == 30)
+        print(len(await wallet.transactions(rows_num=30)) == 30) # True
         # Однако, повторный запрос к апи будет выполнен, поскольку
         # при попытке взятие результата из кэша валидатор сравнивает
         # параметры запроса, если они не совпадают, то
         # кэш игнорируется
         # Повторный запрос к апи
-        print(len(await wallet.transactions(rows_num=10)) == 10)
+        print(len(await wallet.transactions(rows_num=10)) == 10) # True
 
 
 asyncio.run(cache_test())
