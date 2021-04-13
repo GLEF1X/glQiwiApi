@@ -14,7 +14,9 @@ class PassInfo(BaseModel):
 
 
 class MobilePinInfo(BaseModel):
-    last_mobile_pin_change: Optional[datetime] = Field(alias="lastMobilePinChange")
+    last_mobile_pin_change: Optional[
+        datetime
+    ] = Field(alias="lastMobilePinChange")
     mobile_pin_used: bool = Field(alias="mobilePinUsed")
     next_mobile_pin_change: str = Field(alias="nextMobilePinChange")
 

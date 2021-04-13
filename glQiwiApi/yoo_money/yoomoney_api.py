@@ -43,7 +43,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             cache_time: Union[float, int] = DEFAULT_CACHE_TIME
     ) -> None:
         """
-        Конструктор принимает токен, полученный из класс метода get_access_token
+        Конструктор принимает токен, полученный из класс метода
+         get_access_token
         и специальный аттрибут without_context,
 
         :param api_access_token: апи токен для запросов
@@ -75,7 +76,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             redirect_uri: str = 'https://example.com'
     ) -> str:
         """
-        Метод для получения ссылки для дальнейшей авторизации и получения токена
+        Метод для получения ссылки для
+        дальнейшей авторизации и получения токена
 
         :param scope: OAuth2-авторизации приложения пользователем,
          права передаются списком.
