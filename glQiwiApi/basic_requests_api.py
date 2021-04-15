@@ -28,45 +28,6 @@ USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
              '(KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
 
 
-class Core:
-    """
-    Class, which include some help methods to HttpXParser
-
-    """
-
-    def __getattr__(self, item: Any) -> Any:
-        """
-        Method, which can get an attribute of base_headers by this method
-
-        :param item: key name of base_headers dict data
-        :return:
-        """
-        return super().__getattribute__(item)
-
-    def __eq__(self, other: Any) -> bool:
-        """
-        Method to compare instances of parsers
-
-        :param other: other object
-        :return: bool
-        """
-        if isinstance(other, HttpXParser):
-            if other.base_headers == self.base_headers:
-                return True
-        return False
-
-    def __setitem__(self, key, value) -> None:
-        """
-
-        :param key: key of base_headers dict
-        :param value: value of base_headers dict
-        :return: None
-        """
-        self.base_headers.update(
-            {key: value}
-        )
-
-
 class HttpXParser(AbstractParser):
     """
     Обвертка над aiohttp
@@ -80,7 +41,6 @@ class HttpXParser(AbstractParser):
             'User-Agent': USER_AGENT,
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
-        self._core = Core()
         self._timeout = ClientTimeout(
             total=5,
             connect=None,
@@ -133,7 +93,7 @@ class HttpXParser(AbstractParser):
          aiohttp.ClientSession initialization
         :return: Response instance
         """
-        headers = headers if isinstance(headers, dict) else self.base_headers
+        headers = self.get_headers(headers)
 
         if isinstance(proxy, ProxyService):
             self._connector = ProxyConnector()
@@ -194,6 +154,11 @@ class HttpXParser(AbstractParser):
             host=response.host,
             url=response.url.__str__()
         )
+
+    def get_headers(self, headers: Optional[dict]) -> Optional[dict]:
+        if isinstance(headers, dict):
+            return headers
+        return self.base_headers
 
     async def fetch(
             self,
