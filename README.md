@@ -8,7 +8,7 @@
 
 :fire:DEMO:fire:
 
-<img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif" width="200" height="200" />
+<img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 
 </h2>
 ## Official api resources:
