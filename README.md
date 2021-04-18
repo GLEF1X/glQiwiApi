@@ -6,8 +6,13 @@
 
 ### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
 
+<h2 align="center">
+:fire:DEMO:fire:
+![Demo](https://s4.gifyu.com/images/demo61c88861414febcb.gif)
+</h2>
+
 ## Official api resources:
-   * __:fire:Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+   * __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
    * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### :floppy_disk:Installation
