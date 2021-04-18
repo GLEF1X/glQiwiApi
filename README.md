@@ -9,7 +9,7 @@
 <h2 align="center">
 :fire:DEMO:fire:
 </h2>
-![](https://s4.gifyu.com/images/demo61c88861414febcb.gif)
+![](https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif?raw=true)
 
 ## Official api resources:
    * __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
