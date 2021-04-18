@@ -8,8 +8,8 @@
 
 <h2 align="center">
 :fire:DEMO:fire:
-![Demo](https://s4.gifyu.com/images/demo61c88861414febcb.gif)
 </h2>
+![](https://s4.gifyu.com/images/demo61c88861414febcb.gif)
 
 ## Official api resources:
    * __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
