@@ -6,8 +6,8 @@
 </h1>
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 
-## Official api resources:
-   * __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+## :globe_with_meridians:Official api resources:
+   * :mortar_board:__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
    * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
