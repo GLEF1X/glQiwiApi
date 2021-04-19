@@ -10,10 +10,8 @@
 
 ## :globe_with_meridians:Official api resources:
 
-* :mortar_board:__
-  Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
-* 🖱️ __Developer
-  contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
+* :mortar_board:__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+* 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
 
