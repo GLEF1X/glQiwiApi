@@ -40,13 +40,6 @@ class InvalidData(Exception):
     """
 
 
-class VersionError(Exception):
-    """
-    Ошибка возникает, если ваша версия python не поддерживается библиотекой
-
-    """
-
-
 class RequestError(Exception):
     """
     Возникает при ошибках сервиса или неправильной передаче параметров
@@ -79,12 +72,14 @@ class RequestError(Exception):
 
     def json(self) -> str:
         import json
-        if not isinstance(self.json_info, dict):
-            return self.__str__()
-        return json.dumps(self.__str__(), indent=2, ensure_ascii=False)
+        return json.dumps(
+            self.__str__() if not self.json_info else self.json_info,
+            indent=2,
+            ensure_ascii=False
+        )
 
 
-__all__ = [
+__all__ = (
     'InvalidData',
     'NoUrlFound',
     'RequestAuthError',
@@ -93,5 +88,4 @@ __all__ = [
     'InvalidCardNumber',
     'InvalidToken',
     'RequestError',
-    'VersionError'
-]
+)

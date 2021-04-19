@@ -1,11 +1,15 @@
+import abc
 import asyncio
 import time
 from itertools import repeat
 from typing import (
-    Optional, Union, Dict,
-    List, Tuple, Any, AsyncGenerator
+    Dict,
+    Tuple,
+    AsyncGenerator
 )
+from typing import Optional, List, Any, Union
 
+import aiohttp
 from aiohttp import (
     ClientTimeout,
     ClientRequest,
@@ -33,6 +37,7 @@ class HttpXParser(AbstractParser):
     Обвертка над aiohttp
 
     """
+
     _sleep_time = 2
 
     def __init__(self):
@@ -78,7 +83,7 @@ class HttpXParser(AbstractParser):
         может возвращать в Response ProxyError в качестве response_data,
         это означает, что вы имеете проблемы с подключением к прокси,
         возможно нужно добавить дополнительные post данные,
-         если вы используете method = POST, или headers,
+        если вы используете method = POST, или headers,
         если запрос GET
 
 
@@ -243,6 +248,16 @@ class SimpleCache(AbstractCacheController):
         if force:
             return self.tmp_data.clear()
         return self.tmp_data.pop(key)
+
+    def __setitem__(self, key, value) -> None:
+        self.tmp_data.update(
+            {key: value}
+        )
+
+    def __getitem__(self, item) -> Union[
+        CachedResponse, aiohttp.ClientSession
+    ]:
+        return self.tmp_data.get(item)
 
     def update_data(
             self,

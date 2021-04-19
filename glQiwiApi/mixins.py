@@ -49,7 +49,3 @@ class ToolsMixin(object):
             setattr(result, k, copy.deepcopy(v, memo))
 
         return result
-
-    @property
-    def parser(self):
-        return self._parser

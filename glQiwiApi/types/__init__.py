@@ -1,9 +1,18 @@
-from typing import Union
+import concurrent.futures as futures
+from typing import Union, TypeVar, Optional, Callable, Any
 
 from .basics import (
-    Type, Sum, Commission, OptionalSum
+    Type,
+    Sum,
+    Commission,
+    OptionalSum
 )
-from .particular import (Response, ProxyService, WrapperData, proxy_list)
+from .particular import (
+    Response,
+    ProxyService,
+    WrapperData,
+    proxy_list
+)
 from .qiwi_types import (
     Bill,
     BillError,
@@ -13,7 +22,10 @@ from .qiwi_types import (
     Limit,
     Account,
     QiwiAccountInfo,
-    Transaction
+    Transaction,
+    PaymentInfo,
+    OrderDetails,
+    RefundBill
 )
 from .yoomoney_types import (
     OperationType,
@@ -34,6 +46,15 @@ PydanticTypes = Union[
     Transaction, QiwiAccountInfo, Account, Limit,
     Bill, BillError, Statistic, Balance, Identification
 ]
+
+E_ = TypeVar(
+    'E_',
+    futures.ThreadPoolExecutor,
+    futures.ProcessPoolExecutor,
+    Optional[None]
+)
+
+FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
 __all__ = [
     'QiwiAccountInfo',
@@ -61,5 +82,10 @@ __all__ = [
     'OptionalSum',
     'Commission',
     'BasicTypes',
-    'PydanticTypes'
+    'PydanticTypes',
+    'PaymentInfo',
+    'OrderDetails',
+    'RefundBill',
+    'E_',
+    'FuncT'
 ]

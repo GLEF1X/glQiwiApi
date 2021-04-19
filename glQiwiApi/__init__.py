@@ -1,14 +1,27 @@
 import sys
 
-from glQiwiApi.qiwi import QiwiWrapper
-from glQiwiApi.utils.exceptions import RequestError, VersionError
-from glQiwiApi.yoo_money import YooMoneyAPI
+from .qiwi import QiwiWrapper  # NOQA
+from .utils.basics import sync, to_datetime  # NOQA
+from .utils.exceptions import *  # NOQA
+from .yoo_money import YooMoneyAPI  # NOQA
 
-__all__ = [
-    'QiwiWrapper',
-    'YooMoneyAPI',
-    'RequestError'
-]
+__all__ = (
+        (
+            'QiwiWrapper',
+            'YooMoneyAPI',
+            'RequestError',
+            'to_datetime',
+            'sync'
+        ) + utils.exceptions.__all__  # NOQA
+)
+
+
+class VersionError(Exception):
+    """
+    Ошибка возникает, если ваша версия python не поддерживается библиотекой
+
+    """
+
 
 if not sys.version_info[:2] >= (3, 7):
     raise VersionError(

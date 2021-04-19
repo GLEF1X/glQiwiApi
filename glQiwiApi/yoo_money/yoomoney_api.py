@@ -71,7 +71,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
     @classmethod
     async def build_url_for_auth(
-            cls, scope: List[str],
+            cls,
+            scope: List[str],
             client_id: str,
             redirect_uri: str = 'https://example.com'
     ) -> str:
