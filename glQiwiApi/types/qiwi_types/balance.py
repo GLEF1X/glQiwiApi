@@ -12,7 +12,7 @@ class Balance(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return super().__str__()
+            return f'Config class with loads={self.json_loads}'
 
         def __repr__(self) -> str:
-            return super().__repr__()
+            return self.__str__()

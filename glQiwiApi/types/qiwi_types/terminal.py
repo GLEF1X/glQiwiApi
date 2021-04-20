@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import Field, BaseModel
 
+from glQiwiApi.utils.basics import custom_load
+
 
 class Coordinate(BaseModel):
     """Object: coordinate"""
@@ -27,6 +29,16 @@ class Terminal(BaseModel):
     card_allowed: bool = Field(..., alias="cardAllowed")
     identification_type: int = Field(..., alias="identificationType")
     coordinate: Coordinate = Field(..., alias="coordinate")
+
+    class Config:
+        """ Pydantic config """
+        json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 __all__ = ("Terminal",)

@@ -290,6 +290,13 @@ def _await_sync(future, executor, loop):
     return future.result()
 
 
+def check_params(amount_, amount, txn, transaction_type):
+    if amount_ >= amount:
+        if txn.direction == transaction_type:
+            return True
+    return False
+
+
 def _cancel_future(loop, future, executor) -> None:
     """ cancels future if any exception occurred """
     executor.submit(loop.call_soon_threadsafe, future.cancel)

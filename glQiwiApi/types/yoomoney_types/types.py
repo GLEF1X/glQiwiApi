@@ -80,10 +80,10 @@ class AccountInfo(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return super().__str__()
+            return f'Config class with loads={self.json_loads}'
 
         def __repr__(self) -> str:
-            return super().__repr__()
+            return self.__str__()
 
 
 class OperationType(Enum):
@@ -333,10 +333,10 @@ class OperationDetails(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return super().__str__()
+            return f'Config class with loads={self.json_loads}'
 
         def __repr__(self) -> str:
-            return super().__repr__()
+            return self.__str__()
 
 
 class Wallet(BaseModel):
@@ -519,6 +519,12 @@ class Payment(BaseModel):
         """ Pydantic config """
         json_loads = custom_load
         extra = Extra.allow
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 class IncomingTransaction(BaseModel):

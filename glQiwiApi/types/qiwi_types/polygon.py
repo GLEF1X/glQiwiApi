@@ -12,7 +12,10 @@ class Polygon:
 
     @property
     def dict(self):
-        return {k: str(double) for k, double in self._dict.items()}
+        return {k: str(double) for k, double in self._get_items()}
+
+    def _get_items(self):
+        return self._dict.items()
 
 
 __all__ = ("Polygon",)

@@ -593,18 +593,22 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 transaction_type,
                 txn_detail
             )
-
-            if amount_ >= amount:
-                if txn_detail.direction == transaction_type:
-                    if txn.status == 'success':
-                        if comment_ == comment:
-                            if txn_detail.sender == sender_number:
-                                return True
-                        elif isinstance(comment, str) and isinstance(
-                                sender_number,
-                                str):
-                            continue
-                        elif comment_ == comment:
+            checked = api_helper.check_params(
+                amount=amount,
+                transaction_type=transaction_type,
+                amount_=amount_,
+                txn=txn_detail
+            )
+            if checked:
+                if txn.status == 'success':
+                    if comment_ == comment:
+                        if txn_detail.sender == sender_number:
                             return True
+                    elif isinstance(comment, str) and isinstance(
+                            sender_number,
+                            str):
+                        continue
+                    elif comment_ == comment:
+                        return True
 
         return False
