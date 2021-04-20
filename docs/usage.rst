@@ -5,3 +5,4 @@
 Для того чтобы использовать pyQiwi в проекте::
 
     import glQiwiApi
+

@@ -11,8 +11,13 @@ Payment wrappers
 
 Low level API
 -------------
-.. automodule:: glQiwiApi.basic_requests_api
+.. automodule:: glQiwiApi.core.basic_requests_api
    :members:
+
+Synchronous adapter
+-------------------
+.. automodule:: glQiwiApi.utils.basics
+    :members: sync, _await_sync, _run_forever_safe
 
 Exceptions
 ----------
