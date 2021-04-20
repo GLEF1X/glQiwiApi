@@ -10,7 +10,7 @@
 
 ## 🌎Official api resources:
 
-* 🎓__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
 * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### 📣New feature. Add YooMoney support and `pydantic` models to library!
