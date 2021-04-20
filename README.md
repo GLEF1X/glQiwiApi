@@ -112,7 +112,6 @@ from glQiwiApi import QiwiWrapper
 async def main():
     # You can pass on only p2p tokens, if you want to use only p2p api
     async with QiwiWrapper(
-            public_p2p="your_p2p",
             secret_p2p="your_secret_p2p"
     ) as w:
         # Таким образом можно создать p2p счет
