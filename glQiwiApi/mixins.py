@@ -25,6 +25,7 @@ class BillMixin(object):
 
 class ToolsMixin(object):
     _parser = None
+    slots_ = set()
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
@@ -37,12 +38,24 @@ class ToolsMixin(object):
             await self._parser.session.close()
             self._parser.clear_cache()
 
+    def get_(self, item: Any) -> Any:
+        try:
+
+            obj = super().__getattribute__(item)
+            if obj is not None:
+                self.slots_.add(item)
+            return obj
+        except AttributeError:
+            return None
+
     def __deepcopy__(self, memo) -> 'ToolsMixin':
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
-        values = [getattr(self, slot) for slot in self.__slots__]
-        items = it.zip_longest(self.__slots__, values)
+        self.slots_.clear()
+        values = [self.get_(slot) for slot in self.__slots__ if
+                  self.get_(slot) is not None]
+        items = it.zip_longest(self.slots_, values)
         for k, v in items:
             if k == '_parser':
                 v.session = None
