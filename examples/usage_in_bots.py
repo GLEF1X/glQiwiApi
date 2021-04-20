@@ -20,8 +20,8 @@ dp = Dispatcher(bot, storage=storage)
 
 
 async def create_payment(amount: Union[float, int] = 1) -> qiwi_types.Bill:
-    async with wallet as w:
-        return await w.create_p2p_bill(amount=amount)
+    async with wallet:
+        return await wallet.create_p2p_bill(amount=amount)
 
 
 @dp.message_handler(text='Хочу оплатить')

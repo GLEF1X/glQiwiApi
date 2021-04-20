@@ -11,7 +11,14 @@ class Statistic(BaseModel):
     out: List[Sum] = Field(alias="outgoingTotal")
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 __all__ = [

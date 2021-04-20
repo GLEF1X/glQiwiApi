@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from glQiwiApi.types import Sum
+from glQiwiApi.utils.basics import custom_load
 
 
 class Fields(BaseModel):
@@ -26,6 +27,16 @@ class PaymentInfo(BaseModel):
     source: str
     transaction: Optional[TransactionInfo] = None
     comment: Optional[str] = None
+
+    class Config:
+        """ Pydantic config """
+        json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 __all__ = [

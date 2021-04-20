@@ -1,5 +1,6 @@
 import sys
 
+from glQiwiApi.utils import exceptions
 from .qiwi import QiwiWrapper, QiwiMaps  # NOQA
 from .utils.basics import sync, to_datetime  # NOQA
 from .utils.exceptions import *  # NOQA
@@ -13,7 +14,7 @@ __all__ = (
             'RequestError',
             'to_datetime',
             'sync'
-        ) + utils.exceptions.__all__  # NOQA
+        ) + exceptions.__all__  # NOQA
 )
 
 

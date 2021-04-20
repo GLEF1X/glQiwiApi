@@ -101,7 +101,14 @@ class Transaction(BaseModel):
     """Курс конвертации (если применяется в транзакции)"""
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
     def as_str(self):
         return f"""Статус транзакции: {self.status}

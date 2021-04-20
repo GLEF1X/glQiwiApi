@@ -33,7 +33,14 @@ class BillError(BaseModel):
     trace_id: str = Field(alias="traceId")
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 class Bill(BaseModel, BillMixin):
@@ -50,9 +57,16 @@ class Bill(BaseModel, BillMixin):
     customer: Optional[Customer] = None
 
     class Config:
+        """ Pydantic config """
         extra = 'allow'
         json_loads = custom_load
         allow_mutation = True
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 class RefundBill(BaseModel):

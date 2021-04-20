@@ -76,7 +76,14 @@ class AccountInfo(BaseModel):
     """
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 class OperationType(Enum):
@@ -169,7 +176,14 @@ class Operation(BaseModel):
     details: Optional[Any] = None
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 class OperationDetails(BaseModel):
@@ -315,7 +329,14 @@ class OperationDetails(BaseModel):
     """
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 class Wallet(BaseModel):
@@ -386,7 +407,14 @@ class PreProcessPaymentResponse(BaseModel):
     ext_action_uri: Optional[str] = None
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 class Payment(BaseModel):
@@ -488,6 +516,7 @@ class Payment(BaseModel):
         return self
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
         extra = Extra.allow
 
@@ -499,7 +528,14 @@ class IncomingTransaction(BaseModel):
     error: Optional[str] = None
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return super().__str__()
+
+        def __repr__(self) -> str:
+            return super().__repr__()
 
 
 __all__ = (

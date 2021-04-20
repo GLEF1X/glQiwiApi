@@ -173,8 +173,8 @@ def custom_load(data):
     return orjson.loads(json.dumps(data))
 
 
-# Модель pydantic для перевода строки в datetime
 class Parser(BaseModel):
+    """ Модель pydantic для перевода строки в datetime """
     dt: datetime
 
 
