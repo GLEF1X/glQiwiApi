@@ -417,7 +417,7 @@ class PreProcessPaymentResponse(BaseModel):
             return self.__str__()
 
 
-class Payment(BaseModel):
+class Payment(BaseModel):  # lgtm [py/missing-equals #
     status: str
     """
     Код результата выполнения операции. Возможные значения:

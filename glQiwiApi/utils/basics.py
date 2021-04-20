@@ -6,7 +6,6 @@ import time
 import warnings
 from copy import deepcopy
 from datetime import datetime
-from json import JSONDecodeError
 
 import pytz
 from pydantic import ValidationError, BaseModel
@@ -215,7 +214,7 @@ def to_datetime(string_representation):
             {'dt': string_representation}
         )
         return Parser.parse_raw(parsed).dt
-    except (ValidationError, JSONDecodeError) as ex:
+    except (ValidationError, orjson.JSONDecodeError) as ex:
         return ex.json(indent=4)
 
 

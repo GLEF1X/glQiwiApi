@@ -1,6 +1,3 @@
-from collections import ItemsView
-
-
 class Polygon:
     """ Polygon class for QiwiMaps class """
 
@@ -19,7 +16,7 @@ class Polygon:
     def dict(self):
         return {k: str(double) for k, double in self._get_items()}
 
-    def _get_items(self) -> ItemsView:
+    def _get_items(self):
         return self._dict.items()
 
 
