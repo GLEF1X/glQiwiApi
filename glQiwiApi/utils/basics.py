@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures as futures
 import functools as ft
-import json
 import re
 import time
 import warnings
@@ -170,7 +169,7 @@ def dump_response(func):
 
 
 def custom_load(data):
-    return orjson.loads(json.dumps(data))
+    return orjson.loads(orjson.dumps(data))
 
 
 class Parser(BaseModel):

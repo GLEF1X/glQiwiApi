@@ -7,19 +7,23 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Fields(BaseModel):
+    """ Специальные поля """
     account: str
 
 
 class State(BaseModel):
+    """ State """
     code: str
 
 
 class TransactionInfo(BaseModel):
+    """ Информация о транзакции """
     txn_id: int = Field(..., alias="id")
     state: State
 
 
 class PaymentInfo(BaseModel):
+    """Информация о платеже"""
     payment_id: int = Field(..., alias="id")
     terms: str
     fields: Fields

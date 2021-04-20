@@ -48,8 +48,8 @@ PydanticTypes = Union[
     Terminal, Partner
 ]
 
-E = TypeVar(
-    'E',
+Executors = TypeVar(
+    'Executors',
     futures.ThreadPoolExecutor,
     futures.ProcessPoolExecutor,
     Optional[None]
@@ -89,6 +89,6 @@ __all__ = [
     'Polygon',
     'Terminal',
     'Partner',
-    'E',
+    'Executors',
     'FuncT'
 ]

@@ -585,25 +585,24 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         )
         for txn in transactions:
             # Get details of transaction to check it later
-            txn_detail = await self.transaction_info(txn.operation_id)
+            detail = await self.transaction_info(txn.operation_id)
 
             # Parse amount and comment,
             # because the parameters depend on the type of transaction
             amount_, comment_ = api_helper.parse_amount(
                 transaction_type,
-                txn_detail
+                detail
             )
             checked = api_helper.check_params(
                 amount=amount,
                 transaction_type=transaction_type,
                 amount_=amount_,
-                txn=txn_detail
+                txn=detail
             )
             if checked:
                 if txn.status == 'success':
-                    if comment_ == comment:
-                        if txn_detail.sender == sender_number:
-                            return True
+                    if comment_ == comment and detail.sender == sender_number:
+                        return True
                     elif isinstance(comment, str) and isinstance(
                             sender_number,
                             str):

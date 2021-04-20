@@ -7,6 +7,7 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Partner(BaseModel):
+    """ Base partner class """
     title: str
     id: int
 

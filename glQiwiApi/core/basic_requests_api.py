@@ -8,13 +8,13 @@ from typing import (
 )
 from typing import Optional, List, Any, Union
 
-import aiohttp
 from aiohttp import (
     ClientTimeout,
     ClientRequest,
     ClientProxyConnectionError,
     ServerDisconnectedError,
-    ContentTypeError
+    ContentTypeError,
+    ClientSession
 )
 from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
@@ -254,7 +254,7 @@ class SimpleCache(AbstractCacheController):
         )
 
     def __getitem__(self, item) -> Union[
-        CachedResponse, aiohttp.ClientSession
+        CachedResponse, ClientSession
     ]:
         return self.tmp_data.get(item)
 

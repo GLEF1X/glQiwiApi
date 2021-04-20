@@ -58,15 +58,13 @@ class Bill(BaseModel, BillMixin):
 
     class Config:
         """ Pydantic config """
-        extra = 'allow'
         json_loads = custom_load
-        allow_mutation = True
 
         def __str__(self) -> str:
-            return super().__str__()
+            return f'Config class with loads={self.json_loads}'
 
         def __repr__(self) -> str:
-            return super().__repr__()
+            return self.__str__()
 
 
 class RefundBill(BaseModel):
