@@ -211,7 +211,7 @@ def to_datetime(string_representation):
     :return: datetime representation
     """
     try:
-        parsed = json.dumps(
+        parsed = orjson.dumps(
             {'dt': string_representation}
         )
         return Parser.parse_raw(parsed).dt
