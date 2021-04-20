@@ -1,10 +1,14 @@
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple
 
+from pydantic import ValidationError
+
 import glQiwiApi.utils.basics as api_helper
-from glQiwiApi.abstracts import AbstractPaymentWrapper
-from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.mixins import ToolsMixin
+from glQiwiApi.core import (
+    AbstractPaymentWrapper,
+    CustomParser,
+    ToolsMixin
+)
 from glQiwiApi.types import (
     AccountInfo,
     OperationType,
@@ -19,8 +23,7 @@ from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.basic_yoomoney_config import (
     BASE_YOOMONEY_URL,
     ERROR_CODE_NUMBERS,
-    content_and_auth,
-    OPERATION_TRANSFER
+    content_and_auth
 )
 
 
@@ -30,7 +33,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
     Удобен он тем, что не просто отдает json подобные объекты,
     а всё это конвертирует в python dataclasses.
     Для работы с данным классом, необходимо зарегистрировать токен,
-    используя гайд на официальном гитхабе проекта
+    используя гайд на официальном github проекта
 
     """
 
@@ -71,7 +74,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
     @classmethod
     async def build_url_for_auth(
-            cls, scope: List[str],
+            cls,
+            scope: List[str],
             client_id: str,
             redirect_uri: str = 'https://example.com'
     ) -> str:
@@ -183,10 +187,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 headers=headers,
                 method='POST'
         ):
-            return api_helper.format_objects(
-                iterable_obj=(response.response_data,),
-                obj=AccountInfo,
-            )[0]
+            return AccountInfo.parse_raw(response.response_data)
 
     async def transactions(
             self,
@@ -204,8 +205,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         https://yoomoney.ru/docs/wallet/user-account/operation-history\n
         Метод позволяет просматривать историю операций (полностью или частично)
         в постраничном режиме.\n
-        Записи истории выдаются в обратном хронологическом порядке: от последних
-         к более ранним.\n
+        Записи истории выдаются в обратном хронологическом порядке:
+        от последних к более ранним.\n
         Перечень типов операций, которые требуется отобразить.\n
         Возможные значения:
         DEPOSITION — пополнение счета (приход);\n
@@ -290,10 +291,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 data=data,
                 get_json=True
         ):
-            return api_helper.format_objects(
-                iterable_obj=response.response_data.get('operations'),
-                obj=Operation,
-                transfers=OPERATION_TRANSFER
+            return api_helper.multiply_objects_parse(
+                lst_of_objects=response.response_data.get('operations'),
+                model=Operation
             )
 
     async def transaction_info(self, operation_id: str) -> OperationDetails:
@@ -316,11 +316,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 headers=headers,
                 data=payload
         ):
-            return api_helper.format_objects(
-                iterable_obj=(response.response_data,),
-                obj=OperationDetails,
-                transfers=OPERATION_TRANSFER
-            )[0]
+            return OperationDetails.parse_raw(response.response_data)
 
     async def _pre_process_payment(
             self,
@@ -378,17 +374,14 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 data=payload
         ):
             try:
-                obj = api_helper.format_objects(
-                    iterable_obj=(response.response_data,),
-                    obj=PreProcessPaymentResponse
-                )[0]
-                if obj.status != 'success':
-                    raise IndexError()
-                return obj
-            except (IndexError, AttributeError):
-                raise ConnectionError(
-                    'Не удалось создать pre_payment запрос, '
-                    'проверьте переданные параметры и попробуйте ещё раз'
+                return PreProcessPaymentResponse.parse_raw(
+                    response.response_data
+                )
+            except ValidationError:
+                msg = "Недостаточно денег для перевода или ошибка сервиса"
+                self._parser.raise_exception(
+                    status_code=400,
+                    message=msg
                 )
 
     async def send(
@@ -455,6 +448,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             protect=protect,
             pattern_id=pattern_id
         )
+
         headers = self._auth_token(
             api_helper.parse_headers(**content_and_auth))
 
@@ -464,20 +458,20 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         }
         expression = isinstance(pre_payment, PreProcessPaymentResponse)
         if money_source == 'card' and expression:
-            if pre_payment.money_source.get('cards').get('allowed') == 'true':
+            if pre_payment.money_source.cards.allowed == 'true':
                 if not isinstance(card_type, str):
-                    cards = pre_payment.money_source['cards']
+                    cards = pre_payment.money_source.cards
                     payload.update({
-                        'money_source': cards['items'][0]['id'],
+                        'money_source': cards.items[0].item_id,
                         'csc': cvv2_code
                     })
                 else:
-                    cards = pre_payment.money_source.get('cards').get('items')
+                    cards = pre_payment.money_source.cards.items
                     for card in cards:
-                        if card.get('type') == card_type:
+                        if card.item_type == card_type:
                             payload.update(
                                 {
-                                    'money_source': card.get('id'),
+                                    'money_source': card.item_id,
                                     'csc': cvv2_code
                                 },
                             )
@@ -487,10 +481,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 headers=headers,
                 data=payload
         ):
-            return api_helper.format_objects(
-                iterable_obj=(response.response_data,),
-                obj=Payment
-            )[0].initialize(pre_payment.protection_code)
+            return Payment.parse_raw(
+                response.response_data
+            ).initialize(pre_payment.protection_code)
 
     async def get_balance(self) -> Optional[Union[float, int]]:
         """Метод для получения баланса на кошельке yoomoney"""
@@ -530,10 +523,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 method='POST',
                 get_json=True
         ):
-            return api_helper.format_objects(
-                iterable_obj=(response.response_data,),
-                obj=IncomingTransaction
-            )[0]
+            return IncomingTransaction.parse_raw(
+                response.response_data
+            )
 
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
         """
@@ -583,30 +575,39 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :param comment: комментарий, по которому будет проверяться транзакция
         :return: bool, есть ли такая транзакция в истории платежей
         """
+        # Generate types of transactions for request
         types = [
-            OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT
-        ]
+            OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT]
+        # Get transactions by params
         transactions = await self.transactions(
             operation_types=types,
             records=rows_num
         )
-        for transaction in transactions:
-            details_transaction = await self.transaction_info(
-                transaction.operation_id
+        for txn in transactions:
+            # Get details of transaction to check it later
+            detail = await self.transaction_info(txn.operation_id)
+
+            # Parse amount and comment,
+            # because the parameters depend on the type of transaction
+            amount_, comment_ = api_helper.parse_amount(
+                transaction_type,
+                detail
             )
-            detail_amount = details_transaction.amount if transaction_type == 'in' else details_transaction.amount_due
-            detail_comment = details_transaction.comment if transaction_type == 'in' else details_transaction.message
-            if detail_amount >= amount:
-                if details_transaction.direction == transaction_type:
-                    if transaction.status == 'success':
-                        if detail_comment == comment:
-                            if details_transaction.sender == sender_number:
-                                return True
-                        elif isinstance(comment, str) and isinstance(
-                                sender_number,
-                                str):
-                            continue
-                        elif detail_comment == comment:
-                            return True
+            checked = api_helper.check_params(
+                amount=amount,
+                transaction_type=transaction_type,
+                amount_=amount_,
+                txn=detail
+            )
+            if checked:
+                if txn.status == 'success':
+                    if comment_ == comment and detail.sender == sender_number:
+                        return True
+                    elif isinstance(comment, str) and isinstance(
+                            sender_number,
+                            str):
+                        continue
+                    elif comment_ == comment:
+                        return True
 
         return False

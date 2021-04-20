@@ -8,14 +8,13 @@
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 </h2>
 
-## :globe_with_meridians:Official api resources:
+## 🌎Official api resources:
 
-* :mortar_board:__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+* 🎓__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
 * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
-### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
-
-### :floppy_disk:Installation
+### 📣New feature. Add YooMoney support and `pydantic` models to library!
+### 💾Installation
 
 ```bash
 pip install glQiwiApi
@@ -23,7 +22,7 @@ pip install glQiwiApi
 
 ---
 
-## :bulb:Dependencies
+## 🐦Dependencies
 
 | Library | Description                                    |
 |:-------:|:----------------------------------------------:|
@@ -35,7 +34,7 @@ pip install glQiwiApi
 
 ---
 
-## :pencil2:Dive-in Examples
+## 🧸Dive-in Examples
 
 ```python
 import asyncio
@@ -78,7 +77,7 @@ asyncio.run(main())
 
 ---
 
-## :scroll:Checking transactions
+## 🌀Checking transactions
 
 ```python
 import asyncio
@@ -102,7 +101,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## :city_sunset:Create & check p2p bills
+## 🌱Create & check p2p bills
 
 ```python
 import asyncio
@@ -113,7 +112,6 @@ from glQiwiApi import QiwiWrapper
 async def main():
     # You can pass on only p2p tokens, if you want to use only p2p api
     async with QiwiWrapper(
-            public_p2p="your_p2p",
             secret_p2p="your_secret_p2p"
     ) as w:
         # Таким образом можно создать p2p счет
@@ -138,7 +136,7 @@ asyncio.run(main())
 
 ![form](https://i.ibb.co/T0C5RYz/2021-03-21-14-58-33.png)
 
-## :rocket:Send to another wallet & get receipt(получение чека транзакции)
+## ⛏Send to another wallet & get receipt(получение чека транзакции)
 
 ```python
 import asyncio
@@ -168,7 +166,7 @@ asyncio.run(main())
 
 ```
 
-## Send to card & check commission
+## 💳Send to card & check commission
 
 ```python
 import asyncio
@@ -198,7 +196,6 @@ asyncio.run(main())
 ```
 
 ## 🚀Query caching (beta)
-
 ```python
 import asyncio
 
@@ -229,13 +226,13 @@ async def cache_test():
         # Запросы ниже не будут браться из кэша,
         # причиной тому есть разница в параметрах запроса
         # Результат все также заноситься в кэш
-        print(len(await wallet.transactions(rows_num=30)) == 30)  # True
+        print(len(await wallet.transactions(rows_num=30)) == 30) # True
         # Однако, повторный запрос к апи будет выполнен, поскольку
         # при попытке взятие результата из кэша валидатор сравнивает
         # параметры запроса, если они не совпадают, то
         # кэш игнорируется
         # Повторный запрос к апи
-        print(len(await wallet.transactions(rows_num=10)) == 10)  # True
+        print(len(await wallet.transactions(rows_num=10)) == 10) # True
 
 
 asyncio.run(cache_test())
@@ -243,7 +240,7 @@ asyncio.run(cache_test())
 
 ```
 
-## :warning:Handling exceptions
+## ⚠️Handling exceptions
 
 ```python
 import asyncio
@@ -263,9 +260,13 @@ async def main():
 
 asyncio.run(main())
 ```
+---
+## 🗺QIWI terminals
+__glQiwiApi covers qiwi's MAPS api in QiwiMaps class__
+
+---
 
 # YooMoney API
----
 
 ## Important. How to get YooMoney access token
 
@@ -365,8 +366,7 @@ async def main():
             amount=2
         )
         # Опционально, так вы можете проверить транзакцию, поступила ли она человеку на счёт
-        print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi',
-                                        transaction_type='out'))
+        print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi', transaction_type='out'))
 
 
 asyncio.run(main())

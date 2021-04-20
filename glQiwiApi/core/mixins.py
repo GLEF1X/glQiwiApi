@@ -1,5 +1,4 @@
 import copy
-import itertools as it
 from typing import Optional, Any
 
 
@@ -37,19 +36,21 @@ class ToolsMixin(object):
             await self._parser.session.close()
             self._parser.clear_cache()
 
+    def _get(self, item: Any) -> Any:
+        try:
+            return super().__getattribute__(item)
+        except AttributeError:
+            return None
+
     def __deepcopy__(self, memo) -> 'ToolsMixin':
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
-        values = [getattr(self, slot) for slot in self.__slots__]
-        items = it.zip_longest(self.__slots__, values)
-        for k, v in items:
+        dct = {slot: self._get(slot) for slot in self.__slots__ if
+               self._get(slot) is not None}
+        for k, v in dct.items():
             if k == '_parser':
                 v.session = None
             setattr(result, k, copy.deepcopy(v, memo))
 
         return result
-
-    @property
-    def parser(self):
-        return self._parser

@@ -5,7 +5,6 @@ from glQiwiApi import QiwiWrapper, RequestError
 
 TOKEN = "YOUR_API_ACCESS_TOKEN"
 WALLET = "+NUMBER"
-PUBLIC_KEY = 'YOUR_PUBLIC_P2P_TOKEN'
 SECRET_KEY = 'YOUR_SECRET_P2P_TOKEN'
 
 
@@ -13,7 +12,6 @@ async def basic_usage():
     async with QiwiWrapper(
             api_access_token=TOKEN,
             phone_number=WALLET,
-            public_p2p=PUBLIC_KEY,
             secret_p2p=SECRET_KEY
     ) as wallet:
         # Так вы можете получить информацию по транзакции, зная её айди и тип

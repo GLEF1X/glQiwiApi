@@ -1,13 +1,14 @@
+import asyncio
+import concurrent.futures as futures
 import functools as ft
 import re
 import time
 import warnings
-from dataclasses import is_dataclass
+from copy import deepcopy
 from datetime import datetime
-from typing import Optional, Union, Type
 
 import pytz
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 from pytz.reference import LocalTimezone
 
 try:
@@ -19,7 +20,25 @@ except (ModuleNotFoundError, ImportError):
     )
     import json as orjson
 
+# Локальная таймзона
 Local = LocalTimezone()
+
+QIWI_MASTER = {
+    "id": str(int(time.time() * 1000)),
+    "sum": {
+        "amount": 2999,
+        "currency": "643"
+    },
+    "paymentMethod": {
+        "type": "Account",
+        "accountId": "643"
+    },
+    "comment": "test",
+    "fields": {
+        "account": "",
+        "vas_alias": "qvc-master"
+    }
+}
 
 
 def measure_time(func):
@@ -30,8 +49,11 @@ def measure_time(func):
     @ft.wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.monotonic()
-        await func(*args, **kwargs)
-        print(f'Executed for {time.monotonic() - start_time} secs')
+        result = await func(*args, **kwargs)
+        execute_time = time.monotonic() - start_time
+        print(
+            f'Function `{func.__name__}` executed for {execute_time} secs')
+        return result
 
     return wrapper
 
@@ -46,7 +68,8 @@ def datetime_to_str_in_iso(obj, yoo_money_format=False):
             ' ').replace(" ", "T") + "Z"
     local_date = str(datetime.now(tz=Local))
     pattern = re.compile(r'[+]\d{2}[:]\d{2}')
-    return obj.isoformat(' ').replace(" ", "T") + re.findall(pattern, local_date)[0]
+    from_pattern = re.findall(pattern, local_date)[0]
+    return obj.isoformat(' ').replace(" ", "T") + from_pattern
 
 
 def parse_auth_link(response_data):
@@ -91,36 +114,6 @@ def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
     data.json['comment'] = comment
     data.headers.update({'User-Agent': 'Android v3.2.0 MKT'})
     return data
-
-
-def format_objects(iterable_obj, obj, transfers=None):
-    """
-    Функция для форматирования объектов, которые приходят от апи
-    """
-    kwargs = {}
-    objects = []
-    for transaction in iterable_obj:
-        for key, value in transaction.items():
-            if key in obj.__dict__.get(
-                    '__annotations__').keys() or key in transfers.keys():
-                try:
-                    fill_key = key if not transfers.get(key) else transfers.get(
-                        key)
-                except AttributeError:
-                    fill_key = key
-                sp_obj: Optional[Union[str, Type]] = obj.__dict__.get(
-                    '__annotations__').get(fill_key)
-                if is_dataclass(sp_obj):
-                    try:
-                        kwargs.update({fill_key: sp_obj(**value)})
-                    except TypeError:
-                        kwargs.update({fill_key: sp_obj(
-                            **format_objects_for_fill(value, transfers))})
-                    continue
-                kwargs.update({fill_key: value})
-        objects.append(obj(**kwargs))
-        kwargs = {}
-    return objects
 
 
 def set_data_p2p_create(wrapped_data, amount, life_time, comment, theme_code,
@@ -175,8 +168,12 @@ def dump_response(func):
 
 
 def custom_load(data):
-    import json
-    return json.loads(json.dumps(data))
+    return orjson.loads(orjson.dumps(data))
+
+
+class Parser(BaseModel):
+    """ Модель pydantic для перевода строки в datetime """
+    dt: datetime
 
 
 def allow_response_code(status_code):
@@ -196,3 +193,134 @@ def allow_response_code(status_code):
         return wrapper
 
     return wrap_func
+
+
+def qiwi_master_data(ph_number):
+    url = "https://edge.qiwi.com" + '/sinap/api/v2/terms/28004/payments'
+    payload = deepcopy(QIWI_MASTER)
+    payload["fields"]["account"] = ph_number
+    return url, payload
+
+
+def to_datetime(string_representation):
+    """
+    Вспомогательная функция для перевода строки во время
+
+    :param string_representation: дата в виде строки
+    :return: datetime representation
+    """
+    try:
+        parsed = orjson.dumps(
+            {'dt': string_representation}
+        )
+        return Parser.parse_raw(parsed).dt
+    except (ValidationError, orjson.JSONDecodeError) as ex:
+        return ex.json(indent=4)
+
+
+def new_card_data(ph_number, order_id):
+    payload = deepcopy(QIWI_MASTER)
+    url = "https://edge.qiwi.com" + "/sinap/api/v2/terms/32064/payments"
+    payload["fields"].pop("vas_alias")
+    payload["fields"].update(order_id=order_id)
+    payload["fields"]["account"] = ph_number
+    return url, payload
+
+
+def sync_measure_time(func):
+    @ft.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.monotonic()
+        result = func(*args, **kwargs)
+        execute_time = time.monotonic() - start_time
+        print(
+            f'Function `{func.__name__}` executed for {execute_time} secs')
+        return result
+
+    return wrapper
+
+
+def parse_amount(txn_type, txn):
+    if txn_type == 'in':
+        amount = txn.amount
+        comment = txn.comment
+    else:
+        amount = txn.amount_due
+        comment = txn.message
+    return amount, comment
+
+
+def _run_forever_safe(loop) -> None:
+    """ run a loop for ever and clean up after being stopped """
+
+    loop.run_forever()
+    # NOTE: loop.run_forever returns after calling loop.stop
+
+    # -- cancel all tasks and close the loop gracefully
+
+    loop_tasks_all = asyncio.all_tasks(loop=loop)
+
+    for task in loop_tasks_all:
+        task.cancel()
+    # NOTE: `cancel` does not guarantee that the Task will be cancelled
+
+    for task in loop_tasks_all:
+        if not (task.done() or task.cancelled()):
+            try:
+                # wait for task cancellations
+                loop.run_until_complete(task)
+            except asyncio.CancelledError:
+                pass
+    # Finally, close event loop
+    loop.close()
+
+
+def _await_sync(future, executor, loop):
+    """ synchronously waits for a task """
+    exception = future.exception()
+    if exception is not None:
+        _cancel_future(
+            loop=loop,
+            executor=executor,
+            future=future
+        )
+        loop.call_soon_threadsafe(_stop_loop, loop)
+    return future.result()
+
+
+def check_params(amount_, amount, txn, transaction_type):
+    if amount_ >= amount:
+        if txn.direction == transaction_type:
+            return True
+    return False
+
+
+def _cancel_future(loop, future, executor) -> None:
+    """ cancels future if any exception occurred """
+    executor.submit(loop.call_soon_threadsafe, future.cancel)
+
+
+def _stop_loop(loop) -> None:
+    """ stops an event loop """
+
+    loop.stop()
+
+
+def sync(func, *args, **kwargs):
+    """ Function to use async functions(libraries) synchronously """
+    loop = asyncio.new_event_loop()  # construct a new event loop
+
+    executor = futures.ThreadPoolExecutor(2, 'sync_connector_')
+    # Run our coroutine thread safe
+    my_task = asyncio.run_coroutine_threadsafe(
+        func(*args, **kwargs),
+        loop=loop
+    )
+    # Run loop.run_forever(), but do it safely
+    executor.submit(_run_forever_safe, loop)
+    # Sync await our result
+    result = _await_sync(my_task, executor=executor, loop=loop)
+    # close created early loop
+    loop.call_soon_threadsafe(_stop_loop, loop)
+    executor.shutdown(wait=True)
+    return result

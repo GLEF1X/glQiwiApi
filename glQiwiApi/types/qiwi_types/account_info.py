@@ -106,7 +106,14 @@ class QiwiAccountInfo(BaseModel):
     user_info: Optional[UserInfo] = Field(alias="userInfo", const=None)
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 __all__ = [

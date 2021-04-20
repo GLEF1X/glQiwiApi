@@ -4,11 +4,13 @@ from datetime import datetime, timedelta
 from typing import Union, Optional, Dict, List, Any
 
 import aiofiles
+import aiohttp
 
 import glQiwiApi.utils.basics as api_helper
-from glQiwiApi.abstracts import AbstractPaymentWrapper
-from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.mixins import ToolsMixin
+from glQiwiApi.core import (
+    AbstractPaymentWrapper
+)
+from glQiwiApi.core import CustomParser, ToolsMixin
 from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
     QIWI_TO_CARD, DEFAULT_QIWI_HEADERS,
@@ -28,7 +30,9 @@ from glQiwiApi.types import (
     Response,
     Sum,
     Commission,
-    OptionalSum
+    OptionalSum,
+    PaymentInfo,
+    OrderDetails
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.qiwi_types.bill import RefundBill
@@ -49,7 +53,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         'api_access_token',
         'phone_number',
         'secret_p2p',
-        'public_p2p',
         '_parser',
     )
 
@@ -58,7 +61,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
-            public_p2p: Optional[str] = None,
             without_context: bool = False,
             cache_time: Union[float, int] = DEFAULT_CACHE_TIME
     ) -> None:
@@ -66,7 +68,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param api_access_token: токен, полученный с https://qiwi.com/api
         :param phone_number: номер вашего телефона с +
         :param secret_p2p: секретный ключ, полученный с https://p2p.qiwi.com/
-        :param public_p2p: публичный ключ, полученный с https://p2p.qiwi.com/
         :param without_context: bool, указывает будет ли объект класса
          "глобальной" переменной или будет использована в async with контексте
         :param cache_time: Время кэширование запросов в секундах,
@@ -74,8 +75,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
          запрос не будет использовать кэш по дефолту, максимальное время
          кэширование 60 секунд
         """
-        super().__init__()
-
         if isinstance(phone_number, str):
             self.phone_number = phone_number.replace('+', '')
             if self.phone_number.startswith('8'):
@@ -86,7 +85,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             cache_time=cache_time
         )
         self.api_access_token = api_access_token
-        self.public_p2p = public_p2p
         self.secret_p2p = secret_p2p
 
     def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
@@ -94,6 +92,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             token=self.api_access_token if not p2p else self.secret_p2p
         )
         return headers
+
+    @property
+    def session(self) -> aiohttp.ClientSession:
+        """Return aiohttp session object"""
+        return self._parser.session
 
     @property
     def stripped_number(self) -> str:
@@ -199,7 +202,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             operation: str = 'ALL',
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None
-    ) -> Union[Optional[List[Transaction]], dict]:
+    ) -> List[Transaction]:
         """
         Метод для получения транзакций на счёту
         Более подробная документация:
@@ -303,7 +306,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             self,
             transaction_id: Union[str, int],
             transaction_type: str
-    ) -> Optional[Transaction]:
+    ) -> Transaction:
         """
         Метод для получения полной информации о транзакции\n
         Подробная документация:
@@ -369,7 +372,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             self,
             amount: Union[int, float],
             transaction_type: str = 'IN',
-            sender_number: Optional[str] = None,
+            sender: Optional[str] = None,
             rows_num: int = 50,
             comment: Optional[str] = None
     ) -> bool:
@@ -387,7 +390,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         :param amount: сумма платежа
         :param transaction_type: тип платежа
-        :param sender_number: номер получателя
+        :param sender: номер получателя
         :param rows_num: кол-во платежей, которое будет проверяться
         :param comment: комментарий, по которому будет проверяться транзакция
         :return: bool, есть ли такая транзакция в истории платежей
@@ -399,19 +402,18 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             raise InvalidData('Можно проверять не более 50 транзакций')
 
         transactions = await self.transactions(rows_num=rows_num)
-        for transaction in transactions:
-            if float(transaction.sum.amount) >= amount:
-                if transaction.type == transaction_type:
-                    if transaction.comment == comment:
-                        if transaction.to_account == sender_number:
-                            return True
-                    elif comment and sender_number:
-                        continue
-                    elif transaction.to_account == sender_number:
+        for txn in transactions:
+            if float(txn.sum.amount) >= amount:
+                if txn.type == transaction_type:
+                    if txn.comment == comment and txn.to_account == sender:
                         return True
-                    elif sender_number:
+                    elif comment and sender:
                         continue
-                    elif transaction.comment == comment:
+                    elif txn.to_account == sender:
+                        return True
+                    elif sender:
+                        continue
+                    elif txn.comment == comment:
                         return True
         return False
 
@@ -572,7 +574,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param pay_source_filter: При открытии формы будут отображаться
          только указанные способы перевода
         """
-        if not self.public_p2p or not self.secret_p2p:
+        if not self.secret_p2p:
             raise InvalidData('Не задан p2p токен')
 
         if not isinstance(bill_id, (str, int)):
@@ -617,7 +619,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param bill_id: номер p2p транзакции
         :return: статус транзакции строкой
         """
-        if not self.public_p2p or not self.secret_p2p:
+        if not self.secret_p2p:
             raise InvalidData('Не задан p2p токен')
 
         data = deepcopy(P2P_DATA)
@@ -636,7 +638,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param bill_id: номер p2p транзакции
         :return: Bill obj
         """
-        if not self.public_p2p or not self.secret_p2p:
+        if not self.secret_p2p:
             raise InvalidData('Не задан p2p токен')
         data = deepcopy(P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
@@ -921,3 +923,128 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 ) else json_bill_data.json()
         ):
             return RefundBill.parse_raw(response.response_data)
+
+    async def buy_qiwi_master(self) -> PaymentInfo:
+        """
+        Метод для покупки пакета QIWI Мастер
+
+        Для вызова методов API вам потребуется токен API QIWI Wallet
+        с разрешениями на следующие действия:
+
+        1. Управление виртуальными картами,
+        2. Запрос информации о профиле кошелька,
+        3. Просмотр истории платежей,
+        4. Проведение платежей без SMS.
+
+        Эти права вы можете выбрать при создании нового апи токена,
+        чтобы пользоваться апи QIWI Master
+        """
+        url, payload = api_helper.qiwi_master_data(self.stripped_number)
+        async for response in self._parser.fast().fetch(
+                url=url,
+                json=payload,
+                method='POST',
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        ):
+            return PaymentInfo.parse_raw(response.response_data)
+
+    async def __pre_qiwi_master_request(
+            self,
+            card_alias: str = 'qvc-cpa'
+    ) -> OrderDetails:
+        """
+        Метод для выпуска виртуальной карты QIWI Мастер
+
+        :param card_alias: Тип карты
+        :return: OrderDetails
+        """
+        url = BASE_QIWI_URL + "/cards/v2/persons/{number}/orders"
+        async for response in self._parser.fast().fetch(
+                url=url.format(number=self.stripped_number),
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
+                json={"cardAlias": card_alias},
+                method='POST'
+        ):
+            return OrderDetails.parse_raw(response.response_data)
+
+    async def _confirm_qiwi_master_request(
+            self,
+            card_alias: str = 'qvc-cpa'
+    ) -> OrderDetails:
+        """
+        Подтверждение заказа выпуска карты
+
+        :param card_alias: Тип карты
+        :return: OrderDetails
+        """
+        details = await self.__pre_qiwi_master_request(card_alias)
+        url = BASE_QIWI_URL + '/cards/v2/persons/{}/orders'
+        async for response in self._parser.fast().fetch(
+                url=url.format(
+                    self.stripped_number
+                ) + f'/{details.order_id}/submit',
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
+                method='PUT'
+        ):
+            return OrderDetails.parse_raw(response.response_data)
+
+    async def __buy_new_qiwi_card(
+            self,
+            **kwargs
+    ) -> OrderDetails:
+        """
+        Покупка карты, если она платная
+
+        :param kwargs:
+        :return: OrderDetails
+        """
+        url, payload = api_helper.new_card_data(**kwargs)
+        async for response in self._parser.fast().fetch(
+                url=url,
+                json=payload,
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        ):
+            return OrderDetails.parse_raw(response.response_data)
+
+    async def issue_qiwi_master_card(
+            self,
+            card_alias: str = 'qvc-cpa'
+    ) -> OrderDetails:
+        """
+        Выпуск новой карты, используя Qiwi Master API
+
+        При выпуске карты производиться 3, а возможно 3 запроса,
+        а именно по такой схеме:
+            - __pre_qiwi_master_request - данный метод создает заявку
+            - _confirm_qiwi_master_request - подтверждает выпуск карты
+            - __buy_new_qiwi_card - покупает новую карту,
+              если такая карта не бесплатна
+
+
+        Подробная документация:
+
+        https://developer.qiwi.com/ru/qiwi-wallet-personal/#qiwi-master-issue-card
+
+        :param card_alias: Тип карты
+        :return: OrderDetails
+        """
+        pre_response = await self._confirm_qiwi_master_request(card_alias)
+        if pre_response.status == 'COMPLETED':
+            return pre_response
+        return await self.__buy_new_qiwi_card(
+            ph_number=self.stripped_number,
+            order_id=pre_response.order_id
+        )
+
+    async def _cards_qiwi_master(self):
+        """
+        Метод для получение списка всех ваших карт QIWI Мастер
+
+        """
+        url = BASE_QIWI_URL + '/cards/v1/cards/?vas-alias=qvc-master'
+        async for response in self._parser.fast().fetch(
+                url=url,
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
+                method='GET'
+        ):
+            return response

@@ -20,7 +20,14 @@ class Limit(BaseModel):
     limit_type: str = Field(alias="type")
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 __all__ = [

@@ -3,11 +3,11 @@ import asyncio
 
 from glQiwiApi import QiwiWrapper
 
-# Создаем объект кошелька и обязательно передаем without_context = True, иначе будут проблемы с aiohttp.ClientSession
+# Создаем объект кошелька и обязательно передаем without_context = True,
+# иначе будут проблемы с aiohttp.ClientSession
 wallet = QiwiWrapper(
     api_access_token='token',
     phone_number="+number",
-    public_p2p="your public_p2p token",
     secret_p2p="your secret p2p",
     without_context=True
 )

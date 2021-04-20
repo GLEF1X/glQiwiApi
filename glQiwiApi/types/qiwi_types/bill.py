@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.mixins import BillMixin
+from glQiwiApi.core.mixins import BillMixin
 from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.utils.basics import custom_load
 
@@ -33,7 +33,14 @@ class BillError(BaseModel):
     trace_id: str = Field(alias="traceId")
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 class Bill(BaseModel, BillMixin):
@@ -50,9 +57,14 @@ class Bill(BaseModel, BillMixin):
     customer: Optional[Customer] = None
 
     class Config:
-        extra = 'allow'
+        """ Pydantic config """
         json_loads = custom_load
-        allow_mutation = True
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 class RefundBill(BaseModel):

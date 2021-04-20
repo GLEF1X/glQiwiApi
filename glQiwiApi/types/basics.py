@@ -18,7 +18,14 @@ class Sum(BaseModel):
     currency: str
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 class OptionalSum(BaseModel):
@@ -38,7 +45,14 @@ class Commission(BaseModel):
     withdraw_to_enrollment_rate: int = Field(alias="withdrawToEnrollmentRate")
 
     class Config:
+        """ Pydantic config """
         json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 class Type(BaseModel):
