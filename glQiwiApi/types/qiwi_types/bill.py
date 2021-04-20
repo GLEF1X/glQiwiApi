@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.mixins import BillMixin
+from glQiwiApi.core.mixins import BillMixin
 from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.utils.basics import custom_load
 

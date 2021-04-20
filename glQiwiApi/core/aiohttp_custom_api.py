@@ -3,7 +3,7 @@ from typing import Dict, Optional, Any, Union
 import aiohttp
 
 import glQiwiApi
-from glQiwiApi.basic_requests_api import HttpXParser, SimpleCache
+from glQiwiApi.core.basic_requests_api import SimpleCache, HttpXParser
 from glQiwiApi.types import Response
 from glQiwiApi.types.basics import CachedResponse
 from glQiwiApi.utils.exceptions import RequestError
@@ -19,9 +19,9 @@ class CustomParser(HttpXParser):
 
     def __init__(
             self,
-            without_context: bool,
-            messages: Dict[str, str],
-            cache_time: Union[float, int]
+            without_context: bool = False,
+            messages: Optional[Dict[str, str]] = None,
+            cache_time: Union[float, int] = 0
     ) -> None:
         super(CustomParser, self).__init__()
         self._without_context = without_context
@@ -72,9 +72,11 @@ class CustomParser(HttpXParser):
     def raise_exception(
             self,
             status_code: Union[str, int],
-            json_info: Optional[Dict[str, Any]] = None
+            json_info: Optional[Dict[str, Any]] = None,
+            message: Optional[str] = None
     ) -> None:
-        message = self.messages.get(str(status_code), "Unknown")
+        if not isinstance(message, str):
+            message = self.messages.get(str(status_code), "Unknown")
         raise RequestError(
             message,
             status_code,
@@ -100,3 +102,12 @@ class CustomParser(HttpXParser):
     def create_session(self, **kwargs) -> None:
         self.set_cached_session()
         super().create_session(**kwargs)
+
+    @classmethod
+    def filter_dict(cls, dictionary: dict):
+        """
+        Pop NoneType values and convert everything to str, designed?for=params
+        :param dictionary: source dict
+        :return: filtered dict
+        """
+        return {k: str(v) for k, v in dictionary.items() if v is not None}

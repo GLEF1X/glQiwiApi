@@ -95,7 +95,6 @@ class AbstractParser(abc.ABC):
             set_timeout: bool,
             cookies: Optional[LooseCookies],
             json: Optional[dict],
-            skip_exceptions: bool,
             proxy: Optional[ProxyService],
             data: Optional[Dict[str, Union[
                 str, int, List[
@@ -122,7 +121,8 @@ class AbstractParser(abc.ABC):
     def raise_exception(
             self,
             status_code: Union[str, int],
-            json_info: Optional[Dict[str, Any]] = None
+            json_info: Optional[Dict[str, Any]] = None,
+            message: Optional[str] = None
     ) -> None:
         """Метод для обработки исключений и лучшего логирования"""
 

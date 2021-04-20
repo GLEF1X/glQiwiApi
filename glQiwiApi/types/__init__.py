@@ -25,7 +25,10 @@ from .qiwi_types import (
     Transaction,
     PaymentInfo,
     OrderDetails,
-    RefundBill
+    RefundBill,
+    Polygon,
+    Terminal,
+    Partner
 )
 from .yoomoney_types import (
     OperationType,
@@ -37,14 +40,12 @@ from .yoomoney_types import (
     AccountInfo
 )
 
-BasicTypes = Union[
-    AccountInfo, Operation, OperationDetails,
-    PreProcessPaymentResponse, Payment, IncomingTransaction
-]
-
 PydanticTypes = Union[
     Transaction, QiwiAccountInfo, Account, Limit,
-    Bill, BillError, Statistic, Balance, Identification
+    Bill, BillError, Statistic, Balance, Identification,
+    AccountInfo, Operation, OperationDetails,
+    PreProcessPaymentResponse, Payment, IncomingTransaction,
+    Terminal, Partner
 ]
 
 E_ = TypeVar(
@@ -81,11 +82,13 @@ __all__ = [
     'Type',
     'OptionalSum',
     'Commission',
-    'BasicTypes',
     'PydanticTypes',
     'PaymentInfo',
     'OrderDetails',
     'RefundBill',
+    'Polygon',
+    'Terminal',
+    'Partner',
     'E_',
     'FuncT'
 ]

@@ -1,4 +1,3 @@
-import abc
 import asyncio
 import time
 from itertools import repeat
@@ -21,7 +20,7 @@ from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
-from glQiwiApi.abstracts import AbstractParser, AbstractCacheController
+from glQiwiApi.core import AbstractParser, AbstractCacheController
 from glQiwiApi.types import ProxyService, Response
 from glQiwiApi.types.basics import CachedResponse, Attributes
 from glQiwiApi.utils.exceptions import InvalidData

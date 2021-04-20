@@ -1,6 +1,6 @@
 import sys
 
-from .qiwi import QiwiWrapper  # NOQA
+from .qiwi import QiwiWrapper, QiwiMaps  # NOQA
 from .utils.basics import sync, to_datetime  # NOQA
 from .utils.exceptions import *  # NOQA
 from .yoo_money import YooMoneyAPI  # NOQA
@@ -9,6 +9,7 @@ __all__ = (
         (
             'QiwiWrapper',
             'YooMoneyAPI',
+            'QiwiMaps',
             'RequestError',
             'to_datetime',
             'sync'

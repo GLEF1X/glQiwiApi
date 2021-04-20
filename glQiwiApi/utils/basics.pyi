@@ -23,11 +23,6 @@ def parse_headers(content_json: bool = False, auth: bool = False) -> Dict[
     Any, Any]: ...
 
 
-def format_objects(iterable_obj: Union[list, tuple], obj: Type,
-                   transfers: Optional[Dict[str, str]] = None) -> Optional[
-    List[types.BasicTypes]]: ...
-
-
 def set_data_to_wallet(data: types.WrapperData,
                        to_number: str,
                        trans_sum: Union[str, int, float],
@@ -78,6 +73,10 @@ def sync_measure_time(func: Any) -> Any: ...
 
 
 def _run_forever_safe(loop: asyncio.AbstractEventLoop) -> None: ...
+
+
+def parse_amount(txn_type: str, txn: types.OperationDetails) -> Tuple[
+    Union[int, float], str]: ...
 
 
 def _await_sync(future: asyncio.Future, executor: types.E_,
@@ -400,7 +399,8 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [Optional[None]], Coroutine[Any, Any, Optional[Union[float, int]]]],
+            [Optional[None]], Coroutine[
+                Any, Any, Optional[Union[float, int]]]],
         *args: Any,
         **kwargs: Any
 ) -> Optional[Union[float, int]]: ...

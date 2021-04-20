@@ -6,10 +6,8 @@ import re
 import time
 import warnings
 from copy import deepcopy
-from dataclasses import is_dataclass
 from datetime import datetime
 from json import JSONDecodeError
-from typing import Optional, Union, Type
 
 import pytz
 from pydantic import ValidationError, BaseModel
@@ -118,37 +116,6 @@ def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
     data.json['comment'] = comment
     data.headers.update({'User-Agent': 'Android v3.2.0 MKT'})
     return data
-
-
-def format_objects(iterable_obj, obj, transfers=None):
-    """
-    Функция для форматирования объектов, которые приходят от апи
-    """
-    kwargs = {}
-    objects = []
-    for transaction in iterable_obj:
-        for key, value in transaction.items():
-            if key in obj.__dict__.get(
-                    '__annotations__').keys() or key in transfers.keys():
-                try:
-                    fill_key = key if not transfers.get(
-                        key) else transfers.get(
-                        key)
-                except AttributeError:
-                    fill_key = key
-                sp_obj: Optional[Union[str, Type]] = obj.__dict__.get(
-                    '__annotations__').get(fill_key)
-                if is_dataclass(sp_obj):
-                    try:
-                        kwargs.update({fill_key: sp_obj(**value)})
-                    except TypeError:
-                        kwargs.update({fill_key: sp_obj(
-                            **format_objects_for_fill(value, transfers))})
-                    continue
-                kwargs.update({fill_key: value})
-        objects.append(obj(**kwargs))
-        kwargs = {}
-    return objects
 
 
 def set_data_p2p_create(wrapped_data, amount, life_time, comment, theme_code,
@@ -275,6 +242,16 @@ def sync_measure_time(func):
     return wrapper
 
 
+def parse_amount(txn_type, txn):
+    if txn_type == 'in':
+        amount = txn.amount
+        comment = txn.comment
+    else:
+        amount = txn.amount_due
+        comment = txn.message
+    return amount, comment
+
+
 def _run_forever_safe(loop) -> None:
     """ run a loop for ever and clean up after being stopped """
 
@@ -325,9 +302,11 @@ def _stop_loop(loop) -> None:
 
 
 def sync(func, *args, **kwargs):
+    """ Function to use async functions(libraries) synchronously """
     loop = asyncio.new_event_loop()  # construct a new event loop
 
     executor = futures.ThreadPoolExecutor(2, 'sync_connector_')
+    # Run our coroutine thread safe
     my_task = asyncio.run_coroutine_threadsafe(
         func(*args, **kwargs),
         loop=loop
@@ -338,4 +317,5 @@ def sync(func, *args, **kwargs):
     result = _await_sync(my_task, executor=executor, loop=loop)
     # close created early loop
     loop.call_soon_threadsafe(_stop_loop, loop)
+    executor.shutdown(wait=True)
     return result

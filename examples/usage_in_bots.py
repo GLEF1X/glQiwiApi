@@ -5,7 +5,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.utils import executor
 
-from glQiwiApi import QiwiWrapper, types as qiwi_types, sync
+from glQiwiApi import QiwiWrapper, types as qiwi_types
 
 wallet = QiwiWrapper(
     secret_p2p='YOUR_SECRET_P2P_TOKEN',
@@ -19,13 +19,14 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 
-def create_payment(amount: Union[float, int] = 1) -> qiwi_types.Bill:
-    return sync(wallet.create_p2p_bill, amount)
+async def create_payment(amount: Union[float, int] = 1) -> qiwi_types.Bill:
+    async with wallet as w:
+        return await w.create_p2p_bill(amount=amount)
 
 
 @dp.message_handler(text='Хочу оплатить')
 async def payment(message: types.Message, state: FSMContext):
-    bill = create_payment()
+    bill = await create_payment()
     await message.answer(
         text=f'Хорошо, вот ваш счёт для оплаты:\n {bill.pay_url}'
     )

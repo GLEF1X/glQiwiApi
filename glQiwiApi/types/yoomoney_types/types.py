@@ -1,10 +1,13 @@
-from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, Dict, List, Any
 
+from pydantic import BaseModel, Field, Extra
 
-@dataclass
-class BalanceDetails:
+from glQiwiApi.utils.basics import custom_load
+
+
+class BalanceDetails(BaseModel):
     total: float
     available: float
     deposition_pending: Optional[float] = None
@@ -13,8 +16,12 @@ class BalanceDetails:
     hold: Optional[float] = None
 
 
-@dataclass
-class AccountInfo:
+class CardsLinked(BaseModel):
+    pan_fragment: str
+    type: str
+
+
+class AccountInfo(BaseModel):
     account: str
     """Номер счета"""
 
@@ -53,11 +60,11 @@ class AccountInfo:
     задолженности, блокировки средств.
     """
 
-    cards_linked: Optional[List[Dict[str, str]]] = None
+    cards_linked: Optional[List[CardsLinked]] = None
     """
     Информация о привязанных банковских картах.
     Если к счету не привязано ни одной карты, параметр отсутствует.
-    Если к счету привязана хотя бы одна карта, 
+    Если к счету привязана хотя бы одна карта,
     параметр содержит список данных о привязанных картах.
     pan_fragment - string Маскированный номер карты.
     type: string
@@ -67,6 +74,9 @@ class AccountInfo:
     - AmericanExpress;
     - JCB.
     """
+
+    class Config:
+        json_loads = custom_load
 
 
 class OperationType(Enum):
@@ -85,12 +95,23 @@ class OperationType(Enum):
     PAYMENT = 'payment'
     """Платежи со счета (расход)"""
 
-    INCOMING = 'incoming-transfers-unaccepted'
+    TRANSFERS = 'incoming-transfers-unaccepted'
     """непринятые входящие P2P-переводы любого типа."""
 
 
-@dataclass(frozen=True)
-class Operation:
+class DigitalGoods(BaseModel):
+    """
+    Данные о цифровом товаре (пин-коды и бонусы игр, iTunes, Xbox, etc.)
+    Поле присутствует при успешном платеже в магазины цифровых товаров.
+    Описание формата:
+    https://yoomoney.ru/docs/wallet/process-payments/process-payment#digital-goods
+    """
+    article_id: str = Field(..., alias="merchantArticleId")
+    serial: str
+    secret: str
+
+
+class Operation(BaseModel):
     operation_id: str
     """Идентификатор операции."""
 
@@ -103,7 +124,7 @@ class Operation:
      перевод не принят получателем или ожидает ввода кода протекции.
     """
 
-    operation_date: str
+    operation_date: datetime = Field(..., alias="datetime")
     """
     Дата и время совершения операции в формате строки
     в ISO формате с часовым поясом UTC.
@@ -124,7 +145,7 @@ class Operation:
     amount: Union[int, float]
     """Сумма операции."""
 
-    operation_type: str
+    operation_type: str = Field(..., alias="type")
     """Тип операции. Возможные значения:
     payment-shop — исходящий платеж в магазин;
     outgoing-transfer — исходящий P2P-перевод любого типа;
@@ -135,7 +156,7 @@ class Operation:
 
     label: Optional[str] = None
     """Метка платежа.
-     Присутствует для входящих и исходящих переводов другим пользователям ЮMoney
+     Присутствует для входящих и исходящих переводов другим пользователям
      у которых был указан параметр label вызова send()
      """
 
@@ -147,9 +168,11 @@ class Operation:
 
     details: Optional[Any] = None
 
+    class Config:
+        json_loads = custom_load
 
-@dataclass(frozen=True)
-class OperationDetails:
+
+class OperationDetails(BaseModel):
     operation_id: Optional[str] = None
     """Идентификатор операции. Можно получить при вызове метода history()"""
 
@@ -159,13 +182,13 @@ class OperationDetails:
     amount: Optional[float] = None
     """Сумма операции (сумма списания со счета)."""
 
-    operation_date: Optional[str] = None
+    operation_date: Optional[str] = Field(..., alias="datetime")
     """
     Дата и время совершения операции в формате строки
     в ISO формате с часовым поясом UTC.
     """
 
-    operation_type: Optional[str] = None
+    operation_type: Optional[str] = Field(..., alias="type")
     """Тип операции. Возможные значения:
     payment-shop — исходящий платеж в магазин;
     outgoing-transfer — исходящий P2P-перевод любого типа;
@@ -187,7 +210,7 @@ class OperationDetails:
      Присутствует в истории отправителя перевода или получателя пополнения.
      """
 
-    digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
+    digital_goods: Optional[Dict[str, DigitalGoods]] = None
     """
     Данные о цифровом товаре (пин-коды и бонусы игр, iTunes, Xbox, etc.)
     Поле присутствует при успешном платеже в магазины цифровых товаров.
@@ -197,8 +220,8 @@ class OperationDetails:
 
     details: Optional[str] = None
     """
-    Детальное описание платежа.
-    Строка произвольного формата, может содержать любые символы и переводы строк
+    Детальное описание платежа. Строка произвольного формата,
+    может содержать любые символы и переводы строк
     Необязательный параметр.
     """
 
@@ -291,9 +314,55 @@ class OperationDetails:
     Все прочие значения - техническая ошибка, повторите вызов метода позднее.
     """
 
+    class Config:
+        json_loads = custom_load
 
-@dataclass
-class PreProcessPaymentResponse:
+
+class Wallet(BaseModel):
+    allowed: bool
+
+
+class Item(BaseModel):
+    item_id: str = Field(..., alias="id")
+    """
+    Идентификатор привязанной к счету банковской карты.
+    Его необходимо указать в методе process-payment для
+    совершения платежа выбранной картой.
+    """
+    pan_fragment: str
+    """
+    Фрагмент номера банковской карты.
+    Поле присутствует только для привязанной банковской карты.
+    Может отсутствовать, если неизвестен.
+    """
+    item_type: str = Field(..., alias="type")
+    """
+    Тип карты. Может отсутствовать, если неизвестен. Возможные значения:
+    Visa;
+    MasterCard;
+    American Express;
+    JCB.
+    """
+
+
+class Card(BaseModel):
+    allowed: bool
+    csc_required: bool
+    items: List[Item]
+
+
+class MoneySource(BaseModel):
+    """
+    Список доступных методов для проведения данного платежа.
+    Каждый метод содержит набор атрибутов.
+    """
+    wallet: Wallet
+    """платеж со счета пользователя"""
+    cards: Optional[Card] = None
+    """платеж с банковских карт, привязанных к счету"""
+
+
+class PreProcessPaymentResponse(BaseModel):
     """
     Объект, который вы получаете при вызове _pre_process_payment.
     При вызове данного метода вы не списываете деньги со своего счёта,
@@ -311,23 +380,25 @@ class PreProcessPaymentResponse:
     multiple_recipients_found: Optional[str] = None
     contract_amount: Optional[float] = None
     error: Optional[str] = None
-    money_source: Optional[Dict[str, Dict[str, Union[str, bool, list]]]] = None
+    money_source: Optional[MoneySource] = None
     protection_code: Optional[str] = None
     account_unblock_uri: Optional[str] = None
     ext_action_uri: Optional[str] = None
 
+    class Config:
+        json_loads = custom_load
 
-@dataclass
-class Payment:
+
+class Payment(BaseModel):
     status: str
     """
     Код результата выполнения операции. Возможные значения:
     success — успешное выполнение (платеж проведен).
         Это конечное состояние платежа.
-    refused — отказ в проведении платежа. 
+    refused — отказ в проведении платежа.
     Причина отказа возвращается в поле error. Это конечное состояние платежа.
     in_progress — авторизация платежа не завершена.
-     Приложению следует повторить запрос 
+     Приложению следует повторить запрос
      с теми же параметрами спустя некоторое время.
     ext_auth_required — для завершения авторизации платежа
      с использованием банковской карты
@@ -388,7 +459,7 @@ class Payment:
     """
     account_unblock_uri: Optional[str] = None
     """
-    Адрес, на который необходимо отправить пользователя для разблокировки счета.
+    Адрес, на который необходимо отправить пользователя для разблокировки счета
     Поле присутствует в случае ошибки account_blocked.
     """
 
@@ -403,7 +474,7 @@ class Payment:
     Поле присутствует при status=in_progress.
     """
 
-    digital_goods: Optional[Dict[str, Dict[str, List[Dict[str, str]]]]] = None
+    digital_goods: Optional[Dict[str, Dict[str, List[DigitalGoods]]]] = None
 
     protection_code: Optional[str] = None
     """
@@ -416,13 +487,19 @@ class Payment:
         self.protection_code = protection_code
         return self
 
+    class Config:
+        json_loads = custom_load
+        extra = Extra.allow
 
-@dataclass(frozen=True)
-class IncomingTransaction:
+
+class IncomingTransaction(BaseModel):
     status: str
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None
     error: Optional[str] = None
+
+    class Config:
+        json_loads = custom_load
 
 
 __all__ = (

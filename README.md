@@ -5,14 +5,16 @@
 [![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-blue)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi) ![docs](https://readthedocs.org/projects/pip/badge/?version=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/GLEF1X/glQiwiApi.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GLEF1X/glQiwiApi/context:python)
 </h1>
+
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 
+</h2>
 ## :globe_with_meridians:Official api resources:
-   * :mortar_board:__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+   * 🎓__Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
    * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
-### :loudspeaker:New feature. Add YooMoney support and `pydantic` models to library!
-### :floppy_disk:Installation
+### 📣New feature. Add YooMoney support and `pydantic` models to library!
+### 💾Installation
 
 ```bash
 pip install glQiwiApi
@@ -20,7 +22,7 @@ pip install glQiwiApi
 
 ---
 
-## :bulb:Dependencies
+## 🐦Dependencies
 
 | Library | Description                                    |
 |:-------:|:----------------------------------------------:|
@@ -32,7 +34,7 @@ pip install glQiwiApi
 
 ---
 
-## :pencil2:Dive-in Examples
+## 🧸Dive-in Examples
 
 ```python
 import asyncio
@@ -75,7 +77,7 @@ asyncio.run(main())
 
 ---
 
-## :scroll:Checking transactions
+## 🌀Checking transactions
 
 ```python
 import asyncio
@@ -99,7 +101,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## :city_sunset:Create & check p2p bills
+## 🌱Create & check p2p bills
 
 ```python
 import asyncio
@@ -135,7 +137,7 @@ asyncio.run(main())
 
 ![form](https://i.ibb.co/T0C5RYz/2021-03-21-14-58-33.png)
 
-## :rocket:Send to another wallet & get receipt(получение чека транзакции)
+## ⛏Send to another wallet & get receipt(получение чека транзакции)
 
 ```python
 import asyncio
@@ -165,7 +167,7 @@ asyncio.run(main())
 
 ```
 
-## Send to card & check commission
+## 💳Send to card & check commission
 
 ```python
 import asyncio
@@ -239,7 +241,7 @@ asyncio.run(cache_test())
 
 ```
 
-## :warning:Handling exceptions
+## ⚠️Handling exceptions
 
 ```python
 import asyncio
@@ -259,6 +261,11 @@ async def main():
 
 asyncio.run(main())
 ```
+---
+## 🗺QIWI terminals
+__glQiwiApi covers qiwi's MAPS api in QiwiMaps class__
+
+---
 
 # YooMoney API
 ---

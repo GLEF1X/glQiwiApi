@@ -7,9 +7,10 @@ import aiofiles
 import aiohttp
 
 import glQiwiApi.utils.basics as api_helper
-from glQiwiApi.abstracts import AbstractPaymentWrapper
-from glQiwiApi.aiohttp_custom_api import CustomParser
-from glQiwiApi.mixins import ToolsMixin
+from glQiwiApi.core import (
+    AbstractPaymentWrapper
+)
+from glQiwiApi.core import CustomParser, ToolsMixin
 from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
     QIWI_TO_CARD, DEFAULT_QIWI_HEADERS,
@@ -371,7 +372,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             self,
             amount: Union[int, float],
             transaction_type: str = 'IN',
-            sender_number: Optional[str] = None,
+            sender: Optional[str] = None,
             rows_num: int = 50,
             comment: Optional[str] = None
     ) -> bool:
@@ -389,7 +390,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         :param amount: сумма платежа
         :param transaction_type: тип платежа
-        :param sender_number: номер получателя
+        :param sender: номер получателя
         :param rows_num: кол-во платежей, которое будет проверяться
         :param comment: комментарий, по которому будет проверяться транзакция
         :return: bool, есть ли такая транзакция в истории платежей
@@ -401,19 +402,18 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             raise InvalidData('Можно проверять не более 50 транзакций')
 
         transactions = await self.transactions(rows_num=rows_num)
-        for transaction in transactions:
-            if float(transaction.sum.amount) >= amount:
-                if transaction.type == transaction_type:
-                    if transaction.comment == comment:
-                        if transaction.to_account == sender_number:
-                            return True
-                    elif comment and sender_number:
-                        continue
-                    elif transaction.to_account == sender_number:
+        for txn in transactions:
+            if float(txn.sum.amount) >= amount:
+                if txn.type == transaction_type:
+                    if txn.comment == comment and txn.to_account == sender:
                         return True
-                    elif sender_number:
+                    elif comment and sender:
                         continue
-                    elif transaction.comment == comment:
+                    elif txn.to_account == sender:
+                        return True
+                    elif sender:
+                        continue
+                    elif txn.comment == comment:
                         return True
         return False
 
