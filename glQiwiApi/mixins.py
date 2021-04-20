@@ -1,5 +1,4 @@
 import copy
-import itertools as it
 from typing import Optional, Any
 
 
@@ -25,7 +24,6 @@ class BillMixin(object):
 
 class ToolsMixin(object):
     _parser = None
-    slots_ = set()
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
@@ -40,11 +38,7 @@ class ToolsMixin(object):
 
     def get_(self, item: Any) -> Any:
         try:
-
-            obj = super().__getattribute__(item)
-            if obj is not None:
-                self.slots_.add(item)
-            return obj
+            return super().__getattribute__(item)
         except AttributeError:
             return None
 
@@ -52,11 +46,9 @@ class ToolsMixin(object):
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
-        self.slots_.clear()
-        values = [self.get_(slot) for slot in self.__slots__ if
-                  self.get_(slot) is not None]
-        items = it.zip_longest(self.slots_, values)
-        for k, v in items:
+        dct = {slot: self.get_(slot) for slot in self.__slots__ if
+               self.get_(slot) is not None}
+        for k, v in dct.items():
             if k == '_parser':
                 v.session = None
             setattr(result, k, copy.deepcopy(v, memo))
