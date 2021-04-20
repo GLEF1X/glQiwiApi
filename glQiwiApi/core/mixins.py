@@ -36,7 +36,7 @@ class ToolsMixin(object):
             await self._parser.session.close()
             self._parser.clear_cache()
 
-    def get(self, item: Any) -> Any:
+    def _get(self, item: Any) -> Any:
         try:
             return super().__getattribute__(item)
         except AttributeError:
@@ -46,8 +46,8 @@ class ToolsMixin(object):
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
-        dct = {slot: self.get(slot) for slot in self.__slots__ if
-               self.get(slot) is not None}
+        dct = {slot: self._get(slot) for slot in self.__slots__ if
+               self._get(slot) is not None}
         for k, v in dct.items():
             if k == '_parser':
                 v.session = None

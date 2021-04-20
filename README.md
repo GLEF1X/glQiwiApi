@@ -267,7 +267,6 @@ __glQiwiApi covers qiwi's MAPS api in QiwiMaps class__
 ---
 
 # YooMoney API
----
 
 ## Important. How to get YooMoney access token
 
