@@ -8,8 +8,7 @@ from aiogram.utils import executor
 from glQiwiApi import QiwiWrapper, types as qiwi_types
 
 wallet = QiwiWrapper(
-    secret_p2p='YOUR_SECRET_P2P_TOKEN',
-    without_context=True
+    secret_p2p='YOUR_SECRET_P2P_TOKEN'
 )
 
 BOT_TOKEN = 'BOT_TOKEN'
