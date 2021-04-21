@@ -7,10 +7,11 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     name="glQiwiApi",  # Replace with your own username
-    version="0.2.13",
+    version="0.2.14",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Light and fast wrapper for qiwi and yoomoney",
+    package_data={"glQiwiApi": ["py.typed", "*.pyi", "**/*.pyi"]},
     # Длинное описание, которое будет отображаться на странице PyPi.
     # Использует README.md репозитория для заполнения.
     long_description=long_description,

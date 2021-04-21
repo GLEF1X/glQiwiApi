@@ -2,18 +2,26 @@ import typing
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi import types
-from glQiwiApi.core import CustomParser
+from glQiwiApi.core import CustomParser, ToolsMixin
+from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 
 
-class QiwiMaps:
+class QiwiMaps(ToolsMixin):
     """
     API Карты терминалов QIWI позволяет установить местонахождение
     терминалов QIWI на территории РФ
 
     """
 
-    def __init__(self) -> None:
-        self.parser = CustomParser()
+    def __init__(
+            self,
+            without_context: bool = False,
+            cache_time: int = DEFAULT_CACHE_TIME
+    ) -> None:
+        self._parser = CustomParser(
+            without_context=without_context,
+            cache_time=cache_time
+        )
 
     async def terminals(
             self,
@@ -46,7 +54,7 @@ class QiwiMaps:
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = self.parser.filter_dict(
+        params = self._parser.filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -60,7 +68,7 @@ class QiwiMaps:
             }
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        async for response in self.parser.fast().fetch(
+        async for response in self._parser.fast().fetch(
                 url=url,
                 method='GET',
                 params=params
@@ -75,7 +83,7 @@ class QiwiMaps:
         Get terminal partners for ttpGroups
         :return: list of TTPGroups
         """
-        async for response in self.parser.fast().fetch(
+        async for response in self._parser.fast().fetch(
                 url='http://edge.qiwi.com/locator/v3/ttp-groups',
                 method='GET',
                 headers={"Content-type": "text/json"}

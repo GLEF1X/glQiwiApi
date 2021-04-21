@@ -20,7 +20,7 @@ except (ModuleNotFoundError, ImportError):
     )
     import json as orjson
 
-# Локальная таймзона
+# Local timezone for pytz lib
 Local = LocalTimezone()
 
 QIWI_MASTER = {

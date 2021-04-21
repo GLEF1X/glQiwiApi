@@ -11,7 +11,6 @@ __all__ = (
             'QiwiWrapper',
             'YooMoneyAPI',
             'QiwiMaps',
-            'RequestError',
             'to_datetime',
             'sync'
         ) + exceptions.__all__  # NOQA
@@ -31,4 +30,4 @@ if not sys.version_info[:2] >= (3, 7):
         "Минимальная версия для использования python 3.7"
     )
 
-__version__ = '0.2.13'
+__version__ = '0.2.14'
