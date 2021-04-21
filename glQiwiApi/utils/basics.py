@@ -4,6 +4,7 @@ import functools as ft
 import re
 import time
 import warnings
+from contextvars import ContextVar
 from copy import deepcopy
 from datetime import datetime
 
@@ -20,7 +21,7 @@ except (ModuleNotFoundError, ImportError):
     )
     import json as orjson
 
-# Local timezone for pytz lib
+# Локальная таймзона
 Local = LocalTimezone()
 
 QIWI_MASTER = {
@@ -250,6 +251,13 @@ def parse_amount(txn_type, txn):
     return amount, comment
 
 
+def check_params(amount_, amount, txn, transaction_type):
+    if amount_ >= amount:
+        if txn.direction == transaction_type:
+            return True
+    return False
+
+
 def _run_forever_safe(loop) -> None:
     """ run a loop for ever and clean up after being stopped """
 
@@ -277,22 +285,7 @@ def _run_forever_safe(loop) -> None:
 
 def _await_sync(future, executor, loop):
     """ synchronously waits for a task """
-    exception = future.exception()
-    if exception is not None:
-        _cancel_future(
-            loop=loop,
-            executor=executor,
-            future=future
-        )
-        loop.call_soon_threadsafe(_stop_loop, loop)
     return future.result()
-
-
-def check_params(amount_, amount, txn, transaction_type):
-    if amount_ >= amount:
-        if txn.direction == transaction_type:
-            return True
-    return False
 
 
 def _cancel_future(loop, future, executor) -> None:
@@ -302,25 +295,54 @@ def _cancel_future(loop, future, executor) -> None:
 
 def _stop_loop(loop) -> None:
     """ stops an event loop """
-
     loop.stop()
 
 
-def sync(func, *args, **kwargs):
-    """ Function to use async functions(libraries) synchronously """
-    loop = asyncio.new_event_loop()  # construct a new event loop
+class AdaptiveExecutor(futures.ThreadPoolExecutor):
+    def __init__(self, max_workers=None, **kwargs):
+        super().__init__(max_workers, 'sync_adapter_', **kwargs)
+        self.max_workers = max_workers
+        self.is_from_running_loop = ContextVar('Adapter_', default=False)
 
-    executor = futures.ThreadPoolExecutor(2, 'sync_connector_')
+
+def _construct_all():
+    """ Get or create new event loop """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    executor = AdaptiveExecutor()
+    loop.set_default_executor(executor)
+    return loop, executor
+
+
+def _on_shutdown(executor, loop):
+    """ Do some cleanup """
+    if not executor.is_from_running_loop.get():
+        loop.call_soon_threadsafe(_stop_loop, loop)
+    executor.shutdown(wait=True)
+
+
+def sync(func, *args, **kwargs):
+    """
+    Function to use async functions(libraries) synchronously
+
+    :param func: Async function, which you want to execute in synchronous code
+    :param args: args, which need your async func
+    :param kwargs: kwargs, which need your async func
+    """
+
+    # construct an event loop and executor
+    loop, executor = _construct_all()
+
     # Run our coroutine thread safe
-    my_task = asyncio.run_coroutine_threadsafe(
+    wrapped_future = asyncio.run_coroutine_threadsafe(
         func(*args, **kwargs),
         loop=loop
     )
     # Run loop.run_forever(), but do it safely
     executor.submit(_run_forever_safe, loop)
-    # Sync await our result
-    result = _await_sync(my_task, executor=executor, loop=loop)
-    # close created early loop
-    loop.call_soon_threadsafe(_stop_loop, loop)
-    executor.shutdown(wait=True)
-    return result
+    try:
+        # Get result
+        return _await_sync(wrapped_future, executor=executor, loop=loop)
+    finally:
+        # Cleanup
+        _on_shutdown(executor, loop)

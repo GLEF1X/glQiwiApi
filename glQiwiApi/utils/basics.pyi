@@ -58,7 +58,8 @@ def custom_load(data: Dict[Any, Any]) -> Dict[str, Any]: ...
 
 
 def check_params(amount_: Union[int, float], amount: Union[int, float],
-                 txn: types.OperationDetails, transaction_type: str) -> bool: ...
+                 txn: types.OperationDetails,
+                 transaction_type: str) -> bool: ...
 
 
 def allow_response_code(status_code: Union[str, int]) -> Any: ...
@@ -123,7 +124,7 @@ def sync(
 
 @overload
 def sync(
-        func: Callable[[], Coroutine[Any, Any, types.Sum]],
+        func: Callable[[Optional[None]], Coroutine[Any, Any, types.Sum]],
         *args: Any,
         **kwargs: Any
 ) -> types.Sum: ...
@@ -164,7 +165,7 @@ def sync(
 
 @overload
 def sync(
-        func: Callable[[], Coroutine[Any, Any, Union[
+        func: Callable[[Optional[None]], Coroutine[Any, Any, Union[
             List[Dict[str, str]], Exception
         ]]],
         *args: Any,
@@ -176,7 +177,8 @@ def sync(
 
 @overload
 def sync(
-        func: Callable[[], Coroutine[Any, Any, types.Identification]],
+        func: Callable[
+            [Optional[None]], Coroutine[Any, Any, types.Identification]],
         *args: Any,
         **kwargs: Any
 ) -> types.Identification: ...
@@ -254,7 +256,7 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [], Coroutine[Any, Any, types.QiwiAccountInfo]],
+            [Optional[None]], Coroutine[Any, Any, types.QiwiAccountInfo]],
         *args: Any,
         **kwargs: Any
 ) -> types.QiwiAccountInfo: ...
@@ -273,7 +275,7 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [], Coroutine[Any, Any, List[types.Account]]],
+            [Optional[None]], Coroutine[Any, Any, List[types.Account]]],
         *args: Any,
         **kwargs: Any
 ) -> List[types.Account]: ...
@@ -291,7 +293,7 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [], Coroutine[Any, Any, List[types.Balance]]],
+            [Optional[None]], Coroutine[Any, Any, List[types.Balance]]],
         *args: Any,
         **kwargs: Any
 ) -> List[types.Balance]: ...
@@ -311,7 +313,7 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [], Coroutine[Any, Any, types.PaymentInfo]],
+            [Optional[None]], Coroutine[Any, Any, types.PaymentInfo]],
         *args: Any,
         **kwargs: Any
 ) -> types.PaymentInfo: ...
@@ -347,7 +349,7 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [], Coroutine[Any, Any, Optional[Dict[str, bool]]]],
+            [Optional[None]], Coroutine[Any, Any, Optional[Dict[str, bool]]]],
         *args: Any,
         **kwargs: Any
 ) -> Optional[Dict[str, bool]]: ...
@@ -356,7 +358,7 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [], Coroutine[Any, Any, types.AccountInfo]],
+            [Optional[None]], Coroutine[Any, Any, types.AccountInfo]],
         *args: Any,
         **kwargs: Any
 ) -> types.AccountInfo: ...
@@ -440,3 +442,34 @@ def sync(
         *args: Any,
         **kwargs: Any
 ) -> bool: ...
+
+
+@overload
+def sync(
+        func: Callable[
+            [Optional[None]], Coroutine[Any, Any, List[types.Partner]]
+        ],
+        *args: Any,
+        **kwargs: Any
+) -> List[types.Partner]: ...
+
+
+@overload
+def sync(
+        func: Callable[
+            [
+                types.Polygon, int, int, bool, list,
+                bool, bool, int, list
+            ], Coroutine[Any, Any, List[types.Terminal]]
+        ],
+        *args: Any,
+        **kwargs: Any
+) -> List[types.Terminal]: ...
+
+
+@overload
+def sync(
+        func: types.FuncT,
+        *args: Any,
+        **kwargs: Any
+) -> Any: ...

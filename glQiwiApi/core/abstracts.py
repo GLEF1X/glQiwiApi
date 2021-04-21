@@ -9,7 +9,7 @@ from aiohttp.typedefs import LooseCookies
 from glQiwiApi.types import ProxyService, Response
 
 
-class AbstractCacheController(abc.ABC):
+class BaseStorage(abc.ABC):
     """
     Абстрактный класс контроллера кэша
 
@@ -18,45 +18,54 @@ class AbstractCacheController(abc.ABC):
 
     @abc.abstractmethod
     def get_current(self, key: str) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def clear(self, key: str, force: bool = False) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def update_data(
             self,
             result: Any,
             kwargs: Any,
-            status_code: Union[str, int]
+            status_code: Optional[Union[str, int]] = None
     ) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    @abc.abstractmethod
-    def validate(self, kwargs: Dict[str, Any]) -> bool:
-        raise NotImplementedError()
+    def validate(self, kwargs: Dict[str, Any]) -> None:
+        """ Should validate some data from cache """
 
 
 class AbstractPaymentWrapper(abc.ABC):
+    """
+    Abstract class for payment wrappers,
+    you can add a new one, using this class, and than,
+    just send a pull request to GitHub repository,
+    if it will be pretty and simple, our team
+    add it to the library in next release
+
+    """
+
     @abc.abstractmethod
     async def transactions(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def transaction_info(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def get_balance(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def account_info(self, *args, **kwargs) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class AioTestCase(unittest.TestCase):
+    """ Test case, but redone for asyncio """
 
     # noinspection PyPep8Naming
     def __init__(self, methodName='runTest', loop=None):
@@ -82,6 +91,7 @@ class AioTestCase(unittest.TestCase):
 
 
 class AbstractParser(abc.ABC):
+    """ Abstract class of parser for send request to different API's"""
 
     def __init__(self):
         self.session: Optional[ClientSession] = None
@@ -107,7 +117,7 @@ class AbstractParser(abc.ABC):
                     Union[str, int]
                 ]]]
             ]) -> Response:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def fetch(
@@ -116,7 +126,8 @@ class AbstractParser(abc.ABC):
             times: int = 1,
             **kwargs
     ) -> AsyncGenerator[Response, None]:
-        raise NotImplementedError()
+        """ You can override it, but is must to return an AsyncGenerator """
+        raise NotImplementedError
 
     def raise_exception(
             self,
@@ -127,6 +138,7 @@ class AbstractParser(abc.ABC):
         """Метод для обработки исключений и лучшего логирования"""
 
     def create_session(self, **kwargs) -> None:
+        """ Creating new session if old was close or it's None """
         if self.session is None:
             self.session = ClientSession(**kwargs)
         elif isinstance(self.session, ClientSession):

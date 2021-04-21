@@ -3,9 +3,9 @@ from typing import Dict, Optional, Any, Union
 import aiohttp
 
 import glQiwiApi
-from glQiwiApi.core.basic_requests_api import SimpleCache, HttpXParser
+from glQiwiApi.core.basic_requests_api import Storage, HttpXParser
 from glQiwiApi.types import Response
-from glQiwiApi.types.basics import CachedResponse
+from glQiwiApi.types.basics import Cached
 from glQiwiApi.utils.exceptions import RequestError
 
 
@@ -26,13 +26,15 @@ class CustomParser(HttpXParser):
         super(CustomParser, self).__init__()
         self._without_context = without_context
         self.messages = messages
-        self._cache = SimpleCache(cache_time)
+        self._cache = Storage(cache_time)
         self._cached_key = "session"
 
     def clear_cache(self) -> None:
+        """ Clear all cache in storage """
         self._cache.clear(force=True)
 
     def get_cached_session(self) -> Optional[aiohttp.ClientSession]:
+        """ Get cached session from storage """
         cached = self._cache[self._cached_key]
         if self.check_session(cached):
             return cached
@@ -50,15 +52,15 @@ class CustomParser(HttpXParser):
             response = await super()._request(*args, **kwargs)
         # Проверяем, не был ли запрос в кэше, если нет,
         # то проверяем статус код и если он не 200 - выбрасываем ошибку
-        if not isinstance(response, CachedResponse):
+        if not isinstance(response, Cached):
             if response.status_code != 200:
                 await self._close_session()
                 self.raise_exception(
                     response.status_code,
                     json_info=response.response_data
                 )
-
-            await self._close_session()
+            if self._without_context:
+                await self._close_session()
 
         self._cache.update_data(
             result=response.response_data,
@@ -75,6 +77,7 @@ class CustomParser(HttpXParser):
             json_info: Optional[Dict[str, Any]] = None,
             message: Optional[str] = None
     ) -> None:
+        """ Raise RequestError exception with pretty explanation """
         if not isinstance(message, str):
             message = self.messages.get(str(status_code), "Unknown")
         raise RequestError(
@@ -100,6 +103,7 @@ class CustomParser(HttpXParser):
         return False
 
     def create_session(self, **kwargs) -> None:
+        """ Create new session or get it from cache """
         self.set_cached_session()
         super().create_session(**kwargs)
 

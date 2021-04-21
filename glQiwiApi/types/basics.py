@@ -84,17 +84,17 @@ class Attributes:
 
 
 @dataclass
-class CachedResponse:
+class Cached:
     """
     Объект кэшированного запроса
 
     """
     kwargs: Attributes
     response_data: Any
-    status_code: Union[str, int]
-    url: str
+    key: str
     method: str
     cached_in: float = time.monotonic()
+    status_code: Union[str, int, None] = None
 
 
 __all__ = [
@@ -102,7 +102,7 @@ __all__ = [
     'OptionalSum',
     'Commission',
     'Type',
-    'CachedResponse',
+    'Cached',
     'DEFAULT_CACHE_TIME',
     'Attributes'
 ]

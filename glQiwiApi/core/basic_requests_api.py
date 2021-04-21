@@ -20,9 +20,9 @@ from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
-from glQiwiApi.core import AbstractParser, AbstractCacheController
+from glQiwiApi.core import AbstractParser, BaseStorage
 from glQiwiApi.types import ProxyService, Response
-from glQiwiApi.types.basics import CachedResponse, Attributes
+from glQiwiApi.types.basics import Cached, Attributes
 from glQiwiApi.utils.exceptions import InvalidData
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
@@ -218,7 +218,7 @@ class HttpXParser(AbstractParser):
         return proxies
 
 
-class SimpleCache(AbstractCacheController):
+class Storage(BaseStorage):
     """
     Класс, позволяющий кэшировать результаты запросов
 
@@ -226,7 +226,11 @@ class SimpleCache(AbstractCacheController):
     # Доступные критерии, по которым проходит валидацию кэш
     available = ('params', 'json', 'data', 'headers')
 
-    def __init__(self, cache_time: Union[float, int]) -> None:
+    def __init__(
+            self,
+            cache_time: Union[float, int],
+            default_key: Optional[str] = None
+    ) -> None:
         if isinstance(cache_time, (int, float)):
             if cache_time > 60 or cache_time < 0:
                 raise InvalidData(
@@ -234,16 +238,29 @@ class SimpleCache(AbstractCacheController):
                     " от 0 до 60 секунд"
                 )
 
-        self.tmp_data: Optional[Dict[str, CachedResponse]] = dict()
+        self.tmp_data: Optional[Dict[str, Cached]] = dict()
         self._cache_time = cache_time
+        self.__initialize_default_key(default_key)
 
     def __del__(self) -> None:
         del self.tmp_data
 
-    def get_current(self, key: str) -> Optional[CachedResponse]:
+    def __initialize_default_key(self, key: str) -> None:
+        """ Initialize default_key attribute """
+        self._default_key = key
+        if not isinstance(key, str):
+            self._default_key = "url"
+
+    def get_current(self, key: str) -> Optional[Cached]:
+        """ Method to get element by key from data """
         return self.tmp_data.get(key)
 
     def clear(self, key: Optional[str] = None, force: bool = False) -> Any:
+        """
+        Method to delete element from the cache by key,
+        or if force passed on its clear all data from the cache
+
+        """
         if force:
             return self.tmp_data.clear()
         return self.tmp_data.pop(key)
@@ -254,7 +271,7 @@ class SimpleCache(AbstractCacheController):
         )
 
     def __getitem__(self, item) -> Union[
-        CachedResponse, ClientSession
+        Cached, ClientSession
     ]:
         return self.tmp_data.get(item)
 
@@ -262,34 +279,38 @@ class SimpleCache(AbstractCacheController):
             self,
             result: Any,
             kwargs: Any,
-            status_code: Union[str, int]
+            status_code: Optional[Union[str, int]] = None
     ) -> None:
         """
         Метод, который добавляет результат запроса в кэш
+
+        :param result: Результат запроса или какие-то данные
+        :param kwargs: Дополнительная информация
+        :param status_code: опционально, статус код запроса
 
         """
         uncached = (
             'https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/'
         )
-        url = kwargs.get('url')
+        value = kwargs.get(self._default_key)
         if not self._cache_time < 0.1:
             if not any(
-                    url.startswith(
+                    value.startswith(
                         contain_match
-                    ) or contain_match in url
+                    ) or contain_match in value
                     for contain_match in uncached
             ):
                 self.tmp_data.update({
-                    url: CachedResponse(
-                        Attributes.format(kwargs, self.available),
-                        result,
-                        status_code,
-                        url,
-                        kwargs.get('method')
+                    value: Cached(
+                        kwargs=Attributes.format(kwargs, self.available),
+                        response_data=result,
+                        key=self._default_key,
+                        status_code=status_code,
+                        method=kwargs.get('method')
                     )
                 })
-            elif uncached[1] in url:
-                self.clear(url, True)
+            elif uncached[1] in value:
+                self.clear(value, True)
 
     def validate(self, kwargs: Dict[str, Any]) -> bool:
         """
@@ -299,11 +320,11 @@ class SimpleCache(AbstractCacheController):
 
         """
         # Если параметры и ссылка запроса совпадает
-        cached = self.tmp_data.get(kwargs.get('url'))
-        if isinstance(cached, CachedResponse):
+        cached = self.tmp_data.get(kwargs.get(self._default_key))
+        if isinstance(cached, Cached):
             # Проверяем, не вышло ли время кэша
             if time.monotonic() - cached.cached_in > self._cache_time:
-                self.clear(kwargs.get('url'))
+                self.clear(kwargs.get(self._default_key))
                 return False
 
             # Проверяем запрос методом GET на кэш
