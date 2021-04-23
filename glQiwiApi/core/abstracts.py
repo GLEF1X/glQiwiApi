@@ -14,7 +14,6 @@ class BaseStorage(abc.ABC):
     Абстрактный класс контроллера кэша
 
     """
-    __slots__ = ('tmp_data', '_cache_time')
 
     @abc.abstractmethod
     def get_current(self, key: str) -> Any:
@@ -24,13 +23,7 @@ class BaseStorage(abc.ABC):
     def clear(self, key: str, force: bool = False) -> Any:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def update_data(
-            self,
-            result: Any,
-            kwargs: Any,
-            status_code: Optional[Union[str, int]] = None
-    ) -> None:
+    def update_data(self, obj_to_cache: Any, key: Any) -> None:
         raise NotImplementedError
 
     def validate(self, kwargs: Dict[str, Any]) -> None:
@@ -144,3 +137,5 @@ class AbstractParser(abc.ABC):
         elif isinstance(self.session, ClientSession):
             if self.session.closed:
                 self.session = ClientSession(**kwargs)
+
+class

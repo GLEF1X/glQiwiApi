@@ -5,12 +5,14 @@ from .utils.basics import sync  # NOQA
 from .utils.exceptions import *  # NOQA
 from .yoo_money import YooMoneyAPI  # NOQA
 
+__version__ = '0.2.14'
+
 __all__ = (
         (
             'QiwiWrapper',
             'YooMoneyAPI',
             'QiwiMaps',
-            'sync'
+            'sync',
         ) + utils.exceptions.__all__  # NOQA
 )
 
@@ -27,5 +29,3 @@ if not sys.version_info[:2] >= (3, 7):
         "Ваша версия python не поддерживается библиотекой glQiwiApi."
         "Минимальная версия для использования python 3.7"
     )
-
-__version__ = '0.2.14'

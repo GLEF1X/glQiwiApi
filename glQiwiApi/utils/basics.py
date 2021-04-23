@@ -1,12 +1,11 @@
 import asyncio
 import concurrent.futures as futures
+import datetime
 import functools as ft
 import re
 import time
-import warnings
 from contextvars import ContextVar
 from copy import deepcopy
-from datetime import datetime
 
 import pytz
 from pydantic import ValidationError, BaseModel
@@ -15,13 +14,9 @@ from pytz.reference import LocalTimezone
 try:
     import orjson
 except (ModuleNotFoundError, ImportError):
-    warnings.warn(
-        'You should install orjson module to improve performance.',
-        ResourceWarning
-    )
     import json as orjson
 
-# Локальная таймзона
+# Gets your local time zone
 Local = LocalTimezone()
 
 QIWI_MASTER = {
@@ -45,6 +40,8 @@ QIWI_MASTER = {
 def measure_time(func):
     """
     Декоратор для замера времени выполнения функции
+
+    :param func:
     """
 
     @ft.wraps(func)
@@ -60,24 +57,90 @@ def measure_time(func):
 
 
 def datetime_to_str_in_iso(obj, yoo_money_format=False):
-    if not isinstance(obj, datetime):
+    """
+    Converts a date to a standard format for API's
+
+    :param obj: datatime object to parse to string
+    :param yoo_money_format: boolean
+    :return: string - parsed date
+    """
+    if not isinstance(obj, datetime.datetime):
         return ''
     if yoo_money_format:
         # Приводим время к UTC,
         # так как yoomoney апи принимает именно в таком формате
         return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(
             ' ').replace(" ", "T") + "Z"
-    local_date = str(datetime.now(tz=Local))
+    local_date = str(datetime.datetime.now(tz=Local))
     pattern = re.compile(r'[+]\d{2}[:]\d{2}')
     from_pattern = re.findall(pattern, local_date)[0]
     return obj.isoformat(' ').replace(" ", "T") + from_pattern
 
 
 def parse_auth_link(response_data):
+    """
+    Parse link for getting code, which needs to be entered in the method
+    get_access_token
+
+    :param response_data:
+    """
     regexp = re.compile(
         r'https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+'
     )
     return re.findall(regexp, str(response_data))[0]
+
+
+def check_dates(start_date, end_date, payload_data):
+    """ Check correctness of transferred dates and add it to request """
+    if isinstance(
+            start_date, (datetime.datetime, datetime.timedelta)
+    ) and isinstance(
+        end_date, (datetime.datetime, datetime.timedelta)
+    ):
+        if (end_date - start_date).total_seconds() > 0:
+            payload_data.update(
+                {
+                    'startDate': datetime_to_str_in_iso(
+                        start_date
+                    ),
+                    'endDate': datetime_to_str_in_iso(
+                        end_date
+                    )
+                }
+            )
+        else:
+            raise Exception(
+                'end_date не может быть больше чем start_date'
+            )
+    return payload_data
+
+
+def parse_commission_request_payload(
+        default_data,
+        auth_maker,
+        pay_sum,
+        to_account
+):
+    """Set commission payload"""
+    payload = deepcopy(default_data)
+    payload.headers = auth_maker(payload.headers)
+    payload.json['purchaseTotals']['total']['amount'] = pay_sum
+    payload.json['account'] = to_account
+    return payload, "99" if len(to_account) <= 15 else None
+
+
+def parse_card_data(
+        default_data,
+        trans_sum,
+        to_card,
+        auth_maker,
+):
+    """Set card data payload"""
+    data = deepcopy(default_data)
+    data.json['sum']['amount'] = trans_sum
+    data.json['fields']['account'] = to_card
+    data.headers = auth_maker(headers=data.headers)
+    return data
 
 
 def parse_headers(content_json=False, auth=False):
@@ -99,16 +162,16 @@ def parse_headers(content_json=False, auth=False):
     return headers
 
 
-def format_objects_for_fill(data, transfers):
-    for key, value in data.copy().items():
-        if hasattr(transfers, 'get'):
-            if key in transfers.keys():
-                data.update({transfers.get(key): value})
-                data.pop(key)
-    return data
-
-
 def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
+    """
+    Setting data for "wallet to wallet" transfer
+
+    :param data:
+    :param trans_sum:
+    :param to_number:
+    :param comment:
+    :param currency:
+    """
     data.json['sum']['amount'] = str(trans_sum)
     data.json['sum']['currency'] = currency
     data.json['fields']['account'] = to_number
@@ -119,6 +182,16 @@ def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
 
 def set_data_p2p_create(wrapped_data, amount, life_time, comment, theme_code,
                         pay_source_filter):
+    """
+    Setting data for p2p form creation transfer
+
+    :param wrapped_data:
+    :param amount:
+    :param life_time:
+    :param comment:
+    :param theme_code:
+    :param pay_source_filter:
+    """
     wrapped_data.json['amount']['value'] = str(amount)
     wrapped_data.json['comment'] = comment
     wrapped_data.json['expirationDateTime'] = life_time
@@ -127,15 +200,23 @@ def set_data_p2p_create(wrapped_data, amount, life_time, comment, theme_code,
             'paySourcesFilter'] = pay_source_filter
     if isinstance(theme_code, str):
         wrapped_data.json['customFields']['theme_code'] = theme_code
-    if not isinstance(theme_code, str) and pay_source_filter not in ['qw',
-                                                                     'card',
-                                                                     'mobile']:
+    if not isinstance(theme_code, str) and pay_source_filter not in [
+        'qw',
+        'card',
+        'mobile'
+    ]:
         wrapped_data.json.pop('customFields')
     return wrapped_data.json
 
 
 #
 def multiply_objects_parse(lst_of_objects, model):
+    """
+    Function to handle list of objects
+
+    :param lst_of_objects: usually its response.response_data
+    :param model: pydantic model, which will parse data
+    """
     objects = []
     for obj in lst_of_objects:
         try:
@@ -151,6 +232,12 @@ def multiply_objects_parse(lst_of_objects, model):
 
 
 def simple_multiply_parse(lst_of_objects, model):
+    """
+    Parse simple objects, which cant raise ValidationError
+
+    :param lst_of_objects: usually its response.response_data
+    :param model: pydantic model, which will parse data
+    """
     objects = []
     for obj in lst_of_objects:
         objects.append(model.parse_raw(obj))
@@ -169,16 +256,27 @@ def dump_response(func):
 
 
 def custom_load(data):
+    """
+    Custom loads for each pydantic model, because
+    it guard API from different errors
+
+    :param data: class data
+    """
     return orjson.loads(orjson.dumps(data))
 
 
 class Parser(BaseModel):
     """ Модель pydantic для перевода строки в datetime """
-    dt: datetime
+    dt: datetime.datetime
 
 
 def allow_response_code(status_code):
-    """Декоратор, который позволяет разрешить определенный код ответа от апи"""
+    """
+    Декоратор, который позволяет разрешить определенный код ответа от апи
+
+    :param status_code: статус код, который будет рассмотрен как правильный,
+     кроме 200
+    """
 
     def wrap_func(func):
         async def wrapper(*args, **kwargs):
@@ -229,6 +327,12 @@ def new_card_data(ph_number, order_id):
 
 
 def sync_measure_time(func):
+    """
+    Decorator, which measures time your synchronous functions
+
+    :param func:
+    """
+
     @ft.wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.monotonic()
@@ -283,7 +387,7 @@ def _run_forever_safe(loop) -> None:
     loop.close()
 
 
-def _await_sync(future, executor, loop):
+def _await_sync(future):
     """ synchronously waits for a task """
     return future.result()
 
@@ -342,7 +446,7 @@ def sync(func, *args, **kwargs):
     executor.submit(_run_forever_safe, loop)
     try:
         # Get result
-        return _await_sync(wrapped_future, executor=executor, loop=loop)
+        return _await_sync(wrapped_future)
     finally:
         # Cleanup
         _on_shutdown(executor, loop)

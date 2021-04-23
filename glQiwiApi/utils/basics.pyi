@@ -13,10 +13,30 @@ def datetime_to_str_in_iso(obj: datetime,
                            yoo_money_format: bool = False) -> str: ...
 
 
-def format_objects_for_fill(data: dict, transfers: Dict[str, str]) -> dict: ...
-
-
 def parse_auth_link(response_data: Union[str, bytes]) -> Optional[str]: ...
+
+
+def check_dates(
+        start_date: Union[datetime, timedelta],
+        end_date: Union[datetime, timedelta],
+        payload_data: dict
+) -> dict: ...
+
+
+def parse_commission_request_payload(
+        default_data: types.WrapperData,
+        auth_maker: types.FuncT,
+        pay_sum: Union[int, float],
+        to_account: str
+) -> Tuple[types.WrapperData, Union[str, None]]: ...
+
+
+def parse_card_data(
+        default_data: types.WrapperData,
+        trans_sum: Union[int, float, str],
+        to_card: str,
+        auth_maker: types.FuncT
+) -> types.WrapperData: ...
 
 
 def parse_headers(content_json: bool = False, auth: bool = False) -> Dict[

@@ -11,6 +11,7 @@ from .qiwi_master import OrderDetails
 from .stats import Statistic
 from .terminal import Terminal
 from .transaction import Transaction
+from .webhooks import WebHookConfig, WebHook
 
 __all__ = (
     'QiwiAccountInfo',
@@ -27,5 +28,7 @@ __all__ = (
     'RefundBill',
     'Polygon',
     'Terminal',
-    'Partner'
+    'Partner',
+    'WebHook',
+    'WebHookConfig'
 )

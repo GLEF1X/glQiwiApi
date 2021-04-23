@@ -92,6 +92,7 @@ class Cached:
     kwargs: Attributes
     response_data: Any
     key: str
+    cache_to: str
     method: str
     cached_in: float = time.monotonic()
     status_code: Union[str, int, None] = None

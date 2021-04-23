@@ -3,19 +3,20 @@ from typing import Dict, Optional, Any, Union
 import aiohttp
 
 import glQiwiApi
-from glQiwiApi.core.basic_requests_api import Storage, HttpXParser
+from glQiwiApi.core.basic_requests_api import HttpXParser
+from glQiwiApi.core.storage import Storage
 from glQiwiApi.types import Response
 from glQiwiApi.types.basics import Cached
 from glQiwiApi.utils.exceptions import RequestError
 
 
-class CustomParser(HttpXParser):
+class RequestManager(HttpXParser):
     """
-    Немного переделанный дочерний класс HttpXParser
+    Немного переделанный наследник HttpXParser
     под платежные системы и кэширование запросов
 
     """
-    __slots__ = ('_without_context', 'messages', '_cache')
+    __slots__ = ('_without_context', 'messages', '_cache', '_cached_key')
 
     def __init__(
             self,
@@ -23,7 +24,7 @@ class CustomParser(HttpXParser):
             messages: Optional[Dict[str, str]] = None,
             cache_time: Union[float, int] = 0
     ) -> None:
-        super(CustomParser, self).__init__()
+        super(RequestManager, self).__init__()
         self._without_context = without_context
         self.messages = messages
         self._cache = Storage(cache_time)
@@ -62,12 +63,7 @@ class CustomParser(HttpXParser):
             if self._without_context:
                 await self._close_session()
 
-        self._cache.update_data(
-            result=response.response_data,
-            kwargs=kwargs,
-            status_code=response.status_code
-        )
-        self.cache_session(self.session)
+        self._cache_all(response, kwargs)
 
         return response
 
@@ -89,11 +85,26 @@ class CustomParser(HttpXParser):
 
     def cache_session(self, session: aiohttp.ClientSession) -> None:
         if self.check_session(session):
-            self._cache[self._cached_key] = session
+            self._cache.update_data(
+                obj_to_cache=session,
+                key='session'
+            )
 
     async def _close_session(self) -> None:
         if self._without_context:
             await self.session.close()
+
+    def _cache_all(self, response: Response, kwargs: Dict[Any, Any]):
+        resolved = self._cache.initialize_response_to_resolve(
+            result=response.response_data,
+            kwargs=kwargs,
+            status_code=response.status_code
+        )
+        self._cache.update_data(
+            key=None,
+            obj_to_cache=resolved
+        )
+        self.cache_session(self.session)
 
     @staticmethod
     def check_session(session: Any) -> bool:
@@ -108,7 +119,7 @@ class CustomParser(HttpXParser):
         super().create_session(**kwargs)
 
     @classmethod
-    def filter_dict(cls, dictionary: dict):
+    def filter_dict(cls, dictionary: dict) -> dict:
         """
         Pop NoneType values and convert everything to str, designed?for=params
         :param dictionary: source dict

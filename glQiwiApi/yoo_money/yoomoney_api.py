@@ -6,7 +6,7 @@ from pydantic import ValidationError
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     AbstractPaymentWrapper,
-    CustomParser,
+    RequestManager,
     ToolsMixin
 )
 from glQiwiApi.types import (
@@ -60,7 +60,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          кэширование 60 секунд
         """
         self.api_access_token = api_access_token
-        self._parser = CustomParser(
+        self._parser = RequestManager(
             without_context=without_context,
             messages=ERROR_CODE_NUMBERS,
             cache_time=cache_time
@@ -98,7 +98,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'redirect_uri': redirect_uri,
             'scope': " ".join(scope)
         }
-        async for response in CustomParser(
+        async for response in RequestManager(
                 without_context=True,
                 messages=ERROR_CODE_NUMBERS,
                 cache_time=DEFAULT_CACHE_TIME
@@ -139,7 +139,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'grant_type': 'authorization_code',
             'redirect_uri': redirect_uri
         }
-        async for response in CustomParser(
+        async for response in RequestManager(
                 without_context=True,
                 messages=ERROR_CODE_NUMBERS,
                 cache_time=DEFAULT_CACHE_TIME

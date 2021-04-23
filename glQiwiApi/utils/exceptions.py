@@ -1,4 +1,5 @@
-from typing import Optional, Dict, Any
+import json
+from typing import Optional, Dict, Any, Union
 
 
 class NoUrlFound(Exception):
@@ -51,13 +52,15 @@ class RequestError(Exception):
             message: str,
             status_code: str,
             additional_info: Optional[str] = None,
-            json_info: Optional[Dict[str, Any]] = None
+            json_info: Optional[Union[Dict[str, Any], str]] = None
     ) -> None:
         super().__init__()
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info
         self.json_info = json_info
+        if not isinstance(json_info, dict):
+            self.json_info = json.loads(json_info)
 
     def __str__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}"""

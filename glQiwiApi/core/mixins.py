@@ -1,3 +1,4 @@
+import asyncio
 import copy
 from typing import Optional, Any
 
@@ -23,18 +24,18 @@ class BillMixin(object):
 
 
 class ToolsMixin(object):
-    _parser = None
+    _requests = None
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
-        self._parser.create_session()
+        self._requests.create_session()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Закрываем сессию и очищаем кэш при выходе"""
-        if self._parser.session:
-            await self._parser.session.close()
-            self._parser.clear_cache()
+        if self._requests.session:
+            await self._requests.session.close()
+            self._requests.clear_cache()
 
     def _get(self, item: Any) -> Any:
         try:

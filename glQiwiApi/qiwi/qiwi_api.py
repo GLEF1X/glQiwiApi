@@ -1,7 +1,7 @@
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import Union, Optional, Dict, List, Any
+from typing import Union, Optional, Dict, List, Any, Tuple
 
 import aiofiles
 import aiohttp
@@ -10,7 +10,7 @@ import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     AbstractPaymentWrapper
 )
-from glQiwiApi.core import CustomParser, ToolsMixin
+from glQiwiApi.core import RequestManager, ToolsMixin
 from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
     QIWI_TO_CARD, DEFAULT_QIWI_HEADERS,
@@ -32,11 +32,15 @@ from glQiwiApi.types import (
     Commission,
     OptionalSum,
     PaymentInfo,
-    OrderDetails
+    OrderDetails, WebHookConfig
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.qiwi_types.bill import RefundBill
-from glQiwiApi.utils.exceptions import InvalidData, InvalidCardNumber
+from glQiwiApi.utils.exceptions import (
+    InvalidData,
+    InvalidCardNumber,
+    RequestError
+)
 
 DEFAULT_BILL_TIME = datetime.now() + timedelta(days=2)
 
@@ -53,7 +57,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         'api_access_token',
         'phone_number',
         'secret_p2p',
-        '_parser',
+        '_requests',
     )
 
     def __init__(
@@ -79,7 +83,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             self.phone_number = phone_number.replace('+', '')
             if self.phone_number.startswith('8'):
                 self.phone_number = '7' + self.phone_number[1:]
-        self._parser = CustomParser(
+        self._requests = RequestManager(
             without_context=without_context,
             messages=ERROR_CODE_NUMBERS,
             cache_time=cache_time
@@ -96,7 +100,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     @property
     def session(self) -> aiohttp.ClientSession:
         """Return aiohttp session object"""
-        return self._parser.session
+        return self._requests.session
 
     @property
     def stripped_number(self) -> str:
@@ -116,13 +120,15 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param to_card: номер карты получателя
         :return
         """
-        data = deepcopy(QIWI_TO_CARD)
-        data.json['sum']['amount'] = trans_sum
-        data.json['fields']['account'] = to_card
-        data.headers = self._auth_token(headers=data.headers)
+        data = api_helper.parse_card_data(
+            default_data=QIWI_TO_CARD,
+            to_card=to_card,
+            trans_sum=trans_sum,
+            auth_maker=self._auth_token
+        )
         privat_card_id = await self._detect_card_number(card_number=to_card)
         base_url = BASE_QIWI_URL + '/sinap/api/v2/terms/' + privat_card_id
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=base_url + '/payments',
                 headers=data.headers,
                 json=data.json,
@@ -145,7 +151,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         )
-        async for response in self._parser.fetch(
+        async for response in self._requests.fetch(
                 url='https://qiwi.com/card/detect.action',
                 headers=headers,
                 method='POST',
@@ -172,7 +178,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         )
-        async for response in self._parser.fetch(
+        async for response in self._requests.fetch(
                 url='https://qiwi.com/mobile/detect.action',
                 headers=headers,
                 method='POST',
@@ -186,7 +192,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """Метод для получения баланса киви"""
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.phone_number + '/accounts',
                 headers=headers,
                 method='GET',
@@ -228,33 +234,18 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         headers = self._auth_token(deepcopy(
             DEFAULT_QIWI_HEADERS
         ))
-        payload_data = {
-            'rows': rows_num,
-            'operation': operation
-        }
 
-        if isinstance(
-                start_date, (datetime, timedelta)
-        ) and isinstance(
-            end_date, (datetime, timedelta)
-        ):
-            if (end_date - start_date).total_seconds() > 0:
-                payload_data.update(
-                    {
-                        'startDate': api_helper.datetime_to_str_in_iso(
-                            start_date
-                        ),
-                        'endDate': api_helper.datetime_to_str_in_iso(
-                            end_date
-                        )
-                    }
-                )
-            else:
-                raise InvalidData(
-                    'end_date не может быть больше чем start_date'
-                )
+        payload_data = api_helper.check_dates(
+            start_date=start_date,
+            end_date=end_date,
+            payload_data={
+                'rows': rows_num,
+                'operation': operation
+            }
+        )
+
         base_url = BASE_QIWI_URL + '/payment-history/v2/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=base_url + self.stripped_number + '/payments',
                 params=payload_data,
                 headers=headers,
@@ -292,7 +283,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         data.headers = self._auth_token(
             headers=data.headers
         )
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_QIWI_URL + '/sinap/api/v2/terms/99/payments',
                 json=data.json,
                 headers=data.headers
@@ -321,7 +312,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             'type': transaction_type
         }
         basic_url = BASE_QIWI_URL + '/payment-history/v1/transactions/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=basic_url + str(transaction_id),
                 headers=headers,
                 params=payload_data,
@@ -343,7 +334,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/person-profile/v1/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.phone_number + '/status/restrictions',
                 headers=headers,
                 method='GET'
@@ -361,7 +352,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/identification/v1/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.phone_number + '/identification',
                 method='GET',
                 headers=headers
@@ -434,7 +425,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         for index, limit_type in enumerate(LIMIT_TYPES):
             payload['types[' + str(index) + ']'] = limit_type
         url = BASE_QIWI_URL + '/qw-limits/v1/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + '/actual-limits',
                 get_json=True,
                 headers=headers,
@@ -457,7 +448,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         headers = self._auth_token(
             deepcopy(DEFAULT_QIWI_HEADERS)
         )
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_QIWI_URL + '/cards/v1/cards?vas-alias=qvc-master',
                 method='GET',
                 headers=headers
@@ -511,7 +502,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             deepcopy(DEFAULT_QIWI_HEADERS)
         )
         url = BASE_QIWI_URL + '/identification/v1/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + "/identification",
                 data=payload,
                 headers=headers
@@ -537,7 +528,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             'rows': rows,
             'statuses': 'READY_FOR_PAY'
         }
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_QIWI_URL + '/checkout-api/api/bill/search',
                 headers=headers,
                 method='GET',
@@ -597,7 +588,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             life_time=life_time
         )
 
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}',
                 json=payload,
                 headers=headers,
@@ -624,7 +615,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         data = deepcopy(P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}',
                 method='GET',
                 headers=headers
@@ -643,7 +634,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         data = deepcopy(P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
         url = f'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}/reject'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url,
                 method='POST',
                 headers=headers
@@ -672,11 +663,13 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :return: pdf файл в байтовом виде или номер записанных байтов
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+
         data = {
             'type': transaction_type,
             'format': 'PDF'
         }
-        async for response in self._parser.fast().fetch(
+
+        async for response in self._requests.fast().fetch(
                 url=BASE_QIWI_URL + '/payment-history/v1/transactions/' + str(
                     transaction_id) + '/cheque/file',
                 headers=headers,
@@ -703,16 +696,20 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param pay_sum: сумма, за которую вы хотите узнать комиссию
         :return: Commission object
         """
-        payload = deepcopy(COMMISSION_DATA)
-        headers = self._auth_token(payload.headers)
-        payload.json['purchaseTotals']['total']['amount'] = pay_sum
-        payload.json['account'] = to_account.replace('+', '')
-        special_code = "99" if len(to_account.replace('+', '')) <= 15 else (
-            await self._detect_card_number(card_number=to_account))
+        payload, special_code = api_helper.parse_commission_request_payload(
+            default_data=COMMISSION_DATA,
+            auth_maker=self._auth_token,
+            to_account=to_account,
+            pay_sum=pay_sum
+        )
+        if not isinstance(special_code, str):
+            special_code = await self._detect_card_number(
+                card_number=to_account
+            )
         query_url = BASE_QIWI_URL + '/sinap/providers/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=query_url + special_code + '/onlineCommission',
-                headers=headers,
+                headers=payload.headers,
                 json=payload.json
         ):
             return Commission.parse_raw(response.response_data)
@@ -723,7 +720,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_QIWI_URL + '/person-profile/v1/profile/current',
                 headers=headers,
                 method='GET',
@@ -793,7 +790,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         if sources:
             params.update({'sources': ' '.join(sources)})
         url = BASE_QIWI_URL + '/payment-history/v2/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + '/payments/total',
                 params=params,
                 headers=headers,
@@ -810,7 +807,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         """
         url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + '/accounts',
                 headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
                 method='GET'
@@ -834,7 +831,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             'alias': currency_alias
         }
         url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + '/accounts',
                 headers=headers,
                 data=payload
@@ -853,7 +850,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + '/accounts/offer',
                 headers=headers,
                 method='GET'
@@ -877,7 +874,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + '/accounts/' + currency_alias,
                 headers=headers,
                 method='PATCH',
@@ -913,7 +910,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         headers = self._auth_token(
             deepcopy(DEFAULT_QIWI_HEADERS), True
         )
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url + ' /refunds/' + refund_id,
                 headers=headers,
                 method='PUT',
@@ -940,7 +937,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         чтобы пользоваться апи QIWI Master
         """
         url, payload = api_helper.qiwi_master_data(self.stripped_number)
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url,
                 json=payload,
                 method='POST',
@@ -959,7 +956,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :return: OrderDetails
         """
         url = BASE_QIWI_URL + "/cards/v2/persons/{number}/orders"
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url.format(number=self.stripped_number),
                 headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
                 json={"cardAlias": card_alias},
@@ -979,7 +976,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         """
         details = await self.__pre_qiwi_master_request(card_alias)
         url = BASE_QIWI_URL + '/cards/v2/persons/{}/orders'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url.format(
                     self.stripped_number
                 ) + f'/{details.order_id}/submit',
@@ -999,7 +996,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :return: OrderDetails
         """
         url, payload = api_helper.new_card_data(**kwargs)
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url,
                 json=payload,
                 headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
@@ -1042,9 +1039,177 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         """
         url = BASE_QIWI_URL + '/cards/v1/cards/?vas-alias=qvc-master'
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url,
                 headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
                 method='GET'
         ):
             return response
+
+    # -*-*-*-*-*-*-*-* WEBHOOKS -*-*-*-*-*-*-*-*-*-*-*-*-
+
+    async def _register_webhook(
+            self,
+            web_url: str,
+            txn_type: int = 2
+    ) -> WebHookConfig:
+        """
+        This method register a new webhook
+
+        :param web_url: service url
+        :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
+        :return: Active Hooks
+        """
+        url = BASE_QIWI_URL + '/payment-notifier/v1/hooks'
+        async for response in self._requests.fast().fetch(
+                url=url,
+                method='PUT',
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
+                params={
+                    'hookType': 1,
+                    'param': web_url,
+                    'txnType': txn_type
+                }
+        ):
+            return WebHookConfig.parse_raw(response.response_data)
+
+    async def get_current_webhook(self) -> Optional[WebHookConfig]:
+        """
+        Список действующих (активных) обработчиков уведомлений,
+         связанных с вашим кошельком, можно получить данным запросом.
+        Так как сейчас используется только один тип хука - webhook,
+         то в ответе содержится только один объект данных
+
+        """
+        url = BASE_QIWI_URL + '/payment-notifier/v1/hooks/active'
+        async for response in self._requests.fast().fetch(
+                url=url,
+                method='GET',
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        ):
+            try:
+                return WebHookConfig.parse_raw(response.response_data)
+            except RequestError:
+                return None
+
+    async def _send_test_notification(self) -> Dict[str, str]:
+        """
+        Для проверки вашего обработчика вебхуков используйте данный запрос.
+        Тестовое уведомление отправляется на адрес, указанный при вызове
+        register_webhook
+
+        """
+        url = BASE_QIWI_URL + '/payment-notifier/v1/hooks/test'
+        async for response in self._requests.fast().fetch(
+                url=url,
+                method='GET',
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        ):
+            return response.response_data
+
+    async def _get_webhook_secret_key(self, hook_id: str) -> str:
+        """
+        Каждое уведомление содержит цифровую подпись сообщения,
+         зашифрованную ключом.
+        Для получения ключа проверки подписи используйте данный запрос.
+
+        :param hook_id: UUID of webhook
+        :return: Base64-закодированный ключ
+        """
+        url = BASE_QIWI_URL + f'/payment-notifier/v1/hooks/{hook_id}/key'
+        async for response in self._requests.fast().fetch(
+                url=url,
+                method='GET',
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
+        ):
+            return response.response_data.get('key')
+
+    async def delete_current_webhook(self) -> Optional[Dict[str, str]]:
+        """
+        Method to delete webhook
+
+        :return: Описание результата операции
+        """
+        try:
+            hook = await self.get_current_webhook()
+        except RequestError as ex:
+            raise RequestError(
+                message=" You didn't register any webhook ",
+                status_code='422',
+                json_info=ex.json()
+            )
+
+        url = BASE_QIWI_URL + f'/payment-notifier/v1/hooks/{hook.hook_id}'
+        async for response in self._requests.fast().fetch(
+                url=url,
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
+                method='DELETE'
+        ):
+            return response.response_data
+
+    async def change_webhook_secret(self, hook_id: str) -> str:
+        """
+        Для смены ключа шифрования уведомлений используйте данный запрос.
+
+        :param hook_id: UUID of webhook
+        :return: Base64-закодированный ключ
+        """
+        url = BASE_QIWI_URL + f'/payment-notifier/v1/hooks/{hook_id}/newkey'
+        async for response in self._requests.fast().fetch(
+                url=url,
+                headers=self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS)),
+                method='POST'
+        ):
+            return response.response_data.get('key')
+
+    async def bind_webhook(
+            self,
+            url: Optional[str] = None,
+            transactions_type: int = 2,
+            *,
+            send_test_notification: bool = False,
+            delete_old: bool = False
+    ) -> Tuple[WebHookConfig, str]:
+        """
+        NON-API EXCLUSIVE method to register new webhook or get old
+
+        :param url: service url
+        :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
+        :param send_test_notification:  qiwi will send you test webhook update
+        :param delete_old: boolean, if True - delete old binded webhook
+
+        :return: Tuple of Hook and Base64-encoded key
+        """
+        key: Optional[str] = None
+
+        if delete_old:
+            await self.delete_current_webhook()
+
+        try:
+            webhook = await self._register_webhook(
+                web_url=url,
+                txn_type=transactions_type
+            )
+        except (RequestError, TypeError):
+            try:
+                webhook = await self.get_current_webhook()
+            except RequestError as ex:
+                raise RequestError(
+                    message="You didn't pass on url to register new hook "
+                            "and you didn't have registered webhooks",
+                    status_code="422",
+                    json_info=ex.json()
+                )
+            key = await self._get_webhook_secret_key(webhook.hook_id)
+            return webhook, key
+
+        if send_test_notification:
+            await self._send_test_notification()
+
+        if not isinstance(key, str):
+            key = await self._get_webhook_secret_key(webhook.hook_id)
+
+        return webhook, key
+
+    def handle(self):
+        return Handler

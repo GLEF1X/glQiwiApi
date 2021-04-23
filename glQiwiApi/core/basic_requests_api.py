@@ -1,29 +1,26 @@
 import asyncio
-import time
 from itertools import repeat
 from typing import (
     Dict,
     Tuple,
     AsyncGenerator
 )
-from typing import Optional, List, Any, Union
+from typing import Optional, List, Union
 
 from aiohttp import (
     ClientTimeout,
     ClientRequest,
     ClientProxyConnectionError,
     ServerDisconnectedError,
-    ContentTypeError,
-    ClientSession
+    ContentTypeError
 )
 from aiohttp.typedefs import LooseCookies
 from aiosocksy import SocksError
 from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
-from glQiwiApi.core import AbstractParser, BaseStorage
+from glQiwiApi.core import AbstractParser
 from glQiwiApi.types import ProxyService, Response
-from glQiwiApi.types.basics import Cached, Attributes
-from glQiwiApi.utils.exceptions import InvalidData
+from glQiwiApi.types.basics import Cached
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
 
@@ -169,7 +166,7 @@ class HttpXParser(AbstractParser):
             *,
             times: int = 1,
             **kwargs
-    ) -> AsyncGenerator[Response, None]:
+    ) -> AsyncGenerator[Union[Response, Cached], None]:
         """
         Basic usage: \n
         parser = HttpXParser() \n
@@ -216,127 +213,3 @@ class HttpXParser(AbstractParser):
         import random
         random.shuffle(proxies)
         return proxies
-
-
-class Storage(BaseStorage):
-    """
-    Класс, позволяющий кэшировать результаты запросов
-
-    """
-    # Доступные критерии, по которым проходит валидацию кэш
-    available = ('params', 'json', 'data', 'headers')
-
-    def __init__(
-            self,
-            cache_time: Union[float, int],
-            default_key: Optional[str] = None
-    ) -> None:
-        if isinstance(cache_time, (int, float)):
-            if cache_time > 60 or cache_time < 0:
-                raise InvalidData(
-                    "Время кэширования должно быть в пределах"
-                    " от 0 до 60 секунд"
-                )
-
-        self.tmp_data: Optional[Dict[str, Cached]] = dict()
-        self._cache_time = cache_time
-        self.__initialize_default_key(default_key)
-
-    def __del__(self) -> None:
-        del self.tmp_data
-
-    def __initialize_default_key(self, key: str) -> None:
-        """ Initialize default_key attribute """
-        self._default_key = key
-        if not isinstance(key, str):
-            self._default_key = "url"
-
-    def get_current(self, key: str) -> Optional[Cached]:
-        """ Method to get element by key from data """
-        return self.tmp_data.get(key)
-
-    def clear(self, key: Optional[str] = None, force: bool = False) -> Any:
-        """
-        Method to delete element from the cache by key,
-        or if force passed on its clear all data from the cache
-
-        """
-        if force:
-            return self.tmp_data.clear()
-        return self.tmp_data.pop(key)
-
-    def __setitem__(self, key, value) -> None:
-        self.tmp_data.update(
-            {key: value}
-        )
-
-    def __getitem__(self, item) -> Union[
-        Cached, ClientSession
-    ]:
-        return self.tmp_data.get(item)
-
-    def update_data(
-            self,
-            result: Any,
-            kwargs: Any,
-            status_code: Optional[Union[str, int]] = None
-    ) -> None:
-        """
-        Метод, который добавляет результат запроса в кэш
-
-        :param result: Результат запроса или какие-то данные
-        :param kwargs: Дополнительная информация
-        :param status_code: опционально, статус код запроса
-
-        """
-        uncached = (
-            'https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/'
-        )
-        value = kwargs.get(self._default_key)
-        if not self._cache_time < 0.1:
-            if not any(
-                    value.startswith(
-                        contain_match
-                    ) or contain_match in value
-                    for contain_match in uncached
-            ):
-                self.tmp_data.update({
-                    value: Cached(
-                        kwargs=Attributes.format(kwargs, self.available),
-                        response_data=result,
-                        key=self._default_key,
-                        status_code=status_code,
-                        method=kwargs.get('method')
-                    )
-                })
-            elif uncached[1] in value:
-                self.clear(value, True)
-
-    def validate(self, kwargs: Dict[str, Any]) -> bool:
-        """
-        Метод, который по некоторым условиям
-        проверяет актуальность кэша и в некоторых
-        случая его чистит.
-
-        """
-        # Если параметры и ссылка запроса совпадает
-        cached = self.tmp_data.get(kwargs.get(self._default_key))
-        if isinstance(cached, Cached):
-            # Проверяем, не вышло ли время кэша
-            if time.monotonic() - cached.cached_in > self._cache_time:
-                self.clear(kwargs.get(self._default_key))
-                return False
-
-            # Проверяем запрос методом GET на кэш
-            if cached.method == 'GET':
-                if kwargs.get('headers') == cached.kwargs.headers:
-                    if kwargs.get('params') == cached.kwargs.params:
-                        return True
-
-            elif any(
-                    getattr(cached.kwargs, key) == kwargs.get(key, '')
-                    for key in self.available if key != 'headers'
-            ):
-                return True
-
-        return False

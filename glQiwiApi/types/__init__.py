@@ -28,7 +28,9 @@ from .qiwi_types import (
     RefundBill,
     Polygon,
     Terminal,
-    Partner
+    Partner,
+    WebHookConfig,
+    WebHook
 )
 from .yoomoney_types import (
     OperationType,
@@ -89,6 +91,8 @@ __all__ = [
     'Polygon',
     'Terminal',
     'Partner',
+    'WebHookConfig',
+    'WebHook',
     'Executors',
     'FuncT'
 ]

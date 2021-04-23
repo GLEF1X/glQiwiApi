@@ -9,7 +9,12 @@ __pycache__/
 glQiwiApi/test.py
 bot
 glQiwiApi/tranzoo
-
+test.*
+*/test.*
+*.pem
+glQiwiApi/webapp.py
+glQiwiApi/templates
+glQiwiApi/web
 # Distribution / packaging
 .Python
 build/

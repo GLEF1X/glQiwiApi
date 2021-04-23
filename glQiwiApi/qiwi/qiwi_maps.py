@@ -2,7 +2,7 @@ import typing
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi import types
-from glQiwiApi.core import CustomParser, ToolsMixin
+from glQiwiApi.core import RequestManager, ToolsMixin
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 
 
@@ -18,7 +18,7 @@ class QiwiMaps(ToolsMixin):
             without_context: bool = False,
             cache_time: int = DEFAULT_CACHE_TIME
     ) -> None:
-        self._parser = CustomParser(
+        self._requests = RequestManager(
             without_context=without_context,
             cache_time=cache_time
         )
@@ -54,7 +54,7 @@ class QiwiMaps(ToolsMixin):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = self._parser.filter_dict(
+        params = self._requests.filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -68,7 +68,7 @@ class QiwiMaps(ToolsMixin):
             }
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=url,
                 method='GET',
                 params=params
@@ -83,7 +83,7 @@ class QiwiMaps(ToolsMixin):
         Get terminal partners for ttpGroups
         :return: list of TTPGroups
         """
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url='http://edge.qiwi.com/locator/v3/ttp-groups',
                 method='GET',
                 headers={"Content-type": "text/json"}
