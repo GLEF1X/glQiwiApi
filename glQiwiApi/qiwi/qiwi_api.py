@@ -11,6 +11,7 @@ from glQiwiApi.core import (
     AbstractPaymentWrapper
 )
 from glQiwiApi.core import RequestManager, ToolsMixin
+from glQiwiApi.core.web_hooks.webhook_mixin import HookMixin
 from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
     QIWI_TO_CARD, DEFAULT_QIWI_HEADERS,
@@ -45,7 +46,7 @@ from glQiwiApi.utils.exceptions import (
 DEFAULT_BILL_TIME = datetime.now() + timedelta(days=2)
 
 
-class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
+class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin, HookMixin):
     """
     Класс, реализующий обработку запросов к киви, удобен он тем,
     что не просто отдает json подобные объекты, а
@@ -60,14 +61,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         '_requests',
     )
 
-    def __init__(
-            self,
-            api_access_token: Optional[str] = None,
-            phone_number: Optional[str] = None,
-            secret_p2p: Optional[str] = None,
-            without_context: bool = False,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME
-    ) -> None:
+    def __init__(self, api_access_token: Optional[str] = None,
+                 phone_number: Optional[str] = None,
+                 secret_p2p: Optional[str] = None,
+                 without_context: bool = False,
+                 cache_time: Union[float, int] = DEFAULT_CACHE_TIME) -> None:
         """
         :param api_access_token: токен, полученный с https://qiwi.com/api
         :param phone_number: номер вашего телефона с +
@@ -79,6 +77,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
          запрос не будет использовать кэш по дефолту, максимальное время
          кэширование 60 секунд
         """
+        super().__init__()
         if isinstance(phone_number, str):
             self.phone_number = phone_number.replace('+', '')
             if self.phone_number.startswith('8'):
@@ -1094,7 +1093,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
     async def _send_test_notification(self) -> Dict[str, str]:
         """
-        Для проверки вашего обработчика вебхуков используйте данный запрос.
+        Для проверки вашего обработчика webhooks используйте данный запрос.
         Тестовое уведомление отправляется на адрес, указанный при вызове
         register_webhook
 
@@ -1176,7 +1175,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param url: service url
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
         :param send_test_notification:  qiwi will send you test webhook update
-        :param delete_old: boolean, if True - delete old binded webhook
+        :param delete_old: boolean, if True - delete old webhook
 
         :return: Tuple of Hook and Base64-encoded key
         """
@@ -1210,6 +1209,3 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             key = await self._get_webhook_secret_key(webhook.hook_id)
 
         return webhook, key
-
-    def handle(self):
-        return Handler

@@ -30,7 +30,8 @@ from .qiwi_types import (
     Terminal,
     Partner,
     WebHookConfig,
-    WebHook
+    WebHook,
+    Notification
 )
 from .yoomoney_types import (
     OperationType,
@@ -93,6 +94,7 @@ __all__ = [
     'Partner',
     'WebHookConfig',
     'WebHook',
+    'Notification',
     'Executors',
     'FuncT'
 ]

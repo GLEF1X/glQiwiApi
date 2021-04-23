@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 from glQiwiApi.types import Sum
@@ -16,20 +18,23 @@ class Payment(BaseModel):
     status: str = Field(..., alias="status")
     txn_id: str = Field(..., alias="txnId")
     type: str = Field(..., alias="type")
-    commission: Sum = Field(..., alias="commission")
+    commission: Optional[Sum] = Field(default=None, alias="commission")
     sum: Sum = Field(..., alias="sum")
     total: Sum = Field(..., alias="total")
 
 
 class WebHook(BaseModel):
-    """WebHook object"""
+    """
+    Хуки или уведомления с данными о событии (платеже/пополнении)
 
-    hash: str = Field(..., alias="hash")
+    """
+
+    hash: Optional[str] = Field(default=None, alias="hash")
     hook_id: str = Field(..., alias="hookId")
-    message_id: str = Field(..., alias="messageId")
+    message_id: Optional[str] = Field(default=None, alias="messageId")
     test: bool = Field(..., alias="test")
     version: str = Field(..., alias="version")
-    payment: Payment = Field(..., alias="payment")
+    payment: Optional[Payment] = Field(default=None, alias="payment")
 
     class Config:
         json_loads = custom_load

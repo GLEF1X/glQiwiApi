@@ -1,7 +1,7 @@
 from .account import Account
 from .account_info import QiwiAccountInfo
 from .balance import Balance
-from .bill import Bill, BillError, RefundBill
+from .bill import Bill, BillError, RefundBill, Notification
 from .identification import Identification
 from .limit import Limit
 from .partner import Partner
@@ -30,5 +30,6 @@ __all__ = (
     'Terminal',
     'Partner',
     'WebHook',
-    'WebHookConfig'
+    'WebHookConfig',
+    'Notification'
 )

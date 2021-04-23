@@ -1,4 +1,5 @@
 import asyncio
+import binascii
 import concurrent.futures as futures
 import datetime
 import functools as ft
@@ -6,6 +7,8 @@ import re
 import time
 from contextvars import ContextVar
 from copy import deepcopy
+from hashlib import sha256
+from hmac import new
 
 import pytz
 from pydantic import ValidationError, BaseModel
@@ -244,15 +247,22 @@ def simple_multiply_parse(lst_of_objects, model):
     return objects
 
 
-def dump_response(func):
-    """Декоратор, который гарантирует получения json данных в запросе"""
+def hmac_key(key, amount, status, bill_id, site_id):
+    """
+    Функция расшифровки подписи webhook
 
-    @ft.wraps(func)
-    async def wrapper(*args, **kwargs):
-        kwargs.update({'get_json': True})
-        return await func(*args, **kwargs)
+    :param key: ключ webhook, закодированный в Base64
+    :param amount: сумма p2p платежа
+    :param status: статус платежа
+    :param bill_id: unique p2p id
+    :param site_id:
+    """
+    byte_key = binascii.unhexlify(key)
+    invoice_params = (
+        f"{amount.currency}|{amount.value}|{bill_id}|{site_id}|{status.value}"
+    ).encode("utf-8")
 
-    return wrapper
+    return new(byte_key, invoice_params, sha256).hexdigest().upper()
 
 
 def custom_load(data):

@@ -66,7 +66,13 @@ def multiply_objects_parse(
 ) -> List[types.PydanticTypes]: ...
 
 
-def dump_response(func: Any) -> Any: ...
+def hmac_key(
+        key: str,
+        amount: types.OptionalSum,
+        status: Any,
+        bill_id: str,
+        site_id: str
+) -> str: ...
 
 
 def simple_multiply_parse(lst_of_objects: Union[List[Union[dict, str]], dict],

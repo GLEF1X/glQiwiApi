@@ -3,9 +3,10 @@ import asyncio
 import unittest
 from typing import AsyncGenerator, Optional, Dict, Any, Union, List
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, web
 from aiohttp.typedefs import LooseCookies
 
+from glQiwiApi.core.web_hooks.handler import HandlerManager
 from glQiwiApi.types import ProxyService, Response
 
 
@@ -138,4 +139,53 @@ class AbstractParser(abc.ABC):
             if self.session.closed:
                 self.session = ClientSession(**kwargs)
 
-class
+
+class BaseWebHookView(web.View):
+    app_key_check_ip: Optional[str] = None
+    """app_key_check_ip stores key to a storage"""
+
+    app_key_handler_manager: Optional[str] = None
+    """app_key_handler_manager"""
+
+    def _check_ip(self, ip: str):
+        """_check_ip checks if given IP is in set of allowed ones"""
+        raise NotImplementedError
+
+    def parse_update(self):
+        """parse_update method that deals with marshaling json"""
+        raise NotImplementedError
+
+    def validate_ip(self):
+        if self.request.app.get(self.app_key_check_ip):
+            ip_address, accept = self.check_ip()
+            if not accept:
+                raise web.HTTPUnauthorized()
+
+    def check_ip(self):
+        forwarded_for = self.request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            return forwarded_for, self._check_ip(forwarded_for)
+
+        peer_name = self.request.transport.get_extra_info("peername")
+
+        if peer_name is not None:
+            host, _ = peer_name
+            return host, self._check_ip(host)
+
+        return None, False
+
+    async def post(self):
+        """
+        Process POST request with basic IP validation.
+        """
+        self.validate_ip()
+
+        update = await self.parse_update()
+        await self.handler_manager.process_event(update)
+
+        return web.Response(text="ok", status=200)
+
+    @property
+    def handler_manager(self) -> "HandlerManager":
+        return self.request.app.get(
+            self.app_key_handler_manager)  # type: ignore

@@ -84,6 +84,16 @@ class RefundBill(BaseModel):
         return self.amount.value
 
 
-__all__ = [
-    'Bill', 'BillError', 'RefundBill'
-]
+class Notification(BaseModel):
+    """Object: Notification"""
+
+    version: str = Field(..., alias="version")
+    bill: Bill = Field(..., alias="bill")
+
+
+__all__ = (
+    'Bill',
+    'BillError',
+    'RefundBill',
+    'Notification'
+)

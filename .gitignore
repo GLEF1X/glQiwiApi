@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+glQiwiApi/test2.py
 glQiwiApi/test.py
 bot
 glQiwiApi/tranzoo
