@@ -1,4 +1,6 @@
-from glQiwiApi import QiwiWrapper
+import logging
+
+from glQiwiApi import QiwiWrapper, types
 
 Y_TOKEN = '4100116602400968.8768F11B3A3EBA77AD840322D6DF69C24379DA18D2B0FB63C8B666F2BD78E957739B00D90D8F71F25762D06D513B7528BC4A8BBF16E157645E64EFBCA71922C08C2A882BC1FB9B9A329BD20752201037ECC01A75C117F77C1D761B4FAF895920302C81F685A9C875959C8B72E312BAEDE701090C10EABA279B92777E85E3F171'
 TOKEN = '4cb242f9ead43bd0e1e98eb7c442262f'
@@ -9,9 +11,14 @@ wallet = QiwiWrapper(
 )
 
 
-@wallet.transaction_handler()
-async def main(event):
+@wallet.transaction_handler(lambda event: event.payment is not None)
+async def main(event: types.WebHook):
     print(event)
+
+
+@wallet.bill_handler()
+async def main2(event: types.Notification):
+    logging.info(f"GET EVENT {event}")
 
 
 wallet.start_polling()

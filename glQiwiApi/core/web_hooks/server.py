@@ -62,7 +62,7 @@ class QiwiBillWebView(BaseWebHookView):
             notification: types.Notification
     ) -> typing.Optional[web.HTTPBadRequest]:
         sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")
-        _secret = self.request.app.get('_secret_key')
+        _secret = self.request.app.get("_secret_key")
         answer = hmac_key(_secret, notification.bill.amount,
                           notification.bill.status, notification.bill.bill_id,
                           notification.bill.site_id)
@@ -78,7 +78,7 @@ class QiwiBillWebView(BaseWebHookView):
 
         notification = await self.parse_update()
 
-        self._hash_validator(notification)
+        # self._hash_validator(notification)
 
         await self.handler_manager.process_event(notification)
 
@@ -91,20 +91,14 @@ class QiwiBillWebView(BaseWebHookView):
 def setup(handler_manager: HandlerManager, app: Application,
           path: str = None, secret_key: typing.Optional[str] = None) -> None:
     app[QiwiWalletWebView.app_key_check_ip] = _check_ip
+    app["_secret_key"] = secret_key
     app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
+    app[QiwiBillWebView.app_key_handler_manager] = handler_manager
     path = path or DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(path, QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME)
-
-
-def setup_bill(
-        secret_key: str,
-        handler_manager: HandlerManager,
-        app: web.Application,
-        path: str = None,
-) -> None:
-    app["_secret_key"] = secret_key
-    app[QiwiBillWebView.app_key_check_ip] = _check_ip
-    app[QiwiBillWebView.app_key_handler_manager] = handler_manager
-    path = path or DEFAULT_QIWI_BILLS_WEBHOOK_PATH
-    app.router.add_view(handler=QiwiBillWebView, name=DEFAULT_QIWI_ROUTER_NAME,
-                        path=path)
+    p2p_path = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
+    app.router.add_view(
+        handler=QiwiBillWebView,
+        name=DEFAULT_QIWI_BILLS_ROUTER_NAME,
+        path=p2p_path
+    )

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
 
 from glQiwiApi.core.mixins import BillMixin
 from glQiwiApi.types.basics import OptionalSum
@@ -9,9 +9,9 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Customer(BaseModel):
-    phone: str
-    email: str
-    account: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    account: Optional[str] = None
 
 
 class BillStatus(BaseModel):
@@ -20,8 +20,9 @@ class BillStatus(BaseModel):
 
 
 class CustomFields(BaseModel):
-    pay_sources_filter: str = Field(alias="paySourcesFilter")
-    theme_code: str = Field(alias="themeCode")
+    pay_sources_filter: Optional[str] = Field(alias="paySourcesFilter",
+                                              default=None)
+    theme_code: Optional[str] = Field(alias="themeCode", default=None)
 
 
 class BillError(BaseModel):
@@ -50,15 +51,16 @@ class Bill(BaseModel, BillMixin):
     status: BillStatus
     creation_date_time: datetime = Field(alias="creationDateTime")
     expiration_date_time: datetime = Field(alias="expirationDateTime")
-    pay_url: str = Field(alias="payUrl")
+    pay_url: Optional[str] = Field(alias="payUrl", default=None)
     custom_fields: Optional[
         CustomFields
-    ] = Field(alias="customFields", const=None)
+    ] = Field(alias="customFields", default=None)
     customer: Optional[Customer] = None
 
     class Config:
         """ Pydantic config """
         json_loads = custom_load
+        extra = Extra.allow
 
         def __str__(self) -> str:
             return f'Config class with loads={self.json_loads}'
@@ -89,6 +91,16 @@ class Notification(BaseModel):
 
     version: str = Field(..., alias="version")
     bill: Bill = Field(..., alias="bill")
+
+    class Config:
+        """ Pydantic config """
+        json_loads = custom_load
+
+        def __str__(self) -> str:
+            return f'Config class with loads={self.json_loads}'
+
+        def __repr__(self) -> str:
+            return self.__str__()
 
 
 __all__ = (

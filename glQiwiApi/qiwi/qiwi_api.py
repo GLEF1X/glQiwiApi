@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -5,13 +7,16 @@ from typing import Union, Optional, Dict, List, Any, Tuple
 
 import aiofiles
 import aiohttp
+from aiohttp import web
+from aiohttp.abc import AbstractAccessLogger
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     AbstractPaymentWrapper
 )
 from glQiwiApi.core import RequestManager, ToolsMixin
-from glQiwiApi.core.web_hooks.webhook_mixin import HookMixin
+from glQiwiApi.core.web_hooks import server, handler
+from glQiwiApi.core.web_hooks.webhook_mixin import AccessLogger
 from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
     QIWI_TO_CARD, DEFAULT_QIWI_HEADERS,
@@ -46,7 +51,7 @@ from glQiwiApi.utils.exceptions import (
 DEFAULT_BILL_TIME = datetime.now() + timedelta(days=2)
 
 
-class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin, HookMixin):
+class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     """
     Класс, реализующий обработку запросов к киви, удобен он тем,
     что не просто отдает json подобные объекты, а
@@ -77,7 +82,6 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin, HookMixin):
          запрос не будет использовать кэш по дефолту, максимальное время
          кэширование 60 секунд
         """
-        super().__init__()
         if isinstance(phone_number, str):
             self.phone_number = phone_number.replace('+', '')
             if self.phone_number.startswith('8'):
@@ -89,6 +93,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin, HookMixin):
         )
         self.api_access_token = api_access_token
         self.secret_p2p = secret_p2p
+        self.handler_manager = handler.HandlerManager(
+            loop=asyncio.get_event_loop()
+        )
 
     def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
         headers['Authorization'] = headers['Authorization'].format(
@@ -1106,7 +1113,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin, HookMixin):
         ):
             return response.response_data
 
-    async def _get_webhook_secret_key(self, hook_id: str) -> str:
+    async def get_webhook_secret_key(self, hook_id: str) -> str:
         """
         Каждое уведомление содержит цифровую подпись сообщения,
          зашифрованную ключом.
@@ -1199,13 +1206,74 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin, HookMixin):
                     status_code="422",
                     json_info=ex.json()
                 )
-            key = await self._get_webhook_secret_key(webhook.hook_id)
+            key = await self.get_webhook_secret_key(webhook.hook_id)
             return webhook, key
 
         if send_test_notification:
             await self._send_test_notification()
 
         if not isinstance(key, str):
-            key = await self._get_webhook_secret_key(webhook.hook_id)
+            key = await self.get_webhook_secret_key(webhook.hook_id)
 
         return webhook, key
+
+    def start_polling(
+            self,
+            host: str = "localhost",
+            port: int = 8080,
+            path: Optional[str] = None,
+            app: Optional["web.Application"] = None,
+            access_logger: Optional[AbstractAccessLogger] = None,
+            **logger_config: Any
+    ):
+        """
+        Blocking function, which listen webhooks
+
+        :param host: server host
+        :param port: server port that open for tcp/ip trans.
+        :param path: path for qiwi that will send requests
+        :param app: pass web.Application
+        :param access_logger: pass heir of AbstractAccessLogger,
+         if you want custom logger
+        """
+        from aiohttp import web
+
+        app = app if app is not None else web.Application()
+
+        # hook_config, key = asyncio.get_event_loop().run_until_complete(
+        #     self.bind_webhook()
+        # )
+
+        server.setup(self.handler_manager, app, path,
+                     secret_key=self.secret_p2p)
+
+        logging.basicConfig(**logger_config)
+
+        if not isinstance(access_logger, AbstractAccessLogger):
+            access_logger = AccessLogger
+
+        web.run_app(
+            app,
+            host=host,
+            port=port,
+            access_log_class=access_logger
+        )
+
+    @property
+    def transaction_handler(self):
+        """
+        Handler manager for default qiwi transactions,
+        you can pass on lambda filter, if you want
+        But it must to return bool
+
+        """
+        return self.handler_manager.add_transaction_handler
+
+    @property
+    def bill_handler(self):
+        """
+        Handler manager for p2p bills,
+        you can pass on lambda filter, if you want
+        But it must to return bool
+        """
+        return self.handler_manager.add_bill_handler

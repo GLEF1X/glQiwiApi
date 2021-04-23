@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, Awaitable, Callable, List, Tuple, TypeVar
 
-from .filter import Filter
+from .filter import Filter, transaction_webhook_filter, bill_webhook_filter
 
 E = TypeVar("E")
 EventFilter = Callable[[E], bool]
@@ -37,13 +37,18 @@ class HandlerManager:
             )
 
         self.loop = loop
-        self._event_handlers: List[EventHandler] = []
+        self.transaction_handlers: List[EventHandler] = []
+        self.bill_handlers: List[EventHandler] = []
 
-    def add_event_handler(
-            self,
+    @property
+    def _handlers(self) -> List[EventHandler]:
+        return [*self.bill_handlers, *self.transaction_handlers]
+
+    @staticmethod
+    def wrap_handler(
             event_handler: EventHandlerFunctor,
             filters: Tuple[EventFilter, ...]
-    ) -> 'HandlerManager':
+    ) -> EventHandler:
         """
         Add new event handler.
         (!) Allows chain addition.
@@ -61,18 +66,23 @@ class HandlerManager:
 
             filters = tuple(filters_list)
 
-        self._event_handlers.append(EventHandler(event_handler, *filters))
+        return EventHandler(event_handler, *filters)
 
-        return self
-
-    def __call__(self, *filter_: EventFilter):
-        """
-        Listener is callable for registering new event handlers
-        :param filter_: Filter objects unpacked
-        """
+    def add_transaction_handler(self, *filters: EventFilter) -> E:
 
         def decorator(event_handler: EventHandlerFunctor) -> None:
-            self.add_event_handler(event_handler, filter_)
+            with_default = add_filter(filters, transaction_webhook_filter)
+            handler = self.wrap_handler(event_handler, with_default)
+            self.transaction_handlers.append(handler)
+
+        return decorator
+
+    def add_bill_handler(self, *filters: EventFilter) -> E:
+
+        def decorator(event_handler: EventHandlerFunctor) -> None:
+            with_default = add_filter(filters, bill_webhook_filter)
+            handler = self.wrap_handler(event_handler, with_default)
+            self.bill_handlers.append(handler)
 
         return decorator
 
@@ -82,5 +92,20 @@ class HandlerManager:
         :param event: any object that will be translated to handlers
         """
 
-        for handler in self._event_handlers:
+        for handler in self._handlers:
             await handler.check_then_execute(event)
+
+
+def add_filter(
+        filters: Tuple[E, ...],
+        custom_filter: Filter
+) -> Tuple[E, ...]:
+    """
+    Added default filter for different handlers
+
+    :param filters: current filters
+    :param custom_filter: filter, which you want to append
+    """
+    filters = list(filters)
+    filters.append(custom_filter.function)
+    return tuple(filters)

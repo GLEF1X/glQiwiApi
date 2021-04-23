@@ -2,6 +2,8 @@ import inspect
 import operator
 from typing import Any, Awaitable, Callable, TypeVar, Union
 
+from glQiwiApi import types
+
 E = TypeVar("E")
 CF = Callable[[E], Union[Awaitable[bool], bool]]
 
@@ -93,4 +95,16 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
     return Filter(func)
 
 
-__all__ = ("Filter",)
+transaction_webhook_filter = Filter(
+    lambda update: isinstance(update, types.WebHook)
+)
+
+bill_webhook_filter = Filter(
+    lambda update: isinstance(update, types.Notification)
+)
+
+__all__ = (
+    "Filter",
+    "transaction_webhook_filter",
+    "bill_webhook_filter"
+)
