@@ -5,9 +5,9 @@ API
 ===
 
 Payment wrappers
---------------------
+----------------
 .. automodule:: glQiwiApi
-    :members:
+    :members: QiwiWrapper, YooMoneyAPI, QiwiMaps
 
 Low level API
 -------------

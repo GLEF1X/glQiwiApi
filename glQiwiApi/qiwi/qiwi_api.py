@@ -1223,7 +1223,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             self,
             host: str = "0.0.0.0",
             port: int = 8080,
-            path: Optional[str] = None,
+            path: Optional[Path] = None,
             app: Optional["web.Application"] = None,
             access_logger: Optional[AbstractAccessLogger] = None,
             **logger_config: Any
