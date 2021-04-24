@@ -8,7 +8,7 @@ from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi import types
 from glQiwiApi.core.web_hooks.handler import HandlerManager
-from glQiwiApi.types import ProxyService, Response
+from glQiwiApi.types import Response
 
 
 class BaseStorage(abc.ABC):
@@ -100,7 +100,6 @@ class AbstractParser(abc.ABC):
             set_timeout: bool,
             cookies: Optional[LooseCookies],
             json: Optional[dict],
-            proxy: Optional[ProxyService],
             data: Optional[Dict[str, Union[
                 str, int, List[
                     Union[str, int]

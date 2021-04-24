@@ -9,9 +9,7 @@ from .basics import (
 )
 from .particular import (
     Response,
-    ProxyService,
     WrapperData,
-    proxy_list
 )
 from .qiwi_types import (
     Bill,
@@ -79,8 +77,6 @@ __all__ = [
     'IncomingTransaction',
     'Response',
     'WrapperData',
-    'ProxyService',
-    'proxy_list',
     'Sum',
     'Type',
     'OptionalSum',

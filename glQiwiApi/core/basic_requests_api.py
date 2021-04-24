@@ -16,7 +16,7 @@ from aiohttp import (
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core import AbstractParser
-from glQiwiApi.types import ProxyService, Response
+from glQiwiApi.types import Response
 from glQiwiApi.types.basics import Cached
 
 DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
@@ -174,18 +174,3 @@ class HttpXParser(AbstractParser):
             asyncio.set_event_loop_policy(EventLoopPolicy())
         return self
 
-    @staticmethod
-    def combine_proxies(
-            proxies: Union[List[ProxyService], Tuple[ProxyService]]
-    ) -> Union[
-        List[ProxyService], Tuple[ProxyService]
-    ]:
-        """
-        Method to combine proxies
-
-        :param proxies:
-        :return: shuffled iterable(list or tuple of CredentialService objects)
-        """
-        import random
-        random.shuffle(proxies)
-        return proxies
