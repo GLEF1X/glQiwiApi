@@ -99,8 +99,11 @@ class Storage(BaseStorage):
             return True
 
         for coincidence in uncached:
-            if value.startswith(coincidence) or coincidence in value:
-                return True
+            try:
+                if value.startswith(coincidence) or coincidence in value:
+                    return True
+            except AttributeError:
+                return False
         return False
 
     def initialize_response_to_resolve(

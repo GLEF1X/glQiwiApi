@@ -1053,7 +1053,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         ):
             return response
 
-    # -*-*-*-*-*-*-*-* WEBHOOKS -*-*-*-*-*-*-*-*-*-*-*-*-
+    # -*-*-*-*-*-*-*-* WEBHOOKS API -*-*-*-*-*-*-*-*-*-*-*-*-
 
     async def _register_webhook(
             self,
@@ -1193,11 +1193,13 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             await self.delete_current_webhook()
 
         try:
+            # Try to register new webhook
             webhook = await self._register_webhook(
                 web_url=url,
                 txn_type=transactions_type
             )
         except (RequestError, TypeError):
+            # Catching exception, if webhook already was registered
             try:
                 webhook = await self.get_current_webhook()
             except RequestError as ex:
@@ -1228,7 +1230,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             **logger_config: Any
     ):
         """
-        Blocking function, which listen webhooks
+        Blocking function, which listening webhooks
 
         :param host: server host
         :param port: server port that open for tcp/ip trans.

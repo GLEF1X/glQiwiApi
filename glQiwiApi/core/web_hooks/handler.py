@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Tuple, Coroutine
+from typing import List, Tuple, Coroutine, Any
 
 from .config import EventHandlerFunctor, EventFilter, E
 from .filter import Filter, transaction_webhook_filter, bill_webhook_filter
@@ -59,6 +59,7 @@ class HandlerManager:
 
     @property
     def handlers(self) -> List[EventHandler]:
+        """ Return all registered handlers """
         return [*self.bill_handlers, *self.transaction_handlers]
 
     @staticmethod

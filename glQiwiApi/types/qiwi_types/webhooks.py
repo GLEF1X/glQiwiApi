@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -10,7 +11,7 @@ class Payment(BaseModel):
     """ Scheme of webhook payment object """
     account: str = Field(..., alias="account")
     comment: str = Field(..., alias="comment")
-    date: str = Field(..., alias="date")
+    date: datetime = Field(..., alias="date")
     error_code: str = Field(..., alias="errorCode")
     person_id: int = Field(..., alias="personId")
     provider: int = Field(..., alias="provider")

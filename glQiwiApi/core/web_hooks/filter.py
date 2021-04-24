@@ -68,6 +68,13 @@ def _compose_filter(
         filter2: Filter,
         operator_: Any
 ) -> Filter:
+    """
+    Compose two filters
+
+    :param filter1:
+    :param filter2:
+    :param operator_:
+    """
     if (not isinstance(filter1, Filter)) | (not isinstance(filter2, Filter)):
         raise ValueError(
             f"Cannot compare non-Filter object with Filter, "
@@ -119,10 +126,12 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
     return Filter(func)
 
 
+# Default filter for transaction handler
 transaction_webhook_filter = Filter(
     lambda update: isinstance(update, types.WebHook)
 )
 
+# Default filter for bill handler
 bill_webhook_filter = Filter(
     lambda update: isinstance(update, types.Notification)
 )

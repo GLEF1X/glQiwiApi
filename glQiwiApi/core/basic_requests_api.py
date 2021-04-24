@@ -9,14 +9,11 @@ from typing import Optional, List, Union
 
 from aiohttp import (
     ClientTimeout,
-    ClientRequest,
     ClientProxyConnectionError,
     ServerDisconnectedError,
     ContentTypeError
 )
 from aiohttp.typedefs import LooseCookies
-from aiosocksy import SocksError
-from aiosocksy.connector import ProxyConnector, ProxyClientRequest
 
 from glQiwiApi.core import AbstractParser
 from glQiwiApi.types import ProxyService, Response
@@ -48,10 +45,6 @@ class HttpXParser(AbstractParser):
             sock_connect=5,
             sock_read=None
         )
-        self._connector: Optional[ProxyConnector] = None
-        self.request_class: Optional[
-            Union[ClientRequest, ProxyClientRequest]
-        ] = None
 
     async def _request(
             self,
@@ -62,7 +55,6 @@ class HttpXParser(AbstractParser):
             cookies: Optional[LooseCookies] = None,
             json: Optional[dict] = None,
             skip_exceptions: bool = False,
-            proxy: Optional[ProxyService] = None,
             data: Optional[Dict[str, Union[
                 str, int, List[
                     Union[str, int]
@@ -87,7 +79,6 @@ class HttpXParser(AbstractParser):
         :param get_json: указывает на то, хотите ли вы получить ответ
          в формате json
         :param method: Тип запроса
-        :param proxy: instance of ProxyService
         :param data: payload data
         :param cookies:
         :param headers:
@@ -95,22 +86,9 @@ class HttpXParser(AbstractParser):
         :return: Response instance
         """
         headers = self.get_headers(headers)
-
-        if isinstance(proxy, ProxyService):
-            self._connector = ProxyConnector()
-            self.request_class = ProxyClientRequest
-
-        # Get "true" dict representation of ProxyService
-        proxy_kwargs = proxy.get_proxy() \
-            if isinstance(proxy, ProxyService) else {}
-
         # Create new session if old was closed
         self.create_session(
-            timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT,
-            connector=self._connector,
-            request_class=self.request_class if isinstance(
-                proxy, ProxyService
-            ) else ClientRequest
+            timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT
         )
 
         # sending query to some endpoint url
@@ -123,11 +101,9 @@ class HttpXParser(AbstractParser):
                 json=json if isinstance(json, dict) else None,
                 cookies=cookies,
                 params=params,
-                **proxy_kwargs
             )
         except (
                 ClientProxyConnectionError,
-                SocksError,
                 ServerDisconnectedError
         ) as ex:
             if not skip_exceptions:
