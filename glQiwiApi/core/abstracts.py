@@ -153,19 +153,19 @@ class BaseWebHookView(web.View):
     app_key_handler_manager: Optional[str] = None
     """app_key_handler_manager"""
 
-    def _check_ip(self, ip: str):
+    def _check_ip(self, ip_address: str):
         """_check_ip checks if given IP is in set of allowed ones"""
         raise NotImplementedError
 
-    def parse_update(self):
+    async def parse_update(self):
         """parse_update method that deals with marshaling json"""
         raise NotImplementedError
 
     def validate_ip(self):
         """ validating request ip address """
         if self.request.app.get(self.app_key_check_ip):
-            ip_address, accept = self.check_ip()
-            if not accept:
+            ip_addr_data = self.check_ip()
+            if not ip_addr_data[1]:
                 raise web.HTTPUnauthorized()
 
     def check_ip(self) -> Union[Tuple[str, bool], Tuple[None, bool]]:

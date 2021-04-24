@@ -19,13 +19,13 @@ from .config import (
 )
 
 
-def _check_ip(ip: str) -> bool:
+def _check_ip(ip_address: str) -> bool:
     """
     Check if ip is allowed to request us
-    :param ip: IP-address
+    :param ip_address: IP-address
     :return: address is allowed
     """
-    address = ipaddress.IPv4Address(ip)
+    address = ipaddress.IPv4Address(ip_address)
     unpacked = [ip_addr for pool in allowed_ips for ip_addr in pool]
     return address in unpacked
 
@@ -80,8 +80,8 @@ class QiwiBillWebView(BaseWebHookView):
 
     """
 
-    def _check_ip(self, ip: str) -> bool:
-        return _check_ip(ip)
+    def _check_ip(self, ip_address: str) -> bool:
+        return _check_ip(ip_address)
 
     def _hash_validator(self, update: types.Notification) -> None:
         sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")

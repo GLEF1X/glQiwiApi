@@ -74,7 +74,6 @@ class RequestError(Exception):
         return self.__str__()
 
     def json(self) -> str:
-        import json
         return json.dumps(
             self.__str__() if not self.json_info else self.json_info,
             indent=2,

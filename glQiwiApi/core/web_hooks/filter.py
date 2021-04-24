@@ -6,26 +6,26 @@ from glQiwiApi import types
 from .config import CF, E
 
 
-def op(a: CF, b: CF, event: Any) -> bool:
+def special_comparator(func1: CF, func2: CF, event: Any) -> bool:
     """ custom a & b (and) operator """
-    validated = a(event)
+    validated = func1(event)
     if validated is not True:
         return False
-    return operator.and_(validated, b(event))
+    return operator.and_(validated, func2(event))
 
 
-def xor(a: CF, b: CF, event: Any) -> bool:
+def xor(func1: CF, func2: CF, event: Any) -> bool:
     """ custom a ^ b (xor) operator """
-    funcs = (a, b)
+    funcs = (func1, func2)
     for func in funcs:
         if func(event):
             return True
     return False
 
 
-def or_(a: CF, b: CF, event: Any) -> bool:
+def or_(func1: CF, func2: CF, event: Any) -> bool:
     """ Custom a | b (or) operator """
-    return True if a(event) or b(event) else False
+    return func1(event) or func2(event)
 
 
 class Filter:
@@ -57,7 +57,7 @@ class Filter:
         return _compose_filter(self, other, xor)
 
     def __and__(self, other: "Filter") -> "Filter":
-        return _compose_filter(self, other, op)
+        return _compose_filter(self, other, special_comparator)
 
     def __or__(self, other: "Filter") -> "Filter":
         return _compose_filter(self, other, or_)

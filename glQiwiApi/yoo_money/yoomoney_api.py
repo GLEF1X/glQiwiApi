@@ -244,7 +244,8 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             )
 
         data = {
-            'records': records
+            'records': records,
+            'label': label
         }
 
         if operation_types:
@@ -265,7 +266,6 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 raise InvalidData('Укажите позитивное число')
             data.update({'start_record': start_record})
 
-        data.update({'label': label}) if isinstance(label, str) else None
         if start_date:
             if not isinstance(start_date, datetime):
                 raise InvalidData(
@@ -288,7 +288,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 url=BASE_YOOMONEY_URL + '/api/operation-history',
                 method='POST',
                 headers=headers,
-                data=data,
+                data=self._parser.filter_dict(data),
                 get_json=True
         ):
             return api_helper.multiply_objects_parse(
