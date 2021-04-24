@@ -53,5 +53,6 @@ wallet.start_webhook(
     # your configured local machine
     port=8080,
     level=logging.INFO,
-    format=FORMAT
+    format=FORMAT,
+    path=path
 )
