@@ -2,7 +2,6 @@ import asyncio
 from itertools import repeat
 from typing import (
     Dict,
-    Tuple,
     AsyncGenerator
 )
 from typing import Optional, List, Union
@@ -173,4 +172,3 @@ class HttpXParser(AbstractParser):
             from asyncio import DefaultEventLoopPolicy as EventLoopPolicy
             asyncio.set_event_loop_policy(EventLoopPolicy())
         return self
-
