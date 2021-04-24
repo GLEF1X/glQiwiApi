@@ -6,7 +6,6 @@ import datetime
 import functools as ft
 import hashlib
 import hmac
-import logging
 import re
 import time
 from contextvars import ContextVar
@@ -376,12 +375,8 @@ def sync_measure_time(func):
 
 
 def parse_amount(txn_type, txn):
-    if txn_type == 'in':
-        amount = txn.amount
-        comment = txn.comment
-    else:
-        amount = txn.amount_due
-        comment = txn.message
+    amount = txn.amount if txn_type == 'in' else txn.amount_due
+    comment = txn.comment if txn_type == 'in' else txn.message
     return amount, comment
 
 

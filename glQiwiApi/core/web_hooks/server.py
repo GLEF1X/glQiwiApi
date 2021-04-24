@@ -8,7 +8,7 @@ from aiohttp.web_response import Response
 from glQiwiApi import types
 from glQiwiApi.core.abstracts import BaseWebHookView
 from glQiwiApi.core.web_hooks.handler import HandlerManager
-from glQiwiApi.utils.basics import hmac_for_transaction
+from glQiwiApi.utils.basics import hmac_for_transaction, hmac_key
 from .config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
     allowed_ips,
@@ -87,24 +87,25 @@ class QiwiBillWebView(BaseWebHookView):
         sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")
         logging.info(sha256_signature)
         _secret = self.request.app.get("_secret_key")
-        # answer = hmac_key(_secret, update.bill.amount,
-        #                   update.bill.status, update.bill.bill_id,
-        #                   update.bill.site_id)
-        logging.info(_secret)
-        logging.info(update.bill.amount)
-        logging.info(update.bill.status)
-        logging.info(update.bill.bill_id)
-        logging.info(update.bill.site_id)
+        answer = hmac_key(_secret, update.bill.amount,
+                          update.bill.status, update.bill.bill_id,
+                          update.bill.site_id)
 
-        # if answer != sha256_signature:
-        #     raise web.HTTPBadRequest()
+        if answer != sha256_signature:
+            raise web.HTTPBadRequest()
 
     async def parse_update(self) -> types.Notification:
         payload = await self.request.json()
         return types.Notification.parse_raw(payload)
 
     async def post(self) -> Response:
-        await super().post()
+        self.validate_ip()
+
+        update = await self.parse_update()
+
+        # self._hash_validator(update)
+
+        await self.handler_manager.process_event(update)
         return web.json_response(data={"error": "0"}, status=200)
 
     app_key_check_ip = "_qiwi_bill_check_ip"
