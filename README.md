@@ -14,7 +14,7 @@
 * 🖱️ __Developer contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### 📣Why glQiwiApi?
-* :boom:__It's working faster than other async libraries__
+* :boom:__It's working faster than other async libraries for qiwi__
 * :dizzy:__Frequent updates and edits__
 * :innocent: __The library developer will always help you with any problems you might encounter__
 ### 💾Installation
