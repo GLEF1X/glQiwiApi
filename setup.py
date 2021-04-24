@@ -7,7 +7,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     name="test_glQiwiApi23.2021",  # Replace with your own username
-    version="0.0.45",
+    version="0.0.47",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Light and fast wrapper for qiwi and yoomoney",

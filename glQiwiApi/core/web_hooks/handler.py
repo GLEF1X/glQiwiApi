@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Tuple, Coroutine, Any
+from typing import List, Tuple, Coroutine
 
 from .config import EventHandlerFunctor, EventFilter, E
 from .filter import Filter, transaction_webhook_filter, bill_webhook_filter

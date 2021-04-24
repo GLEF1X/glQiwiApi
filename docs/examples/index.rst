@@ -1,11 +1,8 @@
-===================
-Qiwi usage examples
-===================
+============
+API examples
+============
 
 .. toctree::
-    p2p
-    basic_methods
-    usage_without_context
-    cache
-    sync_support
-    usage_with_aiogram
+    qiwi/index
+    yoo_money/index
+    other/index

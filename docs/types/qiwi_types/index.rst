@@ -11,3 +11,4 @@ Qiwi types
     stats
     identification
     account-info
+    hook

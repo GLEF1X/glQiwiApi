@@ -6,7 +6,7 @@ Synchronous usage
 
 .. tip:: Usage. **You can use this sync adapter for any async function**.
 
-.. literalinclude:: ./../../examples/sync_usage.py
+.. literalinclude:: ./../../../examples/other/sync_usage.py
     :caption: sync_usage.py
     :language: python
     :linenos:

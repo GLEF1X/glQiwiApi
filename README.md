@@ -30,8 +30,7 @@ pip install glQiwiApi
 | Library | Description                                    |
 |:-------:|:----------------------------------------------:|
 |aiohttp  | default http server                            |
-|aiofiles | saving receipts in pdf                         |  
-|aiosocks | to connect a SOCKS5 proxy                      |
+|aiofiles | saving receipts in pdf                         |
 |uvloop   | Optional(can boost API), but work only on Linux|
 |pydantic | Json data validator. Very fast instead of custom|
 

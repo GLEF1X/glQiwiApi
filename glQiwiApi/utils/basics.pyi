@@ -505,6 +505,16 @@ def sync(
 
 @overload
 def sync(
+        func: Callable[
+            [
+                Optional[str], int, bool, bool
+            ], Coroutine[Any, Any, Tuple[types.WebHookConfig, str]]
+        ]
+) -> Tuple[types.WebHookConfig, str]: ...
+
+
+@overload
+def sync(
         func: types.FuncT,
         *args: Any,
         **kwargs: Any

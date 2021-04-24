@@ -9,7 +9,7 @@ Installation
 Стабильный релиз
 ----------------
 
-Для установки pyQiwi, запустите эту команду в вашем терминале:
+Для установки glQiwiApi, запустите эту команду в вашем терминале:
 
 .. code-block:: console
 
@@ -24,8 +24,6 @@ Installation
 
 Из исходных файлов
 ------------------
-
-Исходные файлы для pyQiwi могут быть загружены с `GitHub репозитория`_.
 
 Вы можете либо клонировать публичный репозиторий:
 
@@ -63,4 +61,5 @@ You can speedup api by following next instructions:
         .. code-block:: bash
 
             $ pip install orjson
-.. _GitHub репозитория: https://github.com/GLEF1X/glQiwiApi
+
+.. tip:: _GitHub репозитория: https://github.com/GLEF1X/glQiwiApi

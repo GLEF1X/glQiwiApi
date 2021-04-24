@@ -6,15 +6,15 @@ from datetime import datetime, timedelta
 from typing import Union, Optional, Dict, List, Any, Tuple
 
 import aiofiles
-import aiohttp
-from aiohttp import web
+from aiohttp import web, ClientSession
 from aiohttp.abc import AbstractAccessLogger
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
-    AbstractPaymentWrapper
+    AbstractPaymentWrapper,
+    RequestManager,
+    ToolsMixin
 )
-from glQiwiApi.core import RequestManager, ToolsMixin
 from glQiwiApi.core.web_hooks import server, handler
 from glQiwiApi.core.web_hooks.config import Path
 from glQiwiApi.core.web_hooks.webhook_mixin import AccessLogger
@@ -105,7 +105,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         return headers
 
     @property
-    def session(self) -> aiohttp.ClientSession:
+    def session(self) -> ClientSession:
         """Return aiohttp session object"""
         return self._requests.session
 
@@ -125,7 +125,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         :param trans_sum: сумма перевода
         :param to_card: номер карты получателя
-        :return
+        :return:
         """
         data = api_helper.parse_card_data(
             default_data=QIWI_TO_CARD,
@@ -230,10 +230,9 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param rows_num: кол-во транзакций, которые вы хотите получить
         :param operation: Тип операций в отчете, для отбора.
         :param start_date:Начальная дата поиска платежей.
-         Используется только вместе с end_date.
+               Используется только вместе с end_date.
         :param end_date: конечная дата поиска платежей.
-         Используется только вместе со start_date.
-
+               Используется только вместе со start_date.
         """
         if rows_num > 50:
             raise InvalidData('Можно проверять не более 50 транзакций')
@@ -1223,7 +1222,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
     def start_webhook(
             self,
             host: str = "0.0.0.0",
-            port: int = 80,
+            port: int = 8080,
             path: Optional[str] = None,
             app: Optional["web.Application"] = None,
             access_logger: Optional[AbstractAccessLogger] = None,
@@ -1243,9 +1242,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         app = app if app is not None else web.Application()
         self._requests.without_context = True
 
-        hook_config, key = asyncio.get_event_loop().run_until_complete(
-            self.bind_webhook()
-        )
+        hook_config, key = api_helper.sync(self.bind_webhook)
 
         server.setup(
             self.handler_manager, app, Path() if not path else path,

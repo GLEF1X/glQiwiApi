@@ -1,5 +1,5 @@
 Добро пожаловать в документацию по glQiwiApi!
-============================================
+=============================================
 
 ..  image:: https://img.shields.io/pypi/v/glQiwiApi.svg?style=flat-square
     :target: https://pypi.python.org/pypi/glQiwiApi
