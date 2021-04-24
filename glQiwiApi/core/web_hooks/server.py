@@ -36,8 +36,8 @@ class QiwiWalletWebView(BaseWebHookView):
 
     """
 
-    def _check_ip(self, ip: str) -> bool:
-        return _check_ip(ip)
+    def _check_ip(self, ip_address: str) -> bool:
+        return _check_ip(ip_address)
 
     async def parse_update(self) -> types.WebHook:
         """

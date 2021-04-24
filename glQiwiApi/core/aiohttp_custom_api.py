@@ -39,6 +39,7 @@ class RequestManager(HttpXParser):
         cached = self._cache[self._cached_key]
         if self.check_session(cached):
             return cached
+        return None
 
     def set_cached_session(self):
         cached_session = self.get_cached_session()

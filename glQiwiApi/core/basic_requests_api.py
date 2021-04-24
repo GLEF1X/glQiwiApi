@@ -53,7 +53,6 @@ class HttpXParser(AbstractParser):
             set_timeout: bool = True,
             cookies: Optional[LooseCookies] = None,
             json: Optional[dict] = None,
-            skip_exceptions: bool = False,
             data: Optional[Dict[str, Union[
                 str, int, List[
                     Union[str, int]
@@ -105,11 +104,10 @@ class HttpXParser(AbstractParser):
                 ClientProxyConnectionError,
                 ServerDisconnectedError
         ) as ex:
-            if not skip_exceptions:
-                self.raise_exception(
-                    status_code='400_special_bad_proxy',
-                    json_info=ex
-                )
+            self.raise_exception(
+                status_code='400_special_bad_proxy',
+                json_info=ex
+            )
             return Response.bad_response()
         # Get content and return response
         try:
