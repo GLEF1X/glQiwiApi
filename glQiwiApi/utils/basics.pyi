@@ -75,6 +75,16 @@ def hmac_key(
 ) -> str: ...
 
 
+def hmac_for_transaction(
+        webhook_key_base64: str,
+        amount: types.Sum,
+        txn_type: str,
+        account: str,
+        txn_id: str,
+        txn_hash: str
+) -> bool: ...
+
+
 def simple_multiply_parse(lst_of_objects: Union[List[Union[dict, str]], dict],
                           model: Type[types.PydanticTypes]) -> List[
     types.PydanticTypes]: ...

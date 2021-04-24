@@ -1,11 +1,12 @@
 import abc
 import asyncio
 import unittest
-from typing import AsyncGenerator, Optional, Dict, Any, Union, List
+from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple
 
 from aiohttp import ClientSession, web
 from aiohttp.typedefs import LooseCookies
 
+from glQiwiApi import types
 from glQiwiApi.core.web_hooks.handler import HandlerManager
 from glQiwiApi.types import ProxyService, Response
 
@@ -141,6 +142,12 @@ class AbstractParser(abc.ABC):
 
 
 class BaseWebHookView(web.View):
+    """
+    Base webhook view for processing events
+    You can make own view and than use it in code,
+    just inheriting this base class
+
+    """
     app_key_check_ip: Optional[str] = None
     """app_key_check_ip stores key to a storage"""
 
@@ -156,16 +163,17 @@ class BaseWebHookView(web.View):
         raise NotImplementedError
 
     def validate_ip(self):
+        """ validating request ip address """
         if self.request.app.get(self.app_key_check_ip):
             ip_address, accept = self.check_ip()
             if not accept:
                 raise web.HTTPUnauthorized()
 
-    def check_ip(self):
+    def check_ip(self) -> Union[Tuple[str, bool], Tuple[None, bool]]:
+        """ checking ip, using headers or peer_name """
         forwarded_for = self.request.headers.get("X-Forwarded-For")
         if forwarded_for:
             return forwarded_for, self._check_ip(forwarded_for)
-
         peer_name = self.request.transport.get_extra_info("peername")
 
         if peer_name is not None:
@@ -174,18 +182,27 @@ class BaseWebHookView(web.View):
 
         return None, False
 
-    async def post(self):
+    @abc.abstractmethod
+    async def post(self) -> None:
         """
         Process POST request with basic IP validation.
+
         """
         self.validate_ip()
 
         update = await self.parse_update()
+
+        self._hash_validator(update)
+
         await self.handler_manager.process_event(update)
 
-        return web.Response(text="ok", status=200)
+    def _hash_validator(self, update: Union[
+        types.Notification, types.WebHook
+    ]) -> None:
+        """ Validating by hash of update """
 
     @property
     def handler_manager(self) -> "HandlerManager":
+        """ Return handler manager """
         return self.request.app.get(
             self.app_key_handler_manager)  # type: ignore

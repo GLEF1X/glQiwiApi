@@ -16,7 +16,7 @@ class RequestManager(HttpXParser):
     под платежные системы и кэширование запросов
 
     """
-    __slots__ = ('_without_context', 'messages', '_cache', '_cached_key')
+    __slots__ = ('without_context', 'messages', '_cache', '_cached_key')
 
     def __init__(
             self,
@@ -25,7 +25,7 @@ class RequestManager(HttpXParser):
             cache_time: Union[float, int] = 0
     ) -> None:
         super(RequestManager, self).__init__()
-        self._without_context = without_context
+        self.without_context = without_context
         self.messages = messages
         self._cache = Storage(cache_time)
         self._cached_key = "session"
@@ -60,8 +60,7 @@ class RequestManager(HttpXParser):
                     response.status_code,
                     json_info=response.response_data
                 )
-            if self._without_context:
-                await self._close_session()
+            await self._close_session()
 
         self._cache_all(response, kwargs)
 
@@ -91,7 +90,7 @@ class RequestManager(HttpXParser):
             )
 
     async def _close_session(self) -> None:
-        if self._without_context:
+        if self.without_context:
             await self.session.close()
 
     def _cache_all(self, response: Response, kwargs: Dict[Any, Any]):

@@ -1,29 +1,22 @@
 import ipaddress
+import logging
 import typing
 
 from aiohttp import web
-from aiohttp.web import Application
 from aiohttp.web_response import Response
 
 from glQiwiApi import types
 from glQiwiApi.core.abstracts import BaseWebHookView
 from glQiwiApi.core.web_hooks.handler import HandlerManager
-from glQiwiApi.utils.basics import hmac_key
-
-DEFAULT_QIWI_WEBHOOK_PATH = "/web_hooks/qiwi/"
-DEFAULT_QIWI_ROUTER_NAME = "QIWI"
-
-DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
-DEFAULT_QIWI_BILLS_ROUTER_NAME = "QIWI_BILLS"
-
-RESPONSE_TIMEOUT = 55
-
-allowed_ips = {
-    ipaddress.ip_network("79.142.16.0/20").hosts(),
-    ipaddress.ip_network("195.189.100.0/22").hosts(),
-    ipaddress.ip_network("91.232.230.0/23").hosts(),
-    ipaddress.ip_network("91.213.51.0/24").hosts(),
-}
+from glQiwiApi.utils.basics import hmac_for_transaction
+from .config import (
+    DEFAULT_QIWI_WEBHOOK_PATH,
+    allowed_ips,
+    DEFAULT_QIWI_ROUTER_NAME,
+    DEFAULT_QIWI_BILLS_ROUTER_NAME,
+    DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
+    Path
+)
 
 
 def _check_ip(ip: str) -> bool:
@@ -33,11 +26,17 @@ def _check_ip(ip: str) -> bool:
     :return: address is allowed
     """
     address = ipaddress.IPv4Address(ip)
-    return address in [ip_addr for pool in allowed_ips for ip_addr in pool]
+    unpacked = [ip_addr for pool in allowed_ips for ip_addr in pool]
+    return address in unpacked
 
 
 class QiwiWalletWebView(BaseWebHookView):
-    def _check_ip(self, ip: str):
+    """
+    View, which processes transactions
+
+    """
+
+    def _check_ip(self, ip: str) -> bool:
         return _check_ip(ip)
 
     async def parse_update(self) -> types.WebHook:
@@ -48,57 +47,116 @@ class QiwiWalletWebView(BaseWebHookView):
         data = await self.request.json()
         return types.WebHook.parse_raw(data)
 
+    async def post(self) -> Response:
+        await super().post()
+        return web.Response(text="ok", status=200)
+
+    def _hash_validator(self, update: types.WebHook) -> None:
+        base64_key = self.request.app.get('_base64_key')
+
+        if update.test:
+            return
+
+        validated = hmac_for_transaction(
+            webhook_key_base64=base64_key,
+            amount=update.payment.sum,
+            txn_hash=update.hash,
+            txn_type=update.payment.type,
+            txn_id=update.payment.txn_id,
+            account=update.payment.account
+        )
+
+        if not validated:
+            raise web.HTTPBadRequest()
+
     app_key_check_ip = "_qiwi_wallet_check_ip"
     app_key_handler_manager = "_qiwi_wallet_handler_manager"
 
 
 class QiwiBillWebView(BaseWebHookView):
+    """
+    View, which processes p2p notifications
+
+
+    """
 
     def _check_ip(self, ip: str) -> bool:
         return _check_ip(ip)
 
-    def _hash_validator(
-            self,
-            notification: types.Notification
-    ) -> typing.Optional[web.HTTPBadRequest]:
+    def _hash_validator(self, update: types.Notification) -> None:
         sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")
+        logging.info(sha256_signature)
         _secret = self.request.app.get("_secret_key")
-        answer = hmac_key(_secret, notification.bill.amount,
-                          notification.bill.status, notification.bill.bill_id,
-                          notification.bill.site_id)
-        if answer != sha256_signature:
-            return web.HTTPBadRequest()
+        # answer = hmac_key(_secret, update.bill.amount,
+        #                   update.bill.status, update.bill.bill_id,
+        #                   update.bill.site_id)
+        logging.info(_secret)
+        logging.info(update.bill.amount)
+        logging.info(update.bill.status)
+        logging.info(update.bill.bill_id)
+        logging.info(update.bill.site_id)
+
+        # if answer != sha256_signature:
+        #     raise web.HTTPBadRequest()
 
     async def parse_update(self) -> types.Notification:
         payload = await self.request.json()
         return types.Notification.parse_raw(payload)
 
     async def post(self) -> Response:
-        self.validate_ip()
-
-        notification = await self.parse_update()
-
-        # self._hash_validator(notification)
-
-        await self.handler_manager.process_event(notification)
-
+        await super().post()
         return web.json_response(data={"error": "0"}, status=200)
 
     app_key_check_ip = "_qiwi_bill_check_ip"
     app_key_handler_manager = "_qiwi_bill_handler_manager"
 
 
-def setup(handler_manager: HandlerManager, app: Application,
-          path: str = None, secret_key: typing.Optional[str] = None) -> None:
+def setup_transaction_data(
+        app: web.Application,
+        base64_key: str,
+        handler_manager: HandlerManager,
+        path: typing.Optional[str] = None
+):
+    app["_base64_key"] = base64_key
     app[QiwiWalletWebView.app_key_check_ip] = _check_ip
-    app["_secret_key"] = secret_key
     app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
-    app[QiwiBillWebView.app_key_handler_manager] = handler_manager
     path = path or DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(path, QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME)
-    p2p_path = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
+
+
+def setup_bill_data(
+        app: web.Application,
+        secret_key: str,
+        handler_manager: HandlerManager,
+        path: typing.Optional[str] = None
+) -> None:
+    app["_secret_key"] = secret_key
+    app[QiwiBillWebView.app_key_check_ip] = _check_ip
+    app[QiwiBillWebView.app_key_handler_manager] = handler_manager
     app.router.add_view(
         handler=QiwiBillWebView,
         name=DEFAULT_QIWI_BILLS_ROUTER_NAME,
-        path=p2p_path
+        path=path or DEFAULT_QIWI_BILLS_WEBHOOK_PATH
     )
+
+
+def setup(
+        handler_manager: HandlerManager,
+        app: web.Application,
+        path: typing.Optional[Path] = None,
+        secret_key: typing.Optional[str] = None,
+        base64_key: typing.Optional[str] = None
+) -> None:
+    """
+    Setup web application for webhooks
+
+    :param handler_manager: handler_manager, which processing events
+    :param app: aiohttp.web.Application
+    :param path: Path obj, contains two paths
+    :param secret_key: secret p2p key
+    :param base64_key: Base64-encoded webhook key
+    """
+    setup_bill_data(app, secret_key, handler_manager,
+                    path.bill_path)
+    setup_transaction_data(app, base64_key, handler_manager,
+                           path.transaction_path)

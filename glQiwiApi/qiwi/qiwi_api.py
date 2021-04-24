@@ -16,6 +16,7 @@ from glQiwiApi.core import (
 )
 from glQiwiApi.core import RequestManager, ToolsMixin
 from glQiwiApi.core.web_hooks import server, handler
+from glQiwiApi.core.web_hooks.config import Path
 from glQiwiApi.core.web_hooks.webhook_mixin import AccessLogger
 from glQiwiApi.qiwi.basic_qiwi_config import (
     BASE_QIWI_URL, ERROR_CODE_NUMBERS,
@@ -1140,10 +1141,10 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             hook = await self.get_current_webhook()
         except RequestError as ex:
             raise RequestError(
-                message=" You didn't register any webhook ",
+                message=" You didn't register any webhook to delete ",
                 status_code='422',
                 json_info=ex.json()
-            )
+            ) from None
 
         url = BASE_QIWI_URL + f'/payment-notifier/v1/hooks/{hook.hook_id}'
         async for response in self._requests.fast().fetch(
@@ -1217,10 +1218,10 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         return webhook, key
 
-    def start_polling(
+    def start_webhook(
             self,
-            host: str = "localhost",
-            port: int = 8080,
+            host: str = "0.0.0.0",
+            port: int = 80,
             path: Optional[str] = None,
             app: Optional["web.Application"] = None,
             access_logger: Optional[AbstractAccessLogger] = None,
@@ -1237,15 +1238,17 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
          if you want custom logger
         """
         from aiohttp import web
-
         app = app if app is not None else web.Application()
+        self._requests.without_context = True
 
-        # hook_config, key = asyncio.get_event_loop().run_until_complete(
-        #     self.bind_webhook()
-        # )
+        hook_config, key = asyncio.get_event_loop().run_until_complete(
+            self.bind_webhook()
+        )
 
-        server.setup(self.handler_manager, app, path,
-                     secret_key=self.secret_p2p)
+        server.setup(
+            self.handler_manager, app, Path() if not path else path,
+            secret_key=self.secret_p2p, base64_key=key
+        )
 
         logging.basicConfig(**logger_config)
 

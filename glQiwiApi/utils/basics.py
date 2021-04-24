@@ -1,8 +1,12 @@
 import asyncio
+import base64
 import binascii
 import concurrent.futures as futures
 import datetime
 import functools as ft
+import hashlib
+import hmac
+import logging
 import re
 import time
 from contextvars import ContextVar
@@ -263,6 +267,22 @@ def hmac_key(key, amount, status, bill_id, site_id):
     ).encode("utf-8")
 
     return new(byte_key, invoice_params, sha256).hexdigest().upper()
+
+
+def hmac_for_transaction(
+        webhook_key_base64,
+        amount,
+        txn_type,
+        account,
+        txn_id,
+        txn_hash
+):
+    invoice_params = (
+        f"{amount.currency}|{amount.amount}|{txn_type}|{account}|{txn_id}"
+    )
+    webhook_key = base64.b64decode(bytes(webhook_key_base64, 'utf-8'))
+    return hmac.new(webhook_key, invoice_params.encode('utf-8'),
+                    hashlib.sha256).hexdigest() == txn_hash
 
 
 def custom_load(data):

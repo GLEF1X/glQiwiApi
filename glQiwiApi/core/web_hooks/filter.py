@@ -1,11 +1,31 @@
 import inspect
 import operator
-from typing import Any, Awaitable, Callable, TypeVar, Union
+from typing import Any, Callable
 
 from glQiwiApi import types
+from .config import CF, E
 
-E = TypeVar("E")
-CF = Callable[[E], Union[Awaitable[bool], bool]]
+
+def op(a: CF, b: CF, event: Any) -> bool:
+    """ custom a & b (and) operator """
+    validated = a(event)
+    if validated is not True:
+        return False
+    return operator.and_(validated, b(event))
+
+
+def xor(a: CF, b: CF, event: Any) -> bool:
+    """ custom a ^ b (xor) operator """
+    funcs = (a, b)
+    for func in funcs:
+        if func(event):
+            return True
+    return False
+
+
+def or_(a: CF, b: CF, event: Any) -> bool:
+    """ Custom a | b (or) operator """
+    return True if a(event) or b(event) else False
 
 
 class Filter:
@@ -34,16 +54,20 @@ class Filter:
         return _sing_filter(self, operator.not_)
 
     def __xor__(self, other: "Filter") -> "Filter":
-        return _compose_filter(self, other, operator.xor)
+        return _compose_filter(self, other, xor)
 
     def __and__(self, other: "Filter") -> "Filter":
-        return _compose_filter(self, other, operator.and_)
+        return _compose_filter(self, other, op)
 
     def __or__(self, other: "Filter") -> "Filter":
-        return _compose_filter(self, other, operator.or_)
+        return _compose_filter(self, other, or_)
 
 
-def _compose_filter(filter1: Filter, filter2: Filter, operator_) -> Filter:
+def _compose_filter(
+        filter1: Filter,
+        filter2: Filter,
+        operator_: Any
+) -> Filter:
     if (not isinstance(filter1, Filter)) | (not isinstance(filter2, Filter)):
         raise ValueError(
             f"Cannot compare non-Filter object with Filter, "
@@ -56,7 +80,7 @@ def _compose_filter(filter1: Filter, filter2: Filter, operator_) -> Filter:
 
     if filter1.awaitable & filter2.awaitable:
 
-        async def func(event: E):
+        async def func(event: E) -> Any:
             return operator_(
                 await filter1.function(event), await filter2.function(event)
             )
@@ -66,15 +90,15 @@ def _compose_filter(filter1: Filter, filter2: Filter, operator_) -> Filter:
         async_func = filter1 if is_f1_async else filter2
         sync_func = filter2 if is_f1_async else filter1
 
-        async def func(event: E):
+        async def func(event: E) -> Any:
             return operator_(
                 await async_func.function(event), sync_func.function(event)
             )
 
     else:
 
-        def func(event: E):
-            return operator_(filter1.function(event), filter2.function(event))
+        def func(event: E) -> Any:
+            return operator_(filter1.function, filter2.function, event)
 
     return Filter(func)
 
@@ -84,12 +108,12 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
 
     if filter1.awaitable:
 
-        async def func(event: E):
+        async def func(event: E) -> Any:
             return operator_(await filter1.function(event))
 
     else:
 
-        def func(event: E):
+        def func(event: E) -> Any:
             return operator_(filter1.function(event))
 
     return Filter(func)
