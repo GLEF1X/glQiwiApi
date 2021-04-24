@@ -8,11 +8,11 @@
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 </h2>
 
-# 🌎Official api resources:
+## 🌎Official api resources:
 
-## * 🎓 Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)
-## * 🖱️ Developer
-  contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)
+* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+* 🖱️ __Developer
+  contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### 📣Why glQiwiApi?
 
