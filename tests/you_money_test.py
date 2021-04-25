@@ -10,7 +10,6 @@ TOKEN = 'some_token'
 class YooMoneyTest(AioTestCase):
     """ object: YooMoneyTest """
 
-
     def setUp(self) -> None:
         self.wallet = YooMoneyAPI(TOKEN)
 
