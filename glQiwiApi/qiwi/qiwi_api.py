@@ -111,7 +111,12 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
     @property
     def stripped_number(self) -> str:
-        return self.phone_number.replace("+", "")
+        try:
+            return self.phone_number.replace("+", "")
+        except AttributeError:
+            raise InvalidData(
+                "You should pass on phone number to execute this method"
+            ) from None
 
     async def to_card(
             self,
@@ -197,6 +202,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
     async def get_balance(self) -> Sum:
         """Метод для получения баланса киви"""
+        if not isinstance(self.phone_number, str):
+            raise InvalidData(
+                "Для вызова этого метода вы должны передать номер кошелька"
+            )
+
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/funding-sources/v2/persons/'
         async for response in self._requests.fast().fetch(
@@ -338,6 +348,10 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :return: Список, где находиться словарь с ограничениями,
          если ограничений нет - возвращает пустой список
         """
+        if not isinstance(self.phone_number, str):
+            raise InvalidData(
+                "Для вызова этого метода вы должны передать номер кошелька"
+            )
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/person-profile/v1/persons/'
         async for response in self._requests.fast().fetch(
@@ -356,6 +370,11 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
         :return: Response object
         """
+        if not isinstance(self.phone_number, str):
+            raise InvalidData(
+                "Для вызова этого метода вы должны передать номер кошелька"
+            )
+
         headers = self._auth_token(deepcopy(DEFAULT_QIWI_HEADERS))
         url = BASE_QIWI_URL + '/identification/v1/persons/'
         async for response in self._requests.fast().fetch(

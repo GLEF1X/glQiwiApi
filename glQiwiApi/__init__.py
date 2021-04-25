@@ -5,7 +5,7 @@ from .utils.basics import sync  # NOQA
 from .utils.exceptions import *  # NOQA
 from .yoo_money import YooMoneyAPI  # NOQA
 
-__version__ = '0.2.14'
+__version__ = '0.2.16'
 
 __all__ = (
         (
