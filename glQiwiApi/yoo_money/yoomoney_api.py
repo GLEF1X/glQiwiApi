@@ -37,7 +37,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
     """
 
-    __slots__ = ("api_access_token", "_parser",)
+    __slots__ = ("api_access_token", "_requests",)
 
     def __init__(
             self,
@@ -60,7 +60,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          кэширование 60 секунд
         """
         self.api_access_token = api_access_token
-        self._parser = RequestManager(
+        self._requests = RequestManager(
             without_context=without_context,
             messages=ERROR_CODE_NUMBERS,
             cache_time=cache_time
@@ -161,7 +161,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         headers = self._auth_token(
             api_helper.parse_headers(auth=True)
         )
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/revoke',
                 method='POST',
                 headers=headers
@@ -182,7 +182,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 **content_and_auth
             )
         )
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/account-info',
                 headers=headers,
                 method='POST'
@@ -284,11 +284,11 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 end_date, True
             )})
 
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/operation-history',
                 method='POST',
                 headers=headers,
-                data=self._parser.filter_dict(data),
+                data=self._requests.filter_dict(data),
                 get_json=True
         ):
             return api_helper.multiply_objects_parse(
@@ -311,7 +311,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         payload = {
             'operation_id': operation_id
         }
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/operation-details',
                 headers=headers,
                 data=payload
@@ -368,7 +368,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'expire_period': expire_period,
             'codepro': protect
         }
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/request-payment',
                 headers=headers,
                 data=payload
@@ -379,7 +379,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                 )
             except ValidationError:
                 msg = "Недостаточно денег для перевода или ошибка сервиса"
-                self._parser.raise_exception(
+                self._requests.raise_exception(
                     status_code=400,
                     message=msg
                 )
@@ -475,7 +475,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                                     'csc': cvv2_code
                                 },
                             )
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/process-payment',
                 method='POST',
                 headers=headers,
@@ -516,7 +516,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'operation_id': operation_id,
             'protection_code': protection_code
         }
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/incoming-transfer-accept',
                 headers=headers,
                 data=payload,
@@ -544,7 +544,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(
             api_helper.parse_headers(**content_and_auth))
-        async for response in self._parser.fast().fetch(
+        async for response in self._requests.fast().fetch(
                 url=BASE_YOOMONEY_URL + '/api/incoming-transfer-reject',
                 headers=headers,
                 data={'operation_id': operation_id},
