@@ -10,8 +10,6 @@ import re
 import time
 from contextvars import ContextVar
 from copy import deepcopy
-from hashlib import sha256
-from hmac import new
 
 import pytz
 from pydantic import ValidationError, BaseModel
@@ -66,7 +64,7 @@ def datetime_to_str_in_iso(obj, yoo_money_format=False):
     """
     Converts a date to a standard format for API's
 
-    :param obj: datatime object to parse to string
+    :param obj: datetime object to parse to string
     :param yoo_money_format: boolean
     :return: string - parsed date
     """
@@ -265,7 +263,9 @@ def hmac_key(key, amount, status, bill_id, site_id):
         f"{amount.currency}|{amount.value}|{bill_id}|{site_id}|{status.value}"
     ).encode("utf-8")
 
-    return new(byte_key, invoice_params, sha256).hexdigest().upper()
+    return hmac.new(
+        byte_key, invoice_params, hashlib.sha256
+    ).hexdigest().upper()
 
 
 def hmac_for_transaction(
@@ -428,6 +428,8 @@ def _stop_loop(loop) -> None:
 
 
 class AdaptiveExecutor(futures.ThreadPoolExecutor):
+    """ object: AdaptiveExecutor """
+
     def __init__(self, max_workers=None, **kwargs):
         super().__init__(max_workers, 'sync_adapter_', **kwargs)
         self.max_workers = max_workers

@@ -8,12 +8,16 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class PassInfo(BaseModel):
+    """ object: PassInfo """
+
     last_pass_change: str = Field(alias="lastPassChange")
     next_pass_change: str = Field(alias="nextPassChange")
     password_used: bool = Field(alias="passwordUsed")
 
 
 class MobilePinInfo(BaseModel):
+    """ object: MobilePinInfo """
+
     last_mobile_pin_change: Optional[
         datetime
     ] = Field(alias="lastMobilePinChange")
@@ -22,10 +26,12 @@ class MobilePinInfo(BaseModel):
 
 
 class PinInfo(BaseModel):
+    """ object: PinInfo """
     pin_used: bool = Field(alias="pinUsed")
 
 
 class AuthInfo(BaseModel):
+    """ object: AuthInfo """
     ip: str
     bound_email: Optional[str] = Field(alias="boundEmail", const=None)
     last_login_date: Optional[
@@ -40,6 +46,7 @@ class AuthInfo(BaseModel):
 
 
 class SmsNotification(BaseModel):
+    """ object: SmsNotification """
     price: Sum
     enabled: bool
     active: bool
@@ -47,12 +54,14 @@ class SmsNotification(BaseModel):
 
 
 class IdentificationInfo(BaseModel):
+    """ object: IdentificationInfo """
     bank_alias: str = Field(alias="bankAlias")
     identification_level: str = Field(alias="identificationLevel")
     passport_expired: bool = Field(alias="passportExpired")
 
 
 class NickName(BaseModel):
+    """ object: NickName """
     nickname: Optional[str] = None
     can_change: bool = Field(alias="canChange")
     can_use: bool = Field(alias="canUse")
@@ -60,6 +69,7 @@ class NickName(BaseModel):
 
 
 class Feature(BaseModel):
+    """ object: Feature """
     feature_id: int = Field(alias="featureId")
     feature_value: str = Field(alias="featureValue")
     start_date: str = Field(alias="startDate")
@@ -67,6 +77,7 @@ class Feature(BaseModel):
 
 
 class ContractInfo(BaseModel):
+    """ object: ContractInfo """
     blocked: bool = False
     contract_id: int = Field(alias="contractId")
     creation_date: datetime = Field(alias="creationDate")
@@ -80,6 +91,7 @@ class ContractInfo(BaseModel):
 
 
 class UserInfo(BaseModel):
+    """ object: UserInfo """
     default_pay_currency: str = Field(alias="defaultPayCurrency")
     default_pay_source: Optional[
         int

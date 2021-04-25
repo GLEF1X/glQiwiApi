@@ -29,6 +29,7 @@ class Sum(BaseModel):
 
 
 class OptionalSum(BaseModel):
+    """ object: OptionalSum """
     value: Union[int, float]
     currency: str
 

@@ -8,6 +8,7 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Provider(BaseModel):
+    """ object: Provider """
     id: int
     """ID провайдера в QIWI Wallet"""
 
@@ -31,6 +32,7 @@ class Provider(BaseModel):
 
 
 class Transaction(BaseModel):
+    """ object: Transaction """
     transaction_id: int = Field(alias="txnId")
     """	ID транзакции в сервисе QIWI Кошелек"""
 

@@ -11,8 +11,8 @@ class BillMixin(object):
     _w = None
     bill_id: Optional[str] = None
 
-    def initialize(self, w: Any):
-        self._w = copy.copy(w)
+    def initialize(self, wallet: Any):
+        self._w = copy.copy(wallet)
         return self
 
     async def check(self) -> bool:
@@ -23,6 +23,7 @@ class BillMixin(object):
 
 
 class ToolsMixin(object):
+    """ Object: ToolsMixin """
     _requests = None
 
     async def __aenter__(self):
@@ -48,9 +49,9 @@ class ToolsMixin(object):
         memo[id(self)] = result
         dct = {slot: self._get(slot) for slot in self.__slots__ if
                self._get(slot) is not None}
-        for k, v in dct.items():
+        for k, value in dct.items():
             if k == '_parser':
-                v.session = None
-            setattr(result, k, copy.deepcopy(v, memo))
+                value.session = None
+            setattr(result, k, copy.deepcopy(value, memo))
 
         return result

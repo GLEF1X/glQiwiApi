@@ -9,23 +9,27 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Customer(BaseModel):
+    """ Object: Customer """
     phone: Optional[str] = None
     email: Optional[str] = None
     account: Optional[str] = None
 
 
 class BillStatus(BaseModel):
+    """ Object: BillStatus """
     value: str
     changed_datetime: datetime = Field(alias="changedDateTime")
 
 
 class CustomFields(BaseModel):
+    """ Object: CustomFields """
     pay_sources_filter: Optional[str] = Field(alias="paySourcesFilter",
                                               default=None)
     theme_code: Optional[str] = Field(alias="themeCode", default=None)
 
 
 class BillError(BaseModel):
+    """ Object: BillError """
     service_name: str = Field(alias="serviceName")
     error_code: str = Field(alias="errorCode")
     description: str
@@ -45,6 +49,7 @@ class BillError(BaseModel):
 
 
 class Bill(BaseModel, BillMixin):
+    """ Object: Bill """
     site_id: str = Field(alias="siteId")
     bill_id: str = Field(alias="billId")
     amount: OptionalSum
@@ -101,6 +106,12 @@ class Notification(BaseModel):
 
         def __repr__(self) -> str:
             return self.__str__()
+
+    def __str__(self) -> str:
+        return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 __all__ = (

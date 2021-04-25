@@ -8,6 +8,7 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class BalanceDetails(BaseModel):
+    """ object: BalanceDetails """
     total: float
     available: float
     deposition_pending: Optional[float] = None
@@ -17,11 +18,14 @@ class BalanceDetails(BaseModel):
 
 
 class CardsLinked(BaseModel):
+    """ object: CardsLinked """
     pan_fragment: str
     type: str
 
 
 class AccountInfo(BaseModel):
+    """ object: AccountInfo"""
+
     account: str
     """Номер счета"""
 
@@ -119,6 +123,8 @@ class DigitalGoods(BaseModel):
 
 
 class Operation(BaseModel):
+    """ object: Operation """
+
     operation_id: str
     """Идентификатор операции."""
 
@@ -187,6 +193,7 @@ class Operation(BaseModel):
 
 
 class OperationDetails(BaseModel):
+    """ object: OperationDetails """
     operation_id: Optional[str] = None
     """Идентификатор операции. Можно получить при вызове метода history()"""
 
@@ -340,10 +347,12 @@ class OperationDetails(BaseModel):
 
 
 class Wallet(BaseModel):
+    """ object: Wallet """
     allowed: bool
 
 
 class Item(BaseModel):
+    """ object: Item """
     item_id: str = Field(..., alias="id")
     """
     Идентификатор привязанной к счету банковской карты.
@@ -367,6 +376,7 @@ class Item(BaseModel):
 
 
 class Card(BaseModel):
+    """ object: Card"""
     allowed: bool
     csc_required: bool
     items: List[Item]
@@ -418,6 +428,7 @@ class PreProcessPaymentResponse(BaseModel):
 
 
 class Payment(BaseModel):  # lgtm [py/missing-equals #
+    """ object: Payment """
     status: str
     """
     Код результата выполнения операции. Возможные значения:
@@ -528,6 +539,7 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
 
 
 class IncomingTransaction(BaseModel):
+    """ object: IncomingTransaction """
     status: str
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None

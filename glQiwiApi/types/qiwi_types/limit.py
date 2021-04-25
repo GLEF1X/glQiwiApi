@@ -7,11 +7,13 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Interval(BaseModel):
+    """ object: Interval """
     date_from: datetime = Field(alias="dateFrom")
     date_till: datetime = Field(alias="dateTill")
 
 
 class Limit(BaseModel):
+    """ object: Limit """
     currency: str
     rest: Union[float, int]
     max_limit: Union[float, int] = Field(alias="max")

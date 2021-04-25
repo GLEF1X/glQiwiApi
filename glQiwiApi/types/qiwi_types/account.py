@@ -7,6 +7,7 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Account(BaseModel):
+    """ object: Account """
     alias: str
     title: str
     fs_alias: str = Field(alias="fsAlias")

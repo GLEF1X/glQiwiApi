@@ -59,8 +59,6 @@ class RequestError(Exception):
         self.status_code = status_code
         self.additional_info = additional_info
         self.json_info = json_info
-        if not isinstance(json_info, dict):
-            self.json_info = json.loads(json_info)
 
     def __str__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}"""

@@ -1221,7 +1221,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
 
     def start_webhook(
             self,
-            host: str = "0.0.0.0",
+            host: str = "localhost",
             port: int = 8080,
             path: Optional[Path] = None,
             app: Optional["web.Application"] = None,
@@ -1238,7 +1238,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param access_logger: pass heir of AbstractAccessLogger,
          if you want custom logger
         """
-        from aiohttp import web
+
         app = app if app is not None else web.Application()
         self._requests.without_context = True
 

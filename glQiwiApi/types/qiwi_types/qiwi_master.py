@@ -6,6 +6,7 @@ from glQiwiApi.types import Sum
 
 
 class OrderDetails(BaseModel):
+    """ object: OrderDetails """
     order_id: str = Field(..., alias="id")
     card_alias: str = Field(..., alias="cardAlias")
     status: str

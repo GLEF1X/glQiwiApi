@@ -11,6 +11,7 @@ response_type = Union[dict, str, bytes, bytearray, Exception, list]
 
 @dataclass
 class Response:
+    """ object: Response """
     status_code: int
     response_data: Optional[response_type] = None
     url: Optional[str] = None
@@ -27,9 +28,13 @@ class Response:
             response_data=ProxyError
         )
 
+    def __str__(self) -> str:
+        return f"{self.status_code} from {self.url}. OK: {self.ok}"
+
 
 @dataclass
 class WrapperData:
+    """ object: WrapperData """
     headers: Dict[str, Union[str, int]]
     data: Dict[str, Union[str, Dict[str, str]]] = None
     json: Dict[str, Union[str, Dict[str, str]]] = None

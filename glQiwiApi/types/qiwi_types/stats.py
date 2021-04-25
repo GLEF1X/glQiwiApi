@@ -7,6 +7,7 @@ from glQiwiApi.utils.basics import custom_load
 
 
 class Statistic(BaseModel):
+    """ object: Statistic """
     incoming: List[Sum] = Field(alias="incomingTotal")
     out: List[Sum] = Field(alias="outgoingTotal")
 
