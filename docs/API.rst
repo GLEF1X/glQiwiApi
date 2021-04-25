@@ -14,6 +14,12 @@ Low level API
 .. automodule:: glQiwiApi.core.basic_requests_api
    :members:
 
+.. automodule:: glQiwiApi.core.aiohttp_custom_api
+   :members:
+
+.. automodule:: glQiwiApi.core.storage
+   :members:
+   
 Synchronous adapter
 -------------------
 .. automodule:: glQiwiApi.utils.basics
