@@ -122,7 +122,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             self,
             trans_sum: Union[float, int],
             to_card: str
-    ) -> Union[Response, str]:
+    ) -> Optional[str]:
         """
         Метод для отправки средств на карту.
         Более подробная документация:
@@ -146,10 +146,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 json=data.json,
                 get_json=True
         ):
-            try:
-                return response.response_data.get('id')
-            except (KeyError, TypeError):
-                return response
+            return response.response_data.get('id')
 
     async def _detect_card_number(self, card_number: str) -> str:
         """
@@ -278,7 +275,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             to_number: str,
             trans_sum: Union[str, float, int],
             currency: str = '643',
-            comment: str = '+comment+') -> Union[str, Response]:
+            comment: str = '+comment+') -> Optional[str]:
         """
         Метод для перевода денег на другой кошелек\n
         Подробная документация:
@@ -304,10 +301,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
                 json=data.json,
                 headers=data.headers
         ):
-            try:
-                return response.response_data['transaction']['id']
-            except (KeyError, TypeError):
-                return response
+            return response.response_data['transaction']['id']
 
     async def transaction_info(
             self,
@@ -529,7 +523,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         url = BASE_QIWI_URL + '/identification/v1/persons/'
         async for response in self._requests.fast().fetch(
                 url=url + self.stripped_number + "/identification",
-                data=payload,
+                data=self._requests.filter_dict(payload),
                 headers=headers
         ):
             if response.ok and response.status_code == 200:

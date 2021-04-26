@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import as_completed, set_event_loop_policy
 from itertools import repeat
 from typing import (
     Dict,
@@ -151,7 +151,7 @@ class HttpXParser(AbstractParser):
         :return:
         """
         coroutines = [self._request(**kwargs) for _ in repeat(None, times)]
-        for future in asyncio.as_completed(fs=coroutines):
+        for future in as_completed(fs=coroutines):
             yield await future
 
     def fast(self) -> 'HttpXParser':
@@ -164,9 +164,9 @@ class HttpXParser(AbstractParser):
         """
         try:
             from uvloop import EventLoopPolicy
-            asyncio.set_event_loop_policy(EventLoopPolicy())
+            set_event_loop_policy(EventLoopPolicy())
         except ImportError:
             # Catching import error and forsake standard policy
             from asyncio import DefaultEventLoopPolicy as EventLoopPolicy
-            asyncio.set_event_loop_policy(EventLoopPolicy())
+            set_event_loop_policy(EventLoopPolicy())
         return self

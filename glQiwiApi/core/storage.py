@@ -66,8 +66,8 @@ class Storage(BaseStorage):
 
     def get_current(self, key: typing.Any) -> typing.Any:
         """ Method to get element by key from data """
-        obj = self.data.get(self._default_key).get(key)
         try:
+            obj = self.data.get(self._default_key).get(key)
             return obj if not self._is_expire(obj) else None
         except AttributeError:
             return None
