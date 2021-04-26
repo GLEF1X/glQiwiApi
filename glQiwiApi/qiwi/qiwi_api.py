@@ -34,7 +34,6 @@ from glQiwiApi.types import (
     Account,
     Balance,
     Identification,
-    Response,
     Sum,
     Commission,
     OptionalSum,
