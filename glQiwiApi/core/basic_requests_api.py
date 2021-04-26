@@ -2,7 +2,8 @@ from asyncio import as_completed, set_event_loop_policy
 from itertools import repeat
 from typing import (
     Dict,
-    AsyncGenerator
+    AsyncGenerator,
+    NoReturn
 )
 from typing import Optional, List, Union
 
@@ -32,7 +33,7 @@ class HttpXParser(AbstractParser):
 
     _sleep_time = 2
 
-    def __init__(self):
+    def __init__(self) -> NoReturn:
         super(HttpXParser, self).__init__()
         self.base_headers = {
             'User-Agent': USER_AGENT,

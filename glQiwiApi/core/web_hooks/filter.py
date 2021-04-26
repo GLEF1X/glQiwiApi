@@ -31,7 +31,7 @@ def or_(func1: CF, func2: CF, event: Any) -> bool:
 class Filter:
     """
     Base Filter object, callback container
-    Same approach used in https://github.com/uwinx/garnet
+
     """
 
     __name__: str

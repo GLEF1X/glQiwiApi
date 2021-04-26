@@ -9,7 +9,6 @@ import aiofiles
 from aiohttp import web, ClientSession
 from aiohttp.abc import AbstractAccessLogger
 
-import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     AbstractPaymentWrapper,
     RequestManager,
@@ -42,6 +41,7 @@ from glQiwiApi.types import (
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.qiwi_types.bill import RefundBill
+from glQiwiApi.utils import basics as api_helper
 from glQiwiApi.utils.exceptions import (
     InvalidData,
     InvalidCardNumber,
