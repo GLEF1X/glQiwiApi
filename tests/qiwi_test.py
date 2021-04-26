@@ -4,9 +4,9 @@ import unittest
 from glQiwiApi import QiwiWrapper, types, sync, RequestError, InvalidData
 from glQiwiApi.core import AioTestCase
 
-TOKEN = '4cb242f9ead43bd0e1e98eb7c442262f'
-WALLET = '+380968317459'
-QIWI_SECRET = 'eyJ2ZXJzaW9uIjoiUDJQIiwiZGF0YSI6eyJwYXlpbl9tZXJjaGFudF9zaXRlX3VpZCI6ImJuMXZmNy0wMCIsInVzZXJfaWQiOiIzODA5NjgzMTc0NTkiLCJzZWNyZXQiOiI2ZmVjYzA4ZWEyOTgxMDY3N2VkNDU1YjY3MTVhZjc3ZjRhMjY4Yzc5MDU0ZGI2ZmYyZTEzZjI1Njk5ODQ3M2ZmIn19'
+TOKEN = 'token'
+WALLET = '+number'
+QIWI_SECRET = 'p2p token'
 
 
 class SyncQiwiTestCase(unittest.TestCase):
@@ -20,11 +20,11 @@ class SyncQiwiTestCase(unittest.TestCase):
         self.assertTrue(isinstance(info, types.QiwiAccountInfo))
 
     def test_commission(self) -> None:
-        commission = sync(self.wallet.commission, to_account='+380985272064',
+        commission = sync(self.wallet.commission, to_account='+number',
                           pay_sum=1)
         self.assertTrue(isinstance(commission, types.Commission))
         with self.assertRaises(RequestError):
-            sync(self.wallet.commission, to_account='+380985272064',
+            sync(self.wallet.commission, to_account='+number',
                  pay_sum=-1)
 
     def test_fail(self):
@@ -36,10 +36,10 @@ class SyncQiwiTestCase(unittest.TestCase):
                 end_date=datetime.datetime.now()
             )
         with self.assertRaises(RequestError):
-            sync(self.wallet.to_wallet, to_number='+38056546456454',
+            sync(self.wallet.to_wallet, to_number='+wrong_number',
                  trans_sum=1)
         with self.assertRaises(RequestError):
-            sync(self.wallet.to_wallet, to_number='+380985272064',
+            sync(self.wallet.to_wallet, to_number='+number',
                  trans_sum=-1)
 
     def test_transactions_history(self):
@@ -64,12 +64,11 @@ class SyncQiwiTestCase(unittest.TestCase):
                     self.wallet.transaction_info,
                     info[0].transaction_id,
                     info[0].type
-                )
-                , types.Transaction)
+                ), types.Transaction)
         )
 
     def test_to_wallet(self):
-        txn_id = sync(self.wallet.to_wallet, to_number='+380985272064',
+        txn_id = sync(self.wallet.to_wallet, to_number='+number',
                       trans_sum=1)
         self.assertTrue(isinstance(txn_id, str))
 
@@ -105,11 +104,11 @@ class SyncQiwiTestCase(unittest.TestCase):
         )
 
     def test_to_card(self):
-        txn_id = sync(self.wallet.to_card, to_card='4890494688391549',
+        txn_id = sync(self.wallet.to_card, to_card='card_number',
                       trans_sum=1)
         self.assertTrue(isinstance(txn_id, str))
         with self.assertRaises(RequestError):
-            sync(self.wallet.to_card, to_card='+380985272064', trans_sum=1)
+            sync(self.wallet.to_card, to_card='+wrong_number', trans_sum=1)
 
     def test_test_limits(self):
         limits = sync(self.wallet.get_limits)
@@ -146,12 +145,12 @@ class AsyncQiwiTestCase(AioTestCase):
 
     async def test_commission(self) -> None:
         async with self.wallet as w:
-            commission = await (w.commission(to_account='+380985272064',
+            commission = await (w.commission(to_account='+number',
                                              pay_sum=1))
         self.assertTrue(isinstance(commission, types.Commission))
         with self.assertRaises(RequestError):
             async with self.wallet as w:
-                await w.commission(to_account='+380985272064',
+                await w.commission(to_account='+number',
                                    pay_sum=-1)
 
     async def test_fail(self):
@@ -168,7 +167,7 @@ class AsyncQiwiTestCase(AioTestCase):
                                   trans_sum=1)
         with self.assertRaises(RequestError):
             async with self.wallet as w:
-                await w.to_wallet(to_number='+380985272064',
+                await w.to_wallet(to_number='+number',
                                   trans_sum=-1)
 
     async def test_transactions_history(self):
@@ -201,7 +200,7 @@ class AsyncQiwiTestCase(AioTestCase):
 
     async def test_to_wallet(self):
         async with self.wallet as w:
-            txn_id = await w.to_wallet(to_number='+380985272064',
+            txn_id = await w.to_wallet(to_number='+number',
                                        trans_sum=1)
         self.assertTrue(isinstance(txn_id, str))
 
@@ -222,7 +221,7 @@ class AsyncQiwiTestCase(AioTestCase):
     async def test_p2p_status_check(self):
         async with self.wallet as w:
             bill = await w.create_p2p_bill(amount=1,
-                                     comment='my_comment')
+                                           comment='my_comment')
             checked = await bill.check()
             status = await self.wallet.check_p2p_bill_status(
                 bill_id=bill.bill_id
@@ -245,8 +244,8 @@ class AsyncQiwiTestCase(AioTestCase):
 
     async def test_to_card(self):
         async with self.wallet as w:
-            txn_id = await w.to_card(to_card='4890494688391549',
-                               trans_sum=1)
+            txn_id = await w.to_card(to_card='card',
+                                     trans_sum=1)
             with self.assertRaises(RequestError):
                 txn_id = await w.to_card(to_card='+380985272064',
                                          trans_sum=1)
