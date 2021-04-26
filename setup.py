@@ -6,6 +6,8 @@ PATH = pathlib.Path(__file__).parent
 
 README = (PATH / "README.md").read_text()
 
+REQUIREMENTS = (PATH / "docs/requirements.txt").read_text()
+
 setuptools.setup(
     packages=setuptools.find_packages(exclude=(
         'tests', 'examples', 'examples.*')
@@ -27,16 +29,10 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
     ],
-    install_requires=[
-        "pytz==2021.1",
-        "aiohttp==3.7.4.post0",
-        'aiofiles==0.6.0',
-        "pydantic==1.8.1",
-        "wheel",
-    ],
+    install_requires=REQUIREMENTS,
     python_requires=">=3.7",
 )
