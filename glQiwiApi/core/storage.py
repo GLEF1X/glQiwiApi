@@ -8,14 +8,12 @@ from glQiwiApi.types.basics import Cached, Attributes
 from glQiwiApi.utils.exceptions import InvalidData
 
 MemData = typing.TypeVar(
-    'MemData', bound=typing.Optional[
-        typing.Dict[
+    'MemData', bound=typing.MutableMapping[
             str,
             typing.Dict[
                 str, typing.Any
             ]
         ]
-    ]
 )
 
 uncached = (
@@ -55,7 +53,7 @@ class Storage(BaseStorage):
         self._cache_time = cache_time
         self.__initialize_default_key(default_key)
 
-    def __initialize_default_key(self, key: str) -> None:
+    def __initialize_default_key(self, key: typing.Optional[str]) -> None:
         """ Initialize default_key attribute """
         self._default_key = key
         if not isinstance(key, str):

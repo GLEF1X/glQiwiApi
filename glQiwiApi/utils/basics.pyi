@@ -1,4 +1,5 @@
 import asyncio
+import threading
 from datetime import datetime, timedelta
 from typing import Any, Union, Optional, Dict, Type, List, MutableMapping, \
     Tuple, overload, Coroutine, Callable
@@ -519,3 +520,17 @@ def sync(
         *args: Any,
         **kwargs: Any
 ) -> Any: ...
+
+
+def events_check_then_execute(
+        on_startup: Optional[Callable[..., Any]],
+        on_shutdown: Optional[Callable[..., Any]],
+        instance: Any
+) -> threading.Event: ...
+
+
+def execute_func(
+        f: Callable[..., Any],
+        instance: Any,
+        event: threading.Event
+) -> None: ...

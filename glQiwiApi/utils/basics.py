@@ -6,8 +6,11 @@ import datetime
 import functools as ft
 import hashlib
 import hmac
+import inspect
 import re
+import threading
 import time
+import types
 from contextvars import ContextVar
 from copy import deepcopy
 
@@ -477,3 +480,67 @@ def sync(func, *args, **kwargs):
     finally:
         # Cleanup
         _on_shutdown(executor, loop)
+
+
+def events_check_then_execute(on_startup, on_shutdown, instance):
+    """
+    Function, which deal with on_startup and on_shutdown functions
+
+    :param on_startup: function or coroutine,which will be executed on startup
+    :param on_shutdown: function or coroutine,which will be executed at the end
+    :param instance: instance of the QiwiWrapper
+    """
+
+    # Create 2 events for on_startup and on_shutdown functions
+    _shutdown_func_event = threading.Event()
+    _startup_func_event = threading.Event()
+
+    def execute():
+        """ Nested function which executing in a separate thread"""
+        for idx, f in enumerate((on_startup, on_shutdown), start=1):
+            if f is None:
+                continue
+            try:
+                # Check transmitted function in cycle, if its not function
+                # or its dont takes raising exception
+                assert isinstance(f, types.FunctionType)
+                assert len(inspect.getfullargspec(f).args) >= 1
+                if idx == 2:
+                    # if function is on_shutdown, we set "_shutdown_func_event"
+                    # then in finally block we
+                    # set it and function on_shutdown executing
+                    _shutdown_func_event.wait()
+                # Function on_startup just executing, on_shutdown func
+                # is waiting for signal
+                execute_func(
+                    f,
+                    instance=instance,
+                    event=_startup_func_event if idx == 1 else None
+                )
+            except AssertionError:
+                raise Exception(
+                    'You passed on an invalid functions with wrong signature, '
+                    'on_shutdown or on_startup function '
+                    'must takes 1 argument(an instance of QiwiWrapper)'
+                ) from None
+    # Create a new thread to deal with functions
+    thread = threading.Thread(target=execute)
+    thread.start()
+    _startup_func_event.wait()
+    return _shutdown_func_event
+
+
+def execute_func(f, instance, event):
+    """
+    Function, which executing function(can be coroutine)
+
+    :param f:
+    :param instance:
+    :param event: object of threading.Event
+    """
+    if inspect.iscoroutinefunction(f):
+        sync(f, instance)
+    else:
+        f(instance)
+    if event is not None:
+        event.set()

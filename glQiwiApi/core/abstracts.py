@@ -7,7 +7,7 @@ from aiohttp import ClientSession, web
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi import types
-from glQiwiApi.core.web_hooks.handler import HandlerManager
+from glQiwiApi.core.web_hooks.handler import Dispatcher
 from glQiwiApi.types import Response
 
 
@@ -201,7 +201,7 @@ class BaseWebHookView(web.View):
         """ Validating by hash of update """
 
     @property
-    def handler_manager(self) -> "HandlerManager":
+    def handler_manager(self) -> "Dispatcher":
         """ Return handler manager """
         return self.request.app.get(
             self.app_key_handler_manager)  # type: ignore

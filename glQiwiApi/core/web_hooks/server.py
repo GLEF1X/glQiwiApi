@@ -7,7 +7,7 @@ from aiohttp.web_response import Response
 
 from glQiwiApi import types
 from glQiwiApi.core.abstracts import BaseWebHookView
-from glQiwiApi.core.web_hooks.handler import HandlerManager
+from glQiwiApi.core.web_hooks.handler import Dispatcher
 from glQiwiApi.utils.basics import hmac_for_transaction, hmac_key
 from .config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
@@ -115,7 +115,7 @@ class QiwiBillWebView(BaseWebHookView):
 def setup_transaction_data(
         app: web.Application,
         base64_key: str,
-        handler_manager: HandlerManager,
+        handler_manager: Dispatcher,
         path: typing.Optional[str] = None
 ):
     app["_base64_key"] = base64_key
@@ -128,7 +128,7 @@ def setup_transaction_data(
 def setup_bill_data(
         app: web.Application,
         secret_key: str,
-        handler_manager: HandlerManager,
+        handler_manager: Dispatcher,
         path: typing.Optional[str] = None
 ) -> None:
     app["_secret_key"] = secret_key
@@ -142,7 +142,7 @@ def setup_bill_data(
 
 
 def setup(
-        handler_manager: HandlerManager,
+        handler_manager: Dispatcher,
         app: web.Application,
         path: typing.Optional[Path] = None,
         secret_key: typing.Optional[str] = None,

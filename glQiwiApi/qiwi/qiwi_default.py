@@ -3,7 +3,7 @@ import logging
 import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import Union, Optional, Dict, List, Any, Tuple
+from typing import Union, Optional, Dict, List, Any, Tuple, Callable
 
 import aiofiles
 from aiohttp import web, ClientSession
@@ -14,7 +14,7 @@ from glQiwiApi.core import (
     RequestManager,
     ToolsMixin
 )
-from glQiwiApi.core.web_hooks import server, handler
+from glQiwiApi.core.web_hooks import handler, server
 from glQiwiApi.core.web_hooks.config import Path
 from glQiwiApi.core.web_hooks.webhook_mixin import AccessLogger
 from glQiwiApi.qiwi.basic_qiwi_config import (
@@ -93,7 +93,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         )
         self.api_access_token = api_access_token
         self.secret_p2p = secret_p2p
-        self.handler_manager = handler.HandlerManager(
+        self.dispatcher = handler.Dispatcher(
             loop=asyncio.get_event_loop()
         )
 
@@ -603,7 +603,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             comment=comment,
             theme_code=theme_code,
             pay_source_filter=pay_source_filter,
-            life_time=life_time
+            life_time=str(life_time)
         )
 
         async for response in self._requests.fast().fetch(
@@ -1238,6 +1238,8 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
             path: Optional[Path] = None,
             app: Optional["web.Application"] = None,
             access_logger: Optional[AbstractAccessLogger] = None,
+            on_startup: Callable[..., Any] = None,
+            on_shutdown: Callable[..., Any] = None,
             **logger_config: Any
     ):
         """
@@ -1247,9 +1249,16 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         :param port: server port that open for tcp/ip trans.
         :param path: path for qiwi that will send requests
         :param app: pass web.Application
+        :param on_startup:
+        :param on_shutdown:
         :param access_logger: pass heir of AbstractAccessLogger,
          if you want custom logger
         """
+        _event = api_helper.events_check_then_execute(
+            on_startup=on_startup,
+            on_shutdown=on_shutdown,
+            instance=self
+        )
 
         app = app if app is not None else web.Application()
         self._requests.without_context = True
@@ -1257,7 +1266,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         hook_config, key = api_helper.sync(self.bind_webhook)
 
         server.setup(
-            self.handler_manager, app, Path() if not path else path,
+            self.dispatcher, app, Path() if not path else path,
             secret_key=self.secret_p2p, base64_key=key
         )
 
@@ -1266,12 +1275,15 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         if not isinstance(access_logger, AbstractAccessLogger):
             access_logger = AccessLogger
 
-        web.run_app(
-            app,
-            host=host,
-            port=port,
-            access_log_class=access_logger
-        )
+        try:
+            web.run_app(
+                app,
+                host=host,
+                port=port,
+                access_log_class=access_logger
+            )
+        finally:
+            _event.set()
 
     @property
     def transaction_handler(self):
@@ -1281,7 +1293,7 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         But it must to return bool
 
         """
-        return self.handler_manager.add_transaction_handler
+        return self.dispatcher.register_transaction_handler
 
     @property
     def bill_handler(self):
@@ -1290,4 +1302,4 @@ class QiwiWrapper(AbstractPaymentWrapper, ToolsMixin):
         you can pass on lambda filter, if you want
         But it must to return bool
         """
-        return self.handler_manager.add_bill_handler
+        return self.dispatcher.register_bill_handler

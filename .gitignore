@@ -10,7 +10,7 @@ glQiwiApi/test.py
 web_test.py
 bot
 glQiwiApi/tranzoo
-test.*
+setup.py
 */test.*
 *.pem
 glQiwiApi/webapp.py

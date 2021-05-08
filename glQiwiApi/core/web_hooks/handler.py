@@ -37,7 +37,7 @@ class EventHandler:
             return await self._fn(event)
 
 
-class HandlerManager:
+class Dispatcher:
     """
     Manager, which managing all handlers
 
@@ -90,7 +90,7 @@ class HandlerManager:
 
         return EventHandler(event_handler, *filters)
 
-    def add_transaction_handler(self, *filters: EventFilter) -> E:
+    def register_transaction_handler(self, *filters: EventFilter) -> E:
 
         def decorator(event_handler: EventHandlerFunctor) -> None:
             self.transaction_handlers.append(
@@ -102,7 +102,7 @@ class HandlerManager:
 
         return decorator
 
-    def add_bill_handler(self, *filters: EventFilter) -> E:
+    def register_bill_handler(self, *filters: EventFilter) -> E:
 
         def decorator(event_handler: EventHandlerFunctor) -> None:
             self.bill_handlers.append(
