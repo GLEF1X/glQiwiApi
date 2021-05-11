@@ -3,12 +3,30 @@ import asyncio
 import unittest
 from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple
 
+import aiohttp
 from aiohttp import ClientSession, web
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi import types
-from glQiwiApi.core.web_hooks.handler import Dispatcher
+from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
 from glQiwiApi.types import Response
+
+
+class SingletonABCMeta(abc.ABCMeta):
+    """
+    Abstract singleton metaclass, using for routers because in class methods
+    it's not possible to get the router object,
+    so we need singleton to get the same instances of routers
+
+    """
+    _instances: Dict[Any, Any] = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonABCMeta, cls).__call__(
+                *args, **kwargs
+            )
+        return cls._instances[cls]
 
 
 class BaseStorage(abc.ABC):
@@ -28,34 +46,30 @@ class BaseStorage(abc.ABC):
     def update_data(self, obj_to_cache: Any, key: Any) -> None:
         raise NotImplementedError
 
-    def validate(self, kwargs: Dict[str, Any]) -> None:
+    def validate(self, kwargs: Dict[str, Any]) -> bool:
         """ Should validate some data from cache """
 
 
-class AbstractPaymentWrapper(abc.ABC):
-    """
-    Abstract class for payment wrappers,
-    you can add a new one, using this class, and than,
-    just send a pull request to GitHub repository,
-    if it will be pretty and simple, our team
-    add it to the library in next release
+class AbstractRouter(metaclass=SingletonABCMeta):
+    """Abstract class-router for building urls"""
 
-    """
+    def __init__(self):
+        self.config = self.setup_config()
 
     @abc.abstractmethod
-    async def transactions(self, *args, **kwargs) -> None:
+    def setup_config(self) -> Any:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    async def transaction_info(self, *args, **kwargs) -> None:
-        raise NotImplementedError
+    @staticmethod
+    def _format_url_kwargs(url_: str, **kwargs: Any) -> Optional[str]:
+        try:
+            return url_.format(**kwargs)
+        except KeyError:
+            raise ValueError("Bad kwargs for url build")
 
     @abc.abstractmethod
-    async def get_balance(self) -> None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def account_info(self, *args, **kwargs) -> None:
+    def build_url(self, api_method: str, **kwargs: Any) -> str:
+        """Implementation of building url"""
         raise NotImplementedError
 
 
@@ -87,9 +101,7 @@ class AioTestCase(unittest.TestCase):
 
 class AbstractParser(abc.ABC):
     """ Abstract class of parser for send request to different API's"""
-
-    def __init__(self):
-        self.session: Optional[ClientSession] = None
+    session: Optional[aiohttp.ClientSession] = None
 
     @abc.abstractmethod
     async def _request(
@@ -125,7 +137,7 @@ class AbstractParser(abc.ABC):
 
     def raise_exception(
             self,
-            status_code: Union[str, int],
+            status_code: str,
             json_info: Optional[Dict[str, Any]] = None,
             message: Optional[str] = None
     ) -> None:
@@ -153,7 +165,8 @@ class BaseWebHookView(web.View):
     app_key_handler_manager: Optional[str] = None
     """app_key_handler_manager"""
 
-    def _check_ip(self, ip_address: str):
+    @abc.abstractmethod
+    def _check_ip(self, ip_address: str) -> bool:
         """_check_ip checks if given IP is in set of allowed ones"""
         raise NotImplementedError
 
@@ -182,7 +195,7 @@ class BaseWebHookView(web.View):
         return None, False
 
     @abc.abstractmethod
-    async def post(self) -> None:
+    async def post(self) -> Any:
         """
         Process POST request with basic IP validation.
 
@@ -203,5 +216,6 @@ class BaseWebHookView(web.View):
     @property
     def handler_manager(self) -> "Dispatcher":
         """ Return handler manager """
-        return self.request.app.get(
-            self.app_key_handler_manager)  # type: ignore
+        return self.request.app.get(  # type: ignore
+            self.app_key_handler_manager  # type: ignore
+        )  # type: ignore
