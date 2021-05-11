@@ -2,11 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+garbage.py
 # C extensions
 *.so
 glQiwiApi/test2.py
-glQiwiApi/test.py
+test.py
 web_test.py
 bot
 glQiwiApi/tranzoo
