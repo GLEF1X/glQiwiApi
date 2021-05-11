@@ -1,3 +1,3 @@
-from .yoomoney_api import YooMoneyAPI
+from .API import YooMoneyAPI
 
 __all__ = ('YooMoneyAPI',)
