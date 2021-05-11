@@ -41,6 +41,13 @@ class InvalidData(Exception):
     """
 
 
+class NoUpdatesToExecute(Exception):
+    """
+    Ошибка возбуждается, если при полинге нет транзакций, чтобы обрабатывать
+
+    """
+
+
 class RequestError(Exception):
     """
     Возникает при ошибках сервиса или неправильной передаче параметров
@@ -88,4 +95,5 @@ __all__ = (
     'InvalidCardNumber',
     'InvalidToken',
     'RequestError',
+    'NoUpdatesToExecute'
 )
