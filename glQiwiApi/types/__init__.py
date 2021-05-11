@@ -1,5 +1,6 @@
 import concurrent.futures as futures
-from typing import Union, TypeVar, Optional, Callable, Any
+from typing import Union, TypeVar, Optional, Callable, Any, MutableMapping, \
+    Dict, NewType
 
 from .basics import (
     Type,
@@ -9,7 +10,7 @@ from .basics import (
 )
 from .particular import (
     Response,
-    WrapperData,
+    WrapperData
 )
 from .qiwi_types import (
     Bill,
@@ -29,7 +30,11 @@ from .qiwi_types import (
     Partner,
     WebHookConfig,
     WebHook,
-    Notification
+    Notification,
+    P2PKeys,
+    CrossRate,
+    FreePaymentDetailsFields,
+    PaymentMethod
 )
 from .yoomoney_types import (
     OperationType,
@@ -41,7 +46,7 @@ from .yoomoney_types import (
     AccountInfo
 )
 
-PydanticTypes = Union[
+ALL_TYPES = Union[
     Transaction, QiwiAccountInfo, Account, Limit,
     Bill, BillError, Statistic, Balance, Identification,
     AccountInfo, Operation, OperationDetails,
@@ -58,11 +63,16 @@ Executors = TypeVar(
 
 FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
-__all__ = [
+MEMData = NewType('MEMData', MutableMapping[str, Dict[str, Any]])
+
+N = TypeVar('N')
+
+__all__ = (
     'QiwiAccountInfo',
     'Transaction',
     'Bill',
     'BillError',
+    'P2PKeys',
     'Statistic',
     'Limit',
     'Account',
@@ -81,7 +91,7 @@ __all__ = [
     'Type',
     'OptionalSum',
     'Commission',
-    'PydanticTypes',
+    'ALL_TYPES',
     'PaymentInfo',
     'OrderDetails',
     'RefundBill',
@@ -92,5 +102,10 @@ __all__ = [
     'WebHook',
     'Notification',
     'Executors',
-    'FuncT'
-]
+    'FuncT',
+    'MEMData',
+    'N',
+    'CrossRate',
+    'FreePaymentDetailsFields',
+    'PaymentMethod'
+)

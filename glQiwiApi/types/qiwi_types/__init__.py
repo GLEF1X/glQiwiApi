@@ -1,9 +1,10 @@
 from .account import Account
 from .account_info import QiwiAccountInfo
 from .balance import Balance
-from .bill import Bill, BillError, RefundBill, Notification
+from .bill import Bill, BillError, RefundBill, Notification, P2PKeys
 from .identification import Identification
 from .limit import Limit
+from .other import CrossRate, FreePaymentDetailsFields, PaymentMethod
 from .partner import Partner
 from .payment_info import PaymentInfo
 from .polygon import Polygon
@@ -31,5 +32,9 @@ __all__ = (
     'Partner',
     'WebHook',
     'WebHookConfig',
-    'Notification'
+    'Notification',
+    'P2PKeys',
+    'CrossRate',
+    'FreePaymentDetailsFields',
+    'PaymentMethod'
 )
