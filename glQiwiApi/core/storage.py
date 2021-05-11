@@ -1,25 +1,11 @@
 import time
 import typing
 
-import aiohttp
-
 from glQiwiApi.core import BaseStorage
+from glQiwiApi.core.constants import uncached
+from glQiwiApi.types import MEMData
 from glQiwiApi.types.basics import Cached, Attributes
 from glQiwiApi.utils.exceptions import InvalidData
-
-MemData = typing.TypeVar(
-    'MemData', bound=typing.MutableMapping[
-            str,
-            typing.Dict[
-                str, typing.Any
-            ]
-        ]
-)
-
-uncached = (
-    'https://api.qiwi.com/partner/bill',
-    '/sinap/api/v2/terms/'
-)
 
 
 class Storage(BaseStorage):
@@ -49,15 +35,16 @@ class Storage(BaseStorage):
                     " от 0 до 60 секунд"
                 )
 
-        self.data: MemData = {}
+        self.data: MEMData = MEMData({})
         self._cache_time = cache_time
         self.__initialize_default_key(default_key)
 
     def __initialize_default_key(self, key: typing.Optional[str]) -> None:
         """ Initialize default_key attribute """
-        self._default_key = key
         if not isinstance(key, str):
             self._default_key = "url"
+        else:
+            self._default_key = key
         self.data.update({
             self._default_key: {}
         })
@@ -84,15 +71,13 @@ class Storage(BaseStorage):
     def __setitem__(self, key, value) -> None:
         self.data[self._default_key][key] = value
 
-    def __getitem__(self, item) -> typing.Union[
-        Cached, aiohttp.ClientSession, None
-    ]:
+    def __getitem__(self, item) -> typing.Any:
         try:
             return self.data[self._default_key][item]
         except KeyError:
             return None
 
-    def _is_contain_uncached(self, value: str) -> bool:
+    def _is_contain_uncached(self, value: typing.Optional[typing.Any]) -> bool:
         if self._cache_time < 0.1:
             return True
 
@@ -120,7 +105,7 @@ class Storage(BaseStorage):
                 method=kwargs.get('method'),
                 cache_to=value
             )
-        elif uncached[1] in value:
+        if uncached[1] in value:
             self.clear(value, True)
 
     def update_data(self, obj_to_cache: typing.Any, key: typing.Any) -> None:
@@ -156,12 +141,14 @@ class Storage(BaseStorage):
         if time.monotonic() - cached.cached_in > self._cache_time:
             self.clear(cached.cache_to)
             return True
+        return False
 
     def _validate_other(self, cached: Cached, kwargs: dict) -> bool:
         keys = (key for key in self.available if key != 'headers')
         for key in keys:
             if getattr(cached.kwargs, key) == kwargs.get(key, ''):
                 return True
+        return False
 
     def validate(self, kwargs: typing.Dict[str, typing.Any]) -> bool:
         """

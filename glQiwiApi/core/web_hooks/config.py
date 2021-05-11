@@ -29,7 +29,6 @@ EventFilter = typing.Callable[[E], bool]
 EventHandlerFunctor = typing.Callable[[E], typing.Awaitable[typing.Any]]
 CF = typing.Callable[[E], typing.Union[typing.Awaitable[bool], bool]]
 
-
 __all__ = (
     'DEFAULT_QIWI_WEBHOOK_PATH',
     'DEFAULT_QIWI_ROUTER_NAME',

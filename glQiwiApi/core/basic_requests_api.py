@@ -3,26 +3,24 @@ from itertools import repeat
 from typing import (
     Dict,
     AsyncGenerator,
-    NoReturn
+    NoReturn, Coroutine, Any
 )
 from typing import Optional, List, Union
 
+import aiohttp
 from aiohttp import (
     ClientTimeout,
     ClientProxyConnectionError,
     ServerDisconnectedError,
     ContentTypeError
 )
+from aiohttp.hdrs import USER_AGENT
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core import AbstractParser
+from glQiwiApi.core.constants import DEFAULT_TIMEOUT
 from glQiwiApi.types import Response
 from glQiwiApi.types.basics import Cached
-
-DEFAULT_TIMEOUT = ClientTimeout(total=5 * 60)
-
-USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
-             '(KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
 
 
 class HttpXParser(AbstractParser):
@@ -34,7 +32,6 @@ class HttpXParser(AbstractParser):
     _sleep_time = 2
 
     def __init__(self) -> NoReturn:
-        super(HttpXParser, self).__init__()
         self.base_headers = {
             'User-Agent': USER_AGENT,
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
@@ -104,11 +101,8 @@ class HttpXParser(AbstractParser):
         except (
                 ClientProxyConnectionError,
                 ServerDisconnectedError
-        ) as ex:
-            self.raise_exception(
-                status_code='400_special_bad_proxy',
-                json_info=ex
-            )
+        ):
+            self.raise_exception(status_code='400_special_bad_proxy')
             return Response.bad_response()
         # Get content and return response
         try:
@@ -140,7 +134,7 @@ class HttpXParser(AbstractParser):
             *,
             times: int = 1,
             **kwargs
-    ) -> AsyncGenerator[Union[Response, Cached], None]:
+    ) -> AsyncGenerator[Response, None]:
         """
         Basic usage: \n
         parser = HttpXParser() \n
@@ -164,7 +158,7 @@ class HttpXParser(AbstractParser):
         :return:
         """
         try:
-            from uvloop import EventLoopPolicy
+            from uvloop import EventLoopPolicy  # type: ignore
             set_event_loop_policy(EventLoopPolicy())
         except ImportError:
             # Catching import error and forsake standard policy

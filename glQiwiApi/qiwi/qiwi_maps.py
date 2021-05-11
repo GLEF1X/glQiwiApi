@@ -1,9 +1,9 @@
 import typing
 
-import glQiwiApi.utils.basics as api_helper
 from glQiwiApi import types
 from glQiwiApi.core import RequestManager, ToolsMixin
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
+from glQiwiApi.utils import basics as api_helper
 
 
 class QiwiMaps(ToolsMixin):

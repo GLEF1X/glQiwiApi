@@ -2,8 +2,7 @@ import time
 from dataclasses import dataclass
 from typing import Union, Any, Optional
 
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, validator, Extra
 from glQiwiApi.utils.basics import custom_load
 
 DEFAULT_CACHE_TIME = 0
@@ -15,17 +14,25 @@ class Sum(BaseModel):
 
     """
     amount: Union[int, float, str]
-    currency: str
+    currency: Any
 
     class Config:
         """ Pydantic config """
         json_loads = custom_load
+        extra = Extra.allow
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
+
+    @validator("currency", pre=True, check_fields=True)
+    def humanize_pay_currency(cls, v):
+        from glQiwiApi.utils.currency_util import Currency
+        if not isinstance(v, int):
+            return v
+        return Currency.get(str(v))
 
 
 class OptionalSum(BaseModel):
@@ -50,7 +57,7 @@ class Commission(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -92,9 +99,9 @@ class Cached:
     """
     kwargs: Attributes
     response_data: Any
-    key: str
-    cache_to: str
-    method: str
+    key: Optional[str]
+    cache_to: Optional[Any]
+    method: Optional[Any]
     cached_in: float = time.monotonic()
     status_code: Union[str, int, None] = None
 
