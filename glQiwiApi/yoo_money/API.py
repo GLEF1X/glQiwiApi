@@ -5,7 +5,6 @@ from pydantic import ValidationError
 
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
-    AbstractPaymentWrapper,
     RequestManager,
     ToolsMixin
 )
@@ -20,14 +19,10 @@ from glQiwiApi.types import (
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
-from glQiwiApi.yoo_money.basic_yoomoney_config import (
-    BASE_YOOMONEY_URL,
-    ERROR_CODE_NUMBERS,
-    content_and_auth
-)
+from glQiwiApi.yoo_money.settings import YooMoneyRouter
 
 
-class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
+class YooMoneyAPI(ToolsMixin):
     """
     Класс, реализующий обработку запросов к YooMoney
     Удобен он тем, что не просто отдает json подобные объекты,
@@ -37,7 +32,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
 
     """
 
-    __slots__ = ("api_access_token", "_requests",)
+    __slots__ = ("api_access_token", "_requests", "_router")
 
     def __init__(
             self,
@@ -60,9 +55,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          кэширование 60 секунд
         """
         self.api_access_token = api_access_token
+        self._router = YooMoneyRouter()
         self._requests = RequestManager(
             without_context=without_context,
-            messages=ERROR_CODE_NUMBERS,
+            messages=self._router.config.ERROR_CODE_NUMBERS,
             cache_time=cache_time
         )
 
@@ -78,7 +74,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             scope: List[str],
             client_id: str,
             redirect_uri: str = 'https://example.com'
-    ) -> str:
+    ) -> Optional[str]:
         """
         Метод для получения ссылки для
         дальнейшей авторизации и получения токена
@@ -91,6 +87,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :return: ссылку, по которой нужно перейти
          и сделать авторизацию через логин/пароль
         """
+        # Create new router
+        router = YooMoneyRouter()
+        # Get headers
         headers = api_helper.parse_headers()
         params = {
             'client_id': client_id,
@@ -100,10 +99,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         }
         async for response in RequestManager(
                 without_context=True,
-                messages=ERROR_CODE_NUMBERS,
-                cache_time=DEFAULT_CACHE_TIME
+                messages=router.config.ERROR_CODE_NUMBERS
         ).fast().fetch(
-            url=BASE_YOOMONEY_URL + '/oauth/authorize',
+            url=router.build_url("BUILD_URL_FOR_AUTH"),
             headers=headers,
             data=params,
             method='POST'
@@ -132,6 +130,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          который нужен для получения основного токена
         :return: YooMoney API TOKEN
         """
+        router = YooMoneyRouter()
         headers = api_helper.parse_headers(content_json=True)
         params = {
             'code': code,
@@ -141,10 +140,10 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         }
         async for response in RequestManager(
                 without_context=True,
-                messages=ERROR_CODE_NUMBERS,
+                messages=router.config.ERROR_CODE_NUMBERS,
                 cache_time=DEFAULT_CACHE_TIME
         ).fast().fetch(
-            url=BASE_YOOMONEY_URL + '/oauth/token',
+            url=router.build_url("GET_ACCESS_TOKEN"),
             headers=headers,
             data=params,
             method='POST',
@@ -162,13 +161,14 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             api_helper.parse_headers(auth=True)
         )
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/revoke',
+                url=self._router.build_url("REVOKE_API_TOKEN"),
                 method='POST',
                 headers=headers
         ):
             if response.ok:
                 return {'success': True}
 
+    @property
     async def account_info(self) -> AccountInfo:
         """
         Метод для получения информации об аккаунте пользователя
@@ -179,15 +179,15 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         """
         headers = self._auth_token(
             api_helper.parse_headers(
-                **content_and_auth
+                **self._router.config.content_and_auth
             )
         )
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/account-info',
+                url=self._router.build_url("ACCOUNT_INFO"),
                 headers=headers,
                 method='POST'
         ):
-            return AccountInfo.parse_raw(response.response_data)
+            return AccountInfo.parse_obj(response.response_data)
 
     async def transactions(
             self,
@@ -233,7 +233,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          Допустимые значения: от 1 до 100, по умолчанию — 30.
         """
         headers = self._auth_token(
-            api_helper.parse_headers(**content_and_auth)
+            api_helper.parse_headers(**self._router.config.content_and_auth)
         )
 
         if records <= 0 or records > 100:
@@ -285,7 +285,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             )})
 
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/operation-history',
+                url=self._router.build_url("TRANSACTIONS"),
                 method='POST',
                 headers=headers,
                 data=self._requests.filter_dict(data),
@@ -306,17 +306,17 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :param operation_id: Идентификатор операции
         """
         headers = self._auth_token(api_helper.parse_headers(
-            **content_and_auth)
+            **self._router.config.content_and_auth)
         )
         payload = {
             'operation_id': operation_id
         }
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/operation-details',
+                url=self._router.build_url("TRANSACTION_INFO"),
                 headers=headers,
                 data=payload
         ):
-            return OperationDetails.parse_raw(response.response_data)
+            return OperationDetails.parse_obj(response.response_data)
 
     async def _pre_process_payment(
             self,
@@ -358,7 +358,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             Необязательный параметр. По умолчанию 1.
         """
         headers = self._auth_token(
-            api_helper.parse_headers(**content_and_auth))
+            api_helper.parse_headers(**self._router.config.content_and_auth))
         payload = {
             'pattern_id': pattern_id,
             'to': to_account,
@@ -369,12 +369,12 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             'codepro': protect
         }
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/request-payment',
+                url=self._router.build_url("PRE_PROCESS_PAYMENT"),
                 headers=headers,
                 data=payload
         ):
             try:
-                return PreProcessPaymentResponse.parse_raw(
+                return PreProcessPaymentResponse.parse_obj(
                     response.response_data
                 )
             except ValidationError:
@@ -439,6 +439,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
             raise InvalidData(
                 'Введите сумму, которая больше минимальной(2 и выше)'
             )
+        url = self._router.build_url("PROCESS_PAYMENT")
         pre_payment = await self._pre_process_payment(
             to_account=to_account,
             amount=amount,
@@ -450,7 +451,7 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         )
 
         headers = self._auth_token(
-            api_helper.parse_headers(**content_and_auth))
+            api_helper.parse_headers(**self._router.config.content_and_auth))
 
         payload = {
             'request_id': pre_payment.request_id,
@@ -476,18 +477,19 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
                                 },
                             )
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/process-payment',
+                url=url,
                 method='POST',
                 headers=headers,
                 data=payload
         ):
-            return Payment.parse_raw(
+            return Payment.parse_obj(
                 response.response_data
             ).initialize(pre_payment.protection_code)
 
-    async def get_balance(self) -> Optional[Union[float, int]]:
+    @property
+    async def balance(self) -> float:
         """Метод для получения баланса на кошельке yoomoney"""
-        return (await self.account_info()).balance
+        return (await self.account_info).balance
 
     async def accept_incoming_transaction(
             self,
@@ -511,19 +513,19 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
          Для переводов до востребования отсутствует.
         """
         headers = self._auth_token(
-            api_helper.parse_headers(**content_and_auth))
+            api_helper.parse_headers(**self._router.config.content_and_auth))
         payload = {
             'operation_id': operation_id,
             'protection_code': protection_code
         }
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/incoming-transfer-accept',
+                url=self._router.build_url("ACCEPT_INCOMING_TRANSFER"),
                 headers=headers,
                 data=payload,
                 method='POST',
                 get_json=True
         ):
-            return IncomingTransaction.parse_raw(
+            return IncomingTransaction.parse_obj(
                 response.response_data
             )
 
@@ -543,9 +545,9 @@ class YooMoneyAPI(AbstractPaymentWrapper, ToolsMixin):
         :return: словарь в json формате с ответом от апи
         """
         headers = self._auth_token(
-            api_helper.parse_headers(**content_and_auth))
+            api_helper.parse_headers(**self._router.config.content_and_auth))
         async for response in self._requests.fast().fetch(
-                url=BASE_YOOMONEY_URL + '/api/incoming-transfer-reject',
+                url=self._router.build_url("INCOMING_TRANSFER_REJECT"),
                 headers=headers,
                 data={'operation_id': operation_id},
                 method='POST',
