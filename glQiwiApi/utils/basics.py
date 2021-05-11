@@ -6,14 +6,13 @@ import datetime
 import functools as ft
 import hashlib
 import hmac
-import inspect
+import pathlib
 import re
-import threading
 import time
-import types
 from contextvars import ContextVar
 from copy import deepcopy
 
+import aiofiles
 import pytz
 from pydantic import ValidationError, BaseModel
 from pytz.reference import LocalTimezone
@@ -25,23 +24,6 @@ except (ModuleNotFoundError, ImportError):
 
 # Gets your local time zone
 Local = LocalTimezone()
-
-QIWI_MASTER = {
-    "id": str(int(time.time() * 1000)),
-    "sum": {
-        "amount": 2999,
-        "currency": "643"
-    },
-    "paymentMethod": {
-        "type": "Account",
-        "accountId": "643"
-    },
-    "comment": "test",
-    "fields": {
-        "account": "",
-        "vas_alias": "qvc-master"
-    }
-}
 
 
 def measure_time(func):
@@ -229,10 +211,10 @@ def multiply_objects_parse(lst_of_objects, model):
         try:
             if isinstance(obj, dict):
                 obj: str
-                objects.append(model.parse_raw(obj))
+                objects.append(model.parse_obj(obj))
                 continue
             for detached_obj in obj:
-                objects.append(model.parse_raw(detached_obj))
+                objects.append(model.parse_obj(detached_obj))
         except ValidationError as ex:
             print(ex.json(indent=4))
     return objects
@@ -247,8 +229,20 @@ def simple_multiply_parse(lst_of_objects, model):
     """
     objects = []
     for obj in lst_of_objects:
-        objects.append(model.parse_raw(obj))
+        objects.append(model.parse_obj(obj))
     return objects
+
+
+def take_event_loop(set_debug: bool = False):
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    loop.set_debug(enabled=set_debug)
+    return loop
 
 
 def hmac_key(key, amount, status, bill_id, site_id):
@@ -326,11 +320,10 @@ def allow_response_code(status_code):
     return wrap_func
 
 
-def qiwi_master_data(ph_number):
-    url = "https://edge.qiwi.com" + '/sinap/api/v2/terms/28004/payments'
-    payload = deepcopy(QIWI_MASTER)
+def qiwi_master_data(ph_number, data):
+    payload = deepcopy(data)
     payload["fields"]["account"] = ph_number
-    return url, payload
+    return payload
 
 
 def to_datetime(string_representation):
@@ -344,13 +337,13 @@ def to_datetime(string_representation):
         parsed = orjson.dumps(
             {'dt': string_representation}
         )
-        return Parser.parse_raw(parsed).dt
+        return Parser.parse_obj(parsed).dt
     except (ValidationError, orjson.JSONDecodeError) as ex:
         return ex.json(indent=4)
 
 
-def new_card_data(ph_number, order_id):
-    payload = deepcopy(QIWI_MASTER)
+def new_card_data(ph_number, order_id, data):
+    payload = deepcopy(data)
     url = "https://edge.qiwi.com" + "/sinap/api/v2/terms/32064/payments"
     payload["fields"].pop("vas_alias")
     payload["fields"].update(order_id=order_id)
@@ -390,12 +383,16 @@ def check_params(amount_, amount, txn, transaction_type):
     return False
 
 
-def _run_forever_safe(loop) -> None:
+def run_forever_safe(loop) -> None:
     """ run a loop for ever and clean up after being stopped """
 
     loop.run_forever()
     # NOTE: loop.run_forever returns after calling loop.stop
 
+    safe_cancel(loop=loop)
+
+
+def safe_cancel(loop) -> None:
     # -- cancel all tasks and close the loop gracefully
 
     loop_tasks_all = asyncio.all_tasks(loop=loop)
@@ -441,8 +438,7 @@ class AdaptiveExecutor(futures.ThreadPoolExecutor):
 
 def _construct_all():
     """ Get or create new event loop """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    loop = take_event_loop()
     executor = AdaptiveExecutor()
     loop.set_default_executor(executor)
     return loop, executor
@@ -466,14 +462,13 @@ def sync(func, *args, **kwargs):
 
     # construct an event loop and executor
     loop, executor = _construct_all()
-
     # Run our coroutine thread safe
     wrapped_future = asyncio.run_coroutine_threadsafe(
         func(*args, **kwargs),
         loop=loop
     )
     # Run loop.run_forever(), but do it safely
-    executor.submit(_run_forever_safe, loop)
+    executor.submit(run_forever_safe, loop)
     try:
         # Get result
         return _await_sync(wrapped_future)
@@ -482,65 +477,99 @@ def sync(func, *args, **kwargs):
         _on_shutdown(executor, loop)
 
 
-def events_check_then_execute(on_startup, on_shutdown, instance):
+def check_transaction(
+        transactions,
+        amount,
+        transaction_type,
+        sender,
+        comment
+):
+    for txn in transactions:
+        if float(txn.sum.amount) >= amount:
+            if txn.type == transaction_type:
+                if txn.comment == comment and txn.to_account == sender:
+                    return True
+                elif comment and sender:
+                    continue
+                elif txn.to_account == sender:
+                    return True
+                elif sender:
+                    continue
+                elif txn.comment == comment:
+                    return True
+    return False
+
+
+def parse_limits(response, model):
+    limits = {}
+    for code, limit in response.response_data.get("limits").items():
+        if not limit:
+            continue
+        limits.update({code: model.parse_obj(limit[0])})
+    return limits
+
+
+def override_error_messages(status_codes):
     """
-    Function, which deal with on_startup and on_shutdown functions
+    Function, which helps to override error message
 
-    :param on_startup: function or coroutine,which will be executed on startup
-    :param on_shutdown: function or coroutine,which will be executed at the end
-    :param instance: instance of the QiwiWrapper
+    :param status_codes: special dictionary
     """
 
-    # Create 2 events for on_startup and on_shutdown functions
-    _shutdown_func_event = threading.Event()
-    _startup_func_event = threading.Event()
-
-    def execute():
-        """ Nested function which executing in a separate thread"""
-        for idx, f in enumerate((on_startup, on_shutdown), start=1):
-            if f is None:
-                continue
+    def functor(func):
+        @ft.wraps(func)
+        async def wrapper(*args, **kwargs):
+            from glQiwiApi import RequestError
             try:
-                # Check transmitted function in cycle, if its not function
-                # or its dont takes raising exception
-                assert isinstance(f, types.FunctionType)
-                assert len(inspect.getfullargspec(f).args) >= 1
-                if idx == 2:
-                    # if function is on_shutdown, we set "_shutdown_func_event"
-                    # then in finally block we
-                    # set it and function on_shutdown executing
-                    _shutdown_func_event.wait()
-                # Function on_startup just executing, on_shutdown func
-                # is waiting for signal
-                execute_func(
-                    f,
-                    instance=instance,
-                    event=_startup_func_event if idx == 1 else None
-                )
-            except AssertionError:
-                raise Exception(
-                    'You passed on an invalid functions with wrong signature, '
-                    'on_shutdown or on_startup function '
-                    'must takes 1 argument(an instance of QiwiWrapper)'
-                ) from None
-    # Create a new thread to deal with functions
-    thread = threading.Thread(target=execute)
-    thread.start()
-    _startup_func_event.wait()
-    return _shutdown_func_event
+                return await func(*args, **kwargs)
+            except RequestError as ex:
+                if int(ex.status_code) in status_codes.keys():
+                    error = status_codes.get(int(ex.status_code))
+                    ex = RequestError(
+                        message=error.get("message"),
+                        status_code=ex.status_code,
+                        json_info=error.get("json_info"),
+                        additional_info=ex.additional_info
+                    )
+                raise ex
+
+        return wrapper
+
+    return functor
 
 
-def execute_func(f, instance, event):
-    """
-    Function, which executing function(can be coroutine)
+def check_api_method(api_method):
+    if not isinstance(api_method, str):
+        raise ValueError("Invalid type of api_method(must  be string)")
 
-    :param f:
-    :param instance:
-    :param event: object of threading.Event
-    """
-    if inspect.iscoroutinefunction(f):
-        sync(f, instance)
+
+def check_dates_for_statistic_request(start_date, end_date):
+    first_expression = isinstance(
+        start_date, datetime.datetime
+    ) and isinstance(end_date, datetime.datetime)
+    second_expression = isinstance(
+        start_date, datetime.timedelta
+    ) and isinstance(end_date, datetime.timedelta)
+    if first_expression or second_expression:
+        delta: datetime.timedelta = end_date - start_date
+        if delta.days > 90:
+            raise ValueError(
+                'Максимальный период для выгрузки'
+                ' статистики - 90 календарных дней.'
+            )
     else:
-        f(instance)
-    if event is not None:
-        event.set()
+        raise ValueError(
+            'Вы передали значения начальной '
+            'и конечной даты в неправильном формате.'
+        )
+
+
+async def save_file(dir_path, file_name, data):
+    if isinstance(dir_path, str):
+        dir_path = pathlib.Path(dir_path)
+    if not dir_path.is_dir():
+        raise RuntimeError("Invalid path to save, its not directory!")
+    dir_path: pathlib.Path
+    path_to_file = dir_path / (file_name + '.pdf')
+    async with aiofiles.open(path_to_file, 'wb') as file:
+        return await file.write(data)

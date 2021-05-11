@@ -6,7 +6,7 @@ import glQiwiApi
 from glQiwiApi.core.basic_requests_api import HttpXParser
 from glQiwiApi.core.storage import Storage
 from glQiwiApi.types import Response
-from glQiwiApi.types.basics import Cached
+from glQiwiApi.types.basics import Cached, DEFAULT_CACHE_TIME
 from glQiwiApi.utils.exceptions import RequestError
 
 
@@ -22,13 +22,13 @@ class RequestManager(HttpXParser):
             self,
             without_context: bool = False,
             messages: Optional[Dict[str, str]] = None,
-            cache_time: Union[float, int] = 0
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME
     ) -> None:
         super(RequestManager, self).__init__()
-        self.without_context = without_context
-        self.messages = messages
-        self._cache = Storage(cache_time)
-        self._cached_key = "session"
+        self.without_context: bool = without_context
+        self.messages: Optional[Dict[str, str]] = messages
+        self._cache: Storage = Storage(cache_time)
+        self._cached_key: str = "session"
 
     def clear_cache(self) -> None:
         """ Clear all cache in storage """
@@ -58,7 +58,7 @@ class RequestManager(HttpXParser):
             if response.status_code != 200:
                 await self._close_session()
                 self.raise_exception(
-                    response.status_code,
+                    str(response.status_code),
                     json_info=response.response_data
                 )
             await self._close_session()
@@ -69,13 +69,14 @@ class RequestManager(HttpXParser):
 
     def raise_exception(
             self,
-            status_code: Union[str, int],
+            status_code: str,
             json_info: Optional[Dict[str, Any]] = None,
             message: Optional[str] = None
     ) -> None:
         """ Raise RequestError exception with pretty explanation """
         if not isinstance(message, str):
-            message = self.messages.get(str(status_code), "Unknown")
+            if self.messages is not None:
+                message = self.messages.get(str(status_code), "Unknown")
         raise RequestError(
             message,
             status_code,

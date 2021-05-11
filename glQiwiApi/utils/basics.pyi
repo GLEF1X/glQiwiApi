@@ -1,16 +1,17 @@
 import asyncio
-import threading
+import pathlib
+from asyncio import AbstractEventLoop
 from datetime import datetime, timedelta
 from typing import Any, Union, Optional, Dict, Type, List, MutableMapping, \
-    Tuple, overload, Coroutine, Callable
+    Tuple, overload, Coroutine, Callable, NoReturn
 
 from glQiwiApi import types
 
 
-def measure_time(func: Any) -> None: ...
+def measure_time(func: types.FuncT) -> types.FuncT: ...
 
 
-def datetime_to_str_in_iso(obj: datetime,
+def datetime_to_str_in_iso(obj: Union[None, datetime, timedelta],
                            yoo_money_format: bool = False) -> str: ...
 
 
@@ -63,8 +64,11 @@ def set_data_p2p_create(
 
 def multiply_objects_parse(
         lst_of_objects: Union[List[str], Tuple[str, ...]],
-        model: Type[types.PydanticTypes]
-) -> List[types.PydanticTypes]: ...
+        model: Type[types.N]
+) -> List[types.N]: ...
+
+
+def take_event_loop(set_debug: bool = False) -> AbstractEventLoop: ...
 
 
 def hmac_key(
@@ -77,18 +81,17 @@ def hmac_key(
 
 
 def hmac_for_transaction(
-        webhook_key_base64: str,
+        webhook_key_base64: Optional[Any],
         amount: types.Sum,
         txn_type: str,
         account: str,
         txn_id: str,
-        txn_hash: str
+        txn_hash: Optional[str]
 ) -> bool: ...
 
 
 def simple_multiply_parse(lst_of_objects: Union[List[Union[dict, str]], dict],
-                          model: Type[types.PydanticTypes]) -> List[
-    types.PydanticTypes]: ...
+                          model: Type[types.N]) -> List[types.N]: ...
 
 
 def custom_load(data: Dict[Any, Any]) -> Dict[str, Any]: ...
@@ -102,7 +105,7 @@ def check_params(amount_: Union[int, float], amount: Union[int, float],
 def allow_response_code(status_code: Union[str, int]) -> Any: ...
 
 
-def qiwi_master_data(ph_number: str) -> Tuple[str, dict]: ...
+def qiwi_master_data(ph_number: str, data: dict) -> dict: ...
 
 
 def new_card_data(ph_number: str, order_id: str) -> Tuple[str, dict]: ...
@@ -111,10 +114,13 @@ def new_card_data(ph_number: str, order_id: str) -> Tuple[str, dict]: ...
 def to_datetime(string_representation: str) -> datetime: ...
 
 
-def sync_measure_time(func: Any) -> Any: ...
+def sync_measure_time(func: types.FuncT) -> types.FuncT: ...
 
 
-def _run_forever_safe(loop: asyncio.AbstractEventLoop) -> None: ...
+def run_forever_safe(loop: asyncio.AbstractEventLoop) -> None: ...
+
+
+def safe_cancel(loop: asyncio.AbstractEventLoop) -> None: ...
 
 
 def parse_amount(txn_type: str, txn: types.OperationDetails) -> Tuple[
@@ -132,10 +138,12 @@ def _cancel_future(loop: asyncio.AbstractEventLoop, future: asyncio.Future,
 def _stop_loop(loop: asyncio.AbstractEventLoop) -> None: ...
 
 
+@overload
 def sync(
         func: types.FuncT,
         *args: object,
-        **kwargs: object) -> Any: ...
+        **kwargs: object
+) -> Any: ...
 
 
 @overload
@@ -256,7 +264,7 @@ def sync(
 
 @overload
 def sync(
-        func: Callable[[int, ...], Coroutine[
+        func: Callable[[int, str, str, datetime, str, str], Coroutine[
             Any, Any, Union[types.Bill, types.BillError]]],
         *args: Any,
         **kwargs: Any
@@ -302,7 +310,11 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [Union[datetime, timedelta], Union[datetime, timedelta], str, ...],
+            [
+                Union[
+                    datetime, timedelta
+                ], Union[datetime, timedelta], str, Optional[List[str]]
+            ],
             Coroutine[Any, Any, types.Statistic]],
         *args: Any,
         **kwargs: Any
@@ -377,7 +389,8 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [str, str, str], Coroutine[Any, Any, str]],
+            [str, str, str], Coroutine[Any, Any, str]
+        ],
         *args: Any,
         **kwargs: Any
 ) -> str: ...
@@ -522,15 +535,34 @@ def sync(
 ) -> Any: ...
 
 
-def events_check_then_execute(
-        on_startup: Optional[Callable[..., Any]],
-        on_shutdown: Optional[Callable[..., Any]],
-        instance: Any
-) -> threading.Event: ...
+def check_transaction(
+        transactions: List[types.Transaction],
+        amount: Union[int, float],
+        transaction_type: str = 'IN',
+        sender: Optional[str] = None,
+        comment: Optional[str] = None
+) -> bool: ...
 
 
-def execute_func(
-        f: Callable[..., Any],
-        instance: Any,
-        event: threading.Event
-) -> None: ...
+def parse_limits(
+        response: types.Response,
+        model: Type[types.Limit]
+) -> Dict[str, types.Limit]: ...
+
+
+def override_error_messages(
+        status_codes: Dict[int, Dict[str, str]]
+) -> types.FuncT: ...
+
+
+def check_api_method(api_method: str) -> NoReturn: ...
+
+
+def check_dates_for_statistic_request(
+        start_date: Union[datetime, timedelta],
+        end_date: Union[datetime, timedelta]
+) -> NoReturn: ...
+
+
+def save_file(dir_path: Union[str, pathlib.Path], file_name: Optional[str],
+              data: Any) -> Coroutine[Any, Any, int]: ...
