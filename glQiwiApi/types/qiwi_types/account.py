@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from glQiwiApi.types.basics import Sum, Type
-from glQiwiApi.utils.basics import custom_load
+from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+from glQiwiApi.utils.currency_util import Currency
 
 
 class Account(BaseModel):
@@ -14,21 +15,17 @@ class Account(BaseModel):
     bank_alias: str = Field(alias="bankAlias")
     has_balance: bool = Field(alias="hasBalance")
     balance: Optional[Sum] = Field(const=None)
-    currency: int
+    currency: CurrencyModel
     account_type: Optional[Type] = Field(None, alias="type")
     is_default_account: bool = Field(alias="defaultAccount")
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
-
-        def __repr__(self) -> str:
-            return self.__str__()
+    @validator("currency", pre=True, check_fields=True)
+    def humanize_pay_currency(cls, v):
+        if not isinstance(v, int):
+            return v
+        return Currency.get(str(v))
 
 
-__all__ = [
+__all__ = (
     'Account'
-]
+)

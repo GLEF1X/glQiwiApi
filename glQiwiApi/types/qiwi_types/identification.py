@@ -3,8 +3,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.utils.basics import custom_load
-
 
 class Identification(BaseModel):
     """ object: Identification """
@@ -18,13 +16,3 @@ class Identification(BaseModel):
     snils: Optional[str]
     oms: Optional[str]
     type: str
-
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
-
-        def __repr__(self) -> str:
-            return self.__str__()

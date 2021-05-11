@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field, Extra
 
-from glQiwiApi.core.mixins import BillMixin
+from glQiwiApi.core.core_mixins import BillMixin
 from glQiwiApi.types.basics import OptionalSum
 from glQiwiApi.utils.basics import custom_load
 
@@ -42,7 +42,7 @@ class BillError(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -68,7 +68,7 @@ class Bill(BaseModel, BillMixin):
         extra = Extra.allow
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -97,16 +97,6 @@ class Notification(BaseModel):
     version: str = Field(..., alias="version")
     bill: Bill = Field(..., alias="bill")
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
     def __str__(self) -> str:
         return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
 
@@ -114,9 +104,15 @@ class Notification(BaseModel):
         return self.__str__()
 
 
+class P2PKeys(BaseModel):
+    public_key: str = Field(..., alias="PublicKey")
+    secret_key: str = Field(..., alias="SecretKey")
+
+
 __all__ = (
     'Bill',
     'BillError',
     'RefundBill',
-    'Notification'
+    'Notification',
+    'P2PKeys'
 )

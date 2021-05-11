@@ -1,19 +1,16 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
-from glQiwiApi.utils.basics import custom_load
+from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+from glQiwiApi.utils.currency_util import Currency
 
 
 class Balance(BaseModel):
     """ object: Balance """
     alias: str
-    currency: int
+    currency: CurrencyModel
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
-
-        def __repr__(self) -> str:
-            return self.__str__()
+    @validator("currency", pre=True, check_fields=True)
+    def humanize_pay_currency(cls, v):
+        if not isinstance(v, int):
+            return v
+        return Currency.get(str(v))

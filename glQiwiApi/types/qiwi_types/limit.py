@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
-from glQiwiApi.utils.basics import custom_load
+from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+from glQiwiApi.utils.currency_util import Currency
 
 
 class Interval(BaseModel):
@@ -14,22 +15,18 @@ class Interval(BaseModel):
 
 class Limit(BaseModel):
     """ object: Limit """
-    currency: str
+    currency: CurrencyModel
     rest: Union[float, int]
     max_limit: Union[float, int] = Field(alias="max")
     spent: Union[float, int]
     interval: Interval
     limit_type: str = Field(alias="type")
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
-
-        def __repr__(self) -> str:
-            return self.__str__()
+    @validator("currency", pre=True)
+    def currency_validate(cls, v):
+        if not isinstance(v, str):
+            raise ValueError()
+        return Currency.get(v)
 
 
 __all__ = [

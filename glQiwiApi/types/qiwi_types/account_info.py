@@ -1,10 +1,12 @@
+import ipaddress
 from datetime import datetime
 from typing import Optional, List
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, validator
 
 from glQiwiApi.types.basics import Sum
-from glQiwiApi.utils.basics import custom_load
+from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+from glQiwiApi.utils.currency_util import Currency
 
 
 class PassInfo(BaseModel):
@@ -32,7 +34,7 @@ class PinInfo(BaseModel):
 
 class AuthInfo(BaseModel):
     """ object: AuthInfo """
-    ip: str
+    ip: ipaddress.IPv4Address
     bound_email: Optional[str] = Field(alias="boundEmail", const=None)
     last_login_date: Optional[
         datetime
@@ -87,12 +89,11 @@ class ContractInfo(BaseModel):
     sms_notification: SmsNotification = Field(alias="smsNotification")
     nickname: NickName
     features: Optional[List[Feature]] = None
-    blocked: bool
 
 
 class UserInfo(BaseModel):
     """ object: UserInfo """
-    default_pay_currency: str = Field(alias="defaultPayCurrency")
+    default_pay_currency: CurrencyModel = Field(alias="defaultPayCurrency")
     default_pay_source: Optional[
         int
     ] = Field(alias="defaultPaySource", const=None)
@@ -108,6 +109,11 @@ class UserInfo(BaseModel):
         bool
     ] = Field(alias="promoEnabled", const=None)
 
+    @validator("default_pay_currency", pre=True, check_fields=True)
+    def humanize_pay_currency(cls, v):
+        if not isinstance(v, int):
+            return v
+        return Currency.get(str(v))
 
 class QiwiAccountInfo(BaseModel):
     """Информация об аккаунте"""
@@ -116,16 +122,6 @@ class QiwiAccountInfo(BaseModel):
         ContractInfo
     ] = Field(alias="contractInfo", const=None)
     user_info: Optional[UserInfo] = Field(alias="userInfo", const=None)
-
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
-
-        def __repr__(self) -> str:
-            return self.__str__()
 
 
 __all__ = [
