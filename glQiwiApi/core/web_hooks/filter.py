@@ -6,7 +6,7 @@ from glQiwiApi import types
 from .config import CF, E
 
 
-def special_comparator(func1: CF, func2: CF, event: Any) -> bool:
+def special_comparator(func1: CF, func2: CF, event: Any) -> Any:
     """ custom a & b (and) operator """
     validated = func1(event)
     if validated is not True:
@@ -14,7 +14,7 @@ def special_comparator(func1: CF, func2: CF, event: Any) -> bool:
     return operator.and_(validated, func2(event))
 
 
-def xor(func1: CF, func2: CF, event: Any) -> bool:
+def xor(func1: CF, func2: CF, event: Any) -> Any:
     """ custom a ^ b (xor) operator """
     funcs = (func1, func2)
     for func in funcs:
@@ -23,7 +23,7 @@ def xor(func1: CF, func2: CF, event: Any) -> bool:
     return False
 
 
-def or_(func1: CF, func2: CF, event: Any) -> bool:
+def or_(func1: CF, func2: CF, event: Any) -> Any:
     """ Custom a | b (or) operator """
     return func1(event) or func2(event)
 
@@ -128,7 +128,7 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
 
 # Default filter for transaction handler
 transaction_webhook_filter = Filter(
-    lambda update: isinstance(update, types.WebHook)
+    lambda update: isinstance(update, (types.WebHook, types.Transaction))
 )
 
 # Default filter for bill handler

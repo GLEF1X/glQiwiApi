@@ -1,8 +1,37 @@
 import asyncio
-from typing import List, Tuple, Coroutine
+import inspect
+import logging
+import types
+from datetime import datetime, timedelta
+from typing import List, Tuple, Coroutine, Any, Union, Optional, NoReturn
+
+import aiohttp
 
 from .config import EventHandlerFunctor, EventFilter, E
 from .filter import Filter, transaction_webhook_filter, bill_webhook_filter
+
+
+async def _inspect_and_execute_callback(client, callback: callable):
+    if inspect.iscoroutinefunction(callback):
+        await callback(client)
+    else:
+        callback(client)
+
+
+def _get_stream_handler() -> logging.StreamHandler:
+    _log_format = f"%(asctime)s - [%(levelname)s] - %(message)s"
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(logging.Formatter(_log_format))
+    return stream_handler
+
+
+def _setup_logger() -> logging.Logger:
+    logger = logging.getLogger(__name__)
+    logger.setLevel(level=logging.INFO)
+    if not logger.handlers:
+        logger.addHandler(_get_stream_handler())
+    return logger
 
 
 class EventHandler:
@@ -20,7 +49,7 @@ class EventHandler:
         self._fn = functor
         self._filters = filter_
 
-    async def check_then_execute(self, event: E) -> Coroutine:
+    async def check_then_execute(self, event: E) -> Coroutine[Any, Any, Any]:
         """
         Check event, apply all filters and than pass on to handler
 
@@ -45,7 +74,8 @@ class Dispatcher:
 
     def __init__(
             self,
-            loop: asyncio.AbstractEventLoop
+            loop: asyncio.AbstractEventLoop,
+            wallet: Any
     ):
         if not isinstance(loop, asyncio.AbstractEventLoop):
             raise ValueError(
@@ -56,16 +86,53 @@ class Dispatcher:
         self.loop = loop
         self.transaction_handlers: List[EventHandler] = []
         self.bill_handlers: List[EventHandler] = []
+        self._logger: logging.Logger = _setup_logger()
+        # Polling variables
+        self._polling: bool = False
+        self.offset: Optional[int] = None
+        self.start_date: Optional[
+            Union[
+                datetime,
+                timedelta
+            ]
+        ] = datetime.now()
+        self.end_date = None
+        self.client: Any = wallet
+        self.request_timeout: Optional[
+            Union[float, int, aiohttp.ClientTimeout]
+        ] = None
+        self._on_startup = []
+        self._on_shutdown = []
 
     @property
     def handlers(self) -> List[EventHandler]:
         """ Return all registered handlers """
         return [*self.bill_handlers, *self.transaction_handlers]
 
+    @property
+    def logger(self) -> logging.Logger:
+        return self._logger
+
+    @logger.setter
+    def logger(self, logger: logging.Logger):
+        self._logger = logger
+
+    def __setitem__(self, key: str, callback: callable):
+        if key not in ["on_shutdown", "on_startup"]:
+            raise ValueError()
+
+        if not isinstance(callback, types.FunctionType):
+            raise ValueError("Invalid type of callback")
+
+        if key == "on_shutdown":
+            self._on_shutdown.append(callback)
+        else:
+            self._on_startup.append(callback)
+
     @staticmethod
     def wrap_handler(
             event_handler: EventHandlerFunctor,
-            filters: Tuple[EventFilter, ...],
+            filters: Tuple[Union[EventFilter, Filter], ...],
             default_filter: Filter
     ) -> EventHandler:
         """
@@ -90,7 +157,7 @@ class Dispatcher:
 
         return EventHandler(event_handler, *filters)
 
-    def register_transaction_handler(self, *filters: EventFilter) -> E:
+    def register_txn_webhook_handler(self, *filters: EventFilter) -> E:
 
         def decorator(event_handler: EventHandlerFunctor) -> None:
             self.transaction_handlers.append(
@@ -122,3 +189,18 @@ class Dispatcher:
 
         for handler in self.handlers:
             await handler.check_then_execute(event)
+
+    async def welcome(self) -> NoReturn:
+        for callback in self._on_startup:
+            await _inspect_and_execute_callback(
+                callback=callback,
+                client=self.client
+            )
+
+    async def goodbye(self) -> NoReturn:
+        self.logger.info("Stop polling!")
+        for callback in self._on_shutdown:
+            await _inspect_and_execute_callback(
+                callback=callback,
+                client=self.client
+            )

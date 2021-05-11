@@ -4,7 +4,6 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from glQiwiApi.types import Sum
-from glQiwiApi.utils.basics import custom_load
 
 
 class Payment(BaseModel):
@@ -37,9 +36,6 @@ class WebHook(BaseModel):
     version: str = Field(..., alias="version")
     payment: Optional[Payment] = Field(default=None, alias="payment")
 
-    class Config:
-        json_loads = custom_load
-
 
 class HookParameters(BaseModel):
     """hookParameters object"""
@@ -54,9 +50,6 @@ class WebHookConfig(BaseModel):
     hook_type: str = Field(..., alias="hookType")
     txn_type: str = Field(..., alias="txnType")
     hook_parameters: HookParameters = Field(..., alias="hookParameters")
-
-    class Config:
-        json_loads = custom_load
 
 
 __all__ = ('WebHookConfig', 'WebHook')
