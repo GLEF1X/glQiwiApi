@@ -84,7 +84,7 @@ class AccountInfo(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return f'<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -186,7 +186,7 @@ class Operation(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -340,7 +340,7 @@ class OperationDetails(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -421,7 +421,7 @@ class PreProcessPaymentResponse(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -522,7 +522,7 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
     при передаче аргументов
     """
 
-    def initialize(self, protection_code: str) -> 'Payment':
+    def initialize(self, protection_code: Optional[str]) -> 'Payment':
         self.protection_code = protection_code
         return self
 
@@ -532,7 +532,7 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
         extra = Extra.allow
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
@@ -550,7 +550,7 @@ class IncomingTransaction(BaseModel):
         json_loads = custom_load
 
         def __str__(self) -> str:
-            return f'Config class with loads={self.json_loads}'
+            return '<Config class of pydantic>'
 
         def __repr__(self) -> str:
             return self.__str__()
