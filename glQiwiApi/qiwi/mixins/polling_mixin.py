@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from typing import NoReturn, Any, Union, Optional, List, \
-    Tuple
+    Tuple, Callable
 
 from aiohttp import ClientTimeout
 
@@ -9,12 +9,17 @@ from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 from glQiwiApi.types.qiwi_types.transaction import Transaction
 from glQiwiApi.utils import basics as api_helper
 
-DEFAULT_TIMEOUT = 25.0
+DEFAULT_TIMEOUT = 20.0  # timeout in seconds
 
 
 def _get_last_payment(
         history: List[Transaction]
 ) -> Tuple[Optional[Transaction], Optional[int]]:
+    """
+    Function, which gets last payment and his id of history
+
+    :param history:
+    """
     last_payment = history[0]
     last_payment_id = last_payment.transaction_id
     return last_payment, last_payment_id
@@ -22,9 +27,15 @@ def _get_last_payment(
 
 def _setup_callbacks(
         dispatcher,
-        on_startup: Optional[callable] = None,
-        on_shutdown: Optional[callable] = None
+        on_startup: Optional[Callable] = None,
+        on_shutdown: Optional[Callable] = None
 ):
+    """
+    Function, which setup callbacks and set it to dispatcher object
+
+    :param on_startup:
+    :param on_shutdown:
+    """
     if on_startup is not None:
         dispatcher["on_startup"] = on_startup
     if on_shutdown is not None:
@@ -34,6 +45,11 @@ def _setup_callbacks(
 def parse_timeout(
         timeout: Union[float, int, ClientTimeout]
 ) -> Optional[float]:
+    """
+    Parse timeout
+
+    :param timeout:
+    """
     if isinstance(timeout, float):
         return timeout
     elif isinstance(timeout, int):
@@ -118,7 +134,7 @@ class HistoryPollingMixin:
     async def _pool_process(
             self,
             get_updates_from: Optional[datetime.datetime]
-    ) -> NoReturn:
+    ):
         """
         Method, which manage pool process
 
@@ -173,18 +189,18 @@ class HistoryPollingMixin:
 
     def start_polling(
             self,
-            get_updates_from: Optional[datetime.datetime] = None,
+            get_updates_from: datetime.datetime = datetime.datetime.now(),
             timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
-            on_startup: Optional[callable] = None,
-            on_shutdown: Optional[callable] = None
-    ) -> NoReturn:
+            on_startup: Optional[Callable] = None,
+            on_shutdown: Optional[Callable] = None
+    ):
         """
-        Blocking func to start polling updates
+        Start long-polling mode
 
         :param get_updates_from: date from which will be polling,
          if it's None, polling will skip all updates
-        :param timeout: timeout of polling in seconds, if timeout is less,
-         the API can throw exception
+        :param timeout: timeout of polling in seconds, if the timeout is less,
+         the API can throw an exception
         :param on_startup: function or coroutine,
          which will be executed on startup
         :param on_shutdown: function or coroutine,
