@@ -1,5 +1,24 @@
+import abc
 import copy
-from typing import Optional, Any
+from typing import Optional, Any, Awaitable
+
+
+class QiwiProto(abc.ABC):
+    """
+    Class, which replaces standard signature of the QiwiWrapper class
+    to avoid a circular import. Inherits from abc, because python 3.7
+    doesn't support typing.Protocol
+
+    """
+
+    def __aenter__(self) -> Awaitable[Any]:
+        ...
+
+    def __aexit__(self, exc_type, exc_val, exc_tb) -> Awaitable[Any]:
+        ...
+
+    async def check_p2p_bill_status(self, bill_id: Optional[str]) -> str:
+        ...
 
 
 class BillMixin(object):
@@ -8,7 +27,7 @@ class BillMixin(object):
     добавляя метод check() объекту Bill
 
     """
-    _w = None
+    _w: QiwiProto
     bill_id: Optional[str] = None
 
     def initialize(self, wallet: Any):
@@ -24,7 +43,7 @@ class BillMixin(object):
 
 class ToolsMixin(object):
     """ Object: ToolsMixin """
-    _requests = None
+    _requests: Any
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
