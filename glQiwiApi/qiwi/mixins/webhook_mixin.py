@@ -1,7 +1,8 @@
 import asyncio
 import copy
 import logging
-from typing import Optional, Any, Awaitable, Dict, Tuple, Callable
+from typing import Optional, Any, Awaitable, Dict, Tuple, Callable, \
+    MutableMapping
 
 from aiohttp import web
 
@@ -30,7 +31,11 @@ class QiwiWebHookMixin:
         self._requests = requests_manager
         self.secret_p2p = secret_p2p
 
-    def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
+    def _auth_token(
+            self,
+            headers: MutableMapping,
+            p2p: bool = False
+    ) -> MutableMapping:
         ...
 
     async def _register_webhook(
@@ -181,7 +186,7 @@ class QiwiWebHookMixin:
 
         :param url: service url
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
-        :param send_test_notification:  qiwi will send you test webhook update
+        :param send_test_notification:  test_qiwi will send you test webhook update
         :param delete_old: boolean, if True - delete old webhook
 
         :return: Tuple of Hook and Base64-encoded key
@@ -240,7 +245,7 @@ class QiwiWebHookMixin:
 
         :param host: server host
         :param port: server port that open for tcp/ip trans.
-        :param path: path for qiwi that will send requests
+        :param path: path for test_qiwi that will send requests
         :param app: pass web.Application
         :param on_startup: coroutine,which will be executed on startup
         :param on_shutdown: coroutine, which will be executed on shutdown
@@ -269,12 +274,12 @@ class QiwiWebHookMixin:
     @property
     def transaction_handler(self):
         """
-        Handler manager for default qiwi transactions,
-        you can pass on lambda filter, if you want
-        But it must to return a boolean
+        Handler manager for default test_qiwi transactions,
+        you can pass on lambda filter, if you want,
+        but it must to return a boolean
 
         """
-        return self.dispatcher.register_txn_webhook_handler
+        return self.dispatcher.transaction_handler_wrapper
 
     @property
     def bill_handler(self):
@@ -284,4 +289,4 @@ class QiwiWebHookMixin:
         But it must to return a boolean
 
         """
-        return self.dispatcher.register_bill_handler
+        return self.dispatcher.bill_handler_wrapper
