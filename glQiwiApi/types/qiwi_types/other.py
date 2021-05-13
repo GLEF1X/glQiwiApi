@@ -1,11 +1,25 @@
-from pydantic import BaseModel, Field
+from typing import Union
+
+from pydantic import BaseModel, Field, validator
+
+from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+from glQiwiApi.utils.currency_util import Currency
 
 
 class CrossRate(BaseModel):
     """Курс валюты"""
-    rate_from: str = Field(..., alias="from")
-    rate_to: str = Field(..., alias="to")
+    rate_from: Union[str, CurrencyModel] = Field(..., alias="from")
+    rate_to: Union[str, CurrencyModel] = Field(..., alias="to")
     rate: float
+
+    @validator("rate_from", "rate_to", pre=True)
+    def humanize_rates(cls, v):
+        if not isinstance(v, str):
+            return v
+        cur = Currency.get(v)
+        if not cur:
+            return v
+        return cur
 
 
 class PaymentMethod(BaseModel):
@@ -77,5 +91,6 @@ class FreePaymentDetailsFields(BaseModel):
 
     toServiceId: str = "1717"
     """Служебная информация, константа"""
+
 
 __all__ = ('CrossRate', 'FreePaymentDetailsFields', 'PaymentMethod')
