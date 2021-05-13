@@ -50,11 +50,14 @@ class ToolsMixin(object):
         self._requests.create_session()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Закрываем сессию и очищаем кэш при выходе"""
+    async def close(self):
         if self._requests.session:
             await self._requests.session.close()
             self._requests.clear_cache()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Закрываем сессию и очищаем кэш при выходе"""
+        await self.close()
 
     def _get(self, item: Any) -> Any:
         try:
