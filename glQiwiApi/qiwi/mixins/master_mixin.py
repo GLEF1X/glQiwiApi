@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Optional, Any
+from typing import Optional, Any, MutableMapping
 
 from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.types import PaymentInfo, OrderDetails
@@ -13,7 +13,11 @@ class QiwiMasterMixin:
         self._router = router
         self._requests = request_manager
 
-    def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
+    def _auth_token(
+            self,
+            headers: MutableMapping,
+            p2p: bool = False
+    ) -> MutableMapping:
         ...
 
     @property

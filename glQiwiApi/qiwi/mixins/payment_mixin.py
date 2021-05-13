@@ -1,6 +1,6 @@
 import uuid
 from copy import deepcopy
-from typing import Any, Optional, Union, List
+from typing import Any, Optional, Union, List, MutableMapping
 
 from glQiwiApi.types import Commission, CrossRate, Sum, PaymentMethod, \
     FreePaymentDetailsFields, PaymentInfo
@@ -16,7 +16,11 @@ class QiwiPaymentsMixin:
         self._requests = requests_manager
         self._router: AbstractRouter = router
 
-    def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
+    def _auth_token(
+            self,
+            headers: MutableMapping,
+            p2p: bool = False
+    ) -> MutableMapping:
         ...
 
     async def to_wallet(
@@ -142,8 +146,7 @@ class QiwiPaymentsMixin:
         ):
             return Commission.parse_obj(response.response_data)
 
-    @property
-    async def cross_rates(self) -> List[CrossRate]:
+    async def get_cross_rates(self) -> List[CrossRate]:
         """
         Метод возвращает текущие курсы и кросс-курсы валют КИВИ Банка.
 

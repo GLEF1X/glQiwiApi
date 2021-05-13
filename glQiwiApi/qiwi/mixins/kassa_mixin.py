@@ -1,7 +1,7 @@
 import uuid
 from copy import deepcopy
 from datetime import datetime
-from typing import Union, Optional, Dict, List, Any
+from typing import Union, Optional, Dict, List, Any, MutableMapping
 
 from glQiwiApi.core import constants
 from glQiwiApi.core.abstracts import AbstractRouter
@@ -25,7 +25,11 @@ class QiwiKassaMixin:
         self._requests = requests_manager
         self.secret_p2p = secret_p2p
 
-    def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
+    def _auth_token(
+            self,
+            headers: MutableMapping,
+            p2p: bool = False
+    ) -> MutableMapping:
         ...
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
@@ -84,7 +88,7 @@ class QiwiKassaMixin:
             comment: Optional[str] = None,
             life_time: Optional[datetime] = None,
             theme_code: Optional[str] = None,
-            pay_source_filter: Optional[str] = None
+            pay_source_filter: Optional[List[str]] = None
     ) -> Union[Bill, BillError]:
         """
         Метод для выставление p2p счёта.
@@ -110,7 +114,7 @@ class QiwiKassaMixin:
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
 
-        life_time = api_helper.datetime_to_str_in_iso(
+        _life_time = api_helper.datetime_to_str_in_iso(
             constants.DEFAULT_BILL_TIME if not life_time else life_time
         )
 
@@ -124,7 +128,7 @@ class QiwiKassaMixin:
             comment=comment,
             theme_code=theme_code,
             pay_source_filter=pay_source_filter,
-            life_time=str(life_time)
+            life_time=str(_life_time)
         )
         url = self._p2p_router.build_url(
             "CREATE_P2P_BILL",
@@ -152,6 +156,7 @@ class QiwiKassaMixin:
         )
         if rows > 50:
             raise InvalidData('Можно получить не более 50 счетов')
+
         params = {
             'rows': rows,
             'statuses': 'READY_FOR_PAY'
