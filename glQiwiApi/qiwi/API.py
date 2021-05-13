@@ -1,7 +1,7 @@
 import pathlib
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import Union, Optional, Dict, List, Any
+from typing import Union, Optional, Dict, List, Any, MutableMapping
 
 from aiohttp import ClientSession
 
@@ -24,7 +24,8 @@ from glQiwiApi.types import (
     Balance,
     Identification,
     Sum,
-    Commission
+    Card,
+    Restriction
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.utils import basics as api_helper
@@ -32,9 +33,9 @@ from glQiwiApi.utils.exceptions import InvalidData
 
 
 class QiwiWrapper(
-    QiwiWebHookMixin, QiwiKassaMixin,
+    QiwiWebHookMixin, QiwiPaymentsMixin,
     QiwiMasterMixin, ToolsMixin,
-    HistoryPollingMixin, QiwiPaymentsMixin
+    HistoryPollingMixin, QiwiKassaMixin
 ):
     """
     Класс, реализующий обработку запросов к киви, удобен он тем,
@@ -73,6 +74,10 @@ class QiwiWrapper(
             self.phone_number = phone_number.replace('+', '')
             if self.phone_number.startswith('8'):
                 self.phone_number = '7' + self.phone_number[1:]
+
+        if not hasattr(self, "phone_number"):
+            raise InvalidData("Invalid phone number value")
+
         self._router: QiwiRouter = QiwiRouter()
         self._p2p_router: QiwiKassaRouter = QiwiKassaRouter()
         self._requests: RequestManager = RequestManager(
@@ -93,14 +98,24 @@ class QiwiWrapper(
             secret_p2p=self.secret_p2p
         )
 
-    def _auth_token(self, headers: dict, p2p: bool = False) -> dict:
+    def _auth_token(
+            self,
+            headers: MutableMapping,
+            p2p: bool = False
+    ) -> MutableMapping:
+        """
+        Make auth for API
+
+        :param headers: dictionary
+        :param p2p: boolean
+        """
         headers['Authorization'] = headers['Authorization'].format(
             token=self.api_access_token if not p2p else self.secret_p2p
         )
         return headers
 
     @property
-    def session(self) -> ClientSession:
+    def session(self) -> Optional[ClientSession]:
         """Return aiohttp session object"""
         return self._requests.session
 
@@ -143,8 +158,7 @@ class QiwiWrapper(
         ):
             return response.response_data.get('message')
 
-    @property
-    async def balance(self) -> Sum:
+    async def get_balance(self) -> Sum:
         """Метод для получения баланса киви"""
         if not isinstance(self.phone_number, str):
             raise InvalidData(
@@ -193,7 +207,7 @@ class QiwiWrapper(
         :param end_date: конечная дата поиска платежей.
                Используется только вместе со start_date.
         """
-        if rows_num > 50:
+        if rows_num > 50 or rows_num <= 0:
             raise InvalidData('Можно проверять не более 50 транзакций')
 
         headers = self._auth_token(deepcopy(
@@ -258,9 +272,7 @@ class QiwiWrapper(
         ):
             return Transaction.parse_obj(response.response_data)
 
-    async def check_restriction(self) -> Union[
-        List[Dict[str, str]], Exception
-    ]:
+    async def check_restriction(self) -> List[Restriction]:
         """
         Метод для проверки ограничений на вашем киви кошельке\n
         Подробная документация:
@@ -285,7 +297,10 @@ class QiwiWrapper(
                 headers=headers,
                 method='GET'
         ):
-            return response.response_data
+            return api_helper.simple_multiply_parse(
+                lst_of_objects=response.response_data,
+                model=Restriction
+            )
 
     @property
     async def identification(self) -> Identification:
@@ -347,7 +362,7 @@ class QiwiWrapper(
         if transaction_type not in ['IN', 'OUT', 'QIWI_CARD']:
             raise InvalidData('Вы ввели неправильный метод транзакции')
 
-        elif rows_num > 50:
+        elif rows_num > 50 or rows_num <= 0:
             raise InvalidData('Можно проверять не более 50 транзакций')
 
         transactions = await self.transactions(rows_num=rows_num)
@@ -391,10 +406,9 @@ class QiwiWrapper(
         ):
             return api_helper.parse_limits(response, Limit)
 
-    async def get_list_of_cards(self) -> dict:
+    async def get_list_of_cards(self) -> List[Card]:
         """
         Данный метод позволяет вам получить список ваших карт.
-        Пока ещё в разработке, стабильность сомнительна
 
         """
         headers = self._auth_token(
@@ -405,7 +419,10 @@ class QiwiWrapper(
                 method='GET',
                 headers=headers
         ):
-            return response.response_data
+            return api_helper.simple_multiply_parse(
+                lst_of_objects=response.response_data,
+                model=Card
+            )
 
     async def authenticate(
             self,
@@ -478,7 +495,7 @@ class QiwiWrapper(
             transaction_type: str,
             dir_path: Union[str, pathlib.Path] = None,
             file_name: Optional[str] = None
-    ) -> Union[bytearray, int]:
+    ) -> Union[bytes, int]:
         """
         Метод для получения чека в формате байтов или файлом.\n
         Возможные значения transaction_type:
@@ -587,6 +604,7 @@ class QiwiWrapper(
 
         if sources:
             params.update({'sources': ' '.join(sources)})
+
         url = self._router.build_url(
             "FETCH_STATISTICS",
             stripped_number=self.stripped_number

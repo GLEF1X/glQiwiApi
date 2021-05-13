@@ -84,7 +84,7 @@ class RequestManager(HttpXParser):
             json_info=json_info
         )
 
-    def cache_session(self, session: aiohttp.ClientSession) -> None:
+    def cache_session(self, session: Optional[aiohttp.ClientSession]) -> None:
         if self.check_session(session):
             self._cache.update_data(
                 obj_to_cache=session,

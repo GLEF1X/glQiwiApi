@@ -26,7 +26,7 @@ class YooMoneyAPI(ToolsMixin):
     """
     Класс, реализующий обработку запросов к YooMoney
     Удобен он тем, что не просто отдает json подобные объекты,
-    а всё это конвертирует в python dataclasses.
+    а всё это конвертирует в pydantic модели.
     Для работы с данным классом, необходимо зарегистрировать токен,
     используя гайд на официальном github проекта
 
@@ -561,7 +561,7 @@ class YooMoneyAPI(ToolsMixin):
             transaction_type: str = 'in',
             comment: Optional[str] = None,
             rows_num: int = 100,
-            sender_number: Optional[str] = None
+            recipient: Optional[str] = None
     ) -> bool:
         """
         Метод для проверки транзакции.\n
@@ -572,7 +572,7 @@ class YooMoneyAPI(ToolsMixin):
 
         :param amount: сумма платежа
         :param transaction_type: тип платежа
-        :param sender_number: номер получателя
+        :param recipient: номер получателя
         :param rows_num: кол-во платежей, которое будет проверяться
         :param comment: комментарий, по которому будет проверяться транзакция
         :return: bool, есть ли такая транзакция в истории платежей
@@ -603,10 +603,10 @@ class YooMoneyAPI(ToolsMixin):
             )
             if checked:
                 if txn.status == 'success':
-                    if comment_ == comment and detail.sender == sender_number:
+                    if comment_ == comment and detail.sender == recipient:
                         return True
                     elif isinstance(comment, str) and isinstance(
-                            sender_number,
+                            recipient,
                             str):
                         continue
                     elif comment_ == comment:

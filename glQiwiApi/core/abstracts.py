@@ -106,7 +106,7 @@ class AbstractParser(abc.ABC):
     @abc.abstractmethod
     async def _request(
             self,
-            url: Optional[str],
+            url: str,
             get_json: bool,
             method: str,
             set_timeout: bool,
