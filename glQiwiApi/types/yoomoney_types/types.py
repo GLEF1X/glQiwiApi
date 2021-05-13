@@ -2,9 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, Dict, List, Any
 
-from pydantic import BaseModel, Field, Extra
-
-from glQiwiApi.utils.basics import custom_load
+from pydantic import BaseModel, Field
 
 
 class BalanceDetails(BaseModel):
@@ -78,16 +76,6 @@ class AccountInfo(BaseModel):
     - AmericanExpress;
     - JCB.
     """
-
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return f'<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
 
 
 class OperationType(Enum):
@@ -181,16 +169,6 @@ class Operation(BaseModel):
 
     details: Optional[Any] = None
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
 
 class OperationDetails(BaseModel):
     """ object: OperationDetails """
@@ -203,13 +181,13 @@ class OperationDetails(BaseModel):
     amount: Optional[float] = None
     """Сумма операции (сумма списания со счета)."""
 
-    operation_date: Optional[str] = Field(..., alias="datetime")
+    operation_date: Optional[datetime] = Field(default=None, alias="datetime")
     """
     Дата и время совершения операции в формате строки
     в ISO формате с часовым поясом UTC.
     """
 
-    operation_type: Optional[str] = Field(..., alias="type")
+    operation_type: Optional[str] = Field(default=None, alias="type")
     """Тип операции. Возможные значения:
     payment-shop — исходящий платеж в магазин;
     outgoing-transfer — исходящий P2P-перевод любого типа;
@@ -335,16 +313,6 @@ class OperationDetails(BaseModel):
     Все прочие значения - техническая ошибка, повторите вызов метода позднее.
     """
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
 
 class Wallet(BaseModel):
     """ object: Wallet """
@@ -415,16 +383,6 @@ class PreProcessPaymentResponse(BaseModel):
     protection_code: Optional[str] = None
     account_unblock_uri: Optional[str] = None
     ext_action_uri: Optional[str] = None
-
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
 
 
 class Payment(BaseModel):  # lgtm [py/missing-equals #
@@ -526,17 +484,6 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
         self.protection_code = protection_code
         return self
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-        extra = Extra.allow
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
 
 class IncomingTransaction(BaseModel):
     """ object: IncomingTransaction """
@@ -544,16 +491,6 @@ class IncomingTransaction(BaseModel):
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None
     error: Optional[str] = None
-
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
 
 
 __all__ = (
