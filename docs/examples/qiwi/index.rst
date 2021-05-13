@@ -3,7 +3,8 @@ Qiwi usage examples
 ===================
 
 .. toctree::
-    p2p
     basic_methods
+    p2p
+    polling
     usage_with_aiogram
     qiwi_webhook
