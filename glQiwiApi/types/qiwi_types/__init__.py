@@ -8,11 +8,12 @@ from .other import CrossRate, FreePaymentDetailsFields, PaymentMethod
 from .partner import Partner
 from .payment_info import PaymentInfo
 from .polygon import Polygon
-from .qiwi_master import OrderDetails
+from .qiwi_master import OrderDetails, Card
 from .stats import Statistic
 from .terminal import Terminal
 from .transaction import Transaction
 from .webhooks import WebHookConfig, WebHook
+from .restriction import Restriction
 
 __all__ = (
     'QiwiAccountInfo',
@@ -36,5 +37,7 @@ __all__ = (
     'P2PKeys',
     'CrossRate',
     'FreePaymentDetailsFields',
-    'PaymentMethod'
+    'PaymentMethod',
+    'Card',
+    'Restriction'
 )

@@ -34,7 +34,9 @@ from .qiwi_types import (
     P2PKeys,
     CrossRate,
     FreePaymentDetailsFields,
-    PaymentMethod
+    PaymentMethod,
+    Card,
+    Restriction
 )
 from .yoomoney_types import (
     OperationType,
@@ -107,5 +109,7 @@ __all__ = (
     'N',
     'CrossRate',
     'FreePaymentDetailsFields',
-    'PaymentMethod'
+    'PaymentMethod',
+    'Card',
+    'Restriction'
 )
