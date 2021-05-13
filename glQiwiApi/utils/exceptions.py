@@ -56,7 +56,7 @@ class RequestError(Exception):
 
     def __init__(
             self,
-            message: str,
+            message: Optional[str],
             status_code: str,
             additional_info: Optional[str] = None,
             json_info: Optional[Union[Dict[str, Any], str]] = None
