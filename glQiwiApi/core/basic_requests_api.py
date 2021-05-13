@@ -31,7 +31,7 @@ class HttpXParser(AbstractParser):
 
     _sleep_time = 2
 
-    def __init__(self) -> NoReturn:
+    def __init__(self) -> None:
         self.base_headers = {
             'User-Agent': USER_AGENT,
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
@@ -45,7 +45,7 @@ class HttpXParser(AbstractParser):
 
     async def _request(
             self,
-            url: Optional[str] = None,
+            url: str,
             get_json: bool = False,
             method: str = 'POST',
             set_timeout: bool = True,
