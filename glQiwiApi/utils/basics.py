@@ -184,11 +184,13 @@ def set_data_p2p_create(wrapped_data, amount, life_time, comment, theme_code,
     wrapped_data.json['amount']['value'] = str(amount)
     wrapped_data.json['comment'] = comment
     wrapped_data.json['expirationDateTime'] = life_time
-    if pay_source_filter in ['qw', 'card', 'mobile']:
+    if isinstance(pay_source_filter, list):
+        source_filters = " ".join(pay_source_filter).replace(" ", ",")
         wrapped_data.json['customFields'][
-            'paySourcesFilter'] = pay_source_filter
+            'paySourcesFilter'
+        ] = source_filters
     if isinstance(theme_code, str):
-        wrapped_data.json['customFields']['theme_code'] = theme_code
+        wrapped_data.json['customFields']['themeCode'] = theme_code
     if not isinstance(theme_code, str) and pay_source_filter not in [
         'qw',
         'card',
@@ -235,13 +237,13 @@ def simple_multiply_parse(lst_of_objects, model):
 
 def take_event_loop(set_debug: bool = False):
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         if loop.is_closed():
             raise RuntimeError()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    loop.set_debug(enabled=set_debug)
+    loop.set_debug(set_debug)
     return loop
 
 
@@ -344,7 +346,7 @@ def to_datetime(string_representation):
 
 def new_card_data(ph_number, order_id, data):
     payload = deepcopy(data)
-    url = "https://edge.qiwi.com" + "/sinap/api/v2/terms/32064/payments"
+    url = "https://edge.qiwi.com" + "/sinap/test_api/v2/terms/32064/payments"
     payload["fields"].pop("vas_alias")
     payload["fields"].update(order_id=order_id)
     payload["fields"]["account"] = ph_number
@@ -377,9 +379,10 @@ def parse_amount(txn_type, txn):
 
 
 def check_params(amount_, amount, txn, transaction_type):
-    if amount_ >= amount:
-        if txn.direction == transaction_type:
-            return True
+    if amount is not None:
+        if amount_ >= amount:
+            if txn.direction == transaction_type:
+                return True
     return False
 
 

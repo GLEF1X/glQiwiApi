@@ -19,8 +19,8 @@ def parse_auth_link(response_data: Union[str, bytes]) -> Optional[str]: ...
 
 
 def check_dates(
-        start_date: Union[datetime, timedelta],
-        end_date: Union[datetime, timedelta],
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
         payload_data: dict
 ) -> dict: ...
 
@@ -72,7 +72,7 @@ def take_event_loop(set_debug: bool = False) -> AbstractEventLoop: ...
 
 
 def hmac_key(
-        key: str,
+        key: Optional[Any],
         amount: types.OptionalSum,
         status: Any,
         bill_id: str,
@@ -399,15 +399,6 @@ def sync(
 @overload
 def sync(
         func: Callable[
-            [Optional[None]], Coroutine[Any, Any, Optional[Dict[str, bool]]]],
-        *args: Any,
-        **kwargs: Any
-) -> Optional[Dict[str, bool]]: ...
-
-
-@overload
-def sync(
-        func: Callable[
             [Optional[None]], Coroutine[Any, Any, types.AccountInfo]],
         *args: Any,
         **kwargs: Any
@@ -479,19 +470,6 @@ def sync(
         *args: Any,
         **kwargs: Any
 ) -> Dict[str, str]: ...
-
-
-@overload
-def sync(
-        func: Callable[
-            [
-                Union[int, float], str, Optional[str],
-                int, Optional[str]
-            ], Coroutine[Any, Any, bool]
-        ],
-        *args: Any,
-        **kwargs: Any
-) -> bool: ...
 
 
 @overload

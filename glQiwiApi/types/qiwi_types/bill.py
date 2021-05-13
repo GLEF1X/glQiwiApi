@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field, Extra
 
 from glQiwiApi.core.core_mixins import BillMixin
 from glQiwiApi.types.basics import OptionalSum
-from glQiwiApi.utils.basics import custom_load
 
 
 class Customer(BaseModel):
@@ -37,16 +36,6 @@ class BillError(BaseModel):
     datetime: str = Field(alias="dateTime")
     trace_id: str = Field(alias="traceId")
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
 
 class Bill(BaseModel, BillMixin):
     """ Object: Bill """
@@ -63,12 +52,10 @@ class Bill(BaseModel, BillMixin):
     customer: Optional[Customer] = None
 
     class Config:
-        """ Pydantic config """
-        json_loads = custom_load
         extra = Extra.allow
 
         def __str__(self) -> str:
-            return '<Config class of pydantic>'
+            return "<Config pydantic model {Bill}>"
 
         def __repr__(self) -> str:
             return self.__str__()
