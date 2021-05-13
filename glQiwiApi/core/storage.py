@@ -66,6 +66,7 @@ class Storage(BaseStorage):
         """
         if force:
             return self.data.clear()
+        key: str
         return self.data[self._default_key].pop(key)
 
     def __setitem__(self, key, value) -> None:

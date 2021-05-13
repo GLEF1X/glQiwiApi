@@ -1,17 +1,17 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Extra
 
 from glQiwiApi.types.basics import Sum
 
 
 class Provider(BaseModel):
     """ object: Provider """
-    id: int
+    id: Optional[int] = None
     """ID провайдера в QIWI Wallet"""
 
-    short_name: str = Field(alias="shortName")
+    short_name: Optional[str] = Field(default=None, alias="shortName")
     """краткое наименование провайдера"""
 
     long_name: Optional[str] = Field(alias="longName", const=None)
@@ -92,7 +92,7 @@ class Transaction(BaseModel):
     provider: Provider
     """Данные о провайдере."""
 
-    source: Provider
+    source: Optional[Provider] = None
     """Служебная информация"""
 
     comment: Optional[str] = None
@@ -101,9 +101,30 @@ class Transaction(BaseModel):
     currency_rate: int = Field(alias="currencyRate")
     """Курс конвертации (если применяется в транзакции)"""
 
-    def as_str(self):
+    _extras: Optional[dict] = Field(..., alias="extras")
+    """Служебная информация"""
+
+    _cheque_ready: bool = Field(..., alias="chequeReady")
+    """Специальное поле"""
+
+    _bank_document_available: bool = Field(..., alias="bankDocumentAvailable")
+    """Специальное поле"""
+
+    _repeat_payment_enabled: bool = Field(..., alias="repeatPaymentEnabled")
+    """Специальное поле"""
+
+    _favorite_payment_enabled: bool = Field(
+        ..., alias="favoritePaymentEnabled"
+    )
+    """Специальное поле"""
+
+    _regular_payment_enabled: bool = Field(..., alias="regularPaymentEnabled")
+    """Специальное поле"""
+
+    def __str__(self) -> str:
         return f"""Статус транзакции: {self.status}
 Дата проведения платежа: {self.date}
 Сумма платежа: {self.sum.amount}
 Комментарий: {self.comment if isinstance(self.comment, str) else '-'}
+{"Кому" if self.type == "OUT" else "От кого"}: {self.to_account}
 """
