@@ -12,7 +12,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=(
         'tests', 'examples', 'examples.*')
     ),
-    name="RepoSitorySomsdfsdfs543",  # Replace with your own username
+    name="glQiwiApi",  # Replace with your own username
     version="0.2.2",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
