@@ -1,13 +1,13 @@
 import asyncio
 import datetime
-from typing import NoReturn, Any, Union, Optional, List, \
+from typing import Any, Union, Optional, List, \
     Tuple, Callable
 
 from aiohttp import ClientTimeout
 
-from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 from glQiwiApi.types.qiwi_types.transaction import Transaction
 from glQiwiApi.utils import basics as api_helper
+from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 
 DEFAULT_TIMEOUT = 20.0  # timeout in seconds
 
@@ -89,7 +89,7 @@ class HistoryPollingMixin:
                 break
 
             self.dispatcher.offset = payment.transaction_id
-            self.dispatcher.start_date = self.dispatcher.end_date
+            self.dispatcher.offset_start_date = self.dispatcher.offset_end_date
 
     async def __pre_process(
             self,
@@ -110,8 +110,11 @@ class HistoryPollingMixin:
                 "Invalid value of get_updates_from, it must "
                 "be instance of datetime and no more than  the current time"
             ) from ex
-        self.dispatcher.end_date = current_time
-        self.dispatcher.start_date = get_updates_from
+
+        self.dispatcher.offset_end_date = current_time
+
+        if self.dispatcher.offset_start_date is None:
+            self.dispatcher.offset_start_date = get_updates_from
 
     async def _get_history(self) -> List[Transaction]:
         """
@@ -121,8 +124,8 @@ class HistoryPollingMixin:
 
         """
         history = await self.dispatcher.client.transactions(
-            end_date=self.dispatcher.end_date,
-            start_date=self.dispatcher.start_date
+            end_date=self.dispatcher.offset_end_date,
+            start_date=self.dispatcher.offset_start_date
         )
 
         if not history or not all(
@@ -140,9 +143,7 @@ class HistoryPollingMixin:
 
         :param get_updates_from: date from which will be polling
         """
-        await self.__pre_process(
-            get_updates_from=get_updates_from
-        )
+        await self.__pre_process(get_updates_from)
         try:
             history = await self._get_history()
         except NoUpdatesToExecute:
