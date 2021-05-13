@@ -28,7 +28,7 @@ class QiwiSettings:
 
     GET_LIMITS: str = '/qw-limits/v1/persons/{stripped_number}/actual-limits'
 
-    GET_LIST_OF_CARDS: str = '/cards/v1/cards?vas-alias=qvc-master'
+    GET_LIST_OF_CARDS: str = '/cards/v1/cards'
 
     AUTHENTICATE: str = '/identification/v1/persons/{stripped_number}/identification'
 
@@ -94,7 +94,7 @@ class QiwiSettings:
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Authorization': 'Bearer {token}',
-            'Host': 'edge.qiwi.com',
+            'Host': 'edge.test_qiwi.com',
         }
         self.P2P_QIWI_HEADERS = {
             'Authorization': 'Bearer {token}',
