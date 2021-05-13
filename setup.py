@@ -4,7 +4,7 @@ import setuptools
 
 PATH = pathlib.Path(__file__).parent
 
-# README = (PATH / "README.md").read_text()
+README = (PATH / "README.md").read_text()
 
 REQUIREMENTS = (PATH / "docs/requirements.txt").read_text()
 
@@ -13,16 +13,16 @@ setuptools.setup(
         'tests', 'examples', 'examples.*')
     ),
     name="RepoSitorySomsdfsdfs543",  # Replace with your own username
-    version="0.0.2",
+    version="0.2.2",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
-    description="Light and fast wrapper for qiwi and yoomoney",
+    description="Light and fast wrapper for test_qiwi and yoomoney",
     package_data={"glQiwiApi": ["py.typed", "*.pyi", "**/*.pyi"]},
     # Длинное описание, которое будет отображаться на странице PyPi.
     # Использует README.md репозитория для заполнения.
-    # long_description=README,
+    long_description=README,
     # Определяет тип контента, используемый в long_description.
-    # long_description_content_type="text/markdown",
+    long_description_content_type="text/markdown",
     license="MIT",
     url="https://github.com/GLEF1X/glQiwiApi",
     classifiers=[
