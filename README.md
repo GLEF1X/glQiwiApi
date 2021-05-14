@@ -172,7 +172,7 @@ asyncio.run(main())
 
 ```
 
-## 🌟Webhooks / polling & handlers
+## 🌟Webhooks & handlers
 
 ```python
 import logging
