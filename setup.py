@@ -10,13 +10,13 @@ REQUIREMENTS = (PATH / "docs/requirements.txt").read_text()
 
 setuptools.setup(
     packages=setuptools.find_packages(exclude=(
-        'tests', 'examples', 'examples.*')
+        'tests', 'examples', 'examples.*', 'tests', 'tests.*')
     ),
     name="glQiwiApi",  # Replace with your own username
-    version="0.2.2",
+    version="0.2.21",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
-    description="Light and fast wrapper for test_qiwi and yoomoney",
+    description="Light and fast wrapper of QIWI and YooMoney api's",
     package_data={"glQiwiApi": ["py.typed", "*.pyi", "**/*.pyi"]},
     # Длинное описание, которое будет отображаться на странице PyPi.
     # Использует README.md репозитория для заполнения.

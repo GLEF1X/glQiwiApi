@@ -38,9 +38,7 @@ class QiwiWrapper(
     HistoryPollingMixin, QiwiKassaMixin
 ):
     """
-    Класс, реализующий обработку запросов к киви, удобен он тем,
-    что не просто отдает json подобные объекты, а
-    конвертирует ответ апи в pydantic модель.
+    Qiwi wallet api methods including webhooks and non api polling
 
     """
 
@@ -74,9 +72,6 @@ class QiwiWrapper(
             self.phone_number = phone_number.replace('+', '')
             if self.phone_number.startswith('8'):
                 self.phone_number = '7' + self.phone_number[1:]
-
-        if not hasattr(self, "phone_number"):
-            raise InvalidData("Invalid phone number value")
 
         self._router: QiwiRouter = QiwiRouter()
         self._p2p_router: QiwiKassaRouter = QiwiKassaRouter()
