@@ -30,9 +30,3 @@ pip install -r requirements.txt
 ```bash
 pytest .
 ```
-
-## 👨‍🎓 Notice
-
-<h3 align="center">
-    About 90% of the library has been verified by rigorous testing
-</h3>
