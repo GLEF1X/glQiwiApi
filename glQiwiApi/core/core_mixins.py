@@ -35,6 +35,10 @@ class BillMixin(object):
         return self
 
     async def check(self) -> bool:
+        """
+        Checking p2p payment
+
+        """
         async with self._w:
             return (await self._w.check_p2p_bill_status(
                 bill_id=self.bill_id
@@ -72,8 +76,9 @@ class ToolsMixin(object):
         dct = {slot: self._get(slot) for slot in self.__slots__ if
                self._get(slot) is not None}
         for k, value in dct.items():
-            if k == '_parser':
+            if k == '_requests':
                 value.session = None
+            elif k == 'dispatcher':
+                value.loop = None
             setattr(result, k, copy.deepcopy(value, memo))
-
         return result

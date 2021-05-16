@@ -236,6 +236,11 @@ def simple_multiply_parse(lst_of_objects, model):
 
 
 def take_event_loop(set_debug: bool = False):
+    """
+    Get new or running event loop
+
+    :param set_debug:
+    """
     try:
         loop = asyncio.get_running_loop()
         if loop.is_closed():
@@ -396,7 +401,7 @@ def run_forever_safe(loop) -> None:
 
 
 def safe_cancel(loop) -> None:
-    # -- cancel all tasks and close the loop gracefully
+    """cancel all tasks and close the loop gracefully"""
 
     loop_tasks_all = asyncio.all_tasks(loop=loop)
 

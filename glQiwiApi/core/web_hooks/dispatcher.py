@@ -205,7 +205,6 @@ class Dispatcher:
             await handler.check_then_execute(event)
 
     async def welcome(self) -> None:
-        """"""
         for callback in self._on_startup:
             await _inspect_and_execute_callback(
                 callback=callback,
