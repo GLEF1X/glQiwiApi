@@ -1,10 +1,12 @@
 """Main model: Terminal"""
 from typing import Optional
 
-from pydantic import Field, BaseModel
+from pydantic import Field
+
+from glQiwiApi.types.base import Base
 
 
-class Coordinate(BaseModel):
+class Coordinate(Base):
     """Object: coordinate"""
 
     latitude: float = Field(..., alias="latitude")
@@ -12,7 +14,7 @@ class Coordinate(BaseModel):
     precision: int = Field(..., alias="precision")
 
 
-class Terminal(BaseModel):
+class Terminal(Base):
     """Object: Terminal"""
 
     terminal_id: int = Field(..., alias="terminalId")

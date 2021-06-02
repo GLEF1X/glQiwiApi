@@ -1,12 +1,13 @@
 from typing import Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import Field, validator
 
+from glQiwiApi.types.base import Base
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
 
-class CrossRate(BaseModel):
+class CrossRate(Base):
     """Курс валюты"""
     rate_from: Union[str, CurrencyModel] = Field(..., alias="from")
     rate_to: Union[str, CurrencyModel] = Field(..., alias="to")
@@ -22,12 +23,12 @@ class CrossRate(BaseModel):
         return cur
 
 
-class PaymentMethod(BaseModel):
+class PaymentMethod(Base):
     payment_type: str
     account_id: str
 
 
-class FreePaymentDetailsFields(BaseModel):
+class FreePaymentDetailsFields(Base):
     """ Набор реквизитов платежа"""
     name: str
     """Наименование банка получателя"""

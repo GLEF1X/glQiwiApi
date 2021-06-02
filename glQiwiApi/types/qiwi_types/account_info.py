@@ -2,14 +2,15 @@ import ipaddress
 from datetime import datetime
 from typing import Optional, List
 
-from pydantic import Field, BaseModel, validator
+from pydantic import Field, validator
 
+from glQiwiApi.types.base import Base
 from glQiwiApi.types.basics import Sum
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
 
-class PassInfo(BaseModel):
+class PassInfo(Base):
     """ object: PassInfo """
 
     last_pass_change: str = Field(alias="lastPassChange")
@@ -17,7 +18,7 @@ class PassInfo(BaseModel):
     password_used: bool = Field(alias="passwordUsed")
 
 
-class MobilePinInfo(BaseModel):
+class MobilePinInfo(Base):
     """ object: MobilePinInfo """
 
     last_mobile_pin_change: Optional[
@@ -27,12 +28,12 @@ class MobilePinInfo(BaseModel):
     next_mobile_pin_change: str = Field(alias="nextMobilePinChange")
 
 
-class PinInfo(BaseModel):
+class PinInfo(Base):
     """ object: PinInfo """
     pin_used: bool = Field(alias="pinUsed")
 
 
-class AuthInfo(BaseModel):
+class AuthInfo(Base):
     """ object: AuthInfo """
     ip: ipaddress.IPv4Address
     bound_email: Optional[str] = Field(alias="boundEmail", const=None)
@@ -47,7 +48,7 @@ class AuthInfo(BaseModel):
     registration_date: datetime = Field(alias="registrationDate")
 
 
-class SmsNotification(BaseModel):
+class SmsNotification(Base):
     """ object: SmsNotification """
     price: Sum
     enabled: bool
@@ -55,14 +56,14 @@ class SmsNotification(BaseModel):
     end_date: Optional[datetime] = Field(alias="endDate", const=None)
 
 
-class IdentificationInfo(BaseModel):
+class IdentificationInfo(Base):
     """ object: IdentificationInfo """
     bank_alias: str = Field(alias="bankAlias")
     identification_level: str = Field(alias="identificationLevel")
     passport_expired: bool = Field(alias="passportExpired")
 
 
-class NickName(BaseModel):
+class NickName(Base):
     """ object: NickName """
     nickname: Optional[str] = None
     can_change: bool = Field(alias="canChange")
@@ -70,7 +71,7 @@ class NickName(BaseModel):
     description: str = ""
 
 
-class Feature(BaseModel):
+class Feature(Base):
     """ object: Feature """
     feature_id: int = Field(alias="featureId")
     feature_value: str = Field(alias="featureValue")
@@ -78,7 +79,7 @@ class Feature(BaseModel):
     end_date: str = Field(alias="endDate")
 
 
-class ContractInfo(BaseModel):
+class ContractInfo(Base):
     """ object: ContractInfo """
     blocked: bool = False
     contract_id: int = Field(alias="contractId")
@@ -91,7 +92,7 @@ class ContractInfo(BaseModel):
     features: Optional[List[Feature]] = None
 
 
-class UserInfo(BaseModel):
+class UserInfo(Base):
     """ object: UserInfo """
     default_pay_currency: CurrencyModel = Field(alias="defaultPayCurrency")
     default_pay_source: Optional[
@@ -115,7 +116,8 @@ class UserInfo(BaseModel):
             return v
         return Currency.get(str(v))
 
-class QiwiAccountInfo(BaseModel):
+
+class QiwiAccountInfo(Base):
     """Информация об аккаунте"""
     auth_info: Optional[AuthInfo] = Field(alias="authInfo", const=None)
     contract_info: Optional[

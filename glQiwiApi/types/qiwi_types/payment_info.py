@@ -1,27 +1,28 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from glQiwiApi.types import Sum
+from glQiwiApi.types.base import Base
 
 
-class Fields(BaseModel):
+class Fields(Base):
     """ Специальные поля """
     account: str
 
 
-class State(BaseModel):
+class State(Base):
     """ State """
     code: str
 
 
-class TransactionInfo(BaseModel):
+class TransactionInfo(Base):
     """ Информация о транзакции """
     txn_id: int = Field(..., alias="id")
     state: State
 
 
-class PaymentInfo(BaseModel):
+class PaymentInfo(Base):
     """Информация о платеже"""
     payment_id: int = Field(..., alias="id")
     terms: str
