@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import inspect
 import operator
 from typing import Any, Callable
 
-from glQiwiApi import types
 from .config import CF, E
 
 
@@ -44,22 +45,22 @@ class Filter:
             function
         ) or inspect.isawaitable(function)
 
-    def __eq__(self, other: Any) -> "Filter":
+    def __eq__(self, other: Any) -> Filter:
         return _sing_filter(self, lambda filter1: operator.eq(filter1, other))
 
-    def __ne__(self, other: Any) -> "Filter":
+    def __ne__(self, other: Any) -> Filter:
         return _sing_filter(self, lambda filter1: operator.ne(filter1, other))
 
-    def __invert__(self) -> "Filter":
+    def __invert__(self) -> Filter:
         return _sing_filter(self, operator.not_)
 
-    def __xor__(self, other: "Filter") -> "Filter":
+    def __xor__(self, other: Filter) -> Filter:
         return _compose_filter(self, other, xor)
 
-    def __and__(self, other: "Filter") -> "Filter":
+    def __and__(self, other: Filter) -> Filter:
         return _compose_filter(self, other, special_comparator)
 
-    def __or__(self, other: "Filter") -> "Filter":
+    def __or__(self, other: Filter) -> Filter:
         return _compose_filter(self, other, or_)
 
 
@@ -126,18 +127,6 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
     return Filter(func)
 
 
-# Default filter for transaction handler
-transaction_webhook_filter = Filter(
-    lambda update: isinstance(update, (types.WebHook, types.Transaction))
-)
-
-# Default filter for bill handler
-bill_webhook_filter = Filter(
-    lambda update: isinstance(update, types.Notification)
-)
-
 __all__ = (
-    "Filter",
-    "transaction_webhook_filter",
-    "bill_webhook_filter"
+    "Filter"
 )
