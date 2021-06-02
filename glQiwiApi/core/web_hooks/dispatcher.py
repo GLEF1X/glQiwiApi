@@ -1,37 +1,21 @@
 import asyncio
-import inspect
 import logging
-import types
-from datetime import datetime, timedelta
-from typing import List, Tuple, Coroutine, Any, Union, Optional, NoReturn, \
-    Callable
-
-import aiohttp
+from typing import List, Tuple, Coroutine, Any, Union
 
 from .config import EventHandlerFunctor, EventFilter, E
-from .filter import Filter, transaction_webhook_filter, bill_webhook_filter
-
-
-async def _inspect_and_execute_callback(client, callback: Callable):
-    if inspect.iscoroutinefunction(callback):
-        await callback(client)
-    else:
-        callback(client)
-
-
-def _get_stream_handler() -> logging.StreamHandler:
-    _log_format = f"%(asctime)s - [%(levelname)s] - %(message)s"
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)
-    stream_handler.setFormatter(logging.Formatter(_log_format))
-    return stream_handler
+from .filter import Filter
+from ..builtin import (
+    bill_webhook_filter,
+    transaction_webhook_filter,
+    InterceptHandler
+)
 
 
 def _setup_logger() -> logging.Logger:
     logger = logging.getLogger(__name__)
-    logger.setLevel(level=logging.INFO)
+    logger.setLevel(level=logging.DEBUG)
     if not logger.handlers:
-        logger.addHandler(_get_stream_handler())
+        logger.addHandler(InterceptHandler())
     return logger
 
 
@@ -73,13 +57,9 @@ class Dispatcher:
 
     """
 
-    def __init__(
-            self,
-            loop: asyncio.AbstractEventLoop,
-            wallet: Any
-    ):
+    def __init__(self, loop: asyncio.AbstractEventLoop):
         if not isinstance(loop, asyncio.AbstractEventLoop):
-            raise ValueError(
+            raise RuntimeError(
                 f"Listener must have its event loop implemented with"
                 f" {asyncio.AbstractEventLoop!r}"
             )
@@ -88,22 +68,6 @@ class Dispatcher:
         self.transaction_handlers: List[EventHandler] = []
         self.bill_handlers: List[EventHandler] = []
         self._logger: logging.Logger = _setup_logger()
-        # Polling variables
-        self._polling: bool = False
-        self.offset: Optional[int] = None
-        self.offset_start_date: Optional[
-            Union[
-                datetime,
-                timedelta
-            ]
-        ] = None
-        self.offset_end_date = None
-        self.client: Any = wallet
-        self.request_timeout: Optional[
-            Union[float, int, aiohttp.ClientTimeout]
-        ] = None
-        self._on_startup: List[Callable] = []
-        self._on_shutdown: List[Callable] = []
 
     def register_transaction_handler(
             self,
@@ -138,18 +102,6 @@ class Dispatcher:
     @logger.setter
     def logger(self, logger: logging.Logger):
         self._logger = logger
-
-    def __setitem__(self, key: str, callback: Callable):
-        if key not in ["on_shutdown", "on_startup"]:
-            raise ValueError()
-
-        if not isinstance(callback, types.FunctionType):
-            raise ValueError("Invalid type of callback")
-
-        if key == "on_shutdown":
-            self._on_shutdown.append(callback)
-        else:
-            self._on_startup.append(callback)
 
     @staticmethod
     def wrap_handler(
@@ -204,17 +156,3 @@ class Dispatcher:
         for handler in self.handlers:
             await handler.check_then_execute(event)
 
-    async def welcome(self) -> None:
-        for callback in self._on_startup:
-            await _inspect_and_execute_callback(
-                callback=callback,
-                client=self.client
-            )
-
-    async def goodbye(self) -> None:
-        self.logger.info("Stop polling!")
-        for callback in self._on_shutdown:
-            await _inspect_and_execute_callback(
-                callback=callback,
-                client=self.client
-            )
