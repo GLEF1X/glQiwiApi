@@ -6,6 +6,7 @@ garbage.py
 # C extensions
 *.so
 glQiwiApi/test2.py
+glQiwiApi/contrib
 test.py
 web_test.py
 bot

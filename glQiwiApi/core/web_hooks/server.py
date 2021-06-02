@@ -9,7 +9,7 @@ from glQiwiApi import types
 from glQiwiApi.core.abstracts import BaseWebHookView
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
 from glQiwiApi.utils.basics import hmac_for_transaction, hmac_key
-from .config import (
+from glQiwiApi.core.web_hooks.config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
     allowed_ips,
     DEFAULT_QIWI_ROUTER_NAME,
@@ -17,11 +17,13 @@ from .config import (
     DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
     Path
 )
+from glQiwiApi.core.builtin import BaseProxy
 
 
 def _check_ip(ip_address: str) -> bool:
     """
     Check if ip is allowed to request us
+
     :param ip_address: IP-address
     :return: address is allowed
     """
@@ -49,11 +51,9 @@ class QiwiWalletWebView(BaseWebHookView):
 
     async def post(self) -> web.Response:
         await super().post()
-        return web.Response(text="ok", status=200)
+        return web.Response(text="ok")
 
-    def _hash_validator(self, update: typing.Union[
-        types.Notification, types.WebHook
-    ]) -> None:
+    def _hash_validator(self, update: types.WebHook) -> None:
         base64_key = self.request.app.get('_base64_key')
 
         if not update.payment:
@@ -85,9 +85,7 @@ class QiwiBillWebView(BaseWebHookView):
     def _check_ip(self, ip_address: str) -> bool:
         return _check_ip(ip_address)
 
-    def _hash_validator(self, update: typing.Union[
-        types.Notification, types.WebHook
-    ]) -> None:
+    def _hash_validator(self, update: types.Notification) -> None:
         sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")
         logging.info(sha256_signature)
         _secret = self.request.app.get("_secret_key")
@@ -98,9 +96,7 @@ class QiwiBillWebView(BaseWebHookView):
         if answer != sha256_signature:
             raise web.HTTPBadRequest()
 
-    async def parse_update(self) -> typing.Union[
-        types.Notification, types.WebHook
-    ]:
+    async def parse_update(self) -> types.Notification:
         payload = await self.request.json()
         return types.Notification.parse_raw(payload)
 
@@ -109,11 +105,10 @@ class QiwiBillWebView(BaseWebHookView):
 
         update = await self.parse_update()
 
-        # Validation is still in development
-        # self._hash_validator(update)
+        # self._hash_validator(update) 
 
         await self.handler_manager.process_event(update)
-        return web.json_response(data={"error": "0"}, status=200)
+        return web.json_response(data={"error": "0"})
 
     app_key_check_ip = "_qiwi_bill_check_ip"
     app_key_handler_manager = "_qiwi_bill_handler_manager"
@@ -129,11 +124,11 @@ def setup_transaction_data(
     app[QiwiWalletWebView.app_key_check_ip] = _check_ip
     app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
     if isinstance(path, Path):
-        path = path.transaction_path
+        txn_path: str = path.transaction_path
     else:
-        path = DEFAULT_QIWI_WEBHOOK_PATH
+        txn_path = DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(
-        path,
+        txn_path,
         QiwiWalletWebView,
         name=DEFAULT_QIWI_ROUTER_NAME
     )
@@ -149,13 +144,13 @@ def setup_bill_data(
     app[QiwiBillWebView.app_key_check_ip] = _check_ip
     app[QiwiBillWebView.app_key_handler_manager] = handler_manager
     if isinstance(path, Path):
-        path: str = path.bill_path
+        bill_path: str = path.bill_path
     else:
-        path: str = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
+        bill_path = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
     app.router.add_view(
         handler=QiwiBillWebView,
         name=DEFAULT_QIWI_BILLS_ROUTER_NAME,
-        path=path
+        path=bill_path
     )
 
 
@@ -163,6 +158,7 @@ def setup(
         dispatcher: Dispatcher,
         app: web.Application,
         instance: typing.Any,
+        host: str,
         on_startup: typing.Optional[
             typing.Callable[[web.Application], typing.Awaitable[None]
             ]],
@@ -173,18 +169,22 @@ def setup(
         path: typing.Optional[Path] = None,
         secret_key: typing.Optional[str] = None,
         base64_key: typing.Optional[str] = None,
+        tg_app: typing.Optional[BaseProxy] = None,
 ) -> None:
     """
-    Setup web application for webhooks
+    Entirely configures the web app for webhooks
 
     :param dispatcher: dispatcher, which processing events
     :param app: aiohttp.web.Application
+    :param instance:
+    :param host:
     :param path: Path obj, contains two paths
     :param secret_key: secret p2p key
     :param base64_key: Base64-encoded webhook key
     :param on_startup: coroutine,which will be executed on startup
     :param on_shutdown: coroutine, which will be executed on shutdown
     :param instance: instance of the QiwiWrapper
+    :param tg_app:
     """
 
     setup_bill_data(app, secret_key, dispatcher,
@@ -192,6 +192,7 @@ def setup(
     setup_transaction_data(app, base64_key, dispatcher,
                            path)
     _setup_callbacks(on_startup, on_shutdown, instance, app)
+    _setup_tg_proxy(tg_app, app, host)
 
 
 def _setup_callbacks(
@@ -212,6 +213,27 @@ def _setup_callbacks(
     :param instance: instance of the QiwiWrapper
     :param app: instance of aiohttp.web.Application()
     """
-    app["qiwi_wrapper"] = instance
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
+    app["client"] = instance
+    if callable(on_startup):
+        app.on_startup.append(on_startup)
+    if callable(on_shutdown):
+        app.on_shutdown.append(on_shutdown)
+
+
+def _setup_tg_proxy(
+        tg_app: typing.Optional[BaseProxy],
+        app: web.Application, host: str
+) -> None:
+    """
+    Function, which setup tg proxy application to main webapp
+
+    :param tg_app: BaseTelegramProxy subclass or builtin
+    :param app: main application
+    """
+    if tg_app is not None:
+        if not isinstance(tg_app, BaseProxy):
+            raise RuntimeError(
+                "Invalid telegram proxy. It must "
+                "inherit from the parent class `BaseTelegramProxy`."
+            )
+        tg_app.setup(app=app, host=host)

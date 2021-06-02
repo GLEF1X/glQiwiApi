@@ -5,7 +5,7 @@ from .abstracts import (
 )
 from .aiohttp_custom_api import RequestManager
 from .basic_requests_api import HttpXParser
-from .core_mixins import BillMixin, ToolsMixin
+from .core_mixins import ToolsMixin, ContextInstanceMixin
 from .storage import Storage
 
 __all__ = (
@@ -14,7 +14,8 @@ __all__ = (
     'AbstractParser',
     'BaseStorage',
     'AioTestCase',
-    'BillMixin',
+    'RequestManager',
+    'executor',
     'ToolsMixin',
-    'RequestManager'
+    'ContextInstanceMixin'
 )
