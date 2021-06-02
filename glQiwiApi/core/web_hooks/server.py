@@ -105,7 +105,7 @@ class QiwiBillWebView(BaseWebHookView):
 
         update = await self.parse_update()
 
-        # self._hash_validator(update) 
+        # self._hash_validator(update)
 
         await self.handler_manager.process_event(update)
         return web.json_response(data={"error": "0"})
