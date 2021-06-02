@@ -1,12 +1,13 @@
 import datetime
 from typing import Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from glQiwiApi.types import Sum
+from glQiwiApi.types.base import Base
 
 
-class OrderDetails(BaseModel):
+class OrderDetails(Base):
     """ object: OrderDetails """
     order_id: str = Field(..., alias="id")
     card_alias: str = Field(..., alias="cardAlias")
@@ -15,7 +16,7 @@ class OrderDetails(BaseModel):
     card_id: Optional[str] = Field(alias="cardId", default=None)
 
 
-class CardCredentials(BaseModel):
+class CardCredentials(Base):
     """object: CardCredentials"""
     qvx_id: int = Field(..., alias="id")
     masked_pan: str = Field(..., alias="maskedPan")
@@ -34,13 +35,13 @@ class CardCredentials(BaseModel):
     card_expire_year: str = Field(..., alias="cardExpireYear")
 
 
-class Requisite(BaseModel):
+class Requisite(Base):
     """object: Requisite"""
     name: str
     value: str
 
 
-class Details(BaseModel):
+class Details(Base):
     """object: Details"""
     info: str
     description: str
@@ -50,7 +51,7 @@ class Details(BaseModel):
     requisites: List[Requisite]
 
 
-class CardInfo(BaseModel):
+class CardInfo(Base):
     """object: CardInfo"""
     id_: int = Field(..., alias="id")
     name: str
@@ -61,7 +62,7 @@ class CardInfo(BaseModel):
     details: Details
 
 
-class Card(BaseModel):
+class Card(Base):
     """
     object: Card
     description: Данные выпущенных карт
