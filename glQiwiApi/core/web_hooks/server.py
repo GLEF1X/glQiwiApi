@@ -7,8 +7,7 @@ from aiohttp.web_response import Response
 
 from glQiwiApi import types
 from glQiwiApi.core.abstracts import BaseWebHookView
-from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
-from glQiwiApi.utils.basics import hmac_for_transaction, hmac_key
+from glQiwiApi.core.builtin import BaseProxy
 from glQiwiApi.core.web_hooks.config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
     allowed_ips,
@@ -17,7 +16,8 @@ from glQiwiApi.core.web_hooks.config import (
     DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
     Path
 )
-from glQiwiApi.core.builtin import BaseProxy
+from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
+from glQiwiApi.utils.basics import hmac_for_transaction, hmac_key
 
 
 def _check_ip(ip_address: str) -> bool:
@@ -160,7 +160,8 @@ def setup(
         instance: typing.Any,
         host: str,
         on_startup: typing.Optional[
-            typing.Callable[[web.Application], typing.Awaitable[None]
+            typing.Callable[
+                [web.Application], typing.Awaitable[None]
             ]],
         on_shutdown: typing.Optional[
             typing.Callable[
