@@ -1,3 +1,8 @@
+"""
+Provides effortless work with QIWI API using asynchronous requests.
+Easy to integrate to Telegram bot, which was written on aiogram or another async/sync library.
+
+"""
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple
 
@@ -6,7 +11,8 @@ from pydantic import ValidationError
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     RequestManager,
-    ToolsMixin
+    ToolsMixin,
+    ContextInstanceMixin
 )
 from glQiwiApi.types import (
     AccountInfo,
@@ -22,7 +28,7 @@ from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter
 
 
-class YooMoneyAPI(ToolsMixin):
+class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
     """
     Класс, реализующий обработку запросов к YooMoney
     Удобен он тем, что не просто отдает json подобные объекты,
@@ -140,8 +146,7 @@ class YooMoneyAPI(ToolsMixin):
         }
         async for response in RequestManager(
                 without_context=True,
-                messages=router.config.ERROR_CODE_NUMBERS,
-                cache_time=DEFAULT_CACHE_TIME
+                messages=router.config.ERROR_CODE_NUMBERS
         ).fast().fetch(
             url=router.build_url("GET_ACCESS_TOKEN"),
             headers=headers,
