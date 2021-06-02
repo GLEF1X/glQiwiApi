@@ -1,9 +1,9 @@
 from typing import Union, Optional
 
-from pydantic import BaseModel
+from glQiwiApi.types.base import Base
 
 
-class CurrencyModel(BaseModel):
+class CurrencyModel(Base):
     code: str
     decimal_digits: int
     name: str

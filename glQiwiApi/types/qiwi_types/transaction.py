@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, Extra
+from pydantic import Field
 
+from glQiwiApi.types.base import Base
 from glQiwiApi.types.basics import Sum
 
 
-class Provider(BaseModel):
+class Provider(Base):
     """ object: Provider """
     id: Optional[int] = None
     """ID провайдера в QIWI Wallet"""
@@ -14,10 +15,10 @@ class Provider(BaseModel):
     short_name: Optional[str] = Field(default=None, alias="shortName")
     """краткое наименование провайдера"""
 
-    long_name: Optional[str] = Field(alias="longName", const=None)
+    long_name: Optional[str] = Field(alias="longName", default=None)
     """развернутое наименование провайдера"""
 
-    logo_url: Optional[str] = Field(alias="logoUrl", const=None)
+    logo_url: Optional[str] = Field(alias="logoUrl", default=None)
     """ссылка на логотип провайдера"""
 
     description: Optional[str] = None
@@ -26,11 +27,11 @@ class Provider(BaseModel):
     keys: Optional[Union[str, list]] = None
     """список ключевых слов"""
 
-    site_url: Optional[str] = Field(alias="siteUrl", const=None)
+    site_url: Optional[str] = Field(alias="siteUrl", default=None)
     """сайт провайдера"""
 
 
-class Transaction(BaseModel):
+class Transaction(Base):
     """ object: Transaction """
     transaction_id: int = Field(alias="txnId")
     """	ID транзакции в сервисе QIWI Кошелек"""
@@ -45,7 +46,7 @@ class Transaction(BaseModel):
     Для запросов данных о транзакции - Дата/время платежа, время московское
     """
 
-    error_code: Optional[int] = Field(alias="errorCode", const=None)
+    error_code: Optional[int] = Field(alias="errorCode", default=None)
     """Код ошибки платежа"""
 
     error: Optional[str] = None
