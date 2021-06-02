@@ -132,7 +132,7 @@ async def main():
         else:
             print('Транзакция не найдена')
         # Или, начиная с версии апи 0.2.0
-        print(await bill.check())  # This will print you bool answer
+        print(await bill.paid)  # This will print you bool answer
 
 
 asyncio.run(main())
