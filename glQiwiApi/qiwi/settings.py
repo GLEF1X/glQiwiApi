@@ -224,7 +224,7 @@ class QiwiSettings:
         headers=DEFAULT_QIWI_HEADERS
     )
 
-    QIWI_MASTER: Dict[str, Union[int, float, str]] = None
+    QIWI_MASTER: Optional[Dict[str, Union[int, float, str]]] = None
 
 
 @lru_cache()
@@ -234,7 +234,7 @@ def get_settings() -> QiwiSettings:
 
 
 class QiwiRouter(AbstractRouter):
-    """Class, which deals with all methods, except p2p"""
+    """Class, that delegates building the right paths, except p2p"""
     __head__ = "https://edge.qiwi.com"
 
     @functools.lru_cache()
