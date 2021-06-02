@@ -4,8 +4,9 @@ import uuid
 from typing import Dict, Union
 
 import pytest
-from glQiwiApi import types, InvalidData
+
 from glQiwiApi import QiwiWrapper
+from glQiwiApi import types, InvalidData
 
 pytestmark = pytest.mark.asyncio
 
@@ -67,6 +68,7 @@ async def test_identification(api: QiwiWrapper):
     assert isinstance(result, types.Identification)
 
 
+@pytest.mark.skip()
 @pytest.mark.parametrize("payload", [
     {
         "transaction_type": "OUT",
@@ -221,7 +223,7 @@ async def test_check_p2p_bill_status(api: QiwiWrapper):
 async def test_check_p2p_on_object(api: QiwiWrapper):
     async with api:
         bill = await api.create_p2p_bill(amount=1)
-        result = await bill.check()
+        result = await bill.paid
 
     assert isinstance(result, bool)
 
@@ -229,7 +231,7 @@ async def test_check_p2p_on_object(api: QiwiWrapper):
 @pytest.mark.parametrize("rows", [5, 10, 50])
 async def test_get_bills(api: QiwiWrapper, rows: int):
     async with api:
-        result = await api.get_bills(rows=rows)
+        result = await api.get_bills(rows_num=rows)
 
     assert isinstance(result, list)
     assert all(isinstance(b, types.Bill) for b in result)
