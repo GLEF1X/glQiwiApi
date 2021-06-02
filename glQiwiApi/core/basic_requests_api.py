@@ -1,31 +1,29 @@
+from __future__ import annotations
+
 from asyncio import as_completed, set_event_loop_policy
 from itertools import repeat
 from typing import (
     Dict,
-    AsyncGenerator,
-    NoReturn, Coroutine, Any
+    AsyncGenerator
 )
 from typing import Optional, List, Union
 
-import aiohttp
 from aiohttp import (
     ClientTimeout,
     ClientProxyConnectionError,
     ServerDisconnectedError,
-    ContentTypeError
+    ContentTypeError, ClientConnectionError, ClientSession
 )
-from aiohttp.hdrs import USER_AGENT
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core import AbstractParser
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
 from glQiwiApi.types import Response
-from glQiwiApi.types.basics import Cached
 
 
 class HttpXParser(AbstractParser):
     """
-    Обвертка над aiohttp
+    Aiohttp wrapper, implements the method of sending a request
 
     """
 
@@ -33,7 +31,7 @@ class HttpXParser(AbstractParser):
 
     def __init__(self) -> None:
         self.base_headers = {
-            'User-Agent': USER_AGENT,
+            'User-Agent': "glQiwiApi/0.2.23",
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
         self._timeout = ClientTimeout(
@@ -42,6 +40,7 @@ class HttpXParser(AbstractParser):
             sock_connect=5,
             sock_read=None
         )
+        self.session: Optional[ClientSession] = None
 
     async def _request(
             self,
@@ -63,12 +62,7 @@ class HttpXParser(AbstractParser):
                 ]]]
             ] = None) -> Response:
         """
-        Метод для отправки запроса,
-        может возвращать в Response ProxyError в качестве response_data,
-        это означает, что вы имеете проблемы с подключением к прокси,
-        возможно нужно добавить дополнительные post данные,
-        если вы используете method = POST, или headers,
-        если запрос GET
+        Send request to some url. Method has a similar signature with the `aiohttp.request`
 
 
         :param url: ссылка, куда вы хотите отправить ваш запрос
@@ -97,18 +91,18 @@ class HttpXParser(AbstractParser):
                 json=json if isinstance(json, dict) else None,
                 cookies=cookies,
                 params=params,
+                verify_ssl=False
             )
         except (
                 ClientProxyConnectionError,
-                ServerDisconnectedError
+                ServerDisconnectedError,
+                ClientConnectionError
         ):
             self.raise_exception(status_code='400_special_bad_proxy')
             return Response.bad_response()
         # Get content and return response
         try:
-            data = await response.json(
-                content_type="application/json"
-            )
+            data = await response.json()
         except ContentTypeError:
             if get_json:
                 return Response(status_code=response.status)
@@ -149,7 +143,7 @@ class HttpXParser(AbstractParser):
         for future in as_completed(fs=coroutines):
             yield await future
 
-    def fast(self) -> 'HttpXParser':
+    def fast(self) -> HttpXParser:
         """
         Method to fetching faster with using faster event loop(uvloop) \n
         USE IT ONLY ON LINUX SYSTEMS,
@@ -162,6 +156,14 @@ class HttpXParser(AbstractParser):
             set_event_loop_policy(EventLoopPolicy())
         except ImportError:
             # Catching import error and forsake standard policy
-            from asyncio import DefaultEventLoopPolicy as EventLoopPolicy
+            from asyncio import DefaultEventLoopPolicy as EventLoopPolicy  # type: ignore
             set_event_loop_policy(EventLoopPolicy())
         return self
+
+    def create_session(self, **kwargs) -> None:
+        """ Creating new session if old was close or it's None """
+        if not isinstance(self.session, ClientSession):
+            self.session = ClientSession(**kwargs)
+        elif isinstance(self.session, ClientSession):
+            if self.session.closed:
+                self.session = ClientSession(**kwargs)

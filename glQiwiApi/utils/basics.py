@@ -98,7 +98,7 @@ def check_dates(start_date, end_date, payload_data):
                 }
             )
         else:
-            raise Exception(
+            raise RuntimeError(
                 'end_date не может быть больше чем start_date'
             )
     return payload_data
@@ -341,10 +341,8 @@ def to_datetime(string_representation):
     :return: datetime representation
     """
     try:
-        parsed = orjson.dumps(
-            {'dt': string_representation}
-        )
-        return Parser.parse_obj(parsed).dt
+        dictionary = {'dt': string_representation}
+        return Parser.parse_obj(dictionary).dt
     except (ValidationError, orjson.JSONDecodeError) as ex:
         return ex.json(indent=4)
 
@@ -407,7 +405,7 @@ def safe_cancel(loop) -> None:
 
     for task in loop_tasks_all:
         task.cancel()
-    # NOTE: `cancel` does not guarantee that the Task will be cancelled
+    # NOTE: `cancel` does not guarantee that the task will be cancelled
 
     for task in loop_tasks_all:
         if not (task.done() or task.cancelled()):
@@ -461,7 +459,7 @@ def _on_shutdown(executor, loop):
 
 def sync(func, *args, **kwargs):
     """
-    Function to use async functions(libraries) synchronously
+    Function to execute async functions synchronously
 
     :param func: Async function, which you want to execute in synchronous code
     :param args: args, which need your async func
@@ -483,6 +481,16 @@ def sync(func, *args, **kwargs):
     finally:
         # Cleanup
         _on_shutdown(executor, loop)
+
+
+def async_as_sync(func):
+    """ Decorator, which use `sync` function to implement async to sync """
+
+    @ft.wraps(func)
+    def wrapper(*args, **kwargs):
+        return sync(func, *args, **kwargs)
+
+    return wrapper
 
 
 def check_transaction(
@@ -548,7 +556,7 @@ def override_error_messages(status_codes):
 
 def check_api_method(api_method):
     if not isinstance(api_method, str):
-        raise ValueError("Invalid type of api_method(must  be string)")
+        raise RuntimeError("Invalid type of api_method(must  be string)")
 
 
 def check_dates_for_statistic_request(start_date, end_date):
@@ -573,11 +581,19 @@ def check_dates_for_statistic_request(start_date, end_date):
 
 
 async def save_file(dir_path, file_name, data):
+    """
+    Saving file in dir_path/file_name.pdf with some data
+
+    :param dir_path:
+    :param file_name:
+    :param data:
+    """
     if isinstance(dir_path, str):
         dir_path = pathlib.Path(dir_path)
+
     if not dir_path.is_dir():
         raise RuntimeError("Invalid path to save, its not directory!")
-    dir_path: pathlib.Path
-    path_to_file = dir_path / (file_name + '.pdf')
+
+    path_to_file: pathlib.Path = dir_path / (file_name + '.pdf')
     async with aiofiles.open(path_to_file, 'wb') as file:
         return await file.write(data)
