@@ -2,7 +2,7 @@ API_DATA = {
     "api_access_token": "",
     "secret_p2p":
         "",
-    "phone_number": ""
+    "phone_number": "+"
 }
 
 YOO_MONEY_DATA = {
@@ -11,9 +11,12 @@ YOO_MONEY_DATA = {
 
 WRONG_API_DATA = {
     "api_access_token": dict(),
-    "secret_p2p": 5454,
-    "phone_number": 1234
+    "secret_p2p": "5454",
+    "phone_number": "12121",
+    "validate_params": True
 }
+
+EMPTY_DATA: dict = {}
 
 TO_WALLET_DATA = {
     "to_number": "+380985272064",
