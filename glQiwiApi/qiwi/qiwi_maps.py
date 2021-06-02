@@ -1,12 +1,13 @@
 import typing
 
 from glQiwiApi import types
-from glQiwiApi.core import RequestManager, ToolsMixin
+from glQiwiApi.core import RequestManager
+from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.utils import basics as api_helper
 
 
-class QiwiMaps(ToolsMixin):
+class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
     """
     API Карты терминалов QIWI позволяет установить местонахождение
     терминалов QIWI на территории РФ
