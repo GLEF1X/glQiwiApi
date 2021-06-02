@@ -3,11 +3,9 @@ import asyncio
 import unittest
 from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple
 
-import aiohttp
-from aiohttp import ClientSession, web
+from aiohttp import web
 from aiohttp.typedefs import LooseCookies
 
-from glQiwiApi import types
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
 from glQiwiApi.types import Response
 
@@ -36,10 +34,6 @@ class BaseStorage(abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_current(self, key: str) -> Any:
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def clear(self, key: str, force: bool = False) -> Any:
         raise NotImplementedError
 
@@ -65,7 +59,7 @@ class AbstractRouter(metaclass=SingletonABCMeta):
         try:
             return url_.format(**kwargs)
         except KeyError:
-            raise ValueError("Bad kwargs for url build")
+            raise RuntimeError("Bad kwargs for url build")
 
     @abc.abstractmethod
     def build_url(self, api_method: str, **kwargs: Any) -> str:
@@ -101,7 +95,6 @@ class AioTestCase(unittest.TestCase):
 
 class AbstractParser(abc.ABC):
     """ Abstract class of parser for send request to different API's"""
-    session: Optional[aiohttp.ClientSession] = None
 
     @abc.abstractmethod
     async def _request(
@@ -142,14 +135,6 @@ class AbstractParser(abc.ABC):
             message: Optional[str] = None
     ) -> None:
         """Метод для обработки исключений и лучшего логирования"""
-
-    def create_session(self, **kwargs) -> None:
-        """ Creating new session if old was close or it's None """
-        if self.session is None:
-            self.session = ClientSession(**kwargs)
-        elif isinstance(self.session, ClientSession):
-            if self.session.closed:
-                self.session = ClientSession(**kwargs)
 
 
 class BaseWebHookView(web.View):
@@ -208,9 +193,7 @@ class BaseWebHookView(web.View):
 
         await self.handler_manager.process_event(update)
 
-    def _hash_validator(self, update: Union[
-        types.Notification, types.WebHook
-    ]) -> None:
+    def _hash_validator(self, update) -> None:
         """ Validating by hash of update """
 
     @property
