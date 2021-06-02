@@ -41,8 +41,15 @@ class TestAiohttpSession:
 
     async def test_create_api_with_wrong_data(self):
         from tests.types.dataset import WRONG_API_DATA
+
         with pytest.raises(InvalidData):
             QiwiWrapper(**WRONG_API_DATA)
+
+    async def test_raise_runtime(self):
+        from tests.types.dataset import EMPTY_DATA
+
+        with pytest.raises(RuntimeError):
+            QiwiWrapper(**EMPTY_DATA)
 
     async def test_close_session(self):
         from tests.types.dataset import API_DATA

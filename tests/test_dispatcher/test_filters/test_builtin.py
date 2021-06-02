@@ -1,5 +1,5 @@
 import pytest
-from glQiwiApi.core.web_hooks.filter import (
+from glQiwiApi.core.builtin import (
     transaction_webhook_filter,
     bill_webhook_filter
 )
