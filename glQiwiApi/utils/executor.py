@@ -311,7 +311,6 @@ class Executor:
                 payment = next(history_iterator)
                 await self.dispatcher.process_event(payment)
                 self.offset = payment.transaction_id
-                print(self.offset, last_payment_id)
                 self.offset_start_date = self.offset_end_date
             except StopIteration:  # handle exhausted iterator
                 break

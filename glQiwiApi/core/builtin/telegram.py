@@ -116,6 +116,7 @@ class TelegramWebhookProxy(BaseProxy):
         API method `set_webhook` like this: self.dispatcher.bot.set_webhook()
 
         """
+
         full_url: str = host + self.prefix
 
         if isinstance(self.execution_path, str):
