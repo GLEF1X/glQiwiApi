@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextvars
 import copy
-from typing import Any, TYPE_CHECKING, TypeVar, Optional, cast, Generic, ClassVar
+from typing import Any, TYPE_CHECKING, TypeVar, Optional, cast, Generic, ClassVar, Dict
 
 from aiohttp import ClientSession
 
@@ -40,6 +40,7 @@ class ToolsMixin(object):
 
     def __deepcopy__(self, memo):
         cls = self.__class__
+        kw: Dict[str, bool] = {"__copy_signal__": True}
         result = cls.__new__(cls, **kw)
         memo[id(self)] = result
         dct = {

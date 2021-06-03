@@ -7,8 +7,6 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import List, Tuple, Dict, Union, Optional, Any, MutableMapping, Pattern, Match
 
-from aiohttp import ClientSession
-
 from glQiwiApi.core import RequestManager
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
@@ -46,6 +44,13 @@ from glQiwiApi.utils.exceptions import (
 )
 
 
+def _is_copy_signal(kwargs: dict):
+    try:
+        return kwargs.pop("__copy_signal__")
+    except KeyError:
+        return False
+
+
 class BaseWrapper(ABC):
     """ Base wrapper class"""
 
@@ -54,7 +59,8 @@ class BaseWrapper(ABC):
                  secret_p2p: Optional[str] = None,
                  without_context: bool = False,
                  cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
-                 validate_params: bool = False) -> None:
+                 validate_params: bool = False,
+                 proxy: Any = None) -> None:
         """
         :param api_access_token: токен, полученный с https://qiwi.com/api
         :param phone_number: номер вашего телефона с +
@@ -85,7 +91,8 @@ class BaseWrapper(ABC):
         self._requests: RequestManager = RequestManager(
             without_context=without_context,
             messages=self._router.config.ERROR_CODE_NUMBERS,
-            cache_time=cache_time
+            cache_time=cache_time,
+            proxy=proxy
         )
         self.api_access_token = api_access_token
         self.secret_p2p = secret_p2p
@@ -109,9 +116,15 @@ class BaseWrapper(ABC):
         return headers
 
     @property
-    def session(self) -> Optional[ClientSession]:
+    def request_manager(self) -> RequestManager:
         """Return aiohttp session object"""
-        return self._requests.session
+        return self._requests
+
+    @request_manager.setter
+    def request_manager(self, manager: RequestManager):
+        if not isinstance(manager, RequestManager):
+            raise TypeError("Expected `RequestManager` hair, got %s" % type(manager))
+        self._requests = manager
 
     @property
     def stripped_number(self) -> str:
@@ -168,7 +181,8 @@ class BaseWrapper(ABC):
                 cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
                 *args, **kwargs):
         if not isinstance(api_access_token, str) and not isinstance(secret_p2p, str):
-            raise RuntimeError("Cannot initialize an instance without any tokens")
+            if not _is_copy_signal(kwargs):
+                raise RuntimeError("Cannot initialize an instance without any tokens")
 
         return super().__new__(cls)
 

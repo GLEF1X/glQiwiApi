@@ -5,19 +5,11 @@ __pycache__/
 garbage.py
 # C extensions
 *.so
-glQiwiApi/test2.py
-glQiwiApi/contrib
 test.py
-web_test.py
-bot
-glQiwiApi/tranzoo
 test2.py
 setup.py
 */test.*
 *.pem
-glQiwiApi/webapp.py
-glQiwiApi/templates
-glQiwiApi/web
 # Distribution / packaging
 .Python
 build/

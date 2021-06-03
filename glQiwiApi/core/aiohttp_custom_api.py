@@ -2,7 +2,7 @@ from typing import Dict, Optional, Any, Union, NoReturn
 
 import aiohttp
 
-from glQiwiApi.core.basic_requests_api import HttpXParser
+from glQiwiApi.core.basic_requests_api import HttpXParser, _ProxyType
 from glQiwiApi.core.storage import Storage
 from glQiwiApi.types import Response
 from glQiwiApi.types.basics import Cached, DEFAULT_CACHE_TIME
@@ -15,15 +15,21 @@ class RequestManager(HttpXParser):
     под платежные системы и кэширование запросов
 
     """
-    __slots__ = ('without_context', 'messages', '_cache', '_cached_key')
+    __slots__ = (
+        'without_context', 'messages', '_cache', '_cached_key',
+        '_connector_type', '_connector_init', '_should_reset_connector',
+        '_proxy'
+    )
 
     def __init__(
             self,
             without_context: bool = False,
             messages: Optional[Dict[str, str]] = None,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+            proxy: Optional[_ProxyType] = None
     ) -> None:
-        super(RequestManager, self).__init__()
+        super(RequestManager, self).__init__(proxy=proxy)
+
         self.without_context: bool = without_context
         self.messages: Optional[Dict[str, str]] = messages
         self._cache: Storage = Storage(cache_time=cache_time)
@@ -70,7 +76,7 @@ class RequestManager(HttpXParser):
         )
 
     async def _close_session(self):
-        if self.without_context:
+        if self.without_context and not self.session.closed:
             await self.session.close()
 
     def _cache_all(self, response: Response, kwargs: Dict[Any, Any]):
@@ -81,10 +87,10 @@ class RequestManager(HttpXParser):
         )
         self._cache[kwargs["url"]] = resolved
 
-    @staticmethod
-    def is_session_closed(session: Any) -> bool:
-        if isinstance(session, aiohttp.ClientSession):
-            if not session.closed:
+    @property
+    def is_session_closed(self) -> bool:
+        if isinstance(self.session, aiohttp.ClientSession):
+            if not self.session.closed:
                 return True
         return False
 
