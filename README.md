@@ -37,6 +37,7 @@ pip install glQiwiApi
 |aiofiles | saving receipts in pdf                         |
 |uvloop   | Optional(can boost API), but work only on Linux|
 |pydantic | Json data validator. Very fast instead of custom|
+|loguru   | library which aims to bring enjoyable logging in Python|
 
 ---
 
@@ -175,9 +176,9 @@ asyncio.run(main())
 ## 🌟Webhooks & handlers
 
 ```python
-import logging
 
 from glQiwiApi import QiwiWrapper, types
+from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
     api_access_token='token from https://qiwi.com/api/',
@@ -194,22 +195,16 @@ async def get_transaction(event: types.WebHook):
 async def fetch_bill(notification: types.Notification):
     print(notification)
 
-
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-
-wallet.start_webhook(
-    port=80,
-    level=logging.INFO,
-    format=FORMAT
-)
-
+    
+executor.start_webhook(wallet, port=80)
 ```
 
-## 🧑🏻‍🔬Polling updates
+## 🧑🏻🔬Polling updates
 ```python
 import datetime
 
 from glQiwiApi import QiwiWrapper, types
+from glQiwiApi.utils import executor
 
 api_access_token = "your token"
 phone_number = "your number"
@@ -229,7 +224,8 @@ def on_startup(wrapper: QiwiWrapper):
     wrapper.dispatcher.logger.info("This message logged on startup")
 
 
-wallet.start_polling(
+executor.start_polling(
+    wallet,
     get_updates_from=datetime.datetime.now() - datetime.timedelta(hours=1),
     on_startup=on_startup
 )

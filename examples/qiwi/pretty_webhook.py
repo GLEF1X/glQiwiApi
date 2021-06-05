@@ -17,6 +17,4 @@ async def fetch_bill(notification: types.Notification):
     print(notification)
 
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-
 executor.start_webhook(wallet, port=80)

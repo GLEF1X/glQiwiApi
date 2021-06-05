@@ -17,7 +17,7 @@ async def p2p_usage():
         status_1 = (await w.check_p2p_bill_status(
             bill_id=bill.bill_id
         )) == 'PAID'
-        # Или, начиная с версии 0.2.0
+        # Или можно так(выглядит лаконичнее на мой взгляд)
         status_2 = await bill.paid
         print(status_1 == status_2)
         # Это выдаст ошибку, так как не передан api_access_token и phone_number
