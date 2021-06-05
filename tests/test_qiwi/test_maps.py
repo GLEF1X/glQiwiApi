@@ -16,6 +16,7 @@ def maps_data():
 
 @pytest.fixture(name="maps")
 async def maps_fixture():
+    """ :class:`QiwiMaps` fixture """
     _maps = QiwiMaps()
     yield _maps
     await _maps.close()

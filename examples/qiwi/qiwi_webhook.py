@@ -4,6 +4,7 @@ from aiogram import Bot
 
 from glQiwiApi import QiwiWrapper, types
 from glQiwiApi.core.web_hooks.config import Path
+from glQiwiApi.utils import executor
 
 TOKEN = 'token from https://qiwi.com/api/'
 QIWI_SECRET = 'secret token from https://qiwi.com/p2p-admin/'
@@ -47,12 +48,10 @@ path = Path(
     bill_path="/my_webhook/"
 )
 
-wallet.start_webhook(
+executor.start_webhook(
+    wallet,
     # You can pass on any port, but it must be open for web
     # You can use any VPS server to catching webhook or
     # your configured local machine
-    port=8080,
-    level=logging.INFO,
-    format=FORMAT,
     path=path
 )

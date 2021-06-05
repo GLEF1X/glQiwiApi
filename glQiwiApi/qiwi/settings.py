@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import time
 from dataclasses import dataclass
@@ -7,6 +9,34 @@ from typing import Optional, Any, Union, Dict, List
 from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.types import WrapperData
 from glQiwiApi.utils.basics import check_api_method
+
+__all__ = ('get_settings', "QiwiRouter", "QiwiKassaRouter")
+
+
+@lru_cache()
+def get_settings() -> QiwiSettings:
+    settings = QiwiSettings()
+    return settings
+
+
+class QiwiRouter(AbstractRouter):
+    """Class, that delegates building the right paths, except p2p"""
+    __head__ = "https://edge.qiwi.com"
+
+    @functools.lru_cache()
+    def build_url(self, api_method: str, **kwargs: Any) -> str:
+        check_api_method(api_method)
+        tail: str = getattr(self.config, api_method, None)
+        pre_build_url = self.__head__ + tail
+        return super()._format_url_kwargs(pre_build_url, **kwargs)
+
+    def setup_config(self) -> Any:
+        return get_settings()
+
+
+class QiwiKassaRouter(QiwiRouter):
+    """ QIWI P2P router"""
+    __head__ = "https://api.qiwi.com/partner/bill/v1/bills"
 
 
 @dataclass
@@ -224,33 +254,4 @@ class QiwiSettings:
         headers=DEFAULT_QIWI_HEADERS
     )
 
-    QIWI_MASTER: Dict[str, Union[int, float, str]] = None
-
-
-@lru_cache()
-def get_settings() -> QiwiSettings:
-    settings = QiwiSettings()
-    return settings
-
-
-class QiwiRouter(AbstractRouter):
-    """Class, which deals with all methods, except p2p"""
-    __head__ = "https://edge.qiwi.com"
-
-    @functools.lru_cache()
-    def build_url(self, api_method: str, **kwargs: Any) -> str:
-        check_api_method(api_method)
-        tail: str = getattr(self.config, api_method, None)
-        pre_build_url = self.__head__ + tail
-        return super()._format_url_kwargs(pre_build_url, **kwargs)
-
-    def setup_config(self) -> Any:
-        return get_settings()
-
-
-class QiwiKassaRouter(QiwiRouter):
-    """ QIWI P2P router"""
-    __head__ = "https://api.qiwi.com/partner/bill/v1/bills"
-
-
-__all__ = ('get_settings', "QiwiRouter", "QiwiKassaRouter")
+    QIWI_MASTER: Optional[Dict[str, Union[int, float, str]]] = None

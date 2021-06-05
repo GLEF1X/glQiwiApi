@@ -4,7 +4,7 @@ from typing import Dict
 
 import pytest
 
-from glQiwiApi import QiwiWrapper, InvalidData
+from glQiwiApi import QiwiWrapper
 
 pytestmark = pytest.mark.asyncio
 
@@ -22,15 +22,6 @@ async def api_fixture(
 
 
 class TestCache:
-
-    @pytest.mark.parametrize("cache_time", [-5, 70, 65])
-    async def test_wrong_initialize_api(
-            self,
-            credentials: Dict[str, str],
-            cache_time: int
-    ):
-        with pytest.raises(InvalidData):
-            QiwiWrapper(**credentials, cache_time=cache_time)
 
     @pytest.mark.parametrize("payload", [
         {"rows_num": 50},

@@ -1,63 +1,25 @@
-import abc
+from __future__ import annotations
+
+import contextvars
 import copy
-from typing import Optional, Any, Awaitable
+from typing import Any, TYPE_CHECKING, TypeVar, Optional, cast, Generic, ClassVar, Dict
 
-
-class QiwiProto(abc.ABC):
-    """
-    Class, which replaces standard signature of the QiwiWrapper class
-    to avoid a circular import. Inherits from abc, because python 3.7
-    doesn't support typing.Protocol
-
-    """
-
-    def __aenter__(self) -> Awaitable[Any]:
-        ...
-
-    def __aexit__(self, exc_type, exc_val, exc_tb) -> Awaitable[Any]:
-        ...
-
-    async def check_p2p_bill_status(self, bill_id: Optional[str]) -> str:
-        ...
-
-
-class BillMixin(object):
-    """
-    Примесь, позволяющая проверять счет, не используя метод QiwiWrapper,
-    добавляя метод check() объекту Bill
-
-    """
-    _w: QiwiProto
-    bill_id: Optional[str] = None
-
-    def initialize(self, wallet: Any):
-        self._w = copy.copy(wallet)
-        return self
-
-    async def check(self) -> bool:
-        """
-        Checking p2p payment
-
-        """
-        async with self._w:
-            return (await self._w.check_p2p_bill_status(
-                bill_id=self.bill_id
-            )) == 'PAID'
+if TYPE_CHECKING:
+    from glQiwiApi.core.aiohttp_custom_api import RequestManager
 
 
 class ToolsMixin(object):
     """ Object: ToolsMixin """
-    _requests: Any
+    _requests: RequestManager
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
-        self._requests.create_session()
+        await self._requests.create_session()
         return self
 
     async def close(self):
-        if self._requests.session:
-            await self._requests.session.close()
-            self._requests.clear_cache()
+        """ shutdown wrapper, close aiohttp session and clear storage """
+        await self._requests.close()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Закрываем сессию и очищаем кэш при выходе"""
@@ -69,16 +31,88 @@ class ToolsMixin(object):
         except AttributeError:
             return None
 
-    def __deepcopy__(self, memo) -> 'ToolsMixin':
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls, *args, **kwargs)
+
+    def __deepcopy__(self, memo):
         cls = self.__class__
-        result = cls.__new__(cls)
+        kw: Dict[str, bool] = {"__copy_signal__": True}
+        result = cls.__new__(cls, **kw)
         memo[id(self)] = result
-        dct = {slot: self._get(slot) for slot in self.__slots__ if
-               self._get(slot) is not None}
+        dct = {
+            slot: self._get(slot) for slot in self.__slots__ if
+            self._get(slot) is not None
+        }
         for k, value in dct.items():
             if k == '_requests':
-                value.session = None
+                value._session = None
             elif k == 'dispatcher':
-                value.loop = None
+                value._loop = None
             setattr(result, k, copy.deepcopy(value, memo))
         return result
+
+    @property
+    def data(self):
+        data = getattr(self, '_data', None)
+        if data is None:
+            data = {}
+            setattr(self, '_data', data)
+        return data
+
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def __delitem__(self, key):
+        del self.data[key]
+
+    def __contains__(self, key):
+        return key in self.data
+
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
+
+ContextInstance = TypeVar("ContextInstance")
+
+
+class ContextInstanceMixin(Generic[ContextInstance]):
+    __context_instance: ClassVar[contextvars.ContextVar[ContextInstance]]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__()
+        cls.__context_instance = contextvars.ContextVar(f"instance_{cls.__name__}")
+
+    @classmethod  # noqa: F811
+    def get_current(  # noqa: F811
+            cls, no_error: bool = True
+    ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
+        """ Get current instance from context """
+        # on mypy 0.770 I catch that contextvars.ContextVar always contextvars.ContextVar[Any]
+        cls.__context_instance = cast(
+            contextvars.ContextVar[ContextInstance], cls.__context_instance
+        )
+
+        try:
+            current: Optional[ContextInstance] = cls.__context_instance.get()
+        except LookupError:
+            if no_error:
+                current = None
+            else:
+                raise
+
+        return current
+
+    @classmethod
+    def set_current(cls, value: ContextInstance) -> contextvars.Token[ContextInstance]:
+        if not isinstance(value, cls):
+            raise TypeError(
+                f"Value should be instance of {cls.__name__!r} not {type(value).__name__!r}"
+            )
+        return cls.__context_instance.set(value)
+
+    @classmethod
+    def reset_current(cls, token: contextvars.Token[ContextInstance]) -> None:
+        cls.__context_instance.reset(token)

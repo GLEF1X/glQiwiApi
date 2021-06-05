@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import abc
 import asyncio
+import typing
 import unittest
-from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple
+from types import TracebackType
+from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple, Type
 
-import aiohttp
-from aiohttp import ClientSession, web
+from aiohttp import web
 from aiohttp.typedefs import LooseCookies
 
-from glQiwiApi import types
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
 from glQiwiApi.types import Response
 
@@ -29,15 +31,14 @@ class SingletonABCMeta(abc.ABCMeta):
         return cls._instances[cls]
 
 
-class BaseStorage(abc.ABC):
+T = typing.TypeVar("T")
+
+
+class BaseStorage(abc.ABC, typing.Generic[T]):
     """
     Абстрактный класс контроллера кэша
 
     """
-
-    @abc.abstractmethod
-    def get_current(self, key: str) -> Any:
-        raise NotImplementedError
 
     @abc.abstractmethod
     def clear(self, key: str, force: bool = False) -> Any:
@@ -65,7 +66,7 @@ class AbstractRouter(metaclass=SingletonABCMeta):
         try:
             return url_.format(**kwargs)
         except KeyError:
-            raise ValueError("Bad kwargs for url build")
+            raise RuntimeError("Bad kwargs for url build")
 
     @abc.abstractmethod
     def build_url(self, api_method: str, **kwargs: Any) -> str:
@@ -101,10 +102,9 @@ class AioTestCase(unittest.TestCase):
 
 class AbstractParser(abc.ABC):
     """ Abstract class of parser for send request to different API's"""
-    session: Optional[aiohttp.ClientSession] = None
 
     @abc.abstractmethod
-    async def _request(
+    async def _make_request(
             self,
             url: str,
             get_json: bool,
@@ -122,7 +122,9 @@ class AbstractParser(abc.ABC):
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ]) -> Response:
+            ],
+            get_bytes: bool,
+            **kwargs) -> Response:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -135,6 +137,13 @@ class AbstractParser(abc.ABC):
         """ You can override it, but is must to return an AsyncGenerator """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    async def close(self) -> None:  # pragma: no cover
+        """
+        Close client session
+        """
+        pass
+
     def raise_exception(
             self,
             status_code: str,
@@ -143,13 +152,16 @@ class AbstractParser(abc.ABC):
     ) -> None:
         """Метод для обработки исключений и лучшего логирования"""
 
-    def create_session(self, **kwargs) -> None:
-        """ Creating new session if old was close or it's None """
-        if self.session is None:
-            self.session = ClientSession(**kwargs)
-        elif isinstance(self.session, ClientSession):
-            if self.session.closed:
-                self.session = ClientSession(**kwargs)
+    async def __aenter__(self) -> AbstractParser:
+        return self
+
+    async def __aexit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
+    ) -> None:
+        await self.close()
 
 
 class BaseWebHookView(web.View):
@@ -208,9 +220,7 @@ class BaseWebHookView(web.View):
 
         await self.handler_manager.process_event(update)
 
-    def _hash_validator(self, update: Union[
-        types.Notification, types.WebHook
-    ]) -> None:
+    def _hash_validator(self, update) -> None:
         """ Validating by hash of update """
 
     @property

@@ -1,11 +1,11 @@
 import sys
 
 from .qiwi import QiwiWrapper, QiwiMaps  # NOQA
-from .utils.basics import sync  # NOQA
+from .utils.basics import sync, async_as_sync  # NOQA
 from .utils.exceptions import *  # NOQA
 from .yoo_money import YooMoneyAPI  # NOQA
 
-__version__ = '0.2.2'
+__version__ = '1.0.0'
 
 __all__ = (
         (
@@ -13,6 +13,7 @@ __all__ = (
             'YooMoneyAPI',
             'QiwiMaps',
             'sync',
+            'async_as_sync'
         ) + utils.exceptions.__all__  # NOQA
 )
 

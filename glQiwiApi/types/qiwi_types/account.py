@@ -1,13 +1,14 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import Field, validator
 
+from glQiwiApi.types.base import Base
 from glQiwiApi.types.basics import Sum, Type
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
 
-class Account(BaseModel):
+class Account(Base):
     """ object: Account """
     alias: str
     title: str

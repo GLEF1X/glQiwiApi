@@ -1,6 +1,5 @@
-import logging
-
 from glQiwiApi import QiwiWrapper, types
+from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
     api_access_token='token from https://qiwi.com/api/',
@@ -18,10 +17,4 @@ async def fetch_bill(notification: types.Notification):
     print(notification)
 
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-
-wallet.start_webhook(
-    port=80,
-    level=logging.INFO,
-    format=FORMAT
-)
+executor.start_webhook(wallet, port=80)

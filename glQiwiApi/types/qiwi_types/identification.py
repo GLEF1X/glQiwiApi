@@ -1,10 +1,12 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from glQiwiApi.types.base import Base
 
 
-class Identification(BaseModel):
+class Identification(Base):
     """ object: Identification """
     identification_id: int = Field(..., alias="id")
     first_name: str = Field(..., alias="firstName")

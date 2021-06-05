@@ -1,3 +1,7 @@
+"""
+Provides effortless work with YooMoney API using asynchronous requests.
+
+"""
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple
 
@@ -6,7 +10,8 @@ from pydantic import ValidationError
 import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     RequestManager,
-    ToolsMixin
+    ToolsMixin,
+    ContextInstanceMixin
 )
 from glQiwiApi.types import (
     AccountInfo,
@@ -22,7 +27,7 @@ from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter
 
 
-class YooMoneyAPI(ToolsMixin):
+class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
     """
     Класс, реализующий обработку запросов к YooMoney
     Удобен он тем, что не просто отдает json подобные объекты,
@@ -38,7 +43,8 @@ class YooMoneyAPI(ToolsMixin):
             self,
             api_access_token: str,
             without_context: bool = False,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+            proxy: Optional[Any] = None
     ) -> None:
         """
         Конструктор принимает токен, полученный из класс метода
@@ -59,7 +65,8 @@ class YooMoneyAPI(ToolsMixin):
         self._requests = RequestManager(
             without_context=without_context,
             messages=self._router.config.ERROR_CODE_NUMBERS,
-            cache_time=cache_time
+            cache_time=cache_time,
+            proxy=proxy
         )
 
     def _auth_token(self, headers: dict) -> Dict[Any, Any]:
@@ -119,7 +126,8 @@ class YooMoneyAPI(ToolsMixin):
             cls,
             code: str,
             client_id: str,
-            redirect_uri: str = 'https://example.com'
+            redirect_uri: str = 'https://example.com',
+            client_secret: Optional[str] = None
     ) -> str:
         """
         Метод для получения токена для запросов к YooMoney API
@@ -128,6 +136,8 @@ class YooMoneyAPI(ToolsMixin):
         :param client_id: идентификатор приложения, тип string
         :param redirect_uri: воронка, куда попадет временный код,
          который нужен для получения основного токена
+        :param client_secret: Секретное слово для проверки подлинности приложения.
+         Указывается, если сервис зарегистрирован с проверкой подлинности.
         :return: YooMoney API TOKEN
         """
         router = YooMoneyRouter()
@@ -136,12 +146,12 @@ class YooMoneyAPI(ToolsMixin):
             'code': code,
             'client_id': client_id,
             'grant_type': 'authorization_code',
-            'redirect_uri': redirect_uri
+            'redirect_uri': redirect_uri,
+            'client_secret': client_secret
         }
         async for response in RequestManager(
                 without_context=True,
-                messages=router.config.ERROR_CODE_NUMBERS,
-                cache_time=DEFAULT_CACHE_TIME
+                messages=router.config.ERROR_CODE_NUMBERS
         ).fast().fetch(
             url=router.build_url("GET_ACCESS_TOKEN"),
             headers=headers,
@@ -185,7 +195,8 @@ class YooMoneyAPI(ToolsMixin):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("ACCOUNT_INFO"),
                 headers=headers,
-                method='POST'
+                method='POST',
+                get_json=True
         ):
             return AccountInfo.parse_obj(response.response_data)
 
@@ -314,7 +325,8 @@ class YooMoneyAPI(ToolsMixin):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("TRANSACTION_INFO"),
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             return OperationDetails.parse_obj(response.response_data)
 
@@ -371,7 +383,8 @@ class YooMoneyAPI(ToolsMixin):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("PRE_PROCESS_PAYMENT"),
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             try:
                 return PreProcessPaymentResponse.parse_obj(
@@ -380,7 +393,7 @@ class YooMoneyAPI(ToolsMixin):
             except ValidationError:
                 msg = "Недостаточно денег для перевода или ошибка сервиса"
                 self._requests.raise_exception(
-                    status_code=400,
+                    status_code="400",
                     message=msg
                 )
 
@@ -480,7 +493,8 @@ class YooMoneyAPI(ToolsMixin):
                 url=url,
                 method='POST',
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             return Payment.parse_obj(
                 response.response_data

@@ -8,7 +8,9 @@ class Currency:
     Class with many currencies
     >>> usd = Currency.get('840')
     >>> usd
-    ... cur.CurrencyModel(code='USD', decimal_digits=2, name='US Dollar', name_plural='US dollars', rounding=0, symbol='$', symbol_native='$')
+    ... cur.CurrencyModel(code='USD', decimal_digits=2, name='US Dollar', name_plural='US dollars',
+    ...                   rounding=0, symbol='$', symbol_native='$')
+
     >>> usd.symbol
     ... '$'
     """
@@ -32,6 +34,6 @@ class Currency:
             else:
                 return cur.described.get(currency_code.upper())
         except (KeyError, AssertionError):
-            raise ValueError(
+            raise RuntimeError(
                 f"Currency code `{currency_code}` was not found"
             )

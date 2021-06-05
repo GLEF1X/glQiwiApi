@@ -1,33 +1,33 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, Extra
+from pydantic import Field, Extra
 
-from glQiwiApi.core.core_mixins import BillMixin
+from glQiwiApi.types.base import Base
 from glQiwiApi.types.basics import OptionalSum
 
 
-class Customer(BaseModel):
+class Customer(Base):
     """ Object: Customer """
     phone: Optional[str] = None
     email: Optional[str] = None
     account: Optional[str] = None
 
 
-class BillStatus(BaseModel):
+class BillStatus(Base):
     """ Object: BillStatus """
     value: str
     changed_datetime: datetime = Field(alias="changedDateTime")
 
 
-class CustomFields(BaseModel):
+class CustomFields(Base):
     """ Object: CustomFields """
     pay_sources_filter: Optional[str] = Field(alias="paySourcesFilter",
                                               default=None)
     theme_code: Optional[str] = Field(alias="themeCode", default=None)
 
 
-class BillError(BaseModel):
+class BillError(Base):
     """ Object: BillError """
     service_name: str = Field(alias="serviceName")
     error_code: str = Field(alias="errorCode")
@@ -37,7 +37,7 @@ class BillError(BaseModel):
     trace_id: str = Field(alias="traceId")
 
 
-class Bill(BaseModel, BillMixin):
+class Bill(Base):
     """ Object: Bill """
     site_id: str = Field(alias="siteId")
     bill_id: str = Field(alias="billId")
@@ -60,8 +60,18 @@ class Bill(BaseModel, BillMixin):
         def __repr__(self) -> str:
             return self.__str__()
 
+    @property
+    async def paid(self) -> bool:
+        """
+        Checking p2p payment
 
-class RefundBill(BaseModel):
+        """
+        return (await self.client.check_p2p_bill_status(
+            bill_id=self.bill_id
+        )) == 'PAID'
+
+
+class RefundBill(Base):
     """
     Модель счёта киви апи
 
@@ -78,7 +88,7 @@ class RefundBill(BaseModel):
         return self.amount.value
 
 
-class Notification(BaseModel):
+class Notification(Base):
     """Object: Notification"""
 
     version: str = Field(..., alias="version")
@@ -91,7 +101,7 @@ class Notification(BaseModel):
         return self.__str__()
 
 
-class P2PKeys(BaseModel):
+class P2PKeys(Base):
     public_key: str = Field(..., alias="PublicKey")
     secret_key: str = Field(..., alias="SecretKey")
 

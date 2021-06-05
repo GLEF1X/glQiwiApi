@@ -58,7 +58,7 @@ def set_data_p2p_create(
         life_time: str,
         comment: Optional[str] = None,
         theme_code: Optional[str] = None,
-        pay_source_filter: Optional[str] = None
+        pay_source_filter: Optional[List[str]] = None
 ) -> Dict[MutableMapping, Any]: ...
 
 
@@ -511,6 +511,9 @@ def sync(
         *args: Any,
         **kwargs: Any
 ) -> Any: ...
+
+
+def async_as_sync(func: types.FuncT) -> types.FuncT: ...
 
 
 def check_transaction(

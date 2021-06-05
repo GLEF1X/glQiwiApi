@@ -42,6 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.ifconfig',
     "sphinx.ext.napoleon",
+    'sphinx.ext.autosectionlabel'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -130,15 +131,15 @@ htmlhelp_basename = 'glQiwiApiDocs'
 #     # The paper size ('letterpaper' or 'a4paper').
 #     #
 #     # 'papersize': 'letterpaper',
-
+#
 #     # The font size ('10pt', '11pt' or '12pt').
 #     #
 #     # 'pointsize': '10pt',
-
+#
 #     # Additional stuff for the LaTeX preamble.
 #     #
 #     # 'preamble': '',
-
+#
 #     # Latex figure (float) alignment
 #     #
 #     # 'figure_align': 'htbp',

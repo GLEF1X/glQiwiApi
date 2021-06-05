@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from glQiwiApi.types import Sum
+from glQiwiApi.types.base import Base
 
 
-class Payment(BaseModel):
+class Payment(Base):
     """ Scheme of webhook payment object """
     account: str = Field(..., alias="account")
     comment: str = Field(..., alias="comment")
@@ -23,7 +24,7 @@ class Payment(BaseModel):
     total: Sum = Field(..., alias="total")
 
 
-class WebHook(BaseModel):
+class WebHook(Base):
     """
     Хуки или уведомления с данными о событии (платеже/пополнении)
 
@@ -37,13 +38,13 @@ class WebHook(BaseModel):
     payment: Optional[Payment] = Field(default=None, alias="payment")
 
 
-class HookParameters(BaseModel):
+class HookParameters(Base):
     """hookParameters object"""
 
     url: str = Field(..., alias="url")
 
 
-class WebHookConfig(BaseModel):
+class WebHookConfig(Base):
     """WebHookConfig object"""
 
     hook_id: str = Field(..., alias="hookId")

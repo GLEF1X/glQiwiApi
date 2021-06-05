@@ -1,9 +1,8 @@
-from typing import Dict, Optional, Any, Union
+from typing import Dict, Optional, Any, Union, NoReturn
 
 import aiohttp
 
-import glQiwiApi
-from glQiwiApi.core.basic_requests_api import HttpXParser
+from glQiwiApi.core.basic_requests_api import HttpXParser, _ProxyType
 from glQiwiApi.core.storage import Storage
 from glQiwiApi.types import Response
 from glQiwiApi.types.basics import Cached, DEFAULT_CACHE_TIME
@@ -12,67 +11,76 @@ from glQiwiApi.utils.exceptions import RequestError
 
 class RequestManager(HttpXParser):
     """
-    Немного переделанный наследник HttpXParser
-    под платежные системы и кэширование запросов
+    Deal with :class:`Storage`,
+    caching queries and managing stable work of sending requests
 
     """
-    __slots__ = ('without_context', 'messages', '_cache', '_cached_key')
+    __slots__ = (
+        'without_context', 'messages', '_cache', '_should_reset_connector',
+        '_connector_type', '_connector_init', '_proxy'
+    )
 
     def __init__(
             self,
             without_context: bool = False,
             messages: Optional[Dict[str, str]] = None,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+            proxy: Optional[_ProxyType] = None
     ) -> None:
-        super(RequestManager, self).__init__()
+        super(RequestManager, self).__init__(proxy=proxy)
+
         self.without_context: bool = without_context
         self.messages: Optional[Dict[str, str]] = messages
-        self._cache: Storage = Storage(cache_time)
-        self._cached_key: str = "session"
+        self._cache: Storage = Storage(cache_time=cache_time)
 
-    def clear_cache(self) -> None:
+    def reset_cache(self) -> None:
         """ Clear all cache in storage """
         self._cache.clear(force=True)
 
-    def get_cached_session(self) -> Optional[aiohttp.ClientSession]:
-        """ Get cached session from storage """
-        cached = self._cache[self._cached_key]
-        if self.check_session(cached):
-            return cached
-        return None
+    async def make_request(self, **kwargs) -> Response:
+        """ The user-friendly method that allows sending requests to any URL  """
+        return await super(RequestManager, self)._make_request(**kwargs)
 
-    def set_cached_session(self):
-        cached_session = self.get_cached_session()
-        if cached_session:
-            self.session = cached_session
-
-    async def _request(self, *args, **kwargs) -> Response:
+    async def _make_request(self, *args, **kwargs) -> Response:
+        """ Send request to service(API) """
         # Получаем текущий кэш используя ссылку как ключ
-        response = self._cache.get_current(kwargs.get('url'))
+        response = self._cache[(kwargs.get('url'))]
         if not self._cache.validate(kwargs):
-            self.set_cached_session()
-            response = await super()._request(*args, **kwargs)
+            try:
+                response = await super()._make_request(*args, **kwargs)
+            except aiohttp.ContentTypeError:
+                raise RequestError(message="Unexpected error. Cannot deserialize answer.",
+                                   status_code="unknown")
+
         # Проверяем, не был ли запрос в кэше, если нет,
         # то проверяем статус код и если он не 200 - выбрасываем ошибку
         if not isinstance(response, Cached):
+            await self._close_session()
             if response.status_code != 200:
-                await self._close_session()
                 self.raise_exception(
                     str(response.status_code),
                     json_info=response.response_data
                 )
-            await self._close_session()
 
         self._cache_all(response, kwargs)
 
         return response
+
+    async def _close_session(self):
+        if self.without_context:
+            await super(RequestManager, self).close()
+
+    async def close(self) -> None:
+        """ Close aiohttp session and reset cache data """
+        await super(RequestManager, self).close()
+        self.reset_cache()
 
     def raise_exception(
             self,
             status_code: str,
             json_info: Optional[Dict[str, Any]] = None,
             message: Optional[str] = None
-    ) -> None:
+    ) -> NoReturn:
         """ Raise RequestError exception with pretty explanation """
         if not isinstance(message, str):
             if self.messages is not None:
@@ -80,44 +88,24 @@ class RequestManager(HttpXParser):
         raise RequestError(
             message,
             status_code,
-            additional_info=f"{glQiwiApi.__version__} version api",
+            additional_info=f"0.2.23 version api",
             json_info=json_info
         )
 
-    def cache_session(self, session: Optional[aiohttp.ClientSession]) -> None:
-        if self.check_session(session):
-            self._cache.update_data(
-                obj_to_cache=session,
-                key='session'
-            )
-
-    async def _close_session(self) -> None:
-        if self.without_context:
-            await self.session.close()
-
     def _cache_all(self, response: Response, kwargs: Dict[Any, Any]):
-        resolved = self._cache.initialize_response_to_resolve(
+        resolved: Cached = self._cache.convert_to_cache(
             result=response.response_data,
             kwargs=kwargs,
             status_code=response.status_code
         )
-        self._cache.update_data(
-            key=None,
-            obj_to_cache=resolved
-        )
-        self.cache_session(self.session)
+        self._cache[kwargs["url"]] = resolved
 
-    @staticmethod
-    def check_session(session: Any) -> bool:
-        if isinstance(session, aiohttp.ClientSession):
-            if not session.closed:
+    @property
+    def is_session_closed(self) -> bool:
+        if isinstance(self._session, aiohttp.ClientSession):
+            if not self._session.closed:
                 return True
         return False
-
-    def create_session(self, **kwargs) -> None:
-        """ Create new session or get it from cache """
-        self.set_cached_session()
-        super().create_session(**kwargs)
 
     @classmethod
     def filter_dict(cls, dictionary: dict) -> dict:

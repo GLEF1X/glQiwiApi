@@ -17,19 +17,19 @@ async def p2p_usage():
         status_1 = (await w.check_p2p_bill_status(
             bill_id=bill.bill_id
         )) == 'PAID'
-        # Или, начиная с версии 0.2.0
-        status_2 = await bill.check()
+        # Или можно так(выглядит лаконичнее на мой взгляд)
+        status_2 = await bill.paid
         print(status_1 == status_2)
         # Это выдаст ошибку, так как не передан api_access_token и phone_number
         # Вы можете в любой момент переназначить токен или номер
         try:
-            await w.get_bills(rows=50)
+            await w.get_bills(rows_num=50)
         except RequestError as ex:
             print(ex)
         # Переназначаем токены
         w.api_access_token = 'TOKEN from https://qiwi.api'
         w.phone_number = '+NUMBER'
-        print(await w.get_bills(rows=20))
+        print(await w.get_bills(rows_num=20))
 
 
 asyncio.run(p2p_usage())

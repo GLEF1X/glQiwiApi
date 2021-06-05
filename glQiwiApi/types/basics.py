@@ -1,9 +1,7 @@
-import time
 from dataclasses import dataclass
 from typing import Union, Any, Optional
 
-from pydantic import BaseModel, Field, validator, Extra
-from glQiwiApi.utils.basics import custom_load
+from pydantic import BaseModel, Field, validator
 
 DEFAULT_CACHE_TIME = 0
 
@@ -16,22 +14,15 @@ class Sum(BaseModel):
     amount: Union[int, float, str]
     currency: Any
 
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-        extra = Extra.allow
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
-    @validator("currency", pre=True, check_fields=True)
+    @validator("currency", pre=True)
     def humanize_pay_currency(cls, v):
         from glQiwiApi.utils.currency_util import Currency
+
         if not isinstance(v, int):
-            return v
+            try:
+                v = int(v)
+            except ValueError:
+                return v
         return Currency.get(str(v))
 
 
@@ -51,16 +42,6 @@ class Commission(BaseModel):
     enrollment_sum: Sum = Field(alias="enrollmentSum")
     qiwi_commission: Sum = Field("qwCommission")
     withdraw_to_enrollment_rate: int = Field(alias="withdrawToEnrollmentRate")
-
-    class Config:
-        """ Pydantic config """
-        json_loads = custom_load
-
-        def __str__(self) -> str:
-            return '<Config class of pydantic>'
-
-        def __repr__(self) -> str:
-            return self.__str__()
 
 
 class Type(BaseModel):
@@ -99,10 +80,7 @@ class Cached:
     """
     kwargs: Attributes
     response_data: Any
-    key: Optional[str]
-    cache_to: Optional[Any]
     method: Optional[Any]
-    cached_in: float = time.monotonic()
     status_code: Union[str, int, None] = None
 
 

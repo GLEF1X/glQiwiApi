@@ -23,13 +23,13 @@ class TestAiohttpSession:
         # initially session is None,
         # it's done  to save performance and
         # it creates new session when you make a request (API method call)
-        assert api.session is None
+        assert api.request_manager._session is None
 
         # such a session is created under the hood(when you call API method)
-        api._requests.create_session()
+        await api._requests.create_session()
 
         # And now it's aiohttp.ClientSession instance
-        assert isinstance(api.session, aiohttp.ClientSession)
+        assert isinstance(api.request_manager._session, aiohttp.ClientSession)
 
         assert isinstance(api._router, QiwiRouter)
         assert isinstance(api._requests, RequestManager)
@@ -41,16 +41,23 @@ class TestAiohttpSession:
 
     async def test_create_api_with_wrong_data(self):
         from tests.types.dataset import WRONG_API_DATA
+
         with pytest.raises(InvalidData):
             QiwiWrapper(**WRONG_API_DATA)
+
+    async def test_raise_runtime(self):
+        from tests.types.dataset import EMPTY_DATA
+
+        with pytest.raises(RuntimeError):
+            QiwiWrapper(**EMPTY_DATA)
 
     async def test_close_session(self):
         from tests.types.dataset import API_DATA
         api = QiwiWrapper(**API_DATA)
 
-        api._requests.create_session()
+        await api._requests.create_session()
 
-        aiohttp_session = api.session
+        aiohttp_session = api.request_manager._session
 
         with patch("aiohttp.ClientSession.close",
                    new=CoroutineMock()) as mocked_close:
@@ -58,3 +65,18 @@ class TestAiohttpSession:
             mocked_close.assert_called_once()
 
         await api.close()
+
+
+class TestContextMixin:
+
+    def test_get_from_context(self):
+        from tests.types.dataset import API_DATA
+        QiwiWrapper.set_current(QiwiWrapper(**API_DATA))
+        instance = QiwiWrapper.get_current()
+        assert isinstance(instance, QiwiWrapper)
+
+    def test_implicit_get_from_context(self):
+        from tests.types.dataset import API_DATA
+        QiwiWrapper(**API_DATA)
+        assert isinstance(QiwiWrapper.get_current(), QiwiWrapper)
+

@@ -1,19 +1,20 @@
 from datetime import datetime
 from typing import Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import Field, validator
 
+from glQiwiApi.types.base import Base
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
 
-class Interval(BaseModel):
+class Interval(Base):
     """ object: Interval """
     date_from: datetime = Field(alias="dateFrom")
     date_till: datetime = Field(alias="dateTill")
 
 
-class Limit(BaseModel):
+class Limit(Base):
     """ object: Limit """
     currency: CurrencyModel
     rest: Union[float, int]
