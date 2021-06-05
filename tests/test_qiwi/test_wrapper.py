@@ -1,9 +1,11 @@
 import datetime
 import pathlib
 import uuid
-from typing import Dict, Union
+from typing import Union
 
 import pytest
+from _pytest.capture import CaptureFixture
+from _pytest.monkeypatch import MonkeyPatch
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types, InvalidData
@@ -12,7 +14,8 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(name='api')
-async def api_fixture(credentials: Dict[str, str]):
+async def api_fixture(credentials: dict, capsys: CaptureFixture,
+                      monkeypatch: MonkeyPatch):
     """ Api fixture """
     _wrapper = QiwiWrapper(**credentials)
     yield _wrapper
@@ -223,6 +226,7 @@ async def test_check_p2p_bill_status(api: QiwiWrapper):
 async def test_check_p2p_on_object(api: QiwiWrapper):
     async with api:
         bill = await api.create_p2p_bill(amount=1)
+        assert isinstance(bill, types.Bill)
         result = await bill.paid
 
     assert isinstance(result, bool)

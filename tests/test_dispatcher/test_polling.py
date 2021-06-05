@@ -1,9 +1,9 @@
 import asyncio
 from datetime import datetime
-from typing import Dict
 
 import pytest
 import timeout_decorator
+from _pytest.fixtures import SubRequest
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types
@@ -23,7 +23,7 @@ txn = Transaction(txnId=50, personId=3254235, date=datetime.now(),
 
 
 @pytest.fixture(name='api')
-async def api_fixture(credentials: Dict[str, str]):
+async def api_fixture(credentials: dict, request: SubRequest, capsys):
     """ Api fixture """
     _wrapper = QiwiWrapper(**credentials)
     yield _wrapper
@@ -39,7 +39,7 @@ class TestPolling:
 
     @timeout_decorator.timeout(5)
     def _start_polling(self, api: QiwiWrapper):
-        from glQiwiApi.core import executor
+        from glQiwiApi.utils import executor
 
         self._handled = False
 
