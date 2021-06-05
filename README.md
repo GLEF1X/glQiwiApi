@@ -116,23 +116,23 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-    # You can pass on only p2p tokens, if you want to use only p2p api
-    async with QiwiWrapper(
-            secret_p2p="your_secret_p2p"
-    ) as w:
-        # Таким образом можно создать p2p счет
-        # В примере указан счёт на 1 рубль с комментарием some_comment
-        bill = await w.create_p2p_bill(
-            amount=1,
-            comment='my_comm'
-        )
-        # Проверка на статус "оплачено" созданного p2p счёта
-        if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
-            print('Успешно оплачено')
-        else:
-            print('Транзакция не найдена')
-        # Или, начиная с версии апи 0.2.0
-        print(await bill.paid)  # This will print you bool answer
+  # You can pass on only p2p tokens, if you want to use only p2p api
+  async with QiwiWrapper(
+          secret_p2p="your_secret_p2p"
+  ) as w:
+    # Таким образом можно создать p2p счет
+    # В примере указан счёт на 1 рубль с комментарием some_comment
+    bill = await w.create_p2p_bill(
+      amount=1,
+      comment='my_comm'
+    )
+    # Проверка на статус "оплачено" созданного p2p счёта
+    if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
+      print('Успешно оплачено')
+    else:
+      print('Транзакция не найдена')
+    # Или, начиная с версии апи 0.2.0
+    print(await bill.paid)  # This will print you bool answer
 
 
 asyncio.run(main())

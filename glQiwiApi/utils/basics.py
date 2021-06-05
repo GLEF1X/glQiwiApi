@@ -556,7 +556,8 @@ def override_error_messages(status_codes):
 
 def check_api_method(api_method):
     if not isinstance(api_method, str):
-        raise RuntimeError("Invalid type of api_method(must  be string)")
+        raise RuntimeError(f"Invalid type of api_method(must  be string)."
+                           f" Passed {type(api_method)}")
 
 
 def check_dates_for_statistic_request(start_date, end_date):

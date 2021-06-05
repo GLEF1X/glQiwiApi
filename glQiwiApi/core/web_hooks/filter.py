@@ -45,10 +45,10 @@ class Filter:
             function
         ) or inspect.isawaitable(function)
 
-    def __eq__(self, other: Any) -> Filter:
+    def __eq__(self, other: Any):
         return _sing_filter(self, lambda filter1: operator.eq(filter1, other))
 
-    def __ne__(self, other: Any) -> Filter:
+    def __ne__(self, other: Any):
         return _sing_filter(self, lambda filter1: operator.ne(filter1, other))
 
     def __invert__(self) -> Filter:

@@ -66,10 +66,9 @@ class Bill(Base):
         Checking p2p payment
 
         """
-        async with self.client:
-            return (await self.client.check_p2p_bill_status(
-                bill_id=self.bill_id
-            )) == 'PAID'
+        return (await self.client.check_p2p_bill_status(
+            bill_id=self.bill_id
+        )) == 'PAID'
 
 
 class RefundBill(Base):

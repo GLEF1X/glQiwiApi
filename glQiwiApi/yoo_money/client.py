@@ -1,6 +1,5 @@
 """
-Provides effortless work with QIWI API using asynchronous requests.
-Easy to integrate to Telegram bot, which was written on aiogram or another async/sync library.
+Provides effortless work with YooMoney API using asynchronous requests.
 
 """
 from datetime import datetime
@@ -44,7 +43,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             self,
             api_access_token: str,
             without_context: bool = False,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+            proxy: Optional[Any] = None
     ) -> None:
         """
         Конструктор принимает токен, полученный из класс метода
@@ -65,7 +65,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         self._requests = RequestManager(
             without_context=without_context,
             messages=self._router.config.ERROR_CODE_NUMBERS,
-            cache_time=cache_time
+            cache_time=cache_time,
+            proxy=proxy
         )
 
     def _auth_token(self, headers: dict) -> Dict[Any, Any]:
@@ -125,7 +126,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             cls,
             code: str,
             client_id: str,
-            redirect_uri: str = 'https://example.com'
+            redirect_uri: str = 'https://example.com',
+            client_secret: Optional[str] = None
     ) -> str:
         """
         Метод для получения токена для запросов к YooMoney API
@@ -134,6 +136,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param client_id: идентификатор приложения, тип string
         :param redirect_uri: воронка, куда попадет временный код,
          который нужен для получения основного токена
+        :param client_secret: Секретное слово для проверки подлинности приложения.
+         Указывается, если сервис зарегистрирован с проверкой подлинности.
         :return: YooMoney API TOKEN
         """
         router = YooMoneyRouter()
@@ -142,7 +146,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'code': code,
             'client_id': client_id,
             'grant_type': 'authorization_code',
-            'redirect_uri': redirect_uri
+            'redirect_uri': redirect_uri,
+            'client_secret': client_secret
         }
         async for response in RequestManager(
                 without_context=True,
@@ -190,7 +195,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("ACCOUNT_INFO"),
                 headers=headers,
-                method='POST'
+                method='POST',
+                get_json=True
         ):
             return AccountInfo.parse_obj(response.response_data)
 
@@ -319,7 +325,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("TRANSACTION_INFO"),
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             return OperationDetails.parse_obj(response.response_data)
 
@@ -376,7 +383,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("PRE_PROCESS_PAYMENT"),
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             try:
                 return PreProcessPaymentResponse.parse_obj(
@@ -385,7 +393,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             except ValidationError:
                 msg = "Недостаточно денег для перевода или ошибка сервиса"
                 self._requests.raise_exception(
-                    status_code=400,
+                    status_code="400",
                     message=msg
                 )
 
@@ -485,7 +493,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                 url=url,
                 method='POST',
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             return Payment.parse_obj(
                 response.response_data

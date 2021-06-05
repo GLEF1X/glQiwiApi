@@ -4,8 +4,6 @@ import contextvars
 import copy
 from typing import Any, TYPE_CHECKING, TypeVar, Optional, cast, Generic, ClassVar, Dict
 
-from aiohttp import ClientSession
-
 if TYPE_CHECKING:
     from glQiwiApi.core.aiohttp_custom_api import RequestManager
 
@@ -16,14 +14,12 @@ class ToolsMixin(object):
 
     async def __aenter__(self):
         """Создаем сессию, чтобы не пересоздавать её много раз"""
-        self._requests.create_session()
+        await self._requests.create_session()
         return self
 
     async def close(self):
         """ shutdown wrapper, close aiohttp session and clear storage """
-        if isinstance(self._requests.session, ClientSession):
-            await self._requests.session.close()
-        self._requests.reset_storage()
+        await self._requests.close()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Закрываем сессию и очищаем кэш при выходе"""
@@ -49,9 +45,9 @@ class ToolsMixin(object):
         }
         for k, value in dct.items():
             if k == '_requests':
-                value.session = None
+                value._session = None
             elif k == 'dispatcher':
-                value.loop = None
+                value._loop = None
             setattr(result, k, copy.deepcopy(value, memo))
         return result
 

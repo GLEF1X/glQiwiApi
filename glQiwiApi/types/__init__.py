@@ -65,8 +65,6 @@ Executors = TypeVar(
 
 FuncT = TypeVar('FuncT', bound=Callable[..., Any])
 
-MEMData = NewType('MEMData', MutableMapping[str, Dict[str, Any]])
-
 N = TypeVar('N')
 
 __all__ = (
@@ -105,7 +103,6 @@ __all__ = (
     'Notification',
     'Executors',
     'FuncT',
-    'MEMData',
     'N',
     'CrossRate',
     'FreePaymentDetailsFields',

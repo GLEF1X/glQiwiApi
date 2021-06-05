@@ -1,3 +1,10 @@
+"""
+Gracefully and lightweight wrapper to deal with QIWI API
+It's an open-source project so you always can improve the quality of code/API by
+adding something of your own...
+Easy to integrate to Telegram bot, which was written on aiogram or another async/sync library.
+
+"""
 from __future__ import annotations
 
 import pathlib
@@ -5,7 +12,7 @@ import uuid
 from abc import ABC
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import List, Tuple, Dict, Union, Optional, Any, MutableMapping, Pattern, Match
+from typing import List, Tuple, Dict, Union, Optional, Any, MutableMapping, Pattern, Match, Callable
 
 from glQiwiApi.core import RequestManager
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
@@ -29,7 +36,6 @@ from glQiwiApi.types import (
     PaymentInfo,
     OrderDetails,
     Bill,
-    BillError,
     OptionalSum,
     P2PKeys,
     RefundBill,
@@ -53,6 +59,7 @@ def _is_copy_signal(kwargs: dict):
 
 class BaseWrapper(ABC):
     """ Base wrapper class"""
+    set_current: Callable
 
     def __init__(self, api_access_token: Optional[str] = None,
                  phone_number: Optional[str] = None,
@@ -71,6 +78,8 @@ class BaseWrapper(ABC):
          по умолчанию 0, соответственно,
          запрос не будет использовать кэш по дефолту, максимальное время
          кэширование 60 секунд
+        :param proxy: Прокси, которое будет использовано при создании сессии, может замедлить
+            работу АПИ
         """
         if validate_params:
             self._validate_params(
@@ -99,6 +108,9 @@ class BaseWrapper(ABC):
 
         self.dispatcher = Dispatcher(loop=api_helper.take_event_loop())
 
+        # Method from ContextInstanceMixin
+        self.set_current(self)  # pragma: no cover
+
     def _auth_token(
             self,
             headers: MutableMapping,
@@ -117,7 +129,7 @@ class BaseWrapper(ABC):
 
     @property
     def request_manager(self) -> RequestManager:
-        """Return aiohttp session object"""
+        """ Return :class:`RequestManager` """
         return self._requests
 
     @request_manager.setter
@@ -226,7 +238,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                     'hookType': 1,
                     'param': web_url,
                     'txnType': txn_type
-                }
+                },
+                get_json=True
         ):
             return WebHookConfig.parse_obj(response.response_data)
 
@@ -244,7 +257,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 method='GET',
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
-                ))
+                )),
+                get_json=True
         ):
             return WebHookConfig.parse_obj(response.response_data)
 
@@ -261,7 +275,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 method='GET',
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
-                ))
+                )),
+                get_json=True
         ):
             return response.response_data
 
@@ -283,7 +298,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 method='GET',
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
-                ))
+                )),
+                get_json=True
         ):
             return response.response_data.get('key')
 
@@ -311,7 +327,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
                 )),
-                method='DELETE'
+                method='DELETE',
+                get_json=True
         ):
             return response.response_data
 
@@ -331,7 +348,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
                 )),
-                method='POST'
+                method='POST',
+                get_json=True
         ):
             return response.response_data.get('key')
 
@@ -375,7 +393,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                             "and you didn't have registered webhooks",
                     status_code="422",
                     json_info=ex.json()
-                )
+                ) from None
             key = await self.get_webhook_secret_key(webhook.hook_id)
             return webhook, key
 
@@ -413,7 +431,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 method='POST',
                 data={
                     'phone': phone_number
-                }
+                },
+                get_json=True
         ):
             return response.response_data.get('message')
 
@@ -554,7 +573,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 headers=headers,
-                method='GET'
+                method='GET',
+                get_json=True
         ):
             return api_helper.simple_multiply_parse(
                 lst_of_objects=response.response_data,
@@ -586,7 +606,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 method='GET',
-                headers=headers
+                headers=headers,
+                get_json=True
         ):
             return Identification.parse_obj(response.response_data)
 
@@ -676,7 +697,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("GET_LIST_OF_CARDS"),
                 method='GET',
-                headers=headers
+                headers=headers,
+                get_json=True
         ):
             return api_helper.simple_multiply_parse(
                 lst_of_objects=response.response_data,
@@ -736,7 +758,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 data=self._requests.filter_dict(payload),
-                headers=headers
+                headers=headers,
+                get_json=True
         ):
             if response.ok and response.status_code == 200:
                 return {'success': True}
@@ -786,7 +809,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 url=url,
                 headers=headers,
                 method='GET',
-                params=data
+                params=data,
+                get_bytes=True
         ):
             if not isinstance(
                     dir_path, (str, pathlib.Path)
@@ -893,7 +917,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
                 )),
-                method='GET'
+                method='GET',
+                get_json=True
         ):
             return api_helper.simple_multiply_parse(
                 response.response_data.get('accounts'), Account
@@ -923,7 +948,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 headers=headers,
-                data=payload
+                data=payload,
+                get_json=True
         ):
             return response.response_data
 
@@ -947,7 +973,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 headers=headers,
-                method='GET'
+                method='GET',
+                get_json=True
         ):
             return api_helper.simple_multiply_parse(
                 lst_of_objects=response.response_data, model=Balance)
@@ -978,7 +1005,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 url=url,
                 headers=headers,
                 method='PATCH',
-                json={'defaultAccount': True}
+                json={'defaultAccount': True},
+                get_json=True
         ):
             return response
 
@@ -1031,7 +1059,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("TO_WALLET"),
                 json=data.json,
-                headers=data.headers
+                headers=data.headers,
+                get_json=True
         ):
             return response.response_data['transaction']['id']
 
@@ -1084,7 +1113,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 method='POST',
                 data={
                     'cardNumber': card_number
-                }
+                },
+                get_json=True
         ):
             try:
                 return response.response_data.get('message')
@@ -1121,7 +1151,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 headers=payload.headers,
-                json=payload.json
+                json=payload.json,
+                get_json=True
         ):
             return Commission.parse_obj(response.response_data)
 
@@ -1133,7 +1164,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         url = self._router.build_url("GET_CROSS_RATES")
         async for response in self._requests.fast().fetch(
                 url=url,
-                method='GET'
+                method='GET',
+                get_json=True
         ):
             return api_helper.simple_multiply_parse(
                 lst_of_objects=response.response_data.get("result"),
@@ -1169,7 +1201,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 json=payload,
-                headers=headers
+                headers=headers,
+                get_json=True
         ):
             return PaymentInfo.parse_obj(response.response_data)
 
@@ -1197,7 +1230,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 method='POST',
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
-                ))
+                )),
+                get_json=True
         ):
             return PaymentInfo.parse_obj(response.response_data)
 
@@ -1221,7 +1255,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                     self._router.config.DEFAULT_QIWI_HEADERS
                 )),
                 json={"cardAlias": card_alias},
-                method='POST'
+                method='POST',
+                get_json=True
         ):
             return OrderDetails.parse_obj(response.response_data)
 
@@ -1246,7 +1281,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
                 )),
-                method='PUT'
+                method='PUT',
+                get_json=True
         ):
             return OrderDetails.parse_obj(response.response_data)
 
@@ -1267,7 +1303,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 json=payload,
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
-                ))
+                )),
+                get_json=True
         ):
             return OrderDetails.parse_obj(response.response_data)
 
@@ -1312,7 +1349,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 headers=self._auth_token(deepcopy(
                     self._router.config.DEFAULT_QIWI_HEADERS
                 )),
-                method='GET'
+                method='GET',
+                get_json=True
         ):
             return response
 
@@ -1331,7 +1369,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 method='POST',
-                headers=headers
+                headers=headers,
+                get_json=True
         ):
             return Bill.parse_obj(response.response_data)
 
@@ -1361,19 +1400,20 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 method='GET',
-                headers=headers
+                headers=headers,
+                get_json=True
         ):
             return Bill.parse_obj(response.response_data).status.value
 
     async def create_p2p_bill(
             self,
-            amount: int,
+            amount: Union[int, float],
             bill_id: Optional[str] = None,
             comment: Optional[str] = None,
             life_time: Optional[datetime] = None,
             theme_code: Optional[str] = None,
             pay_source_filter: Optional[List[str]] = None
-    ) -> Union[Bill, BillError]:
+    ) -> Bill:
         """
         Метод для выставление p2p счёта.
         Надежный способ для интеграции.
@@ -1424,7 +1464,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 url=url,
                 json=payload,
                 headers=headers,
-                method='PUT'
+                method='PUT',
+                get_json=True
         ):
             return Bill.parse_obj(response.response_data)
 
@@ -1451,7 +1492,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 url=self._router.build_url("GET_BILLS"),
                 headers=headers,
                 method='GET',
-                params=params
+                params=params,
+                get_json=True
         ):
             return api_helper.simple_multiply_parse(
                 response.response_data.get("bills"), Bill
@@ -1496,7 +1538,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 json=json_bill_data if isinstance(
                     json_bill_data,
                     dict
-                ) else json_bill_data.json()
+                ) else json_bill_data.json(),
+                get_json=True
         ):
             return RefundBill.parse_obj(response.response_data)
 
@@ -1522,6 +1565,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 headers=headers,
-                json=data
+                json=data,
+                get_json=True
         ):
             return P2PKeys.parse_obj(response.response_data)

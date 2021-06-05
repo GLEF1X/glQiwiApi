@@ -1,3 +1,6 @@
+"""
+Managing polling and webhooks
+"""
 from __future__ import annotations
 
 import asyncio
@@ -6,7 +9,7 @@ import logging
 import types
 from datetime import datetime, timedelta
 from typing import Union, Optional, List, \
-    Callable, Awaitable, Any, Dict, TypeVar, TYPE_CHECKING
+    Callable, Awaitable, Dict, TypeVar, TYPE_CHECKING, Coroutine, Any
 
 from aiohttp import ClientTimeout, web
 
@@ -30,17 +33,16 @@ T = TypeVar("T")
 def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
                   port: int = 8080,
                   path: Optional[Path] = None,
-                  app: Optional["web.Application"] = None,
                   on_startup: Optional[
                       Callable[
-                          [web.Application], Awaitable[None]
+                          [QiwiWrapper], Awaitable[None]
                       ]] = None,
                   on_shutdown: Optional[
                       Callable[
-                          [web.Application], Awaitable[None]
+                          [QiwiWrapper], Awaitable[None]
                       ]] = None,
                   tg_app: Optional[BaseProxy] = None,
-                  **logger_config: Any):
+                  app: Optional["web.Application"] = None):
     """
     Blocking function that listens for webhooks
 
@@ -56,21 +58,20 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
     :param logger_config:
     """
     executor = Executor(client, tg_app=tg_app)
-    executor.start_webhook(
-        host=host,
-        port=port,
-        path=path,
-        app=app,
-        on_startup=on_startup,
-        on_shutdown=on_shutdown,
-        **logger_config
-    )
+    _setup_callbacks(executor, on_startup, on_shutdown)
+    executor.start_webhook(host=host, port=port, path=path, app=app)
 
 
 def start_polling(client: QiwiWrapper, *, get_updates_from: datetime = datetime.now(),
                   timeout: Union[float, int, ClientTimeout] = 5,
-                  on_startup: Optional[Callable] = None,
-                  on_shutdown: Optional[Callable] = None,
+                  on_startup: Optional[
+                      Callable[
+                          [QiwiWrapper], Any
+                      ]] = None,
+                  on_shutdown: Optional[
+                      Callable[
+                          [QiwiWrapper], Any
+                      ]] = None,
                   tg_app: Optional[BaseProxy] = None,
                   **kwargs):
     """
@@ -126,7 +127,7 @@ def _setup_callbacks(
 
 def parse_timeout(
         timeout: Union[float, int, ClientTimeout]
-) -> Optional[float]:
+) -> float:
     """
     Parse timeout
 
@@ -137,7 +138,7 @@ def parse_timeout(
     elif isinstance(timeout, int):
         return float(timeout)
     elif isinstance(timeout, ClientTimeout):
-        return timeout.total
+        return timeout.total or DEFAULT_TIMEOUT.total
     else:
         raise ValueError("Timeout must be float, int or ClientTimeout. You have "
                          f"passed on {type(timeout)}")
@@ -156,7 +157,7 @@ class Executor:
         :param tg_app: optional proxy to connect aiogram polling/webhook mode
         """
         self.dispatcher: Dispatcher = client.dispatcher
-        self._loop: asyncio.AbstractEventLoop = client.dispatcher.loop
+        self._loop: asyncio.AbstractEventLoop = client.dispatcher._loop
         self._logger_config: Dict[str, Union[List[logging.Handler], int]] = {
             "handlers": [logger.InterceptHandler()],
             "level": logging.DEBUG
@@ -261,7 +262,7 @@ class Executor:
         :param kwargs:
         """
         self._polling = True
-        timeout: Optional[float] = parse_timeout(kwargs.pop("timeout"))
+        timeout: float = parse_timeout(kwargs.pop("timeout"))
         while self._polling:
             try:
                 await self._pool_process(**kwargs)
@@ -276,12 +277,12 @@ class Executor:
         On shutdown, we gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
         """
-        self._loop.run_until_complete(self.goodbye())
-        api_helper.sync(self.client.close)
+        coroutines: List[Coroutine] = [self.goodbye(), self.client.close()]
         if isinstance(self.tg_app, BaseProxy):
-            api_helper.sync(self._shutdown_tg_app)
-        self._polling = False
-        api_helper.safe_cancel(self._loop)
+            coroutines.append(self._shutdown_tg_app())
+        self._loop.run_until_complete(
+            asyncio.gather(*coroutines, loop=self._loop)
+        )
 
     async def _shutdown_tg_app(self):
         """
@@ -334,6 +335,7 @@ class Executor:
             # Allow to graceful shutdown
             pass
         finally:
+            self._polling = False
             self._on_shutdown()
 
     def start_webhook(
@@ -341,44 +343,27 @@ class Executor:
             host: str = "localhost",
             port: int = 8080,
             path: Optional[Path] = None,
-            app: Optional[web.Application] = None,
-            on_startup: Optional[
-                Callable[
-                    [web.Application], Awaitable[None]
-                ]] = None,
-            on_shutdown: Optional[
-                Callable[
-                    [web.Application], Awaitable[None]
-                ]] = None,
-            **logger_config: Any
+            app: Optional[web.Application] = None
     ):
-        from glQiwiApi.utils.basics import sync
+        application = app or web.Application()
 
-        # Set up logging
-        self._logger_config.update(**logger_config)
-        logging.basicConfig(**self._logger_config)
-
-        app = app if app is not None else web.Application()
-
-        hook_config, key = sync(self.client.bind_webhook)
+        hook_config, key = self._loop.run_until_complete(self.client.bind_webhook())
 
         server.setup(
             dispatcher=self.dispatcher,
-            app=app,
+            app=application,
             path=path,
             secret_key=self.client.secret_p2p,
             base64_key=key,
-            on_startup=on_startup,
-            on_shutdown=on_shutdown,
-            instance=self,
             tg_app=self.tg_app,
             host=host
         )
 
         try:
-            self.dispatcher.logger.debug("Start webhook!")
-            web.run_app(app, host=host, port=port)
+            self._loop.run_until_complete(self.welcome())
+            web.run_app(application, host=host, port=port)
         except (KeyboardInterrupt, SystemExit):
+            # Allow to graceful shutdown
             pass
         finally:
             self._on_shutdown()

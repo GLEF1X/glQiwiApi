@@ -17,11 +17,13 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
     def __init__(
             self,
             without_context: bool = False,
-            cache_time: int = DEFAULT_CACHE_TIME
+            cache_time: int = DEFAULT_CACHE_TIME,
+            proxy: typing.Optional[typing.Any] = None
     ) -> None:
         self._requests = RequestManager(
             without_context=without_context,
-            cache_time=cache_time
+            cache_time=cache_time,
+            proxy=proxy
         )
 
     async def terminals(
@@ -72,7 +74,8 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         async for response in self._requests.fast().fetch(
                 url=url,
                 method='GET',
-                params=params
+                params=params,
+                get_json=True
         ):
             return api_helper.multiply_objects_parse(
                 lst_of_objects=response.response_data,
@@ -87,7 +90,8 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         async for response in self._requests.fast().fetch(
                 url='http://edge.qiwi.com/locator/v3/ttp-groups',
                 method='GET',
-                headers={"Content-type": "text/json"}
+                headers={"Content-type": "text/json"},
+                get_json=True
         ):
             return api_helper.multiply_objects_parse(
                 lst_of_objects=response.response_data,

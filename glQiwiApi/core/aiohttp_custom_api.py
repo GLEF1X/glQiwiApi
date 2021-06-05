@@ -11,14 +11,13 @@ from glQiwiApi.utils.exceptions import RequestError
 
 class RequestManager(HttpXParser):
     """
-    Немного переделанный HttpXParser
-    под платежные системы и кэширование запросов
+    Deal with :class:`Storage`,
+    caching queries and managing stable work of sending requests
 
     """
     __slots__ = (
-        'without_context', 'messages', '_cache', '_cached_key',
-        '_connector_type', '_connector_init', '_should_reset_connector',
-        '_proxy'
+        'without_context', 'messages', '_cache', '_should_reset_connector',
+        '_connector_type', '_connector_init', '_proxy'
     )
 
     def __init__(
@@ -33,17 +32,26 @@ class RequestManager(HttpXParser):
         self.without_context: bool = without_context
         self.messages: Optional[Dict[str, str]] = messages
         self._cache: Storage = Storage(cache_time=cache_time)
-        self._cached_key: str = "session"
 
-    def reset_storage(self) -> None:
+    def reset_cache(self) -> None:
         """ Clear all cache in storage """
         self._cache.clear(force=True)
 
-    async def _request(self, *args, **kwargs) -> Response:
+    async def make_request(self, **kwargs) -> Response:
+        """ The user-friendly method that allows sending requests to any URL  """
+        return await super(RequestManager, self)._make_request(**kwargs)
+
+    async def _make_request(self, *args, **kwargs) -> Response:
+        """ Send request to service(API) """
         # Получаем текущий кэш используя ссылку как ключ
         response = self._cache[(kwargs.get('url'))]
         if not self._cache.validate(kwargs):
-            response = await super()._request(*args, **kwargs)
+            try:
+                response = await super()._make_request(*args, **kwargs)
+            except aiohttp.ContentTypeError:
+                raise RequestError(message="Unexpected error. Cannot deserialize answer.",
+                                   status_code="unknown")
+
         # Проверяем, не был ли запрос в кэше, если нет,
         # то проверяем статус код и если он не 200 - выбрасываем ошибку
         if not isinstance(response, Cached):
@@ -57,6 +65,15 @@ class RequestManager(HttpXParser):
         self._cache_all(response, kwargs)
 
         return response
+
+    async def _close_session(self):
+        if self.without_context:
+            await super(RequestManager, self).close()
+
+    async def close(self) -> None:
+        """ Close aiohttp session and reset cache data """
+        await super(RequestManager, self).close()
+        self.reset_cache()
 
     def raise_exception(
             self,
@@ -75,10 +92,6 @@ class RequestManager(HttpXParser):
             json_info=json_info
         )
 
-    async def _close_session(self):
-        if self.without_context and not self.session.closed:
-            await self.session.close()
-
     def _cache_all(self, response: Response, kwargs: Dict[Any, Any]):
         resolved: Cached = self._cache.convert_to_cache(
             result=response.response_data,
@@ -89,8 +102,8 @@ class RequestManager(HttpXParser):
 
     @property
     def is_session_closed(self) -> bool:
-        if isinstance(self.session, aiohttp.ClientSession):
-            if not self.session.closed:
+        if isinstance(self._session, aiohttp.ClientSession):
+            if not self._session.closed:
                 return True
         return False
 

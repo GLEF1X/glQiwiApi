@@ -12,7 +12,7 @@ from aiohttp import (
     ClientTimeout,
     ClientProxyConnectionError,
     ServerDisconnectedError,
-    ContentTypeError, ClientConnectionError, ClientSession
+    ClientConnectionError, ClientSession
 )
 from aiohttp.typedefs import LooseCookies
 
@@ -90,10 +90,10 @@ class HttpXParser(AbstractParser):
             sock_connect=5,
             sock_read=None
         )
-        self.session: Optional[ClientSession] = None
+        self._session: Optional[ClientSession] = None
         self._connector_type: Type[aiohttp.TCPConnector] = aiohttp.TCPConnector
         self._connector_init: Dict[str, Any] = {}
-        self._should_reset_connector = True  # flag determines connector state
+        self._should_reset_connector = False  # flag determines connector state
         self._proxy: Optional[_ProxyType] = None
 
         if proxy is not None:
@@ -118,7 +118,7 @@ class HttpXParser(AbstractParser):
         self._setup_proxy_connector(proxy)
         self._should_reset_connector = True
 
-    async def _request(
+    async def _make_request(
             self,
             url: str,
             get_json: bool = False,
@@ -131,12 +131,14 @@ class HttpXParser(AbstractParser):
                     Union[str, int]
                 ]]]
             ] = None,
-            headers: Optional[Dict[str, Union[str, int]]] = None,
+            headers: Optional[dict] = None,
             params: Optional[
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ] = None) -> Response:
+            ] = None,
+            get_bytes: bool = False,
+            **kwargs) -> Response:
         """
         Send request to some url. Method has a similar signature with the `aiohttp.request`
 
@@ -146,27 +148,33 @@ class HttpXParser(AbstractParser):
          в формате json
         :param method: Тип запроса
         :param data: payload data
-        :param cookies:
-        :param headers:
-         aiohttp.ClientSession initialization
+        :param set_timeout:
+        :param json:
+        :param cookies: куки запроса
+        :param headers: заголовки запроса
+        :param params:
+        :param get_bytes: указывает на то, хотите ли вы получить ответ
+         в байтах
+        :param kwargs:
         :return: Response instance
         """
-        headers = self.get_headers(headers)
+        headers = headers or self.base_headers
         # Create new session if old was closed
-        self.create_session(
+        await self.create_session(
             timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT
         )
 
         # sending query to some endpoint url
         try:
-            response = await self.session.request(
+            response = await self._session.request(
                 method=method,
                 url=url,
                 data=data,
                 headers=headers,
                 json=json if isinstance(json, dict) else None,
                 cookies=cookies,
-                params=params
+                params=params,
+                **kwargs
             )
         except (
                 ClientProxyConnectionError,
@@ -176,12 +184,13 @@ class HttpXParser(AbstractParser):
             self.raise_exception(status_code='400_special_bad_proxy')
             return Response.bad_response()
         # Get content and return response
-        try:
+        if get_json:
             data = await response.json()
-        except ContentTypeError:
-            if get_json:
-                return Response(status_code=response.status)
+        elif get_bytes:
+            data = await response.read()
+        else:
             data = await response.text()
+
         return Response(
             status_code=response.status,
             response_data=data,
@@ -192,11 +201,6 @@ class HttpXParser(AbstractParser):
             host=response.host,
             url=response.url.__str__()
         )
-
-    def get_headers(self, headers: Optional[dict]) -> Optional[dict]:
-        if isinstance(headers, dict):
-            return headers
-        return self.base_headers
 
     async def fetch(
             self,
@@ -210,11 +214,11 @@ class HttpXParser(AbstractParser):
         async for response in parser.fetch():
             print(response)
 
-        :param times: int of quantity requests
+        :param times: quantity requests
         :param kwargs: HttpXParser._request kwargs
         :return:
         """
-        coroutines = [self._request(**kwargs) for _ in repeat(None, times)]
+        coroutines = [self._make_request(**kwargs) for _ in repeat(None, times)]
         for future in as_completed(fs=coroutines):
             yield await future
 
@@ -235,25 +239,34 @@ class HttpXParser(AbstractParser):
             set_event_loop_policy(EventLoopPolicy())
         return self
 
-    def create_session(self, **kwargs) -> Optional[aiohttp.ClientSession]:
+    async def create_session(self, **kwargs) -> Optional[aiohttp.ClientSession]:
         """ Creating new session if old was close or it's None """
         if self.proxy is not None:
             kwargs.update(connector=self._connector_type(**self._connector_init))
 
-        if not isinstance(self.session, ClientSession):
-            self.session = ClientSession(**kwargs)
+        if self._should_reset_connector and isinstance(self._session, ClientSession):
+            await self._session.close()
+
+        if not isinstance(self._session, ClientSession):
+            self._session = ClientSession(**kwargs)
             self._should_reset_connector = False
-        elif isinstance(self.session, ClientSession):
-            if self.session.closed:
-                self.session = ClientSession(**kwargs)
+        elif isinstance(self._session, ClientSession):
+            if self._session.closed:
+                self._session = ClientSession(**kwargs)
                 self._should_reset_connector = False
-        return self.session
+        return self._session
+
+    async def close(self) -> None:
+        """ close aiohttp session"""
+        if isinstance(self._session, ClientSession):
+            if not self._session.closed:
+                await self._session.close()
 
     async def stream_content(
             self, url: str, timeout: int, chunk_size: int
     ) -> AsyncGenerator[bytes, None]:
-        self.create_session()
+        await self.create_session()
 
-        async with self.session.get(url, timeout=timeout) as resp:
+        async with self._session.get(url, timeout=timeout) as resp:
             async for chunk in resp.content.iter_chunked(chunk_size):
                 yield chunk

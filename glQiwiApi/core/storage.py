@@ -3,11 +3,12 @@ import typing
 
 from glQiwiApi.core import BaseStorage
 from glQiwiApi.core.constants import uncached
-from glQiwiApi.types import MEMData
 from glQiwiApi.types.basics import Cached, Attributes
 
+MEMData = typing.TypeVar("MEMData", bound=typing.Dict[typing.Any, typing.Any])
 
-class Storage(BaseStorage):
+
+class Storage(BaseStorage[MEMData]):
     """
     Deal with cache and data. Easy to use
 
@@ -27,7 +28,7 @@ class Storage(BaseStorage):
         :param cache_time: Время кэширования в секундах
         """
 
-        self.data: MEMData = MEMData(dict())
+        self.data: MEMData = dict()
         self._cache_time = cache_time
 
     def clear(self, key: typing.Optional[str] = None, *,

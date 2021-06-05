@@ -25,7 +25,7 @@ class EventHandler:
 
     """
 
-    def __init__(self, functor: EventHandlerFunctor, *filter_: Filter) -> None:
+    def __init__(self, functor: EventHandlerFunctor, *filter_: Tuple[Filter]) -> None:
         """
 
         :param functor:
@@ -64,7 +64,7 @@ class Dispatcher:
                 f" {asyncio.AbstractEventLoop!r}"
             )
 
-        self.loop = loop
+        self._loop = loop
         self.transaction_handlers: List[EventHandler] = []
         self.bill_handlers: List[EventHandler] = []
         self._logger: logging.Logger = _setup_logger()
@@ -131,7 +131,7 @@ class Dispatcher:
 
         return EventHandler(event_handler, *filters)
 
-    def transaction_handler_wrapper(self, *filters: EventFilter) -> E:
+    def transaction_handler_wrapper(self, *filters: EventFilter):
 
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_transaction_handler(callback, *filters)
@@ -139,7 +139,7 @@ class Dispatcher:
 
         return decorator
 
-    def bill_handler_wrapper(self, *filters: EventFilter) -> E:
+    def bill_handler_wrapper(self, *filters: EventFilter):
 
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_bill_handler(callback, *filters)
@@ -155,4 +155,3 @@ class Dispatcher:
 
         for handler in self.handlers:
             await handler.check_then_execute(event)
-

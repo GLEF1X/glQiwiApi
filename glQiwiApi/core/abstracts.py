@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import abc
 import asyncio
+import typing
 import unittest
-from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple
+from types import TracebackType
+from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple, Type
 
 from aiohttp import web
 from aiohttp.typedefs import LooseCookies
@@ -27,7 +31,10 @@ class SingletonABCMeta(abc.ABCMeta):
         return cls._instances[cls]
 
 
-class BaseStorage(abc.ABC):
+T = typing.TypeVar("T")
+
+
+class BaseStorage(abc.ABC, typing.Generic[T]):
     """
     Абстрактный класс контроллера кэша
 
@@ -97,7 +104,7 @@ class AbstractParser(abc.ABC):
     """ Abstract class of parser for send request to different API's"""
 
     @abc.abstractmethod
-    async def _request(
+    async def _make_request(
             self,
             url: str,
             get_json: bool,
@@ -115,7 +122,9 @@ class AbstractParser(abc.ABC):
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ]) -> Response:
+            ],
+            get_bytes: bool,
+            **kwargs) -> Response:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -128,6 +137,13 @@ class AbstractParser(abc.ABC):
         """ You can override it, but is must to return an AsyncGenerator """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    async def close(self) -> None:  # pragma: no cover
+        """
+        Close client session
+        """
+        pass
+
     def raise_exception(
             self,
             status_code: str,
@@ -135,6 +151,17 @@ class AbstractParser(abc.ABC):
             message: Optional[str] = None
     ) -> None:
         """Метод для обработки исключений и лучшего логирования"""
+
+    async def __aenter__(self) -> AbstractParser:
+        return self
+
+    async def __aexit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
+    ) -> None:
+        await self.close()
 
 
 class BaseWebHookView(web.View):

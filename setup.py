@@ -6,7 +6,7 @@ PATH = pathlib.Path(__file__).parent
 
 README = (PATH / "README.md").read_text()
 
-REQUIREMENTS = (PATH / "docs/requirements.txt").read_text()
+REQUIREMENTS = (PATH / "SETUP_REQUIREMENTS.txt").read_text()
 
 setuptools.setup(
     packages=setuptools.find_packages(exclude=(

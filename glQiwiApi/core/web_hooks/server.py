@@ -157,16 +157,7 @@ def setup_bill_data(
 def setup(
         dispatcher: Dispatcher,
         app: web.Application,
-        instance: typing.Any,
         host: str,
-        on_startup: typing.Optional[
-            typing.Callable[
-                [web.Application], typing.Awaitable[None]
-            ]],
-        on_shutdown: typing.Optional[
-            typing.Callable[
-                [web.Application], typing.Awaitable[None]
-            ]],
         path: typing.Optional[Path] = None,
         secret_key: typing.Optional[str] = None,
         base64_key: typing.Optional[str] = None,
@@ -182,8 +173,6 @@ def setup(
     :param path: Path obj, contains two paths
     :param secret_key: secret p2p key
     :param base64_key: Base64-encoded webhook key
-    :param on_startup: coroutine,which will be executed on startup
-    :param on_shutdown: coroutine, which will be executed on shutdown
     :param instance: instance of the QiwiWrapper
     :param tg_app:
     """
@@ -192,33 +181,7 @@ def setup(
                     path)
     setup_transaction_data(app, base64_key, dispatcher,
                            path)
-    _setup_callbacks(on_startup, on_shutdown, instance, app)
     _setup_tg_proxy(tg_app, app, host)
-
-
-def _setup_callbacks(
-        on_startup: typing.Optional[
-            typing.Callable[[web.Application], typing.Awaitable[None]]
-        ],
-        on_shutdown: typing.Optional[
-            typing.Callable[[web.Application], typing.Awaitable[None]]
-        ],
-        instance: typing.Any,
-        app: web.Application
-) -> None:
-    """
-    Function, which deals with on_startup and on_shutdown functions
-
-    :param on_startup: coroutine,which will be executed on startup
-    :param on_shutdown: coroutine, which will be executed on shutdown
-    :param instance: instance of the QiwiWrapper
-    :param app: instance of aiohttp.web.Application()
-    """
-    app["client"] = instance
-    if callable(on_startup):
-        app.on_startup.append(on_startup)
-    if callable(on_shutdown):
-        app.on_shutdown.append(on_shutdown)
 
 
 def _setup_tg_proxy(
@@ -233,7 +196,7 @@ def _setup_tg_proxy(
     """
     if tg_app is not None:
         if not isinstance(tg_app, BaseProxy):
-            raise RuntimeError(
+            raise TypeError(
                 "Invalid telegram proxy. It must "
                 "inherit from the parent class `BaseTelegramProxy`."
             )

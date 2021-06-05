@@ -1,9 +1,31 @@
+from __future__ import annotations
+
 import functools
 from dataclasses import dataclass
-from typing import Any, Optional, Dict
+from typing import Optional, Dict, Any
 
 from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.utils.basics import check_api_method
+
+
+class YooMoneyRouter(AbstractRouter):
+    __head__ = 'https://yoomoney.ru'
+
+    def setup_config(self) -> Any:
+        return get_settings()
+
+    @functools.lru_cache()
+    def build_url(self, api_method: str, **kwargs: Any) -> str:
+        check_api_method(api_method)
+        tail_path: Optional[str] = getattr(self.config, api_method, None)
+        pre_build_url = self.__head__ + tail_path
+        return super()._format_url_kwargs(pre_build_url, **kwargs)
+
+
+@functools.lru_cache()
+def get_settings() -> YooMoneySettings:
+    settings = YooMoneySettings()
+    return settings
 
 
 @dataclass
@@ -43,26 +65,6 @@ class YooMoneySettings:
     ERROR_CODE_NUMBERS: Optional[Dict[str, str]] = None
 
     content_and_auth: Optional[Dict[str, bool]] = None
-
-
-class YooMoneyRouter(AbstractRouter):
-    __head__ = 'https://yoomoney.ru'
-
-    def setup_config(self) -> Any:
-        return get_settings()
-
-    @functools.lru_cache()
-    def build_url(self, api_method: str, **kwargs: Any) -> str:
-        check_api_method(api_method)
-        tail_path: Optional[str] = getattr(self.config, api_method, None)
-        pre_build_url = self.__head__ + tail_path
-        return super()._format_url_kwargs(pre_build_url, **kwargs)
-
-
-@functools.lru_cache()
-def get_settings() -> YooMoneySettings:
-    settings = YooMoneySettings()
-    return settings
 
 
 __all__ = ('YooMoneyRouter',)
