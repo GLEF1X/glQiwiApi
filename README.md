@@ -249,7 +249,7 @@ async def main():
         print(trans_id)
         # Так можно предварительно расчитать комиссию за транзакцию
         commission = await w.commission(
-            to_account='4731219185432123',
+            to_account='4890494756089082',
             pay_sum=1
         )
         print(commission.qiwi_commission.amount)
