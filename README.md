@@ -226,7 +226,6 @@ def on_startup(wrapper: QiwiWrapper):
 
 executor.start_polling(
     wallet,
-    get_updates_from=datetime.datetime.now() - datetime.timedelta(hours=1),
     on_startup=on_startup
 )
 ```

@@ -3,7 +3,7 @@ name = "glQiwiApi"
 version = "1.0beta"
 description = "The fast and lightweight wrapper of QIWI and YooMoney API's"
 authors = ["Gleb Garanin <glebgar567@gmail.com>"]
-repository = "https://ggithub.com/GLEF1X/glQiwiApi"
+repository = "https://github.com/GLEF1X/glQiwiApi"
 readme = 'README.md'
 maintainers = [
     "GLEF1X github.com/GLEF1X",
