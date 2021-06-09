@@ -88,7 +88,7 @@ class RequestManager(HttpXParser):
         raise RequestError(
             message,
             status_code,
-            additional_info=f"0.2.23 version api",
+            additional_info=f"1.0.1 version api",
             json_info=json_info
         )
 
