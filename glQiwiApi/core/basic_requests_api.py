@@ -19,6 +19,8 @@ from aiohttp.typedefs import LooseCookies
 from glQiwiApi.core import AbstractParser
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
 from glQiwiApi.types import Response
+from glQiwiApi.types.basics import Cached
+from glQiwiApi.utils.exceptions import RequestError
 
 _ProxyBasic = Union[str, Tuple[str, aiohttp.BasicAuth]]
 _ProxyChain = Iterable[_ProxyBasic]
@@ -77,13 +79,13 @@ class HttpXParser(AbstractParser):
 
     """
 
-    _sleep_time = 2
-
-    def __init__(self, proxy: Optional[_ProxyType] = None) -> None:
+    def __init__(self, proxy: Optional[_ProxyType] = None,
+                 messages: Optional[Dict[str, str]] = None) -> None:
         self.base_headers = {
             'User-Agent': "glQiwiApi/1.0beta",
             'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
         }
+        self.messages = messages
         self._timeout = ClientTimeout(
             total=5,
             connect=None,
@@ -138,7 +140,7 @@ class HttpXParser(AbstractParser):
                 ]]]
             ] = None,
             get_bytes: bool = False,
-            **kwargs) -> Response:
+            **kwargs) -> Union[Response, Cached]:
         """
         Send request to some url. Method has a similar signature with the `aiohttp.request`
 
@@ -160,13 +162,13 @@ class HttpXParser(AbstractParser):
         """
         headers = headers or self.base_headers
         # Create new session if old was closed
-        await self.create_session(
+        session = await self.create_session(
             timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT
         )
 
         # sending query to some endpoint url
         try:
-            response = await self._session.request(
+            response = await session.request(
                 method=method,
                 url=url,
                 data=data,
@@ -181,19 +183,25 @@ class HttpXParser(AbstractParser):
                 ServerDisconnectedError,
                 ClientConnectionError
         ):
-            self.raise_exception(status_code='400_special_bad_proxy')
-            return Response.bad_response()
+            raise self.make_exception(status_code=500)
         # Get content and return response
-        if get_json:
-            data = await response.json()
-        elif get_bytes:
-            data = await response.read()
-        else:
-            data = await response.text()
+        try:
+            if get_json:
+                resp_data = await response.json(encoding="utf-8")
+            elif get_bytes:
+                resp_data = await response.read()
+            else:
+                resp_data = await response.text(encoding="utf-8")
+        except aiohttp.ContentTypeError as ex:
+            # For better traceback we raising a new exception from aiohttp.ContentTypeError
+            raise self.make_exception(
+                status_code=response.status,
+                traceback_info=ex.request_info
+            ) from None
 
         return Response(
             status_code=response.status,
-            response_data=data,
+            response_data=resp_data,
             raw_headers=response.raw_headers,
             cookies=response.cookies,
             ok=response.ok,
@@ -207,7 +215,7 @@ class HttpXParser(AbstractParser):
             *,
             times: int = 1,
             **kwargs
-    ) -> AsyncGenerator[Response, None]:
+    ) -> AsyncGenerator[Union[Response, Cached], None]:
         """
         Basic usage: \n
         parser = HttpXParser() \n
@@ -239,7 +247,7 @@ class HttpXParser(AbstractParser):
             set_event_loop_policy(EventLoopPolicy())
         return self
 
-    async def create_session(self, **kwargs) -> Optional[aiohttp.ClientSession]:
+    async def create_session(self, **kwargs) -> aiohttp.ClientSession:
         """ Creating new session if old was close or it's None """
         if self.proxy is not None:
             kwargs.update(connector=self._connector_type(**self._connector_init))
@@ -265,8 +273,27 @@ class HttpXParser(AbstractParser):
     async def stream_content(
             self, url: str, timeout: int, chunk_size: int
     ) -> AsyncGenerator[bytes, None]:
-        await self.create_session()
+        session = await self.create_session()
 
-        async with self._session.get(url, timeout=timeout) as resp:
+        async with session.get(url, timeout=timeout) as resp:
             async for chunk in resp.content.iter_chunked(chunk_size):
                 yield chunk
+
+    def make_exception(
+            self,
+            status_code: int,
+            traceback_info: Optional[Union[aiohttp.RequestInfo, dict, str, bytes]] = None,
+            message: Optional[str] = None
+    ) -> RequestError:
+        """ Raise :class:`RequestError` exception with pretty explanation """
+        from glQiwiApi import __version__
+
+        if not isinstance(message, str):
+            if isinstance(self.messages, dict):
+                message = self.messages.get(status_code, "Unknown")  # type: ignore
+        return RequestError(
+            message,
+            status_code,
+            additional_info=f"{__version__} version api",
+            traceback_info=traceback_info
+        )

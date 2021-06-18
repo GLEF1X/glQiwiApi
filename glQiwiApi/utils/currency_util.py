@@ -21,6 +21,7 @@ class Currency:
     ]:
         """
         Implements class-based getitem behaviour
+
         >>> Currency.get('840').symbol
         ... '$'
         >>> Currency.get('USD').symbol

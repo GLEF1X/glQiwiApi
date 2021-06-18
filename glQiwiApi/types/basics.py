@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Union, Any, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, validator
 
 DEFAULT_CACHE_TIME = 0
 
@@ -30,18 +30,6 @@ class OptionalSum(BaseModel):
     """ object: OptionalSum """
     value: Union[int, float]
     currency: str
-
-
-class Commission(BaseModel):
-    """
-    Комиссия за платеж
-
-    """
-    provider_id: int = Field(alias="providerId")
-    withdraw_sum: Sum = Field(alias="withdrawSum")
-    enrollment_sum: Sum = Field(alias="enrollmentSum")
-    qiwi_commission: Sum = Field(alias="qwCommission")
-    withdraw_to_enrollment_rate: int = Field(alias="withdrawToEnrollmentRate")
 
 
 class Type(BaseModel):
@@ -87,7 +75,6 @@ class Cached:
 __all__ = [
     'Sum',
     'OptionalSum',
-    'Commission',
     'Type',
     'Cached',
     'DEFAULT_CACHE_TIME',

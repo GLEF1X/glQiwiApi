@@ -7,11 +7,12 @@ import unittest
 from types import TracebackType
 from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple, Type
 
-from aiohttp import web
+from aiohttp import web, RequestInfo
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
 from glQiwiApi.types import Response
+from glQiwiApi.types.basics import Cached
 
 
 class SingletonABCMeta(abc.ABCMeta):
@@ -34,20 +35,21 @@ class SingletonABCMeta(abc.ABCMeta):
 T = typing.TypeVar("T")
 
 
-class BaseStorage(abc.ABC, typing.Generic[T]):
+class BaseStorage(abc.ABC):
     """
     Абстрактный класс контроллера кэша
 
     """
 
     @abc.abstractmethod
-    def clear(self, key: str, force: bool = False) -> Any:
+    def clear(self, key: typing.Optional[str] = None, *,
+              force: bool = False) -> Any:
         raise NotImplementedError
 
     def update_data(self, obj_to_cache: Any, key: Any) -> None:
         raise NotImplementedError
 
-    def validate(self, kwargs: Dict[str, Any]) -> bool:
+    def validate(self, **kwargs) -> bool:
         """ Should validate some data from cache """
 
 
@@ -107,24 +109,24 @@ class AbstractParser(abc.ABC):
     async def _make_request(
             self,
             url: str,
-            get_json: bool,
-            method: str,
-            set_timeout: bool,
-            cookies: Optional[LooseCookies],
-            json: Optional[dict],
+            get_json: bool = False,
+            method: str = 'POST',
+            set_timeout: bool = True,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[dict] = None,
             data: Optional[Dict[str, Union[
                 str, int, List[
                     Union[str, int]
                 ]]]
-            ],
-            headers: Optional[Dict[str, Union[str, int]]],
+            ] = None,
+            headers: Optional[dict] = None,
             params: Optional[
                 Dict[str, Union[str, int, List[
                     Union[str, int]
                 ]]]
-            ],
-            get_bytes: bool,
-            **kwargs) -> Response:
+            ] = None,
+            get_bytes: bool = False,
+            **kwargs) -> Union[Response, Cached]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -144,12 +146,12 @@ class AbstractParser(abc.ABC):
         """
         pass
 
-    def raise_exception(
+    def make_exception(
             self,
-            status_code: str,
-            json_info: Optional[Dict[str, Any]] = None,
+            status_code: int,
+            traceback_info: Optional[RequestInfo] = None,
             message: Optional[str] = None
-    ) -> None:
+    ):
         """Метод для обработки исключений и лучшего логирования"""
 
     async def __aenter__(self) -> AbstractParser:
@@ -198,7 +200,7 @@ class BaseWebHookView(web.View):
         forwarded_for = self.request.headers.get("X-Forwarded-For")
         if forwarded_for:
             return forwarded_for, self._check_ip(forwarded_for)
-        peer_name = self.request.transport.get_extra_info("peername")
+        peer_name = self.request.transport.get_extra_info("peername")  # type: ignore
 
         if peer_name is not None:
             host, _ = peer_name

@@ -18,8 +18,8 @@ from pydantic import ValidationError, BaseModel
 from pytz.reference import LocalTimezone
 
 try:
-    import orjson
-except (ModuleNotFoundError, ImportError):
+    import orjson  # type: ignore
+except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
     import json as orjson
 
 # Gets your local time zone
@@ -238,6 +238,7 @@ def simple_multiply_parse(lst_of_objects, model):
 def take_event_loop(set_debug: bool = False):
     """
     Get new or running event loop
+    !THIS FUNCTION IS IRRELEVANT, DON'T USE IT!
 
     :param set_debug:
     """
@@ -318,7 +319,7 @@ def allow_response_code(status_code):
                 await func(*args, **kwargs)
             except RequestError as error:
                 if error.status_code == str(status_code):
-                    info = error.json_info
+                    info = error.traceback_info
                     return {"success": True} if not info else info
                 return {"success": False}
 
@@ -544,7 +545,7 @@ def override_error_messages(status_codes):
                     ex = RequestError(
                         message=error.get("message"),
                         status_code=ex.status_code,
-                        json_info=error.get("json_info"),
+                        traceback_info=error.get("json_info"),
                         additional_info=ex.additional_info
                     )
                 raise ex

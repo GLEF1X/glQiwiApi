@@ -5,10 +5,8 @@ from glQiwiApi.core import BaseStorage
 from glQiwiApi.core.constants import uncached
 from glQiwiApi.types.basics import Cached, Attributes
 
-MEMData = typing.TypeVar("MEMData", bound=typing.Dict[typing.Any, typing.Any])
 
-
-class Storage(BaseStorage[MEMData]):
+class Storage(BaseStorage):
     """
     Deal with cache and data. Easy to use
 
@@ -18,7 +16,7 @@ class Storage(BaseStorage[MEMData]):
 
     """
     # Доступные критерии, по которым проходит валидацию кэш
-    _validator_args = ('params', 'json', 'data', 'headers')
+    _validator_criteria = ('params', 'json', 'data', 'headers')
 
     __slots__ = ('data', '_cache_time')
 
@@ -28,7 +26,7 @@ class Storage(BaseStorage[MEMData]):
         :param cache_time: Время кэширования в секундах
         """
 
-        self.data: MEMData = dict()
+        self.data: dict = {}
         self._cache_time = cache_time
 
     def clear(self, key: typing.Optional[str] = None, *,
@@ -49,13 +47,14 @@ class Storage(BaseStorage[MEMData]):
     def __setitem__(self, key, value) -> None:
         return self.update_data(value, key)
 
-    def __getitem__(self, item) -> typing.Any:
+    def __getitem__(self, item) -> typing.Optional[typing.Any]:
         try:
             obj = self.data[item]
             if not self._is_expire(obj["cached_in"], item):
                 return obj["data"]
+            return None
         except KeyError:
-            pass
+            return None
 
     def _is_contain_uncached(self, value: typing.Optional[typing.Any]) -> bool:
         if self._cache_time < 0.1:
@@ -63,7 +62,7 @@ class Storage(BaseStorage[MEMData]):
 
         for coincidence in uncached:
             try:
-                if value.startswith(coincidence) or coincidence in value:
+                if value.startswith(coincidence) or coincidence in value:  # type: ignore
                     return True
             except AttributeError:
                 return False
@@ -85,13 +84,14 @@ class Storage(BaseStorage[MEMData]):
         value = kwargs.get("url")
         if not self._is_contain_uncached(value):
             return Cached(
-                kwargs=Attributes.format(kwargs, self._validator_args),
+                kwargs=Attributes.format(kwargs, self._validator_criteria),
                 response_data=result,
                 status_code=status_code,
                 method=kwargs.get('method')
             )
-        elif uncached[1] in value:
-            self.clear(value, force=True)
+        elif isinstance(value, str):
+            if uncached[1] in value:
+                self.clear(value, force=True)
 
     def update_data(self, obj_to_cache: typing.Any, key: typing.Any) -> None:
         """
@@ -100,7 +100,7 @@ class Storage(BaseStorage[MEMData]):
         >>> storage = Storage(cache_time=5)
         >>> storage.update_data(obj_to_cache="hello world", key="world")
         >>> storage["world"] = "hello_world"  # This approach is in priority and
-                                              # the same as on the line of code above
+        ...                                   # the same as on the line of code above
 
         :param obj_to_cache: объект для кэширования
         :param key: ключ, по которому будет зарезервирован этот кэш
@@ -128,13 +128,13 @@ class Storage(BaseStorage[MEMData]):
         return False
 
     def _validate_other(self, cached: Cached, kwargs: dict) -> bool:
-        keys = (key for key in self._validator_args if key != 'headers')
+        keys = (k for k in self._validator_criteria if k != 'headers')
         for key in keys:
             if getattr(cached.kwargs, key) == kwargs.get(key, ''):
                 return True
         return False
 
-    def validate(self, kwargs: typing.Dict[str, typing.Any]) -> bool:
+    def validate(self, **kwargs) -> bool:
         """
         Метод, который по некоторым условиям
         проверяет актуальность кэша и в некоторых
@@ -145,11 +145,12 @@ class Storage(BaseStorage[MEMData]):
         """
         # Если параметры и ссылка запроса совпадает
         cached = self[kwargs.get("url")]
+        validation_kwargs = {k: v for k, v in kwargs.items() if v is not None}
         if isinstance(cached, Cached):
             # Проверяем запрос методом GET на кэш
-            if self._check_get_request(cached, kwargs):
+            if self._check_get_request(cached, validation_kwargs):
                 return True
-            elif self._validate_other(cached, kwargs):
+            elif self._validate_other(cached, validation_kwargs):
                 return True
 
         return False

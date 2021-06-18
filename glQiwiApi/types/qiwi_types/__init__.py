@@ -2,6 +2,7 @@ from .account import Account
 from .account_info import QiwiAccountInfo
 from .balance import Balance
 from .bill import Bill, BillError, RefundBill, Notification, P2PKeys
+from .commission import Commission
 from .identification import Identification
 from .limit import Limit
 from .other import CrossRate, FreePaymentDetailsFields, PaymentMethod
@@ -39,5 +40,6 @@ __all__ = (
     'FreePaymentDetailsFields',
     'PaymentMethod',
     'Card',
-    'Restriction'
+    'Restriction',
+    'Commission'
 )

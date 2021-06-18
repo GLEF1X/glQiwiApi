@@ -24,9 +24,9 @@ async def basic_usage():
             start_date=datetime.datetime.now() - datetime.timedelta(days=10),
             end_date=datetime.datetime.now()
         )
-        print(stats.out[0].amount)
+        print(stats)
         # Полная информация об аккаунте
-        info = await wallet.account_info()
+        info = await wallet.account_info
         # Получаем айпи адресс, с которого был совершен последний вход
         print(info.auth_info.ip)
         # Переводим деньги на другой кошелек, при этом получая айди платежа

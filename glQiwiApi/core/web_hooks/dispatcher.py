@@ -1,6 +1,5 @@
-import asyncio
 import logging
-from typing import List, Tuple, Coroutine, Any, Union
+from typing import List, Tuple, Callable
 
 from .config import EventHandlerFunctor, EventFilter, E
 from .filter import Filter
@@ -25,16 +24,16 @@ class EventHandler:
 
     """
 
-    def __init__(self, functor: EventHandlerFunctor, *filter_: Tuple[Filter]) -> None:
+    def __init__(self, functor: EventHandlerFunctor, *filters: Filter) -> None:
         """
 
         :param functor:
-        :param filter_:
+        :param filters:
         """
         self._fn = functor
-        self._filters = filter_
+        self._filters = filters
 
-    async def check_then_execute(self, event: E) -> Coroutine[Any, Any, Any]:
+    async def check_then_execute(self, event: E):
         """
         Check event, apply all filters and than pass on to handler
 
@@ -57,14 +56,7 @@ class Dispatcher:
 
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop):
-        if not isinstance(loop, asyncio.AbstractEventLoop):
-            raise RuntimeError(
-                f"Listener must have its event loop implemented with"
-                f" {asyncio.AbstractEventLoop!r}"
-            )
-
-        self._loop = loop
+    def __init__(self):
         self.transaction_handlers: List[EventHandler] = []
         self.bill_handlers: List[EventHandler] = []
         self._logger: logging.Logger = _setup_logger()
@@ -106,7 +98,7 @@ class Dispatcher:
     @staticmethod
     def wrap_handler(
             event_handler: EventHandlerFunctor,
-            filters: Tuple[Union[EventFilter, Filter], ...],
+            filters: Tuple[EventFilter, ...],
             default_filter: Filter
     ) -> EventHandler:
         """
@@ -119,19 +111,17 @@ class Dispatcher:
         :return: this handler manager
         """
         if filters:  # Initially filters are in tuple
-            filters_list = list(filters)
-
-            for index, filter_ in enumerate(filters):
-                if not isinstance(filter_, Filter):
-                    filters_list[index] = default_filter & Filter(filter_)
-
-            filters = tuple(filters_list)
+            filters = [
+                default_filter & Filter(f) for idx, f in enumerate(filters)
+                if not isinstance(f, Filter)
+            ]
         else:
-            filters = (default_filter,)
+            filters = [default_filter]
 
         return EventHandler(event_handler, *filters)
 
-    def transaction_handler_wrapper(self, *filters: EventFilter):
+    def transaction_handler_wrapper(
+            self, *filters: EventFilter) -> Callable[[EventHandlerFunctor], EventHandlerFunctor]:
 
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_transaction_handler(callback, *filters)

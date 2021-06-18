@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import abc
+import asyncio
 import typing
 from asyncio import AbstractEventLoop
 
 from aiohttp import web
 
-from glQiwiApi.utils.basics import take_event_loop
-
 if typing.TYPE_CHECKING:
     try:
-        from aiogram import Dispatcher
-    except (ModuleNotFoundError, ImportError):
+        from aiogram import Dispatcher  # type: ignore
+    except (ModuleNotFoundError, ImportError):  # type: ignore
         pass
 
 __all__ = ["TelegramWebhookProxy", "TelegramPollingProxy", "BaseProxy"]
@@ -49,7 +48,7 @@ class BaseProxy(abc.ABC):
                 raise RuntimeError("The event loop, that you have passed on is closed")
             self._loop = loop
         else:
-            self._loop = take_event_loop(set_debug=True)
+            self._loop = asyncio.get_event_loop()
 
     @abc.abstractmethod
     def setup(self, **kwargs: typing.Any) -> typing.Any:
@@ -78,7 +77,7 @@ class TelegramWebhookProxy(BaseProxy):
         :param dispatcher: instance of aiogram class Dispatcher
         :param sub_apps: list of tuples(prefix as string, web.Application)
         """
-        from aiogram.dispatcher.webhook import WebhookRequestHandler
+        from aiogram.dispatcher.webhook import WebhookRequestHandler  # type: ignore
 
         super(TelegramWebhookProxy, self).__init__(dispatcher)
         self._app: web.Application = web.Application()
@@ -117,7 +116,7 @@ class TelegramWebhookProxy(BaseProxy):
 
         """
 
-        full_url: str = host + self.prefix
+        full_url = host + self.prefix
 
         if isinstance(self.execution_path, str):
             full_url += self.execution_path
@@ -132,6 +131,27 @@ class TelegramPollingProxy(BaseProxy):
 
     """
 
+    def __init__(
+            self,
+            dispatcher: Dispatcher,
+            loop: typing.Optional[AbstractEventLoop] = None,
+            timeout: int = 20,
+            relax: float = 0.1,
+            limit=None,
+            reset_webhook=None,
+            fast: typing.Optional[bool] = True,
+            error_sleep: int = 5,
+            allowed_updates: typing.Optional[typing.List[str]] = None
+    ):
+        super(TelegramPollingProxy, self).__init__(dispatcher, loop=loop)
+        self._allowed_updates = allowed_updates
+        self._error_sleep = error_sleep
+        self._fast = fast
+        self._reset_webhook = reset_webhook
+        self._timeout = timeout
+        self._relax = relax
+        self._limit = limit
+
     def setup(self, **kwargs: typing.Any):
         """
         Set up polling to run polling qiwi updates concurrently with aiogram
@@ -139,4 +159,12 @@ class TelegramPollingProxy(BaseProxy):
         :param kwargs: you can pass on loop as key/value parameter
         """
         loop = kwargs.pop("loop") or self._loop
-        loop.create_task(self.dispatcher.start_polling(**kwargs))
+        loop.create_task(self.dispatcher.start_polling(
+            timeout=self._timeout,
+            reset_webhook=self._reset_webhook,
+            relax=self._relax,
+            allowed_updates=self._allowed_updates,
+            limit=self._limit,
+            error_sleep=self._error_sleep,
+            fast=self._fast
+        ))

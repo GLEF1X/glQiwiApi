@@ -9,7 +9,7 @@ import logging
 import types
 from datetime import datetime, timedelta
 from typing import Union, Optional, List, \
-    Callable, Awaitable, Dict, TypeVar, TYPE_CHECKING, Coroutine, Any
+    Callable, Awaitable, Dict, TypeVar, TYPE_CHECKING, Coroutine, Any, cast
 
 from aiohttp import ClientTimeout, web
 
@@ -19,7 +19,6 @@ from glQiwiApi.core.web_hooks import server
 from glQiwiApi.core.web_hooks.config import Path
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
 from glQiwiApi.types import Transaction
-from glQiwiApi.utils import basics as api_helper
 from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 
 __all__ = ['start_webhook', 'start_polling']
@@ -55,7 +54,6 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
     :param on_shutdown: coroutine, which will be executed on shutdown
     :param tg_app: builtin TelegramWebhookProxy or other
           or class, that inherits from BaseProxy and deal with aiogram updates
-    :param logger_config:
     """
     executor = Executor(client, tg_app=tg_app)
     _setup_callbacks(executor, on_startup, on_shutdown)
@@ -72,8 +70,7 @@ def start_polling(client: QiwiWrapper, *, get_updates_from: datetime = datetime.
                       Callable[
                           [QiwiWrapper], Any
                       ]] = None,
-                  tg_app: Optional[BaseProxy] = None,
-                  **kwargs):
+                  tg_app: Optional[BaseProxy] = None):
     """
     Setup for long-polling mode
 
@@ -82,8 +79,6 @@ def start_polling(client: QiwiWrapper, *, get_updates_from: datetime = datetime.
          if it's None, polling will skip all updates
     :param timeout: timeout of polling in seconds, if the timeout is too small,
          the API can throw an exception
-    :param kwargs: keyword arguments that you can pass
-         into the aiogram `start_polling` method
     :param on_startup: function or coroutine,
          which will be executed on startup
     :param on_shutdown: function or coroutine,
@@ -95,12 +90,12 @@ def start_polling(client: QiwiWrapper, *, get_updates_from: datetime = datetime.
     _setup_callbacks(executor, on_startup, on_shutdown)
     executor.start_polling(
         get_updates_from=get_updates_from,
-        timeout=timeout,
-        **kwargs
+        timeout=timeout
     )
 
 
-async def _inspect_and_execute_callback(client, callback: Callable):
+async def _inspect_and_execute_callback(client: "QiwiWrapper",
+                                        callback: Callable[[QiwiWrapper], Any]):
     if inspect.iscoroutinefunction(callback):
         await callback(client)
     else:
@@ -138,9 +133,9 @@ def parse_timeout(
     elif isinstance(timeout, int):
         return float(timeout)
     elif isinstance(timeout, ClientTimeout):
-        return timeout.total or DEFAULT_TIMEOUT.total
+        return timeout.total or DEFAULT_TIMEOUT.total  # type: ignore
     else:
-        raise ValueError("Timeout must be float, int or ClientTimeout. You have "
+        raise TypeError("Timeout must be float, int or ClientTimeout. You have "
                          f"passed on {type(timeout)}")
 
 
@@ -150,36 +145,47 @@ class Executor:
 
     """
 
-    def __init__(self, client: QiwiWrapper, tg_app: Optional[BaseProxy]):
+    def __init__(self, client: QiwiWrapper, tg_app: Optional[BaseProxy],
+                 loop: Optional[asyncio.AbstractEventLoop] = None):
         """
 
         :param client: instance of BaseWrapper
         :param tg_app: optional proxy to connect aiogram polling/webhook mode
         """
+        if loop is not None:
+            self._loop = loop
+
         self.dispatcher: Dispatcher = client.dispatcher
-        self._loop: asyncio.AbstractEventLoop = client.dispatcher._loop
         self._logger_config: Dict[str, Union[List[logging.Handler], int]] = {
             "handlers": [logger.InterceptHandler()],
             "level": logging.DEBUG
         }
         self.tg_app: Optional[BaseProxy] = tg_app
         self._polling: bool = False
-        self.offset: Optional[int] = None
+        self.offset: int = 10 ** 6
         self.offset_start_date: Optional[datetime] = None
         self.offset_end_date: Optional[datetime] = None
         self.client: QiwiWrapper = client
         self._on_startup_calls: List[Callable] = []
         self._on_shutdown_calls: List[Callable] = []
 
+        # add wrapper to context
         from glQiwiApi import QiwiWrapper
         QiwiWrapper.set_current(client)
 
+        if isinstance(self.tg_app, BaseProxy):
+            client["dispatcher"] = self.tg_app.dispatcher
+
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        return cast(asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop()))
+
     def __setitem__(self, key: str, callback: Callable):
         if key not in ["on_shutdown", "on_startup"]:
-            raise RuntimeError()
+            raise TypeError("to __setitem__ you can only pass callbacks")
 
         if not isinstance(callback, types.FunctionType):
-            raise RuntimeError("Invalid type of callback")
+            raise TypeError("Invalid type of callback, expected function, got %s" % type(callback))
 
         if key == "on_shutdown":
             self._on_shutdown_calls.append(callback)
@@ -198,9 +204,10 @@ class Executor:
                            current_time - get_updates_from
                    ).total_seconds() > 0
         except AssertionError as ex:
-            raise ValueError(
+            raise TypeError(
                 "Invalid value of get_updates_from, it must "
-                "be instance of datetime and no more than  the current time"
+                f"be instance of datetime and no more than  the current time,"
+                f" got {type(get_updates_from)}"
             ) from ex
 
         self.offset_end_date = current_time
@@ -267,12 +274,13 @@ class Executor:
             try:
                 await self._pool_process(**kwargs)
             except Exception as ex:
-                self.dispatcher.logger.error("Handle `%s`. Set a smaller timeout or open issue. "
-                                             "Sleeping %s seconds", repr(ex), timeout + 100)
+                self.dispatcher.logger.error(
+                    "Handle `%s`. Sleeping %s seconds", repr(ex), timeout + 100
+                )
                 timeout += 100
             await asyncio.sleep(timeout)
 
-    def _on_shutdown(self):
+    def _on_shutdown(self, loop: asyncio.AbstractEventLoop):
         """
         On shutdown, we gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
@@ -280,8 +288,8 @@ class Executor:
         coroutines: List[Coroutine] = [self.goodbye(), self.client.close()]
         if isinstance(self.tg_app, BaseProxy):
             coroutines.append(self._shutdown_tg_app())
-        self._loop.run_until_complete(
-            asyncio.gather(*coroutines, loop=self._loop)
+        loop.run_until_complete(
+            asyncio.gather(*coroutines, loop=loop)
         )
 
     async def _shutdown_tg_app(self):
@@ -319,24 +327,25 @@ class Executor:
     def start_polling(
             self, *,
             get_updates_from: datetime = datetime.now(),
-            timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
-            **kwargs
+            timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT
     ):
+        loop: asyncio.AbstractEventLoop = self.loop
+
         try:
-            self._loop.run_until_complete(self.welcome())
-            self._loop.create_task(self._start_polling(
+            loop.run_until_complete(self.welcome())
+            loop.create_task(self._start_polling(
                 get_updates_from=get_updates_from,
                 timeout=timeout
             ))
             if isinstance(self.tg_app, BaseProxy):
-                self.tg_app.setup(**kwargs, loop=self._loop)
-            api_helper.run_forever_safe(loop=self._loop)
+                self.tg_app.setup(loop=loop)
+            loop.run_forever()
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # Allow to graceful shutdown
             pass
         finally:
             self._polling = False
-            self._on_shutdown()
+            self._on_shutdown(loop=loop)
 
     def start_webhook(
             self, *,
@@ -345,10 +354,9 @@ class Executor:
             path: Optional[Path] = None,
             app: Optional[web.Application] = None
     ):
+        loop: asyncio.AbstractEventLoop = self.loop
         application = app or web.Application()
-
-        hook_config, key = self._loop.run_until_complete(self.client.bind_webhook())
-
+        hook_config, key = loop.run_until_complete(self.client.bind_webhook())
         server.setup(
             dispatcher=self.dispatcher,
             app=application,
@@ -358,15 +366,14 @@ class Executor:
             tg_app=self.tg_app,
             host=host
         )
-
         try:
-            self._loop.run_until_complete(self.welcome())
+            loop.run_until_complete(self.welcome())
             web.run_app(application, host=host, port=port)
         except (KeyboardInterrupt, SystemExit):
             # Allow to graceful shutdown
             pass
         finally:
-            self._on_shutdown()
+            self._on_shutdown(loop=loop)
 
     async def welcome(self) -> None:
         """ Execute on_startup callback"""

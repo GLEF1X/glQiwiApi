@@ -1,11 +1,9 @@
 import concurrent.futures as futures
-from typing import Union, TypeVar, Optional, Callable, Any, MutableMapping, \
-    Dict, NewType
+from typing import Union, TypeVar, Optional, Callable, Any
 
 from .basics import (
     Type,
     Sum,
-    Commission,
     OptionalSum
 )
 from .particular import (
@@ -36,7 +34,8 @@ from .qiwi_types import (
     FreePaymentDetailsFields,
     PaymentMethod,
     Card,
-    Restriction
+    Restriction,
+    Commission
 )
 from .yoomoney_types import (
     OperationType,

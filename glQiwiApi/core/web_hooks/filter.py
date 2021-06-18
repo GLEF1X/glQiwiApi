@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import operator
-from typing import Any, Callable
+from typing import Any, TypeVar
 
 from .config import CF, E
 
@@ -29,6 +29,9 @@ def or_(func1: CF, func2: CF, event: Any) -> Any:
     return func1(event) or func2(event)
 
 
+T = TypeVar("T")
+
+
 class Filter:
     """
     Base Filter object, callback container
@@ -40,7 +43,7 @@ class Filter:
     def __init__(self, function: CF):
         self.__name__ = f"Filter around <{function!r}>"
 
-        self.function: Callable = function
+        self.function: CF = function
         self.awaitable: bool = inspect.iscoroutinefunction(
             function
         ) or inspect.isawaitable(function)

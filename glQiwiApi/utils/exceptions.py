@@ -1,5 +1,8 @@
 import json
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Union
+
+from aiohttp import RequestInfo
+from pydantic import BaseModel
 
 
 class NoUrlFound(Exception):
@@ -34,7 +37,7 @@ class InvalidToken(Exception):
     """
 
 
-class InvalidData(Exception):
+class InvalidData(TypeError):
     """
     Ошибка возникает если были переданы или получены невалидные данные
 
@@ -48,6 +51,19 @@ class NoUpdatesToExecute(Exception):
     """
 
 
+class RequestInfoModel(BaseModel):
+    method: str
+    url: str
+    real_url: str
+
+
+class ExceptionTraceback(BaseModel):
+    status_code: int
+    msg: Optional[str] = None
+    additional_info: Optional[str] = None
+    request_info: Optional[RequestInfoModel] = None
+
+
 class RequestError(Exception):
     """
     Возникает при ошибках сервиса или неправильной передаче параметров
@@ -57,15 +73,15 @@ class RequestError(Exception):
     def __init__(
             self,
             message: Optional[str],
-            status_code: str,
+            status_code: Union[str, int],
             additional_info: Optional[str] = None,
-            json_info: Optional[Union[Dict[str, Any], str]] = None
+            traceback_info: Optional[Union[RequestInfo, str, bytes, dict]] = None
     ) -> None:
-        super().__init__()
+        super(RequestError, self).__init__()
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info
-        self.json_info = json_info
+        self.traceback_info = traceback_info
 
     def __str__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}"""
@@ -78,12 +94,36 @@ class RequestError(Exception):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def json(self) -> str:
-        return json.dumps(
-            self.__str__() if not self.json_info else self.json_info,
-            indent=2,
-            ensure_ascii=False
+    def to_model(self) -> ExceptionTraceback:
+        """ Convert exception to :class:`ExceptionTraceback` """
+        if not isinstance(self.traceback_info, RequestInfo):
+            raise TypeError("Cannot convert exception ExceptionTraceback, this method require "
+                            "RequestInfo object")
+        return ExceptionTraceback(
+            status_code=self.status_code,
+            msg=self.message,
+            additional_info=self.additional_info,
+            request_info=RequestInfoModel(
+                method=self.traceback_info.method,
+                url=self.traceback_info.url.__str__(),
+                real_url=self.traceback_info.real_url.__str__()
+            )
         )
+
+    def json(self, indent: int = 4, **dump_kw) -> str:
+        """
+        Method, that makes json format from traceback
+
+        :param indent:
+        :param dump_kw:
+        """
+        if isinstance(self.traceback_info, RequestInfo):
+            info = self.to_model().dict(exclude_none=True)
+        elif isinstance(self.traceback_info, dict):
+            info = self.traceback_info
+        else:
+            info = self.__str__()  # type: ignore
+        return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
 
 
 __all__ = (

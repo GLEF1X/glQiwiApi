@@ -175,7 +175,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                 method='POST',
                 headers=headers
         ):
-            if response.ok:
+            if response.status_code == 200:
                 return {'success': True}
 
     @property
@@ -392,8 +392,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                 )
             except ValidationError:
                 msg = "Недостаточно денег для перевода или ошибка сервиса"
-                self._requests.raise_exception(
-                    status_code="400",
+                raise self._requests.make_exception(
+                    status_code=400,
                     message=msg
                 )
 

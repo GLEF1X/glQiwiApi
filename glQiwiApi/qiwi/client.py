@@ -12,7 +12,7 @@ import uuid
 from abc import ABC
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import List, Tuple, Dict, Union, Optional, Any, MutableMapping, Pattern, Match, Callable
+from typing import List, Tuple, Dict, Union, Optional, Any, Pattern, Match, Callable
 
 from glQiwiApi.core import RequestManager
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
@@ -65,7 +65,7 @@ class BaseWrapper(ABC):
                  phone_number: Optional[str] = None,
                  secret_p2p: Optional[str] = None,
                  without_context: bool = False,
-                 cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+                 cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
                  validate_params: bool = False,
                  proxy: Any = None) -> None:
         """
@@ -106,16 +106,16 @@ class BaseWrapper(ABC):
         self.api_access_token = api_access_token
         self.secret_p2p = secret_p2p
 
-        self.dispatcher = Dispatcher(loop=api_helper.take_event_loop())
+        self.dispatcher = Dispatcher()
 
         # Method from ContextInstanceMixin
-        self.set_current(self)  # pragma: no cover
+        self.set_current(self)  # type: ignore
 
     def _auth_token(
             self,
-            headers: MutableMapping,
+            headers: Dict,
             p2p: bool = False
-    ) -> MutableMapping:
+    ) -> Dict:
         """
         Make auth for API
 
@@ -315,7 +315,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             raise RequestError(
                 message=" You didn't register any webhook to delete ",
                 status_code='422',
-                json_info=ex.json()
+                traceback_info=ex.traceback_info
             ) from None
 
         url = self._router.build_url(
@@ -392,7 +392,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                     message="You didn't pass on url to register new hook "
                             "and you didn't have registered webhooks",
                     status_code="422",
-                    json_info=ex.json()
+                    traceback_info=ex.traceback_info
                 ) from None
             key = await self.get_webhook_secret_key(webhook.hook_id)
             return webhook, key
@@ -436,7 +436,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         ):
             return response.response_data.get('message')
 
-    async def get_balance(self) -> Sum:
+    async def get_balance(self, __account_number: int = 1) -> Sum:
         """Метод для получения баланса киви"""
         if not isinstance(self.phone_number, str):
             raise InvalidData(
@@ -457,7 +457,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 get_json=True
         ):
             return Sum.parse_obj(
-                response.response_data['accounts'][0]['balance']
+                response.response_data['accounts'][__account_number - 1]['balance']
             )
 
     async def transactions(
@@ -761,7 +761,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 headers=headers,
                 get_json=True
         ):
-            if response.ok and response.status_code == 200:
+            if response.status_code == 200:
                 return {'success': True}
 
     @api_helper.override_error_messages({
@@ -1469,7 +1469,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         ):
             return Bill.parse_obj(response.response_data)
 
-    async def get_bills(self, rows_num: int) -> List[Bill]:
+    async def get_bills(self, rows_num: int, bill_statuses: str = "READY_FOR_PAY") -> List[Bill]:
         """
         Метод получения списка неоплаченных счетов вашего кошелька.
         Список строится в обратном хронологическом порядке.
@@ -1486,7 +1486,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
         params = {
             'rows': rows_num,
-            'statuses': 'READY_FOR_PAY'
+            'statuses': bill_statuses
         }
         async for response in self._requests.fast().fetch(
                 url=self._router.build_url("GET_BILLS"),

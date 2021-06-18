@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from http.cookies import SimpleCookie
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union
 
 from aiohttp.typedefs import RawHeaders
 
@@ -11,7 +11,7 @@ from glQiwiApi.utils.exceptions import ProxyError
 class Response:
     """ object: Response """
     status_code: int
-    response_data: Any = None
+    response_data: Union[bytes, dict, str] = None
     url: Optional[str] = None
     raw_headers: Optional[RawHeaders] = None
     cookies: Optional[SimpleCookie] = None
@@ -33,10 +33,10 @@ class Response:
 @dataclass
 class WrapperData:
     """ object: WrapperData """
-    headers: Optional[Dict[str, Union[str, int]]]
-    data: Optional[Dict[str, Union[str, Dict[Any, Any]]]] = None
-    json: Optional[Dict[str, Union[str, Dict[Any, Any]]]] = None
-    cookies: Optional[Dict[str, Union[str, int]]] = None
+    headers: dict
+    data: Optional[dict] = None
+    json: Optional[dict] = None
+    cookies: Optional[dict] = None
 
 
 __all__ = ('Response', 'WrapperData')

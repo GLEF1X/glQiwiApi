@@ -124,11 +124,11 @@ def setup_transaction_data(
     app[QiwiWalletWebView.app_key_check_ip] = _check_ip
     app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
     if isinstance(path, Path):
-        txn_path: str = path.transaction_path
+        txn_path = path.transaction_path
     else:
         txn_path = DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(
-        txn_path,
+        typing.cast(str, txn_path),
         QiwiWalletWebView,
         name=DEFAULT_QIWI_ROUTER_NAME
     )
@@ -144,13 +144,13 @@ def setup_bill_data(
     app[QiwiBillWebView.app_key_check_ip] = _check_ip
     app[QiwiBillWebView.app_key_handler_manager] = handler_manager
     if isinstance(path, Path):
-        bill_path: str = path.bill_path
+        bill_path = path.bill_path
     else:
         bill_path = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
     app.router.add_view(
         handler=QiwiBillWebView,
         name=DEFAULT_QIWI_BILLS_ROUTER_NAME,
-        path=bill_path
+        path=typing.cast(str, bill_path)
     )
 
 
@@ -168,12 +168,10 @@ def setup(
 
     :param dispatcher: dispatcher, which processing events
     :param app: aiohttp.web.Application
-    :param instance:
     :param host:
     :param path: Path obj, contains two paths
     :param secret_key: secret p2p key
     :param base64_key: Base64-encoded webhook key
-    :param instance: instance of the QiwiWrapper
     :param tg_app:
     """
 
@@ -197,7 +195,7 @@ def _setup_tg_proxy(
     if tg_app is not None:
         if not isinstance(tg_app, BaseProxy):
             raise TypeError(
-                "Invalid telegram proxy. It must "
-                "inherit from the parent class `BaseTelegramProxy`."
+                "Invalid telegram proxy. Expected"
+                f"inherit from the parent class `BaseTelegramProxy`, got {type(tg_app)}"
             )
         tg_app.setup(app=app, host=host)
