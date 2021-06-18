@@ -35,7 +35,7 @@ class TestCache:
             "end_date": datetime.datetime.now()
         }
     ])
-    async def test_query_caching(self, api: QiwiWrapper, payload: dict, capsys):
+    async def test_query_caching(self, api: QiwiWrapper, payload: dict):
         async with api:
             first_response = await api.transactions(**payload)
             second_response = await asyncio.wait_for(
@@ -64,7 +64,7 @@ class TestCache:
             first_response = await api.transactions(**payload1)
             with pytest.raises(asyncio.TimeoutError):
                 await asyncio.wait_for(
-                    api.transactions(**payload2), 0.05
+                    api.transactions(**payload2), 0.04
                 )
             second_uncached_response = await api.transactions(
                 **payload2

@@ -10,8 +10,6 @@ from glQiwiApi import types
 from glQiwiApi.types import Transaction, Sum
 from glQiwiApi.types.qiwi_types.transaction import Provider
 
-pytestmark = pytest.mark.asyncio
-
 txn = Transaction(txnId=50, personId=3254235, date=datetime.now(),
                   status="OUT", statusText="hello",
                   trmTxnId="world", account="+38908234234",
@@ -37,6 +35,7 @@ async def _on_startup_callback(api: QiwiWrapper):
 
 class TestPolling:
 
+    @pytest.mark.asyncio
     @timeout_decorator.timeout(5)
     def _start_polling(self, api: QiwiWrapper):
         from glQiwiApi.utils import executor

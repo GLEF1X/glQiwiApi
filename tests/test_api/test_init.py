@@ -69,13 +69,13 @@ class TestAiohttpSession:
 
 class TestContextMixin:
 
-    def test_get_from_context(self):
+    async def test_get_from_context(self):
         from tests.types.dataset import API_DATA
         QiwiWrapper.set_current(QiwiWrapper(**API_DATA))
         instance = QiwiWrapper.get_current()
         assert isinstance(instance, QiwiWrapper)
 
-    def test_implicit_get_from_context(self):
+    async def test_implicit_get_from_context(self):
         from tests.types.dataset import API_DATA
         QiwiWrapper(**API_DATA)
         assert isinstance(QiwiWrapper.get_current(), QiwiWrapper)

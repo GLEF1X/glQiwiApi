@@ -249,12 +249,17 @@ async def test_check_restriction(api: QiwiWrapper):
     assert all(isinstance(r, types.Restriction) for r in result)
 
 
-async def test_commission(api: QiwiWrapper):
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"to_account": "+380985272064",
+         "pay_sum": 999},
+        {"to_account": "4890494756089082", "pay_sum": 1}
+    ]
+)
+async def test_commission(api: QiwiWrapper, payload: dict):
     async with api:
-        result = await api.commission(
-            to_account="+380985272064",
-            pay_sum=999
-        )
+        result = await api.commission(**payload)
     assert isinstance(result, types.Commission)
 
 
