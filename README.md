@@ -456,7 +456,7 @@ async def main():
     w = YooMoneyAPI(TOKEN)
     async with w:
         # Так вы получаете информацию об аккаунте в виде объекта AccountInfo
-        account_info = await w.account_info()
+        account_info = await w.account_info
         print(account_info.account_status)
         print(account_info.balance)
 

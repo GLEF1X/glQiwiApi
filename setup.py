@@ -13,7 +13,7 @@ setuptools.setup(
         'tests', 'examples', 'examples.*', 'tests', 'tests.*')
     ),
     name="glQiwiApi",  # Replace with your own username
-    version="1.0.1",
+    version="1.0.2",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Light and fast wrapper of QIWI and YooMoney api's",
@@ -29,7 +29,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
     ],

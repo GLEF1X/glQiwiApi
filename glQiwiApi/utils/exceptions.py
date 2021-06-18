@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 
 from aiohttp import RequestInfo
 from pydantic import BaseModel
@@ -97,8 +97,8 @@ class RequestError(Exception):
     def to_model(self) -> ExceptionTraceback:
         """ Convert exception to :class:`ExceptionTraceback` """
         if not isinstance(self.traceback_info, RequestInfo):
-            raise TypeError("Cannot convert exception ExceptionTraceback, this method require "
-                            "RequestInfo object")
+            raise TypeError("Cannot convert exception to `ExceptionTraceback`, because "
+                            "this method require `RequestInfo` object")
         return ExceptionTraceback(
             status_code=self.status_code,
             msg=self.message,
@@ -110,6 +110,14 @@ class RequestError(Exception):
             )
         )
 
+    def _make_json_without_request_info(self) -> Dict[str, Any]:
+        return {
+            "code": self.status_code,
+            "msg": self.message,
+            "additional_info": self.additional_info,
+            "traceback_info": self.traceback_info
+        }
+
     def json(self, indent: int = 4, **dump_kw) -> str:
         """
         Method, that makes json format from traceback
@@ -119,10 +127,8 @@ class RequestError(Exception):
         """
         if isinstance(self.traceback_info, RequestInfo):
             info = self.to_model().dict(exclude_none=True)
-        elif isinstance(self.traceback_info, dict):
-            info = self.traceback_info
         else:
-            info = self.__str__()  # type: ignore
+            info = self._make_json_without_request_info()
         return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
 
 
