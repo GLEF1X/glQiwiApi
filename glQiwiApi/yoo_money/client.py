@@ -69,11 +69,17 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             proxy=proxy
         )
 
+        self.set_current(self)
+
     def _auth_token(self, headers: dict) -> Dict[Any, Any]:
         headers['Authorization'] = headers['Authorization'].format(
             token=self.api_access_token
         )
         return headers
+
+    @property
+    def request_manager(self) -> RequestManager:
+        return self._requests
 
     @classmethod
     async def build_url_for_auth(
@@ -94,9 +100,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :return: ссылку, по которой нужно перейти
          и сделать авторизацию через логин/пароль
         """
-        # Create new router
         router = YooMoneyRouter()
-        # Get headers
         headers = api_helper.parse_headers()
         params = {
             'client_id': client_id,
@@ -283,7 +287,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                     'Параметр start_date был передан неправильным типом данных'
                 )
             data.update({'from': api_helper.datetime_to_str_in_iso(
-                start_date, True
+                start_date, yoo_money_format=True
             )})
 
         if end_date:
@@ -292,7 +296,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                     'Параметр end_date был передан неправильным типом данных'
                 )
             data.update({'till': api_helper.datetime_to_str_in_iso(
-                end_date, True
+                end_date, yoo_money_format=True
             )})
 
         async for response in self._requests.fast().fetch(
@@ -302,7 +306,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                 data=self._requests.filter_dict(data),
                 get_json=True
         ):
-            return api_helper.multiply_objects_parse(
+            return api_helper.simple_multiply_parse(
                 lst_of_objects=response.response_data.get('operations'),
                 model=Operation
             )
@@ -619,9 +623,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                 if txn.status == 'success':
                     if comment_ == comment and detail.sender == recipient:
                         return True
-                    elif isinstance(comment, str) and isinstance(
-                            recipient,
-                            str):
+                    elif isinstance(comment, str) and isinstance(recipient, str):
                         continue
                     elif comment_ == comment:
                         return True

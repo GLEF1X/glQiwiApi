@@ -45,7 +45,7 @@ def measure_time(func):
     return wrapper
 
 
-def datetime_to_str_in_iso(obj, yoo_money_format=False):
+def datetime_to_str_in_iso(obj, *, yoo_money_format=False):
     """
     Converts a date to a standard format for API's
 

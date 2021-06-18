@@ -11,7 +11,7 @@ from glQiwiApi.utils.basics import check_api_method
 class YooMoneyRouter(AbstractRouter):
     __head__ = 'https://yoomoney.ru'
 
-    def setup_config(self) -> Any:
+    def setup_config(self) -> YooMoneySettings:
         return get_settings()
 
     @functools.lru_cache()
@@ -50,11 +50,11 @@ class YooMoneySettings:
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         self.ERROR_CODE_NUMBERS = {
-            "400": "Ошибка, связанная с типом запроса к апи,"
-                   "возможно вы передали недействительный API токен.",
-            "401": "Указан несуществующий, просроченный, или отозванный токен.",
-            "403": "Запрошена операция, на которую у токена нет прав.",
-            "400_special_bad_proxy": "Ошибка, связанная с использованием прокси"
+            400: "Ошибка, связанная с типом запроса к апи, "
+                   "возможно вы передали недействительный API токен",
+            401: "Указан несуществующий, просроченный, или отозванный токен",
+            403: "Запрошена операция, на которую у токена нет прав",
+            0: "Ошибка, связанная с использованием прокси или непредвиденные ошибки сервера"
         }
         self.content_and_auth = {
             'content_json': True, 'auth': True
@@ -62,7 +62,7 @@ class YooMoneySettings:
 
     DEFAULT_YOOMONEY_HEADERS: Optional[Dict[str, str]] = None
 
-    ERROR_CODE_NUMBERS: Optional[Dict[str, str]] = None
+    ERROR_CODE_NUMBERS: Optional[Dict[int, str]] = None
 
     content_and_auth: Optional[Dict[str, bool]] = None
 

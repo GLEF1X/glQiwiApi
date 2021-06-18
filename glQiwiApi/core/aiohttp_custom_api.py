@@ -77,7 +77,6 @@ class RequestManager(HttpXParser):
                 data=data,
                 json=json
             )
-
         # Проверяем, не был ли запрос в кэше, если нет,
         # то проверяем статус код и если он не 200 - выбрасываем ошибку
         if not isinstance(response, Cached) and isinstance(response, Response):
