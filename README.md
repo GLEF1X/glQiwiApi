@@ -244,12 +244,12 @@ async def main():
         # Так можно отправлять средства на карты разных банков, получая при этом айди транзакции
         trans_id = await w.to_card(
             trans_sum=1,
-            to_card='4731219185432123'
+            to_card='4890494756089082'
         )
         print(trans_id)
         # Так можно предварительно расчитать комиссию за транзакцию
         commission = await w.commission(
-            to_account='4731219185432123',
+            to_account='4890494756089082',
             pay_sum=1
         )
         print(commission.qiwi_commission.amount)
