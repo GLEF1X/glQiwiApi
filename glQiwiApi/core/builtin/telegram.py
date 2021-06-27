@@ -4,12 +4,14 @@ import abc
 import asyncio
 import typing
 from asyncio import AbstractEventLoop
+from ssl import SSLContext
 
 from aiohttp import web
 
 if typing.TYPE_CHECKING:
     try:
         from aiogram import Dispatcher  # type: ignore
+        from aiogram.types import InputFile  # type: ignore
     except (ModuleNotFoundError, ImportError):  # type: ignore
         pass
 
@@ -71,10 +73,20 @@ class TelegramWebhookProxy(BaseProxy):
     prefix: str = "/tg/webhooks"
     """ You can override the prefix for the application """
 
-    def __init__(self, dispatcher: Dispatcher, sub_apps: typing.Optional[SubApps] = None):
+    def __init__(
+            self,
+            dispatcher: Dispatcher,
+            ssl_certificate: SSLContext,
+            webhook_domain: str,
+            route_name: str = 'webhook_handler',
+            sub_apps: typing.Optional[SubApps] = None
+    ):
         """
 
         :param dispatcher: instance of aiogram class Dispatcher
+        :param ssl_certificate: self-signed or default ssl certificate
+        :param webhook_domain: your domain such like https://example.com
+        :param route_name: name of aiogram webhook router
         :param sub_apps: list of tuples(prefix as string, web.Application)
         """
         from aiogram.dispatcher.webhook import WebhookRequestHandler  # type: ignore
@@ -83,10 +95,16 @@ class TelegramWebhookProxy(BaseProxy):
         self._app: web.Application = web.Application()
         self._app.router.add_route(
             '*', self.execution_path, WebhookRequestHandler,
-            name='webhook_handler'
+            name=route_name
         )
         self._app['BOT_DISPATCHER'] = self.dispatcher
         self.sub_apps: SubApps = sub_apps or []
+        self._ssl_context = ssl_certificate
+        self._webhook_domain = webhook_domain
+
+    @property
+    def ssl_context(self) -> SSLContext:
+        return self._ssl_context
 
     def setup(self, **kwargs) -> web.Application:
         """
@@ -95,33 +113,35 @@ class TelegramWebhookProxy(BaseProxy):
         :param kwargs: keyword arguments, which contains application and host
         """
         main_app: web.Application = kwargs.pop("app")
-        host: str = kwargs.pop("host")
 
         main_app.add_subapp(self.prefix, self._app)
+        # print(main_app.router.routes())
         for prefix, sub_app, handlers in self.sub_apps:
             sub_app['bot'] = self.bot
             sub_app['dp'] = self.dispatcher
             _init_sub_apps_handlers(sub_app, handlers)
             main_app.add_subapp(prefix, sub_app)
-        self._loop.run_until_complete(
-            self.configure_webhook(host, **kwargs)
-        )
+        self._loop.run_until_complete(self.configure_webhook(**kwargs))
 
         return self._app
 
-    async def configure_webhook(self, host: str, **kwargs) -> typing.Any:
+    async def configure_webhook(self, **kwargs) -> typing.Any:
         """
         You can override this method to correctly setup webhooks with aiogram
         API method `set_webhook` like this: self.dispatcher.bot.set_webhook()
 
         """
 
-        full_url = host + self.prefix
+        full_url = self._webhook_domain + self.prefix
 
         if isinstance(self.execution_path, str):
             full_url += self.execution_path
 
-        await self.dispatcher.bot.set_webhook(full_url, **kwargs)
+        await self.dispatcher.bot.set_webhook(
+            full_url,
+            certificate=self._ssl_context,
+            **kwargs
+        )
 
 
 class TelegramPollingProxy(BaseProxy):

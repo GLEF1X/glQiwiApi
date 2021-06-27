@@ -64,6 +64,10 @@ class ExceptionTraceback(BaseModel):
     request_info: Optional[RequestInfoModel] = None
 
 
+class StateError(Exception):
+    ...
+
+
 class RequestError(Exception):
     """
     Возникает при ошибках сервиса или неправильной передаче параметров
@@ -141,5 +145,6 @@ __all__ = (
     'InvalidCardNumber',
     'InvalidToken',
     'RequestError',
-    'NoUpdatesToExecute'
+    'NoUpdatesToExecute',
+    'StateError'
 )

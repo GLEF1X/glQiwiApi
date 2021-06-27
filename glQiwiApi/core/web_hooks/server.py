@@ -196,6 +196,6 @@ def _setup_tg_proxy(
         if not isinstance(tg_app, BaseProxy):
             raise TypeError(
                 "Invalid telegram proxy. Expected"
-                f"inherit from the parent class `BaseTelegramProxy`, got {type(tg_app)}"
+                f"class that inherit from the parent `BaseTelegramProxy`, got {type(tg_app)}"
             )
         tg_app.setup(app=app, host=host)

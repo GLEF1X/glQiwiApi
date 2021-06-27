@@ -8,6 +8,7 @@ import inspect
 import logging
 import types
 from datetime import datetime, timedelta
+from ssl import SSLContext
 from typing import Union, Optional, List, \
     Callable, Awaitable, Dict, TypeVar, TYPE_CHECKING, Coroutine, Any, cast
 
@@ -41,7 +42,8 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
                           [QiwiWrapper], Awaitable[None]
                       ]] = None,
                   tg_app: Optional[BaseProxy] = None,
-                  app: Optional["web.Application"] = None):
+                  app: Optional["web.Application"] = None,
+                  ssl_context: Optional[SSLContext] = None):
     """
     Blocking function that listens for webhooks
 
@@ -54,10 +56,17 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
     :param on_shutdown: coroutine, which will be executed on shutdown
     :param tg_app: builtin TelegramWebhookProxy or other
           or class, that inherits from BaseProxy and deal with aiogram updates
+    :param ssl_context:
     """
     executor = Executor(client, tg_app=tg_app)
     _setup_callbacks(executor, on_startup, on_shutdown)
-    executor.start_webhook(host=host, port=port, path=path, app=app)
+    executor.start_webhook(
+        host=host,
+        port=port,
+        path=path,
+        app=app,
+        ssl_context=ssl_context or tg_app.ssl_context
+    )
 
 
 def start_polling(client: QiwiWrapper, *, get_updates_from: datetime = datetime.now(),
@@ -136,7 +145,7 @@ def parse_timeout(
         return timeout.total or DEFAULT_TIMEOUT.total  # type: ignore
     else:
         raise TypeError("Timeout must be float, int or ClientTimeout. You have "
-                         f"passed on {type(timeout)}")
+                        f"passed on {type(timeout)}")
 
 
 class Executor:
@@ -352,7 +361,8 @@ class Executor:
             host: str = "localhost",
             port: int = 8080,
             path: Optional[Path] = None,
-            app: Optional[web.Application] = None
+            app: Optional[web.Application] = None,
+            ssl_context: Optional[SSLContext] = None
     ):
         loop: asyncio.AbstractEventLoop = self.loop
         application = app or web.Application()
@@ -368,7 +378,7 @@ class Executor:
         )
         try:
             loop.run_until_complete(self.welcome())
-            web.run_app(application, host=host, port=port)
+            web.run_app(application, host=host, port=port, ssl_context=ssl_context)
         except (KeyboardInterrupt, SystemExit):
             # Allow to graceful shutdown
             pass
