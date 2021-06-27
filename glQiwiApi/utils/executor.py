@@ -14,7 +14,7 @@ from typing import Union, Optional, List, \
 
 from aiohttp import ClientTimeout, web
 
-from glQiwiApi.core.builtin import BaseProxy, logger
+from glQiwiApi.core.builtin import BaseProxy, logger, TelegramWebhookProxy
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
 from glQiwiApi.core.web_hooks import server
 from glQiwiApi.core.web_hooks.config import Path
@@ -41,7 +41,7 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
                       Callable[
                           [QiwiWrapper], Awaitable[None]
                       ]] = None,
-                  tg_app: Optional[BaseProxy] = None,
+                  tg_app: Optional[TelegramWebhookProxy] = None,
                   app: Optional["web.Application"] = None,
                   ssl_context: Optional[SSLContext] = None):
     """
