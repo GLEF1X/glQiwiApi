@@ -98,7 +98,7 @@ class QiwiBillWebView(BaseWebHookView):
 
     async def parse_update(self) -> types.Notification:
         payload = await self.request.json()
-        return types.Notification.parse_raw(payload)
+        return types.Notification.parse_obj(payload)
 
     async def post(self) -> Response:
         self.validate_ip()

@@ -92,7 +92,7 @@ class Notification(Base):
     """Object: Notification"""
 
     version: str = Field(..., alias="version")
-    bill: Bill = Field(..., alias="bill")
+    bill: Optional[Bill] = Field(..., alias="bill")
 
     def __str__(self) -> str:
         return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
