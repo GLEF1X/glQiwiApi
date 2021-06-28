@@ -3,10 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 garbage.py
-# C extensions
+# C ext
 *.so
 test.py
-test2.py
+ssl_load_s.py
 setup.py
 */test.*
 *.pem

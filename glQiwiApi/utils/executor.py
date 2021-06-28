@@ -43,7 +43,8 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
                       ]] = None,
                   tg_app: Optional[TelegramWebhookProxy] = None,
                   app: Optional["web.Application"] = None,
-                  ssl_context: Optional[SSLContext] = None):
+                  ssl_context: Optional[SSLContext] = None,
+                  loop: Optional[asyncio.AbstractEventLoop] = None):
     """
     Blocking function that listens for webhooks
 
@@ -57,8 +58,9 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
     :param tg_app: builtin TelegramWebhookProxy or other
           or class, that inherits from BaseProxy and deal with aiogram updates
     :param ssl_context:
+    :param loop:
     """
-    executor = Executor(client, tg_app=tg_app)
+    executor = Executor(client, tg_app=tg_app, loop=loop)
     _setup_callbacks(executor, on_startup, on_shutdown)
     executor.start_webhook(
         host=host,
@@ -373,8 +375,7 @@ class Executor:
             path=path,
             secret_key=self.client.secret_p2p,
             base64_key=key,
-            tg_app=self.tg_app,
-            host=host
+            tg_app=self.tg_app
         )
         try:
             loop.run_until_complete(self.welcome())

@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+import ipaddress
 import pathlib
 import ssl
 from datetime import timedelta, datetime
 from io import BytesIO
-from typing import cast, TYPE_CHECKING, Optional, Iterable, Union, Any, List, overload
+from typing import cast, TYPE_CHECKING, Optional, Iterable, Union, Any, List
 
 from glQiwiApi.utils.exceptions import StateError
 
@@ -48,37 +51,38 @@ class SSLConfigurator:
         self.cert_path = cert_path
         self.hostname = hostname
 
-    def load_ssl_context(self) -> "ssl.SSLContext":
+    def as_ssl_context(self) -> "ssl.SSLContext":
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         try:
-            ssl_context.load_cert_chain(
-                str(self.cert_path),
-                str(self.pkey_path),
-            )
+            ssl_context.load_cert_chain(str(self.cert_path), str(self.pkey_path))
         except FileNotFoundError:
             raise StateError("There are not certificates in folder."
                              " Firstly, you need to call "
                              "`SSLConfigurator.generate_self_signed` method.")
         return ssl_context
 
-    @overload
-    def generate_self_signed(self, get_ssl_context: "Literal[False]",
-                             *name_attributes: "x509.NameAttribute") -> None:
-        ...
+    def _get_self_signed_cert(self) -> bool:
+        if isinstance(self.cert_path, pathlib.Path):
+            is_cert_is_file = self.cert_path.is_file()
+        else:
+            is_cert_is_file = pathlib.Path(self.cert_path).is_file()
 
-    @overload
-    def generate_self_signed(self, get_ssl_context: "Literal[True]",
-                             *name_attributes: "x509.NameAttribute") -> "ssl.SSLContext":
-        ...
+        if isinstance(self.pkey_path, pathlib.Path):
+            is_pkey_is_file = self.pkey_path.is_file()
+        else:
+            is_pkey_is_file = pathlib.Path(self.pkey_path).is_file()
 
-    def generate_self_signed(self,
-                             get_ssl_context: bool,
-                             *name_attributes: "x509.NameAttribute") -> Optional["ssl.SSLContext"]:
+        return is_cert_is_file and is_pkey_is_file
+
+    def get_or_generate_self_signed(self,
+                                    *name_attributes: "x509.NameAttribute") -> SSLConfigurator:
         """
         Generates self signed certificate for a hostname, and optional IP addresses.
         Copied from https://gist.github.com/bloodearnest/9017111a313777b9cce5
         """
-        import ipaddress
+        if self._get_self_signed_cert():
+            return self
+
         try:
             from cryptography import x509
             from cryptography.x509.oid import NameOID
@@ -145,11 +149,9 @@ class SSLConfigurator:
         with open(self.cert_path, 'wb') as f1, open(self.pkey_path, 'wb') as f2:
             f1.write(cert_pem)
             f2.write(key_pem)
-        if get_ssl_context:
-            return self.load_ssl_context()
-        return None
+        return self
 
-    def convert_cert_to_input_file(self):
+    def as_input_file(self):
         from aiogram.types import InputFile
         with open(self.cert_path, 'rb') as f:
             return InputFile(BytesIO(f.read()))

@@ -157,7 +157,6 @@ def setup_bill_data(
 def setup(
         dispatcher: Dispatcher,
         app: web.Application,
-        host: str,
         path: typing.Optional[Path] = None,
         secret_key: typing.Optional[str] = None,
         base64_key: typing.Optional[str] = None,
@@ -168,7 +167,6 @@ def setup(
 
     :param dispatcher: dispatcher, which processing events
     :param app: aiohttp.web.Application
-    :param host:
     :param path: Path obj, contains two paths
     :param secret_key: secret p2p key
     :param base64_key: Base64-encoded webhook key
@@ -179,12 +177,12 @@ def setup(
                     path)
     setup_transaction_data(app, base64_key, dispatcher,
                            path)
-    _setup_tg_proxy(tg_app, app, host)
+    _setup_tg_proxy(tg_app, app)
 
 
 def _setup_tg_proxy(
         tg_app: typing.Optional[BaseProxy],
-        app: web.Application, host: str
+        app: web.Application
 ) -> None:
     """
     Function, which setup tg proxy application to main webapp
@@ -198,4 +196,4 @@ def _setup_tg_proxy(
                 "Invalid telegram proxy. Expected"
                 f"class that inherit from the parent `BaseTelegramProxy`, got {type(tg_app)}"
             )
-        tg_app.setup(app=app, host=host)
+        tg_app.setup(app=app)

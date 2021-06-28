@@ -6,6 +6,7 @@ import typing
 from asyncio import AbstractEventLoop
 from ssl import SSLContext
 
+from aiogram.dispatcher.webhook import configure_app
 from aiohttp import web
 
 if typing.TYPE_CHECKING:
