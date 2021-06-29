@@ -62,12 +62,14 @@ def start_webhook(client: QiwiWrapper, *, host: str = "localhost",
     """
     executor = Executor(client, tg_app=tg_app, loop=loop)
     _setup_callbacks(executor, on_startup, on_shutdown)
+    if isinstance(tg_app, TelegramWebhookProxy) and ssl_context is None:
+        ssl_context = tg_app.ssl_context
     executor.start_webhook(
         host=host,
         port=port,
         path=path,
         app=app,
-        ssl_context=ssl_context or tg_app.ssl_context
+        ssl_context=ssl_context
     )
 
 
