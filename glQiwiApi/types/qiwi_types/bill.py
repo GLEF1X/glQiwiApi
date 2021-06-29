@@ -92,10 +92,12 @@ class Notification(Base):
     """Object: Notification"""
 
     version: str = Field(..., alias="version")
-    bill: Optional[Bill] = Field(..., alias="bill")
+    bill: Optional[Bill] = Field(default=None, alias="bill")
 
     def __str__(self) -> str:
-        return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
+        if isinstance(self.bill, Bill):
+            return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
+        return f"Test notification. QIWI API version -> {self.version}"
 
     def __repr__(self) -> str:
         return self.__str__()
