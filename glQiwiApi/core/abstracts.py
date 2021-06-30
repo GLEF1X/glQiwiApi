@@ -5,14 +5,12 @@ import asyncio
 import typing
 import unittest
 from types import TracebackType
-from typing import AsyncGenerator, Optional, Dict, Any, Union, List, Tuple, Type
+from typing import Optional, Dict, Any, Union, List, Tuple, Type
 
 from aiohttp import web, RequestInfo
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
-from glQiwiApi.types import Response
-from glQiwiApi.types.basics import Cached
 
 
 class SingletonABCMeta(abc.ABCMeta):
@@ -22,13 +20,12 @@ class SingletonABCMeta(abc.ABCMeta):
     so we need singleton to get the same instances of routers
 
     """
+
     _instances: Dict[Any, Any] = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(SingletonABCMeta, cls).__call__(
-                *args, **kwargs
-            )
+            cls._instances[cls] = super(SingletonABCMeta, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
 
@@ -42,8 +39,7 @@ class BaseStorage(abc.ABC):
     """
 
     @abc.abstractmethod
-    def clear(self, key: typing.Optional[str] = None, *,
-              force: bool = False) -> Any:
+    def clear(self, key: typing.Optional[str] = None, *, force: bool = False) -> Any:
         raise NotImplementedError
 
     def update_data(self, obj_to_cache: Any, key: Any) -> None:
@@ -56,7 +52,7 @@ class BaseStorage(abc.ABC):
 class AbstractRouter(metaclass=SingletonABCMeta):
     """Abstract class-router for building urls"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = self.setup_config()
 
     @abc.abstractmethod
@@ -80,7 +76,7 @@ class AioTestCase(unittest.TestCase):
     """ Test case, but redone for asyncio """
 
     # noinspection PyPep8Naming
-    def __init__(self, methodName='runTest', loop=None):
+    def __init__(self, methodName="runTest", loop=None):
         self.loop = loop or asyncio.get_event_loop()
         self._function_cache = {}
         super(AioTestCase, self).__init__(methodName=methodName)
@@ -95,9 +91,7 @@ class AioTestCase(unittest.TestCase):
         attr = object.__getattribute__(self, item)
         if asyncio.iscoroutinefunction(attr):
             if item not in self._function_cache:
-                self._function_cache[
-                    item
-                ] = self.coroutine_function_decorator(attr)
+                self._function_cache[item] = self.coroutine_function_decorator(attr)
             return self._function_cache[item]
         return attr
 
@@ -106,37 +100,18 @@ class AbstractParser(abc.ABC):
     """ Abstract class of parser for send request to different API's"""
 
     @abc.abstractmethod
-    async def _make_request(
-            self,
-            url: str,
-            get_json: bool = False,
-            method: str = 'POST',
-            set_timeout: bool = True,
-            cookies: Optional[LooseCookies] = None,
-            json: Optional[dict] = None,
-            data: Optional[Dict[str, Union[
-                str, int, List[
-                    Union[str, int]
-                ]]]
-            ] = None,
-            headers: Optional[dict] = None,
-            params: Optional[
-                Dict[str, Union[str, int, List[
-                    Union[str, int]
-                ]]]
-            ] = None,
-            get_bytes: bool = False,
-            **kwargs) -> Union[Response, Cached]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def fetch(
-            self,
-            *,
-            times: int = 1,
-            **kwargs
-    ) -> AsyncGenerator[Response, None]:
-        """ You can override it, but is must to return an AsyncGenerator """
+    async def make_request(
+        self,
+        url: str,
+        method: str,
+        set_timeout: bool = True,
+        cookies: Optional[LooseCookies] = None,
+        json: Optional[dict] = None,
+        data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+        headers: Optional[dict] = None,
+        params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+        **kwargs
+    ) -> dict:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -147,10 +122,10 @@ class AbstractParser(abc.ABC):
         pass
 
     def make_exception(
-            self,
-            status_code: int,
-            traceback_info: Optional[RequestInfo] = None,
-            message: Optional[str] = None
+        self,
+        status_code: int,
+        traceback_info: Optional[RequestInfo] = None,
+        message: Optional[str] = None,
     ):
         """Метод для обработки исключений и лучшего логирования"""
 
@@ -158,10 +133,10 @@ class AbstractParser(abc.ABC):
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 
@@ -173,6 +148,7 @@ class BaseWebHookView(web.View):
     just inheriting this base class
 
     """
+
     app_key_check_ip: Optional[str] = None
     """app_key_check_ip stores key to a storage"""
 
@@ -188,12 +164,13 @@ class BaseWebHookView(web.View):
         """parse_update method that deals with marshaling json"""
         raise NotImplementedError
 
-    def validate_ip(self):
+    def validate_ip(self) -> None:
         """ validating request ip address """
-        if self.request.app.get(self.app_key_check_ip):
+        if self.request.app.get(self.app_key_check_ip):  # type: ignore
             ip_addr_data = self.check_ip()
             if not ip_addr_data[1]:
                 raise web.HTTPUnauthorized()
+        return None
 
     def check_ip(self) -> Union[Tuple[str, bool], Tuple[None, bool]]:
         """ checking ip, using headers or peer_name """

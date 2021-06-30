@@ -2,8 +2,8 @@ from glQiwiApi import QiwiWrapper, types
 from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
-    api_access_token='token from https://qiwi.com/api/',
-    secret_p2p='secret token from https://qiwi.com/p2p-admin/'
+    api_access_token="token from https://qiwi.com/api/",
+    secret_p2p="secret token from https://qiwi.com/p2p-admin/",
 )
 
 

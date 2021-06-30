@@ -11,6 +11,7 @@ class Sum(BaseModel):
     Сумма платежа
 
     """
+
     amount: Union[int, float, str]
     currency: Any
 
@@ -28,6 +29,7 @@ class Sum(BaseModel):
 
 class OptionalSum(BaseModel):
     """ object: OptionalSum """
+
     value: Union[int, float]
     currency: str
 
@@ -37,6 +39,7 @@ class Type(BaseModel):
     Базовая модель типа данных
 
     """
+
     id: str
     title: str
 
@@ -47,6 +50,7 @@ class Attributes:
     Аттрибуты кэшированного запроса
 
     """
+
     headers: Optional[dict] = None
     json: Optional[dict] = None
     params: Optional[dict] = None
@@ -55,8 +59,7 @@ class Attributes:
     @classmethod
     def format(cls, kwargs: dict, args: tuple):
         return cls(
-            **{k: kwargs.get(k) for k in args if
-               isinstance(kwargs.get(k), dict)}
+            **{k: kwargs.get(k) for k in args if isinstance(kwargs.get(k), dict)}
         )
 
 
@@ -66,17 +69,10 @@ class Cached:
     Объект кэшированного запроса
 
     """
+
     kwargs: Attributes
     response_data: Any
     method: Optional[Any]
-    status_code: Union[str, int, None] = None
 
 
-__all__ = [
-    'Sum',
-    'OptionalSum',
-    'Type',
-    'Cached',
-    'DEFAULT_CACHE_TIME',
-    'Attributes'
-]
+__all__ = ["Sum", "OptionalSum", "Type", "Cached", "DEFAULT_CACHE_TIME", "Attributes"]

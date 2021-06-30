@@ -8,4 +8,4 @@ class Restriction(Base):
     description: str = Field(..., alias="restrictionDescription")
 
 
-__all__ = ('Restriction',)
+__all__ = ("Restriction",)

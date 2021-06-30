@@ -10,6 +10,7 @@ from glQiwiApi.utils.currency_util import Currency
 
 class Account(Base):
     """ object: Account """
+
     alias: str
     title: str
     fs_alias: str = Field(alias="fsAlias")
@@ -27,6 +28,4 @@ class Account(Base):
         return Currency.get(str(v))
 
 
-__all__ = (
-    'Account'
-)
+__all__ = "Account"

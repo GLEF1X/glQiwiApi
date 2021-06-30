@@ -1,28 +1,23 @@
+import os
+
 API_DATA = {
-    "api_access_token": "",
-    "secret_p2p":
-        "",
-    "phone_number": "+"
+    "api_access_token": os.getenv("API_ACCESS_TOKEN"),
+    "secret_p2p": os.getenv("SECRET_P2P"),
+    "phone_number": os.getenv("PHONE_NUMBER"),
 }
 
-YOO_MONEY_DATA = {
-    "api_access_token": ""
-}
+YOO_MONEY_DATA = {"api_access_token": os.getenv("YOO_API_TOKEN")}
 
 WRONG_API_DATA = {
     "api_access_token": dict(),
     "secret_p2p": "5454",
     "phone_number": "12121",
-    "validate_params": True
+    "validate_params": True,
 }
 
 EMPTY_DATA: dict = {}
 
-TO_WALLET_DATA = {
-    "to_number": "+380985272064",
-    "trans_sum": 1,
-    "comment": "unit_test"
-}
+TO_WALLET_DATA = {"to_number": "+380985272064", "trans_sum": 1, "comment": "unit_test"}
 
 NOTIFICATION_RAW_DATA = """{
 "bill": {
@@ -114,6 +109,6 @@ TXN_RAW_DATA = """{
    }
 """
 
-TEMP_DIRECTORY_NAME: str = 'temp'
+TEMP_DIRECTORY_NAME: str = "temp"
 
-RECEIPT_FILE_NAME: str = 'receipt'
+RECEIPT_FILE_NAME: str = "receipt"

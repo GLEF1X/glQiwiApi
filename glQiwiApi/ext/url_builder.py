@@ -13,11 +13,7 @@ _URL = TypeVar("_URL", bound="WebhookURL")
 class WebhookURL(
     namedtuple(
         "WebhookURL",
-        [
-            "host",
-            "webhook_path",
-            "port"
-        ],
+        ["host", "webhook_path", "port"],
     )
 ):
     host: str
@@ -26,18 +22,16 @@ class WebhookURL(
 
     @classmethod
     def create(
-            cls: Type[_URL],
-            host: str,
-            port: int,
-            webhook_path: Optional[str] = None
+        cls: Type[_URL], host: str, port: int, webhook_path: Optional[str] = None
     ) -> _URL:
         return cls(
             host=cls._assert_host(host, param_name="host"),
             webhook_path=cls._assert_str(
-                webhook_path, param_name="webhook_path",
-                additional_filter=lambda v: v.startswith("/")
+                webhook_path,
+                param_name="webhook_path",
+                additional_filter=lambda v: v.startswith("/"),
             ),
-            port=cls._assert_int(port, param_name="port")
+            port=cls._assert_int(port, param_name="port"),
         )
 
     @classmethod
@@ -50,8 +44,13 @@ class WebhookURL(
         return v
 
     @classmethod
-    def _assert_str(cls, v: Any, *, param_name: str,
-                    additional_filter: Optional[Callable[[Any], bool]] = None):
+    def _assert_str(
+        cls,
+        v: Any,
+        *,
+        param_name: str,
+        additional_filter: Optional[Callable[[Any], bool]] = None,
+    ):
         if v is None:
             return v
 
@@ -59,7 +58,9 @@ class WebhookURL(
             raise TypeError("%s must be a string" % param_name)
         if isinstance(additional_filter, types.LambdaType):
             if not additional_filter(v):
-                raise TypeError(f"%s must pass a custom filter {additional_filter}" % param_name)
+                raise TypeError(
+                    f"%s must pass a custom filter {additional_filter}" % param_name
+                )
         return v
 
     @classmethod
@@ -76,7 +77,8 @@ class WebhookURL(
         )
         if not re.match(regex_pattern, v):
             raise TypeError(
-                "%s must be like https://127.0.0.1/ or https://website.com/" % param_name
+                "%s must be like https://127.0.0.1/ or https://website.com/"
+                % param_name
             )
         return v
 
@@ -86,7 +88,7 @@ class WebhookURL(
         port = self.port
 
         if self.host.endswith("/"):
-            host = host[:host.rindex("/")]
+            host = host[: host.rindex("/")]
         if webhook_path is None:
             webhook_path = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
 

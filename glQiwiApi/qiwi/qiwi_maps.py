@@ -4,7 +4,7 @@ from glQiwiApi import types
 from glQiwiApi.core import RequestManager
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
-from glQiwiApi.utils import basics as api_helper
+from glQiwiApi.utils import api_helper
 
 
 class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
@@ -15,28 +15,30 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
     """
 
     def __init__(
-            self,
-            without_context: bool = False,
-            cache_time: int = DEFAULT_CACHE_TIME,
-            proxy: typing.Optional[typing.Any] = None
+        self,
+        without_context: bool = False,
+        cache_time: int = DEFAULT_CACHE_TIME,
+        proxy: typing.Optional[typing.Any] = None,
     ) -> None:
         self._requests = RequestManager(
-            without_context=without_context,
-            cache_time=cache_time,
-            proxy=proxy
+            without_context=without_context, cache_time=cache_time, proxy=proxy
         )
 
+    @property
+    def request_manager(self) -> RequestManager:
+        return self._requests
+
     async def terminals(
-            self,
-            polygon: types.Polygon,
-            zoom: int = None,
-            pop_if_inactive_x_mins: int = 30,
-            include_partners: bool = None,
-            partners_ids: list = None,
-            cache_terminals: bool = None,
-            card_terminals: bool = None,
-            identification_types: int = None,
-            terminal_groups: list = None,
+        self,
+        polygon: types.Polygon,
+        zoom: typing.Optional[int] = None,
+        pop_if_inactive_x_mins: int = 30,
+        include_partners: typing.Optional[bool] = None,
+        partners_ids: typing.Optional[typing.List[typing.Any]] = None,
+        cache_terminals: typing.Optional[bool] = None,
+        card_terminals: typing.Optional[bool] = None,
+        identification_types: typing.Optional[int] = None,
+        terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
     ) -> typing.List[types.Terminal]:
         """
         Get map of terminals sent for passed polygon with additional params
@@ -57,7 +59,7 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = self._requests.filter_dict(
+        params = self.request_manager.filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -71,29 +73,20 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
             }
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        async for response in self._requests.fast().fetch(
-                url=url,
-                method='GET',
-                params=params,
-                get_json=True
-        ):
-            return api_helper.multiply_objects_parse(
-                lst_of_objects=response.response_data,
-                model=types.Terminal
-            )
+        response = await self.request_manager.make_request(url, "GET", params=params)
+        return api_helper.multiply_objects_parse(
+            typing.cast(typing.List[typing.Any], response), types.Terminal
+        )
 
     async def partners(self) -> typing.List[types.Partner]:
         """
         Get terminal partners for ttpGroups
         :return: list of TTPGroups
         """
-        async for response in self._requests.fast().fetch(
-                url='http://edge.qiwi.com/locator/v3/ttp-groups',
-                method='GET',
-                headers={"Content-type": "text/json"},
-                get_json=True
-        ):
-            return api_helper.multiply_objects_parse(
-                lst_of_objects=response.response_data,
-                model=types.Partner
-            )
+        url = "http://edge.qiwi.com/locator/v3/ttp-groups"
+        response = await self.request_manager.make_request(
+            url, "GET", headers={"Content-type": "text/json"}
+        )
+        return api_helper.multiply_objects_parse(
+            typing.cast(typing.List[typing.Any], response), types.Partner
+        )

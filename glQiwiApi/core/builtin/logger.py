@@ -4,7 +4,6 @@ from loguru import logger
 
 
 class InterceptHandler(logging.Handler):
-
     def __init__(self, level=logging.NOTSET) -> None:
         super(InterceptHandler, self).__init__(level)
 
@@ -22,6 +21,5 @@ class InterceptHandler(logging.Handler):
             depth += 1
 
         logger.opt(depth=depth, exception=record.exc_info).log(
-            level,
-            record.getMessage()
+            level, record.getMessage()
         )

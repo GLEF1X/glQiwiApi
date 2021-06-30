@@ -7,6 +7,7 @@ from glQiwiApi.utils.currency_util import Currency
 
 class Balance(Base):
     """ object: Balance """
+
     alias: str
     currency: CurrencyModel
 

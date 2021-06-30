@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import inspect
 import operator
-from typing import Any, TypeVar
+from typing import Any, Awaitable, cast
 
 from .config import CF, E
 
 
-def special_comparator(func1: CF, func2: CF, event: Any) -> Any:
+def special_comparator(func1: CF, func2: CF, event: Any) -> bool:
     """ custom a & b (and) operator """
     validated = func1(event)
     if validated is not True:
@@ -15,7 +15,7 @@ def special_comparator(func1: CF, func2: CF, event: Any) -> Any:
     return operator.and_(validated, func2(event))
 
 
-def xor(func1: CF, func2: CF, event: Any) -> Any:
+def xor(func1: CF, func2: CF, event: Any) -> bool:
     """ custom a ^ b (xor) operator """
     funcs = (func1, func2)
     for func in funcs:
@@ -27,9 +27,6 @@ def xor(func1: CF, func2: CF, event: Any) -> Any:
 def or_(func1: CF, func2: CF, event: Any) -> Any:
     """ Custom a | b (or) operator """
     return func1(event) or func2(event)
-
-
-T = TypeVar("T")
 
 
 class Filter:
@@ -67,11 +64,7 @@ class Filter:
         return _compose_filter(self, other, or_)
 
 
-def _compose_filter(
-        filter1: Filter,
-        filter2: Filter,
-        operator_: Any
-) -> Filter:
+def _compose_filter(filter1: Filter, filter2: Filter, operator_: Any) -> Filter:
     """
     Compose two filters
 
@@ -93,7 +86,8 @@ def _compose_filter(
 
         async def func(event: E) -> Any:
             return operator_(
-                await filter1.function(event), await filter2.function(event)
+                await cast(Awaitable[bool], filter1.function(event)),
+                await cast(Awaitable[bool], filter2.function(event)),
             )
 
     elif filter1.awaitable ^ filter2.awaitable:
@@ -103,7 +97,8 @@ def _compose_filter(
 
         async def func(event: E) -> Any:
             return operator_(
-                await async_func.function(event), sync_func.function(event)
+                await cast(Awaitable[bool], async_func.function(event)),
+                sync_func.function(event),
             )
 
     else:
@@ -120,7 +115,7 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
     if filter1.awaitable:
 
         async def func(event: E) -> Any:
-            return operator_(await filter1.function(event))
+            return operator_(await cast(Awaitable[bool], filter1.function(event)))
 
     else:
 
@@ -130,6 +125,4 @@ def _sing_filter(filter1: Filter, operator_) -> Filter:
     return Filter(func)
 
 
-__all__ = (
-    "Filter"
-)
+__all__ = "Filter"

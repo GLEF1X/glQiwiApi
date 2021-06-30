@@ -14,15 +14,10 @@ async def qiwi_maps():
 
     maps = QiwiMaps()
     async with maps:
-        terminals = await maps.terminals(
-            polygon,
-            zoom=12,
-            cache_terminals=True
-        )
+        terminals = await maps.terminals(polygon, zoom=12, cache_terminals=True)
 
     for terminal in terminals:
-        terminal_latlon = (
-            terminal.coordinate.latitude, terminal.coordinate.longitude)
+        terminal_latlon = (terminal.coordinate.latitude, terminal.coordinate.longitude)
         print(
             f"{terminal.terminal_id:<10} is {distance(terminal_latlon, my_lat_lon).km:.2f} m. away"
         )

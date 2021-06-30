@@ -8,6 +8,7 @@ from glQiwiApi.types.base import Base
 
 class Identification(Base):
     """ object: Identification """
+
     identification_id: int = Field(..., alias="id")
     first_name: str = Field(..., alias="firstName")
     middle_name: str = Field(..., alias="middleName")

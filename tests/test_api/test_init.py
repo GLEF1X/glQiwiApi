@@ -15,9 +15,9 @@ pytestmark = pytest.mark.asyncio
 
 
 class TestAiohttpSession:
-
     async def test_create_api(self):
         from tests.types.dataset import API_DATA
+
         api = QiwiWrapper(**API_DATA)
 
         # initially session is None,
@@ -34,7 +34,7 @@ class TestAiohttpSession:
         assert isinstance(api._router, QiwiRouter)
         assert isinstance(api._requests, RequestManager)
         assert isinstance(api._p2p_router, QiwiKassaRouter)
-        assert isinstance(api.dispatcher, Dispatcher)
+        assert isinstance(api.dp, Dispatcher)
 
         # close session =)
         await api.close()
@@ -53,14 +53,14 @@ class TestAiohttpSession:
 
     async def test_close_session(self):
         from tests.types.dataset import API_DATA
+
         api = QiwiWrapper(**API_DATA)
 
         await api._requests.create_session()
 
         aiohttp_session = api.request_manager._session
 
-        with patch("aiohttp.ClientSession.close",
-                   new=CoroutineMock()) as mocked_close:
+        with patch("aiohttp.ClientSession.close", new=CoroutineMock()) as mocked_close:
             await aiohttp_session.close()
             mocked_close.assert_called_once()
 
@@ -68,15 +68,15 @@ class TestAiohttpSession:
 
 
 class TestContextMixin:
-
     async def test_get_from_context(self):
         from tests.types.dataset import API_DATA
+
         QiwiWrapper.set_current(QiwiWrapper(**API_DATA))
         instance = QiwiWrapper.get_current()
         assert isinstance(instance, QiwiWrapper)
 
     async def test_implicit_get_from_context(self):
         from tests.types.dataset import API_DATA
+
         QiwiWrapper(**API_DATA)
         assert isinstance(QiwiWrapper.get_current(), QiwiWrapper)
-

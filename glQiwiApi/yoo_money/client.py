@@ -2,12 +2,10 @@
 Provides effortless work with YooMoney API using asynchronous requests.
 
 """
+import asyncio
 from datetime import datetime
-from typing import List, Dict, Any, Union, Optional, Tuple
+from typing import List, Dict, Any, Union, Optional, Tuple, cast
 
-from pydantic import ValidationError
-
-import glQiwiApi.utils.basics as api_helper
 from glQiwiApi.core import (
     RequestManager,
     ToolsMixin,
@@ -23,7 +21,10 @@ from glQiwiApi.types import (
     IncomingTransaction
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
-from glQiwiApi.utils.exceptions import NoUrlFound, InvalidData
+from glQiwiApi.types.yoomoney_types.types import Card
+from glQiwiApi.utils.api_helper import parse_auth_link, parse_headers, datetime_to_str_in_iso, \
+    simple_multiply_parse, check_params, parse_amount
+from glQiwiApi.utils.errors import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter
 
 
@@ -101,29 +102,23 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
          и сделать авторизацию через логин/пароль
         """
         router = YooMoneyRouter()
-        headers = api_helper.parse_headers()
+        headers = parse_headers()
         params = {
             'client_id': client_id,
             'response_type': 'code',
             'redirect_uri': redirect_uri,
             'scope': " ".join(scope)
         }
-        async for response in RequestManager(
-                without_context=True,
-                messages=router.config.ERROR_CODE_NUMBERS
-        ).fast().fetch(
-            url=router.build_url("BUILD_URL_FOR_AUTH"),
+        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).make_request(
+            router.build_url("BUILD_URL_FOR_AUTH"),
+            "POST",
             headers=headers,
-            data=params,
-            method='POST'
-        ):
-            try:
-                return api_helper.parse_auth_link(response.response_data)
-            except IndexError:
-                raise NoUrlFound(
-                    'Не удалось найти ссылку для авторизации '
-                    'в ответе от апи, проверьте client_id'
-                )
+            data=params
+        )
+        try:
+            return parse_auth_link(response)
+        except IndexError:
+            raise NoUrlFound('Не удалось найти ссылку для авторизации в ответе от апи, проверьте значение client_id')
 
     @classmethod
     async def get_access_token(
@@ -145,7 +140,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :return: YooMoney API TOKEN
         """
         router = YooMoneyRouter()
-        headers = api_helper.parse_headers(content_json=True)
+        headers = parse_headers(content_json=True)
         params = {
             'code': code,
             'client_id': client_id,
@@ -153,17 +148,10 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'redirect_uri': redirect_uri,
             'client_secret': client_secret
         }
-        async for response in RequestManager(
-                without_context=True,
-                messages=router.config.ERROR_CODE_NUMBERS
-        ).fast().fetch(
-            url=router.build_url("GET_ACCESS_TOKEN"),
-            headers=headers,
-            data=params,
-            method='POST',
-            get_json=True
-        ):
-            return response.response_data.get('access_token')
+        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).make_request(
+            router.build_url("GET_ACCESS_TOKEN"), "POST", headers=headers, data=params
+        )
+        return cast(str, response.get('access_token'))
 
     async def revoke_api_token(self) -> Optional[Dict[str, bool]]:
         """
@@ -171,16 +159,9 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         Документация:
         https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
         """
-        headers = self._auth_token(
-            api_helper.parse_headers(auth=True)
-        )
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("REVOKE_API_TOKEN"),
-                method='POST',
-                headers=headers
-        ):
-            if response.status_code == 200:
-                return {'success': True}
+        headers = self._auth_token(parse_headers(auth=True))
+        url = self._router.build_url("REVOKE_API_TOKEN")
+        return await self.request_manager.make_request(url, "POST", headers=headers)
 
     @property
     async def account_info(self) -> AccountInfo:
@@ -191,18 +172,10 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
         :return: объект AccountInfo
         """
-        headers = self._auth_token(
-            api_helper.parse_headers(
-                **self._router.config.content_and_auth
-            )
-        )
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("ACCOUNT_INFO"),
-                headers=headers,
-                method='POST',
-                get_json=True
-        ):
-            return AccountInfo.parse_obj(response.response_data)
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
+        url = self._router.build_url("ACCOUNT_INFO")
+        response = await self.request_manager.make_request(url, "POST", headers=headers)
+        return AccountInfo.parse_obj(response)
 
     async def transactions(
             self,
@@ -247,9 +220,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param records:	int	Количество запрашиваемых записей истории операций.
          Допустимые значения: от 1 до 100, по умолчанию — 30.
         """
-        headers = self._auth_token(
-            api_helper.parse_headers(**self._router.config.content_and_auth)
-        )
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
 
         if records <= 0 or records > 100:
             raise InvalidData(
@@ -257,59 +228,28 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                 'Кол-во записей, которые можно запросить,'
                 ' находиться в диапазоне от 1 до 100 включительно'
             )
-
-        data = {
-            'records': records,
-            'label': label
-        }
-
+        data = {'records': records, 'label': label}
         if operation_types:
-            if all(
-                    isinstance(
-                        operation_type, OperationType
-                    ) for operation_type in operation_types
-            ):
-                op_types = [
-                    operation_type.value for operation_type in operation_types
-                ]
-                data.update({'type': ' '.join(
-                    op_types)}
-                )
-
+            if all(isinstance(operation_type, OperationType) for operation_type in operation_types):
+                op_types = [operation_type.value for operation_type in operation_types]
+                data.update({'type': ' '.join(op_types)})
         if isinstance(start_record, int):
             if start_record < 0:
                 raise InvalidData('Укажите позитивное число')
             data.update({'start_record': start_record})
-
         if start_date:
             if not isinstance(start_date, datetime):
-                raise InvalidData(
-                    'Параметр start_date был передан неправильным типом данных'
-                )
-            data.update({'from': api_helper.datetime_to_str_in_iso(
-                start_date, yoo_money_format=True
-            )})
+                raise InvalidData('Параметр start_date был передан неправильным типом данных')
+            data.update({'from': datetime_to_str_in_iso(start_date, yoo_money_format=True)})
 
         if end_date:
             if not isinstance(end_date, datetime):
-                raise InvalidData(
-                    'Параметр end_date был передан неправильным типом данных'
-                )
-            data.update({'till': api_helper.datetime_to_str_in_iso(
-                end_date, yoo_money_format=True
-            )})
-
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("TRANSACTIONS"),
-                method='POST',
-                headers=headers,
-                data=self._requests.filter_dict(data),
-                get_json=True
-        ):
-            return api_helper.simple_multiply_parse(
-                lst_of_objects=response.response_data.get('operations'),
-                model=Operation
-            )
+                raise InvalidData('Параметр end_date был передан неправильным типом данных')
+            data.update({'till': datetime_to_str_in_iso(end_date, yoo_money_format=True)})
+        url = self._router.build_url("TRANSACTIONS")
+        response = await self.request_manager.make_request(url, "POST", headers=headers,
+                                                           data=self.request_manager.filter_dict(data))
+        return simple_multiply_parse(objects=cast(List[Any], response.get('operations')), model=Operation)
 
     async def transaction_info(self, operation_id: str) -> OperationDetails:
         """
@@ -320,19 +260,11 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
         :param operation_id: Идентификатор операции
         """
-        headers = self._auth_token(api_helper.parse_headers(
-            **self._router.config.content_and_auth)
-        )
-        payload = {
-            'operation_id': operation_id
-        }
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("TRANSACTION_INFO"),
-                headers=headers,
-                data=payload,
-                get_json=True
-        ):
-            return OperationDetails.parse_obj(response.response_data)
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
+        payload = {'operation_id': operation_id}
+        url = self._router.build_url("TRANSACTION_INFO")
+        response = await self.request_manager.make_request(url, "POST", data=payload, headers=headers)
+        return OperationDetails.parse_obj(response)
 
     async def _pre_process_payment(
             self,
@@ -373,8 +305,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             Значение параметра должно находиться в интервале от 1 до 365.
             Необязательный параметр. По умолчанию 1.
         """
-        headers = self._auth_token(
-            api_helper.parse_headers(**self._router.config.content_and_auth))
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
         payload = {
             'pattern_id': pattern_id,
             'to': to_account,
@@ -384,22 +315,9 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'expire_period': expire_period,
             'codepro': protect
         }
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("PRE_PROCESS_PAYMENT"),
-                headers=headers,
-                data=payload,
-                get_json=True
-        ):
-            try:
-                return PreProcessPaymentResponse.parse_obj(
-                    response.response_data
-                )
-            except ValidationError:
-                msg = "Недостаточно денег для перевода или ошибка сервиса"
-                raise self._requests.make_exception(
-                    status_code=400,
-                    message=msg
-                )
+        url = self._router.build_url("PRE_PROCESS_PAYMENT")
+        response = await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        return PreProcessPaymentResponse.parse_obj(response)
 
     async def send(
             self,
@@ -466,54 +384,38 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             protect=protect,
             pattern_id=pattern_id
         )
-
-        headers = self._auth_token(
-            api_helper.parse_headers(**self._router.config.content_and_auth))
-
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
         payload = {
             'request_id': pre_payment.request_id,
             'money_source': 'wallet'
         }
-        expression = isinstance(pre_payment, PreProcessPaymentResponse)
-        if money_source == 'card' and expression:
-            if pre_payment.money_source.cards.allowed == 'true':
+        if money_source == 'card' and isinstance(pre_payment, PreProcessPaymentResponse):
+            if pre_payment.money_source.cards.allowed == 'true':  # type: ignore
                 if not isinstance(card_type, str):
-                    cards = pre_payment.money_source.cards
+                    cards = cast(Card, pre_payment.money_source.cards)  # type: ignore
                     payload.update({
                         'money_source': cards.items[0].item_id,
                         'csc': cvv2_code
                     })
                 else:
-                    cards = pre_payment.money_source.cards.items
+                    cards = cast(Card, pre_payment.money_source.cards).items  # type: ignore
                     for card in cards:
-                        if card.item_type == card_type:
+                        if card.item_type == card_type:  # type: ignore
                             payload.update(
                                 {
-                                    'money_source': card.item_id,
+                                    'money_source': card.item_id,  # type: ignore
                                     'csc': cvv2_code
                                 },
                             )
-        async for response in self._requests.fast().fetch(
-                url=url,
-                method='POST',
-                headers=headers,
-                data=payload,
-                get_json=True
-        ):
-            return Payment.parse_obj(
-                response.response_data
-            ).initialize(pre_payment.protection_code)
+        response = await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        return Payment.parse_obj(response).initialize(pre_payment.protection_code)
 
     @property
     async def balance(self) -> float:
         """Метод для получения баланса на кошельке yoomoney"""
         return (await self.account_info).balance
 
-    async def accept_incoming_transaction(
-            self,
-            operation_id: str,
-            protection_code: str
-    ) -> IncomingTransaction:
+    async def accept_incoming_transaction(self, operation_id: str, protection_code: str) -> IncomingTransaction:
         """
         Прием входящих переводов, защищенных кодом протекции,
         если вы передали в метод send параметр protect
@@ -530,22 +432,14 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
          Указывается для входящего перевода, защищенного кодом протекции.
          Для переводов до востребования отсутствует.
         """
-        headers = self._auth_token(
-            api_helper.parse_headers(**self._router.config.content_and_auth))
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
         payload = {
             'operation_id': operation_id,
             'protection_code': protection_code
         }
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("ACCEPT_INCOMING_TRANSFER"),
-                headers=headers,
-                data=payload,
-                method='POST',
-                get_json=True
-        ):
-            return IncomingTransaction.parse_obj(
-                response.response_data
-            )
+        url = self._router.build_url("ACCEPT_INCOMING_TRANSFER")
+        response = await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        return IncomingTransaction.parse_obj(response)
 
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
         """
@@ -562,16 +456,10 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
          operation_id ответа метода history().
         :return: словарь в json формате с ответом от апи
         """
-        headers = self._auth_token(
-            api_helper.parse_headers(**self._router.config.content_and_auth))
-        async for response in self._requests.fast().fetch(
-                url=self._router.build_url("INCOMING_TRANSFER_REJECT"),
-                headers=headers,
-                data={'operation_id': operation_id},
-                method='POST',
-                get_json=True
-        ):
-            return response.response_data
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
+        url = self._router.build_url("INCOMING_TRANSFER_REJECT")
+        return await self.request_manager.make_request(url, "POST", headers=headers,
+                                                       data={'operation_id': operation_id})
 
     async def check_transaction(
             self,
@@ -596,31 +484,22 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :return: bool, есть ли такая транзакция в истории платежей
         """
         # Generate types of transactions for request
-        types = [
-            OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT]
+        types = [OperationType.DEPOSITION if transaction_type == 'in' else OperationType.PAYMENT]
         # Get transactions by params
-        transactions = await self.transactions(
-            operation_types=types,
-            records=rows_num
-        )
-        for txn in transactions:
-            # Get details of transaction to check it later
-            detail = await self.transaction_info(txn.operation_id)
-
+        transactions = await self.transactions(operation_types=types, records=rows_num)
+        tasks = [self.transaction_info(txn.operation_id) for txn in transactions]
+        for detail in await asyncio.gather(*tasks):
             # Parse amount and comment,
             # because the parameters depend on the type of transaction
-            amount_, comment_ = api_helper.parse_amount(
-                transaction_type,
-                detail
-            )
-            checked = api_helper.check_params(
+            amount_, comment_ = parse_amount(transaction_type, detail)
+            checked = check_params(
                 amount=amount,
                 transaction_type=transaction_type,
                 amount_=amount_,
                 txn=detail
             )
             if checked:
-                if txn.status == 'success':
+                if detail.status == 'success':
                     if comment_ == comment and detail.sender == recipient:
                         return True
                     elif isinstance(comment, str) and isinstance(recipient, str):

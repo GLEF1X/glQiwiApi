@@ -16,9 +16,7 @@ class Currency:
     """
 
     @classmethod
-    def get(cls, currency_code: Union[str, int]) -> Optional[
-        cur.CurrencyModel
-    ]:
+    def get(cls, currency_code: Union[str, int]) -> Optional[cur.CurrencyModel]:
         """
         Implements class-based getitem behaviour
 
@@ -35,6 +33,4 @@ class Currency:
             else:
                 return cur.described.get(currency_code.upper())
         except (KeyError, AssertionError):
-            raise RuntimeError(
-                f"Currency code `{currency_code}` was not found"
-            )
+            raise RuntimeError(f"Currency code `{currency_code}` was not found")

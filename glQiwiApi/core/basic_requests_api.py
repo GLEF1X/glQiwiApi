@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from asyncio import as_completed, set_event_loop_policy
-from itertools import repeat
-from typing import (
-    AsyncGenerator
-)
+from asyncio import set_event_loop_policy
 from typing import Dict, Optional, Any, Union, Tuple, Type, Iterable, cast, List
 
 import aiohttp
@@ -12,15 +8,15 @@ from aiohttp import (
     ClientTimeout,
     ClientProxyConnectionError,
     ServerDisconnectedError,
-    ClientConnectionError, ClientSession
+    ClientConnectionError,
+    ClientSession,
 )
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core import AbstractParser
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
-from glQiwiApi.types import Response
-from glQiwiApi.types.basics import Cached
-from glQiwiApi.utils.exceptions import RequestError
+from glQiwiApi.utils.api_helper import check_result
+from glQiwiApi.utils.errors import RequestError
 
 _ProxyBasic = Union[str, Tuple[str, aiohttp.BasicAuth]]
 _ProxyChain = Iterable[_ProxyBasic]
@@ -53,14 +49,14 @@ def _retrieve_basic(basic: _ProxyBasic) -> Dict[str, Any]:
 
 
 def _prepare_connector(
-        chain_or_plain: _ProxyType
+    chain_or_plain: _ProxyType,
 ) -> Tuple[Type["aiohttp.TCPConnector"], Dict[str, Any]]:
     from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyInfo  # type: ignore
 
     # since tuple is Iterable(compatible with _ProxyChain) object, we assume that
     # user wants chained proxies if tuple is a pair of string(url) and BasicAuth
     if isinstance(chain_or_plain, str) or (
-            isinstance(chain_or_plain, tuple) and len(chain_or_plain) == 2
+        isinstance(chain_or_plain, tuple) and len(chain_or_plain) == 2
     ):
         chain_or_plain = cast(_ProxyBasic, chain_or_plain)
         return ProxyConnector, _retrieve_basic(chain_or_plain)
@@ -79,18 +75,18 @@ class HttpXParser(AbstractParser):
 
     """
 
-    def __init__(self, proxy: Optional[_ProxyType] = None,
-                 messages: Optional[Dict[str, str]] = None) -> None:
+    def __init__(
+        self,
+        proxy: Optional[_ProxyType] = None,
+        messages: Optional[Dict[int, str]] = None,
+    ) -> None:
         self.base_headers = {
-            'User-Agent': "glQiwiApi/1.0beta",
-            'Accept-Language': "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
+            "User-Agent": "glQiwiApi/1.0beta",
+            "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
         }
         self.messages = messages
         self._timeout = ClientTimeout(
-            total=5,
-            connect=None,
-            sock_connect=5,
-            sock_read=None
+            total=5, connect=None, sock_connect=5, sock_read=None
         )
         self._session: Optional[ClientSession] = None
         self._connector_type: Type[aiohttp.TCPConnector] = aiohttp.TCPConnector
@@ -120,34 +116,23 @@ class HttpXParser(AbstractParser):
         self._setup_proxy_connector(proxy)
         self._should_reset_connector = True
 
-    async def _make_request(
-            self,
-            url: str,
-            get_json: bool = False,
-            method: str = 'POST',
-            set_timeout: bool = True,
-            cookies: Optional[LooseCookies] = None,
-            json: Optional[dict] = None,
-            data: Optional[Dict[str, Union[
-                str, int, List[
-                    Union[str, int]
-                ]]]
-            ] = None,
-            headers: Optional[dict] = None,
-            params: Optional[
-                Dict[str, Union[str, int, List[
-                    Union[str, int]
-                ]]]
-            ] = None,
-            get_bytes: bool = False,
-            **kwargs) -> Union[Response, Cached]:
+    async def make_request(
+        self,
+        url: str,
+        method: str,
+        set_timeout: bool = True,
+        cookies: Optional[LooseCookies] = None,
+        json: Optional[dict] = None,
+        data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+        headers: Optional[dict] = None,
+        params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+        **kwargs,
+    ) -> dict:
         """
         Send request to some url. Method has a similar signature with the `aiohttp.request`
 
 
         :param url: ссылка, куда вы хотите отправить ваш запрос
-        :param get_json: указывает на то, хотите ли вы получить ответ
-         в формате json
         :param method: Тип запроса
         :param data: payload data
         :param set_timeout:
@@ -155,8 +140,6 @@ class HttpXParser(AbstractParser):
         :param cookies: куки запроса
         :param headers: заголовки запроса
         :param params:
-        :param get_bytes: указывает на то, хотите ли вы получить ответ
-         в байтах
         :param kwargs:
         :return: Response instance
         """
@@ -168,7 +151,7 @@ class HttpXParser(AbstractParser):
 
         # sending query to some endpoint url
         try:
-            response = await session.request(
+            resp = await session.request(
                 method=method,
                 url=url,
                 data=data,
@@ -176,59 +159,21 @@ class HttpXParser(AbstractParser):
                 json=json if isinstance(json, dict) else None,
                 cookies=cookies,
                 params=params,
-                **kwargs
+                **kwargs,
+            )
+            return check_result(
+                self.messages,
+                resp.content_type,
+                resp.status,
+                resp.request_info,
+                await resp.text(),
             )
         except (
-                ClientProxyConnectionError,
-                ServerDisconnectedError,
-                ClientConnectionError
+            ClientProxyConnectionError,
+            ServerDisconnectedError,
+            ClientConnectionError,
         ):
             raise self.make_exception(status_code=500)
-        # Get content and return response
-        try:
-            if get_json:
-                resp_data = await response.json(encoding="utf-8")
-            elif get_bytes:
-                resp_data = await response.read()
-            else:
-                resp_data = await response.text(encoding="utf-8")
-        except aiohttp.ContentTypeError as ex:
-            # For better traceback we raising a new exception from aiohttp.ContentTypeError
-            raise self.make_exception(
-                status_code=response.status,
-                traceback_info=ex.request_info
-            ) from None
-
-        return Response(
-            status_code=response.status,
-            response_data=resp_data,
-            raw_headers=response.raw_headers,
-            cookies=response.cookies,
-            ok=response.ok,
-            content_type=response.content_type,
-            host=response.host,
-            url=response.url.__str__()
-        )
-
-    async def fetch(
-            self,
-            *,
-            times: int = 1,
-            **kwargs
-    ) -> AsyncGenerator[Union[Response, Cached], None]:
-        """
-        Basic usage: \n
-        parser = HttpXParser() \n
-        async for response in parser.fetch():
-            print(response)
-
-        :param times: quantity requests
-        :param kwargs: HttpXParser._request kwargs
-        :return:
-        """
-        coroutines = [self._make_request(**kwargs) for _ in repeat(None, times)]
-        for future in as_completed(fs=coroutines):
-            yield await future
 
     def fast(self) -> HttpXParser:
         """
@@ -240,10 +185,12 @@ class HttpXParser(AbstractParser):
         """
         try:
             from uvloop import EventLoopPolicy  # type: ignore
+
             set_event_loop_policy(EventLoopPolicy())
         except ImportError:
             # Catching import error and forsake standard policy
             from asyncio import DefaultEventLoopPolicy as EventLoopPolicy  # type: ignore
+
             set_event_loop_policy(EventLoopPolicy())
         return self
 
@@ -270,20 +217,16 @@ class HttpXParser(AbstractParser):
             if not self._session.closed:
                 await self._session.close()
 
-    async def stream_content(
-            self, url: str, timeout: int, chunk_size: int
-    ) -> AsyncGenerator[bytes, None]:
+    async def stream_content(self, url: str, method: str, **kwargs) -> bytes:
         session = await self.create_session()
-
-        async with session.get(url, timeout=timeout) as resp:
-            async for chunk in resp.content.iter_chunked(chunk_size):
-                yield chunk
+        resp = await session.request(method, url, **kwargs)
+        return await resp.read()
 
     def make_exception(
-            self,
-            status_code: int,
-            traceback_info: Optional[Union[aiohttp.RequestInfo, dict, str, bytes]] = None,
-            message: Optional[str] = None
+        self,
+        status_code: int,
+        traceback_info: Optional[Union[aiohttp.RequestInfo, dict, str, bytes]] = None,
+        message: Optional[str] = None,
     ) -> RequestError:
         """ Raise :class:`RequestError` exception with pretty explanation """
         from glQiwiApi import __version__
@@ -295,5 +238,5 @@ class HttpXParser(AbstractParser):
             message,
             status_code,
             additional_info=f"{__version__} version api",
-            traceback_info=traceback_info
+            traceback_info=traceback_info,
         )

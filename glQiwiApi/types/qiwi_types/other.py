@@ -9,6 +9,7 @@ from glQiwiApi.utils.currency_util import Currency
 
 class CrossRate(Base):
     """Курс валюты"""
+
     rate_from: Union[str, CurrencyModel] = Field(..., alias="from")
     rate_to: Union[str, CurrencyModel] = Field(..., alias="to")
     rate: float
@@ -30,6 +31,7 @@ class PaymentMethod(Base):
 
 class FreePaymentDetailsFields(Base):
     """ Набор реквизитов платежа"""
+
     name: str
     """Наименование банка получателя"""
 
@@ -42,7 +44,7 @@ class FreePaymentDetailsFields(Base):
     city: str
     """Город местонахождения получателя"""
 
-    info: str = 'Коммерческие организации'
+    info: str = "Коммерческие организации"
     """Константное значение"""
 
     is_commercial: str = "1"
@@ -71,7 +73,7 @@ class FreePaymentDetailsFields(Base):
     """
     Признак срочного платежа (0 - нет, 1 - да).
     Срочный платеж выполняется от 10 минут.
-    Возможен по будням с 9:00 до 20:30 по московскому времени. 
+    Возможен по будням с 9:00 до 20:30 по московскому времени.
     Стоимость услуги — 25 рублей.
     """
 
@@ -94,4 +96,4 @@ class FreePaymentDetailsFields(Base):
     """Служебная информация, константа"""
 
 
-__all__ = ('CrossRate', 'FreePaymentDetailsFields', 'PaymentMethod')
+__all__ = ("CrossRate", "FreePaymentDetailsFields", "PaymentMethod")

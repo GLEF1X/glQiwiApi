@@ -7,11 +7,7 @@ pytestmark = pytest.mark.asyncio
 @pytest.fixture(name="data")
 def maps_data():
     polygon = types.Polygon((55.690881, 37.386282), (55.580184, 37.826078))
-    yield {
-        "polygon": polygon,
-        "zoom": 12,
-        "cache_terminals": True
-    }
+    yield {"polygon": polygon, "zoom": 12, "cache_terminals": True}
 
 
 @pytest.fixture(name="maps")

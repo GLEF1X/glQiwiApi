@@ -6,7 +6,6 @@ import typing
 from asyncio import AbstractEventLoop
 from ssl import SSLContext
 
-from aiogram.dispatcher.webhook import configure_app
 from aiohttp import web
 
 if typing.TYPE_CHECKING:
@@ -35,14 +34,14 @@ def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes):
             handler=route.handler,
             method=route.method,
             name=route.name,
-            path=route.url_for().path
+            path=route.url_for().path,
         )
 
 
 class BaseProxy(abc.ABC):
-
-    def __init__(self, dispatcher: Dispatcher, *,
-                 loop: typing.Optional[AbstractEventLoop] = None):
+    def __init__(
+        self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
+    ):
         self.bot = dispatcher.bot
         self.dispatcher = dispatcher
 
@@ -75,12 +74,12 @@ class TelegramWebhookProxy(BaseProxy):
     """ You can override the prefix for the application """
 
     def __init__(
-            self,
-            dispatcher: Dispatcher,
-            ssl_certificate: SSLContext,
-            webhook_domain: str,
-            route_name: str = 'webhook_handler',
-            sub_apps: typing.Optional[SubApps] = None
+        self,
+        dispatcher: Dispatcher,
+        ssl_certificate: SSLContext,
+        webhook_domain: str,
+        route_name: str = "webhook_handler",
+        sub_apps: typing.Optional[SubApps] = None,
     ):
         """
 
@@ -95,10 +94,9 @@ class TelegramWebhookProxy(BaseProxy):
         super(TelegramWebhookProxy, self).__init__(dispatcher)
         self._app: web.Application = web.Application()
         self._app.router.add_route(
-            '*', self.execution_path, WebhookRequestHandler,
-            name=route_name
+            "*", self.execution_path, WebhookRequestHandler, name=route_name
         )
-        self._app['BOT_DISPATCHER'] = self.dispatcher
+        self._app["BOT_DISPATCHER"] = self.dispatcher
         self.sub_apps: SubApps = sub_apps or []
         self._ssl_context = ssl_certificate
         self._webhook_domain = webhook_domain
@@ -118,8 +116,8 @@ class TelegramWebhookProxy(BaseProxy):
         main_app.add_subapp(self.prefix, self._app)
         # print(main_app.router.routes())
         for prefix, sub_app, handlers in self.sub_apps:
-            sub_app['bot'] = self.bot
-            sub_app['dp'] = self.dispatcher
+            sub_app["bot"] = self.bot
+            sub_app["dp"] = self.dispatcher
             _init_sub_apps_handlers(sub_app, handlers)
             main_app.add_subapp(prefix, sub_app)
         self._loop.run_until_complete(self.configure_webhook(**kwargs))
@@ -139,9 +137,7 @@ class TelegramWebhookProxy(BaseProxy):
             full_url += self.execution_path
 
         await self.dispatcher.bot.set_webhook(
-            full_url,
-            certificate=self._ssl_context,
-            **kwargs
+            full_url, certificate=self._ssl_context, **kwargs
         )
 
 
@@ -153,16 +149,16 @@ class TelegramPollingProxy(BaseProxy):
     """
 
     def __init__(
-            self,
-            dispatcher: Dispatcher,
-            loop: typing.Optional[AbstractEventLoop] = None,
-            timeout: int = 20,
-            relax: float = 0.1,
-            limit=None,
-            reset_webhook=None,
-            fast: typing.Optional[bool] = True,
-            error_sleep: int = 5,
-            allowed_updates: typing.Optional[typing.List[str]] = None
+        self,
+        dispatcher: Dispatcher,
+        loop: typing.Optional[AbstractEventLoop] = None,
+        timeout: int = 20,
+        relax: float = 0.1,
+        limit=None,
+        reset_webhook=None,
+        fast: typing.Optional[bool] = True,
+        error_sleep: int = 5,
+        allowed_updates: typing.Optional[typing.List[str]] = None,
     ):
         super(TelegramPollingProxy, self).__init__(dispatcher, loop=loop)
         self._allowed_updates = allowed_updates
@@ -180,12 +176,14 @@ class TelegramPollingProxy(BaseProxy):
         :param kwargs: you can pass on loop as key/value parameter
         """
         loop = kwargs.pop("loop") or self._loop
-        loop.create_task(self.dispatcher.start_polling(
-            timeout=self._timeout,
-            reset_webhook=self._reset_webhook,
-            relax=self._relax,
-            allowed_updates=self._allowed_updates,
-            limit=self._limit,
-            error_sleep=self._error_sleep,
-            fast=self._fast
-        ))
+        loop.create_task(
+            self.dispatcher.start_polling(
+                timeout=self._timeout,
+                reset_webhook=self._reset_webhook,
+                relax=self._relax,
+                allowed_updates=self._allowed_updates,
+                limit=self._limit,
+                error_sleep=self._error_sleep,
+                fast=self._fast,
+            )
+        )

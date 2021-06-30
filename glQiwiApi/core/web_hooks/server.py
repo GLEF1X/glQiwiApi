@@ -1,5 +1,4 @@
 import ipaddress
-import logging
 import typing
 
 from aiohttp import web
@@ -14,10 +13,10 @@ from glQiwiApi.core.web_hooks.config import (
     DEFAULT_QIWI_ROUTER_NAME,
     DEFAULT_QIWI_BILLS_ROUTER_NAME,
     DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
-    Path
+    Path,
 )
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
-from glQiwiApi.utils.basics import hmac_for_transaction, hmac_key
+from glQiwiApi.utils.api_helper import hmac_for_transaction, hmac_key
 
 
 def _check_ip(ip_address: str) -> bool:
@@ -54,7 +53,7 @@ class QiwiWalletWebView(BaseWebHookView):
         return web.Response(text="ok")
 
     def _hash_validator(self, update: types.WebHook) -> None:
-        base64_key = self.request.app.get('_base64_key')
+        base64_key = self.request.app.get("_base64_key")
 
         if not update.payment:
             return
@@ -65,7 +64,7 @@ class QiwiWalletWebView(BaseWebHookView):
             txn_hash=update.hash,
             txn_type=update.payment.type,
             txn_id=update.payment.txn_id,
-            account=update.payment.account
+            account=update.payment.account,
         )
 
         if not validated:
@@ -86,12 +85,13 @@ class QiwiBillWebView(BaseWebHookView):
         return _check_ip(ip_address)
 
     def _hash_validator(self, update: types.Notification) -> None:
+        if update.bill is None:
+            return None
+
         sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")
-        logging.info(sha256_signature)
         _secret = self.request.app.get("_secret_key")
-        answer = hmac_key(_secret, update.bill.amount,
-                          update.bill.status, update.bill.bill_id,
-                          update.bill.site_id)
+        bill = update.bill
+        answer = hmac_key(_secret, bill.amount, bill.status, bill.bill_id, bill.site_id)
 
         if answer != sha256_signature:
             raise web.HTTPBadRequest()
@@ -115,11 +115,11 @@ class QiwiBillWebView(BaseWebHookView):
 
 
 def setup_transaction_data(
-        app: web.Application,
-        base64_key: typing.Optional[str],
-        handler_manager: Dispatcher,
-        path: typing.Optional[Path] = None
-):
+    app: web.Application,
+    base64_key: typing.Optional[str],
+    handler_manager: Dispatcher,
+    path: typing.Optional[Path] = None,
+) -> None:
     app["_base64_key"] = base64_key
     app[QiwiWalletWebView.app_key_check_ip] = _check_ip
     app[QiwiWalletWebView.app_key_handler_manager] = handler_manager
@@ -128,17 +128,15 @@ def setup_transaction_data(
     else:
         txn_path = DEFAULT_QIWI_WEBHOOK_PATH
     app.router.add_view(
-        typing.cast(str, txn_path),
-        QiwiWalletWebView,
-        name=DEFAULT_QIWI_ROUTER_NAME
+        typing.cast(str, txn_path), QiwiWalletWebView, name=DEFAULT_QIWI_ROUTER_NAME
     )
 
 
 def setup_bill_data(
-        app: web.Application,
-        secret_key: typing.Optional[str],
-        handler_manager: Dispatcher,
-        path: typing.Optional[Path] = None
+    app: web.Application,
+    secret_key: typing.Optional[str],
+    handler_manager: Dispatcher,
+    path: typing.Optional[Path] = None,
 ) -> None:
     app["_secret_key"] = secret_key
     app[QiwiBillWebView.app_key_check_ip] = _check_ip
@@ -150,17 +148,17 @@ def setup_bill_data(
     app.router.add_view(
         handler=QiwiBillWebView,
         name=DEFAULT_QIWI_BILLS_ROUTER_NAME,
-        path=typing.cast(str, bill_path)
+        path=typing.cast(str, bill_path),
     )
 
 
 def setup(
-        dispatcher: Dispatcher,
-        app: web.Application,
-        path: typing.Optional[Path] = None,
-        secret_key: typing.Optional[str] = None,
-        base64_key: typing.Optional[str] = None,
-        tg_app: typing.Optional[BaseProxy] = None,
+    dispatcher: Dispatcher,
+    app: web.Application,
+    path: typing.Optional[Path] = None,
+    secret_key: typing.Optional[str] = None,
+    base64_key: typing.Optional[str] = None,
+    tg_app: typing.Optional[BaseProxy] = None,
 ) -> None:
     """
     Entirely configures the web app for webhooks
@@ -173,17 +171,12 @@ def setup(
     :param tg_app:
     """
 
-    setup_bill_data(app, secret_key, dispatcher,
-                    path)
-    setup_transaction_data(app, base64_key, dispatcher,
-                           path)
+    setup_bill_data(app, secret_key, dispatcher, path)
+    setup_transaction_data(app, base64_key, dispatcher, path)
     _setup_tg_proxy(tg_app, app)
 
 
-def _setup_tg_proxy(
-        tg_app: typing.Optional[BaseProxy],
-        app: web.Application
-) -> None:
+def _setup_tg_proxy(tg_app: typing.Optional[BaseProxy], app: web.Application) -> None:
     """
     Function, which setup tg proxy application to main webapp
 

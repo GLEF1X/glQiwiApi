@@ -9,6 +9,7 @@ from glQiwiApi.types.basics import OptionalSum
 
 class Customer(Base):
     """ Object: Customer """
+
     phone: Optional[str] = None
     email: Optional[str] = None
     account: Optional[str] = None
@@ -16,19 +17,21 @@ class Customer(Base):
 
 class BillStatus(Base):
     """ Object: BillStatus """
+
     value: str
     changed_datetime: datetime = Field(alias="changedDateTime")
 
 
 class CustomFields(Base):
     """ Object: CustomFields """
-    pay_sources_filter: Optional[str] = Field(alias="paySourcesFilter",
-                                              default=None)
+
+    pay_sources_filter: Optional[str] = Field(alias="paySourcesFilter", default=None)
     theme_code: Optional[str] = Field(alias="themeCode", default=None)
 
 
 class BillError(Base):
     """ Object: BillError """
+
     service_name: str = Field(alias="serviceName")
     error_code: str = Field(alias="errorCode")
     description: str
@@ -39,6 +42,7 @@ class BillError(Base):
 
 class Bill(Base):
     """ Object: Bill """
+
     site_id: str = Field(alias="siteId")
     bill_id: str = Field(alias="billId")
     amount: OptionalSum
@@ -46,9 +50,7 @@ class Bill(Base):
     creation_date_time: datetime = Field(alias="creationDateTime")
     expiration_date_time: datetime = Field(alias="expirationDateTime")
     pay_url: Optional[str] = Field(alias="payUrl", default=None)
-    custom_fields: Optional[
-        CustomFields
-    ] = Field(alias="customFields", default=None)
+    custom_fields: Optional[CustomFields] = Field(alias="customFields", default=None)
     customer: Optional[Customer] = None
 
     class Config:
@@ -66,9 +68,7 @@ class Bill(Base):
         Checking p2p payment
 
         """
-        return (await self.client.check_p2p_bill_status(
-            bill_id=self.bill_id
-        )) == 'PAID'
+        return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
 
 
 class RefundBill(Base):
@@ -76,6 +76,7 @@ class RefundBill(Base):
     Модель счёта киви апи
 
     """
+
     amount: OptionalSum
     datetime: datetime
     refund_id: str = Field(..., alias="refundId")
@@ -108,10 +109,4 @@ class P2PKeys(Base):
     secret_key: str = Field(..., alias="SecretKey")
 
 
-__all__ = (
-    'Bill',
-    'BillError',
-    'RefundBill',
-    'Notification',
-    'P2PKeys'
-)
+__all__ = ("Bill", "BillError", "RefundBill", "Notification", "P2PKeys")

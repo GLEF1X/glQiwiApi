@@ -9,6 +9,7 @@ from glQiwiApi.types.basics import Sum
 
 class Provider(Base):
     """ object: Provider """
+
     id: Optional[int] = None
     """ID провайдера в QIWI Wallet"""
 
@@ -33,6 +34,7 @@ class Provider(Base):
 
 class Transaction(Base):
     """ object: Transaction """
+
     transaction_id: int = Field(alias="txnId")
     """	ID транзакции в сервисе QIWI Кошелек"""
 
@@ -114,9 +116,7 @@ class Transaction(Base):
     _repeat_payment_enabled: bool = Field(..., alias="repeatPaymentEnabled")
     """Специальное поле"""
 
-    _favorite_payment_enabled: bool = Field(
-        ..., alias="favoritePaymentEnabled"
-    )
+    _favorite_payment_enabled: bool = Field(..., alias="favoritePaymentEnabled")
     """Специальное поле"""
 
     _regular_payment_enabled: bool = Field(..., alias="regularPaymentEnabled")

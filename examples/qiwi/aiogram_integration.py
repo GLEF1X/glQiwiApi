@@ -12,10 +12,7 @@ phone_number = "your number"
 bot = Bot("token from BotFather")
 dp = Dispatcher(bot)
 
-wallet = QiwiWrapper(
-    api_access_token=api_access_token,
-    phone_number=phone_number
-)
+wallet = QiwiWrapper(api_access_token=api_access_token, phone_number=phone_number)
 
 
 @dp.message_handler()
@@ -29,11 +26,7 @@ async def my_first_handler(update: Transaction):
 
 
 def on_startup(wrapper: QiwiWrapper):
-    wrapper.dispatcher.logger.info("This message logged on startup")
+    wrapper.dp.logger.info("This message logged on startup")
 
 
-executor.start_polling(
-    wallet,
-    on_startup=on_startup,
-    tg_app=TelegramPollingProxy(dp)
-)
+executor.start_polling(wallet, on_startup=on_startup, tg_app=TelegramPollingProxy(dp))

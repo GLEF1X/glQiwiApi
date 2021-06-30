@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class BalanceDetails(BaseModel):
     """ object: BalanceDetails """
+
     total: float
     available: float
     deposition_pending: Optional[float] = None
@@ -17,6 +18,7 @@ class BalanceDetails(BaseModel):
 
 class CardsLinked(BaseModel):
     """ object: CardsLinked """
+
     pan_fragment: str
     type: str
 
@@ -88,13 +90,14 @@ class OperationType(Enum):
     непринятые входящие P2P-переводы любого типа.
 
     """
-    DEPOSITION = 'deposition'
+
+    DEPOSITION = "deposition"
     """Пополнение счета (приход);"""
 
-    PAYMENT = 'payment'
+    PAYMENT = "payment"
     """Платежи со счета (расход)"""
 
-    TRANSFERS = 'incoming-transfers-unaccepted'
+    TRANSFERS = "incoming-transfers-unaccepted"
     """непринятые входящие P2P-переводы любого типа."""
 
 
@@ -105,6 +108,7 @@ class DigitalGoods(BaseModel):
     Описание формата:
     https://yoomoney.ru/docs/wallet/process-payments/process-payment#digital-goods
     """
+
     article_id: str = Field(..., alias="merchantArticleId")
     serial: str
     secret: str
@@ -172,6 +176,7 @@ class Operation(BaseModel):
 
 class OperationDetails(BaseModel):
     """ object: OperationDetails """
+
     operation_id: Optional[str] = None
     """Идентификатор операции. Можно получить при вызове метода history()"""
 
@@ -316,11 +321,13 @@ class OperationDetails(BaseModel):
 
 class Wallet(BaseModel):
     """ object: Wallet """
+
     allowed: bool
 
 
 class Item(BaseModel):
     """ object: Item """
+
     item_id: str = Field(..., alias="id")
     """
     Идентификатор привязанной к счету банковской карты.
@@ -345,6 +352,7 @@ class Item(BaseModel):
 
 class Card(BaseModel):
     """ object: Card"""
+
     allowed: bool
     csc_required: bool
     items: List[Item]
@@ -355,6 +363,7 @@ class MoneySource(BaseModel):
     Список доступных методов для проведения данного платежа.
     Каждый метод содержит набор атрибутов.
     """
+
     wallet: Wallet
     """платеж со счета пользователя"""
     cards: Optional[Card] = None
@@ -368,6 +377,7 @@ class PreProcessPaymentResponse(BaseModel):
     а условно подготавливаете его к отправке.
     Для отправки денег на счёт используйте метод send()
     """
+
     status: str
     request_id: str
     recipient_account_status: str
@@ -387,6 +397,7 @@ class PreProcessPaymentResponse(BaseModel):
 
 class Payment(BaseModel):  # lgtm [py/missing-equals #
     """ object: Payment """
+
     status: str
     """
     Код результата выполнения операции. Возможные значения:
@@ -480,13 +491,14 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
     при передаче аргументов
     """
 
-    def initialize(self, protection_code: Optional[str]) -> 'Payment':
+    def initialize(self, protection_code: Optional[str]) -> "Payment":
         self.protection_code = protection_code
         return self
 
 
 class IncomingTransaction(BaseModel):
     """ object: IncomingTransaction """
+
     status: str
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None
@@ -494,11 +506,12 @@ class IncomingTransaction(BaseModel):
 
 
 __all__ = (
-    'AccountInfo',
-    'OperationType',
-    'Operation',
-    'OperationDetails',
-    'PreProcessPaymentResponse',
-    'Payment',
-    'IncomingTransaction'
+    "AccountInfo",
+    "OperationType",
+    "Operation",
+    "OperationDetails",
+    "PreProcessPaymentResponse",
+    "Payment",
+    "IncomingTransaction",
+    "Card",
 )

@@ -10,14 +10,15 @@ if TYPE_CHECKING:
 
 class ToolsMixin(object):
     """ Object: ToolsMixin """
+
     _requests: RequestManager
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> ToolsMixin:
         """Создаем сессию, чтобы не пересоздавать её много раз"""
         await self._requests.create_session()
         return self
 
-    async def close(self):
+    async def close(self) -> None:
         """ shutdown wrapper, close aiohttp session and clear storage """
         await self._requests.close()
 
@@ -31,32 +32,30 @@ class ToolsMixin(object):
         except AttributeError:
             return None
 
-    def __new__(cls, *args, **kwargs):
-        return super().__new__(cls, *args, **kwargs)
-
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> ToolsMixin:
         cls = self.__class__
         kw: Dict[str, bool] = {"__copy_signal__": True}
-        result = cls.__new__(cls, **kw)
+        result = cls.__new__(cls, **kw)  # type: ignore  # pragma: no cover
         memo[id(self)] = result
         dct = {
-            slot: self._get(slot) for slot in self.__slots__ if
-            self._get(slot) is not None
+            slot: self._get(slot)  # type: ignore
+            for slot in self.__slots__
+            if self._get(slot) is not None  # type: ignore
         }
         for k, value in dct.items():
-            if k == '_requests':
+            if k == "_requests":
                 value._session = None
-            elif k == 'dispatcher':
+            elif k == "dispatcher":
                 value._loop = None
-            setattr(result, k, copy.deepcopy(value, memo))
+            setattr(result, k, copy.deepcopy(value, memo))  # NOQA
         return result
 
     @property
     def data(self):
-        data = getattr(self, '_data', None)
+        data = getattr(self, "_data", None)
         if data is None:
             data = {}
-            setattr(self, '_data', data)
+            setattr(self, "_data", data)
         return data
 
     def __getitem__(self, item):

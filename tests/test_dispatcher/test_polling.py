@@ -10,17 +10,24 @@ from glQiwiApi import types
 from glQiwiApi.types import Transaction, Sum
 from glQiwiApi.types.qiwi_types.transaction import Provider
 
-txn = Transaction(txnId=50, personId=3254235, date=datetime.now(),
-                  status="OUT", statusText="hello",
-                  trmTxnId="world", account="+38908234234",
-                  sum=Sum(amount=999, currency=643),
-                  total=Sum(amount=999, currency=643),
-                  provider=Provider(),
-                  commission=Sum(amount=999, currency=643),
-                  currencyRate=643, type="OUT")
+txn = Transaction(
+    txnId=50,
+    personId=3254235,
+    date=datetime.now(),
+    status="OUT",
+    statusText="hello",
+    trmTxnId="world",
+    account="+38908234234",
+    sum=Sum(amount=999, currency=643),
+    total=Sum(amount=999, currency=643),
+    provider=Provider(),
+    commission=Sum(amount=999, currency=643),
+    currencyRate=643,
+    type="OUT",
+)
 
 
-@pytest.fixture(name='api')
+@pytest.fixture(name="api")
 async def api_fixture(credentials: dict, request: SubRequest, capsys):
     """ Api fixture """
     _wrapper = QiwiWrapper(**credentials)
@@ -30,11 +37,10 @@ async def api_fixture(credentials: dict, request: SubRequest, capsys):
 
 async def _on_startup_callback(api: QiwiWrapper):
     await asyncio.sleep(1)
-    await api.dispatcher.process_event(txn)
+    await api.dp.process_event(txn)
 
 
 class TestPolling:
-
     @pytest.mark.asyncio
     @timeout_decorator.timeout(5)
     def _start_polling(self, api: QiwiWrapper):
@@ -51,6 +57,7 @@ class TestPolling:
 
         executor.start_polling(api, on_startup=_on_startup_callback)
 
+    @pytest.mark.skipif("sys.platform in ['cygwin', 'msys', 'win32']")
     def test_polling(self, api: QiwiWrapper):
         try:
             self._start_polling(api)

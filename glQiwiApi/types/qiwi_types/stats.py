@@ -8,10 +8,9 @@ from glQiwiApi.types.basics import Sum
 
 class Statistic(Base):
     """ object: Statistic """
+
     incoming: List[Sum] = Field(alias="incomingTotal")
     out: List[Sum] = Field(alias="outgoingTotal")
 
 
-__all__ = [
-    'Statistic'
-]
+__all__ = ["Statistic"]

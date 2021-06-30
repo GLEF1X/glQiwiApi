@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 
 class Base(BaseModel):
-
     @property
     def client(self) -> QiwiWrapper:
         """ Returning an instance of :class:`QiwiWrapper` """
@@ -18,7 +17,9 @@ class Base(BaseModel):
         instance = QiwiWrapper.get_current()
 
         if instance is None:
-            raise RuntimeError("Can't get client instance from context. "
-                               "You can fix it with setting current instance: "
-                               "'QiwiWrapper.set_current(wrapper_instance)'")
+            raise RuntimeError(
+                "Can't get client instance from context. "
+                "You can fix it with setting current instance: "
+                "'QiwiWrapper.set_current(wrapper_instance)'"
+            )
         return instance

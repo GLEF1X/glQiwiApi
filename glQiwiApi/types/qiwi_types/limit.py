@@ -10,12 +10,14 @@ from glQiwiApi.utils.currency_util import Currency
 
 class Interval(Base):
     """ object: Interval """
+
     date_from: datetime = Field(alias="dateFrom")
     date_till: datetime = Field(alias="dateTill")
 
 
 class Limit(Base):
     """ object: Limit """
+
     currency: CurrencyModel
     rest: Union[float, int]
     max_limit: Union[float, int] = Field(alias="max")
@@ -30,6 +32,4 @@ class Limit(Base):
         return Currency.get(v)
 
 
-__all__ = [
-    'Limit'
-]
+__all__ = ["Limit"]

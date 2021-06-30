@@ -9,6 +9,7 @@ class Commission(Base):
     Комиссия за платеж
 
     """
+
     provider_id: int = Field(alias="providerId")
     withdraw_sum: Sum = Field(alias="withdrawSum")
     enrollment_sum: Sum = Field(alias="enrollmentSum")

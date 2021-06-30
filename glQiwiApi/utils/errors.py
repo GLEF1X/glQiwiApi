@@ -13,7 +13,8 @@ class RequestProxyError(Exception):
     """Возникает, если были переданы неправильные параметры запроса"""
 
 
-ProxyError = Exception()
+class NetworkError(Exception):
+    ...
 
 
 class InvalidCardNumber(Exception):
@@ -68,6 +69,10 @@ class StateError(Exception):
     ...
 
 
+class InvalidCachePayload(Exception):
+    ...
+
+
 class RequestError(Exception):
     """
     Возникает при ошибках сервиса или неправильной передаче параметров
@@ -75,11 +80,11 @@ class RequestError(Exception):
     """
 
     def __init__(
-            self,
-            message: Optional[str],
-            status_code: Union[str, int],
-            additional_info: Optional[str] = None,
-            traceback_info: Optional[Union[RequestInfo, str, bytes, dict]] = None
+        self,
+        message: Optional[str],
+        status_code: Union[str, int],
+        additional_info: Optional[str] = None,
+        traceback_info: Optional[Union[RequestInfo, str, bytes, dict]] = None,
     ) -> None:
         super(RequestError, self).__init__()
         self.message = message
@@ -88,11 +93,9 @@ class RequestError(Exception):
         self.traceback_info = traceback_info
 
     def __str__(self) -> str:
-        resp = "code={sc} doc={msg}, additional_info={info}"""
+        resp = "code={sc} doc={msg}, additional_info={info}" ""
         return resp.format(
-            sc=self.status_code,
-            msg=self.message,
-            info=self.additional_info
+            sc=self.status_code, msg=self.message, info=self.additional_info
         )
 
     def __repr__(self) -> str:
@@ -101,8 +104,10 @@ class RequestError(Exception):
     def to_model(self) -> ExceptionTraceback:
         """ Convert exception to :class:`ExceptionTraceback` """
         if not isinstance(self.traceback_info, RequestInfo):
-            raise TypeError("Cannot convert exception to `ExceptionTraceback`, because "
-                            "this method require `RequestInfo` object")
+            raise TypeError(
+                "Cannot convert exception to `ExceptionTraceback`, because "
+                "this method require `RequestInfo` object"
+            )
         return ExceptionTraceback(
             status_code=self.status_code,
             msg=self.message,
@@ -110,8 +115,8 @@ class RequestError(Exception):
             request_info=RequestInfoModel(
                 method=self.traceback_info.method,
                 url=self.traceback_info.url.__str__(),
-                real_url=self.traceback_info.real_url.__str__()
-            )
+                real_url=self.traceback_info.real_url.__str__(),
+            ),
         )
 
     def _make_json_without_request_info(self) -> Dict[str, Any]:
@@ -119,7 +124,7 @@ class RequestError(Exception):
             "code": self.status_code,
             "msg": self.message,
             "additional_info": self.additional_info,
-            "traceback_info": self.traceback_info
+            "traceback_info": self.traceback_info,
         }
 
     def json(self, indent: int = 4, **dump_kw) -> str:
@@ -137,14 +142,15 @@ class RequestError(Exception):
 
 
 __all__ = (
-    'InvalidData',
-    'NoUrlFound',
-    'RequestAuthError',
-    'RequestProxyError',
-    'ProxyError',
-    'InvalidCardNumber',
-    'InvalidToken',
-    'RequestError',
-    'NoUpdatesToExecute',
-    'StateError'
+    "InvalidData",
+    "NoUrlFound",
+    "RequestAuthError",
+    "RequestProxyError",
+    "InvalidCardNumber",
+    "InvalidToken",
+    "RequestError",
+    "NoUpdatesToExecute",
+    "StateError",
+    "NetworkError",
+    "InvalidCachePayload",
 )

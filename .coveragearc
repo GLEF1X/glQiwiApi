@@ -1,0 +1,7 @@
+[pytest]
+
+[report]
+exclude_lines =
+    pragma: no cover
+    @abstract
+    type: ignore

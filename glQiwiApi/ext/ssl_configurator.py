@@ -7,19 +7,16 @@ from datetime import timedelta, datetime
 from io import BytesIO
 from typing import cast, TYPE_CHECKING, Optional, Iterable, Union, Any, List
 
-from glQiwiApi.utils.exceptions import StateError
+from glQiwiApi.utils.errors import StateError
 
 if TYPE_CHECKING:
     try:
-        from typing import Literal
         from cryptography import x509  # type: ignore
-        from cryptography.hazmat.primitives.asymmetric.rsa import \
-            RSAPrivateKeyWithSerialization  # type: ignore
-        from cryptography.hazmat.backends.openssl.backend import backend  # type: ignore
+        from cryptography.hazmat.primitives.asymmetric.rsa import (  # type: ignore
+            RSAPrivateKeyWithSerialization,  # type: ignore
+        )  # type: ignore
     except ImportError:  # pragma: no cover # type: ignore
-        # typing_extensions defines Literal for Python 3.7 and earlier, but
-        # re-exports it from 'typing' for later versions of Python.
-        from typing_extensions import Literal  # type: ignore
+        pass
 
 
 class SSLConfigurator:
@@ -29,17 +26,19 @@ class SSLConfigurator:
 
     """
 
-    def __init__(self,
-                 hostname: str,  # your host machine ip address
-                 cert_path: Union[str, pathlib.Path] = 'cert.pem',
-                 pkey_path: Union[str, pathlib.Path] = 'pkey.pem',
-                 ip_addresses: Optional[Iterable[Any]] = None,
-                 rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
-                 public_exponent: int = 65537,
-                 key_size: int = 2048,
-                 backend: Optional[Any] = None,
-                 serial_number: int = 1000,
-                 expire_days: int = 3650):
+    def __init__(
+            self,
+            hostname: str,  # your host machine ip address
+            cert_path: Union[str, pathlib.Path] = "cert.pem",
+            pkey_path: Union[str, pathlib.Path] = "pkey.pem",
+            ip_addresses: Optional[Iterable[Any]] = None,
+            rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
+            public_exponent: int = 65537,
+            key_size: int = 2048,
+            backend: Optional[Any] = None,
+            serial_number: int = 1000,
+            expire_days: int = 3650,
+    ):
         self.expire_days = expire_days
         self.serial_number = serial_number
         self.backend = backend
@@ -56,9 +55,11 @@ class SSLConfigurator:
         try:
             ssl_context.load_cert_chain(str(self.cert_path), str(self.pkey_path))
         except FileNotFoundError:
-            raise StateError("There are not certificates in folder."
-                             " Firstly, you need to call "
-                             "`SSLConfigurator.generate_self_signed` method.")
+            raise StateError(
+                "There are not certificates in folder."
+                " Firstly, you need to call "
+                "`SSLConfigurator.generate_self_signed` method."
+            )
         return ssl_context
 
     def _get_self_signed_cert(self) -> bool:
@@ -74,8 +75,9 @@ class SSLConfigurator:
 
         return is_cert_is_file and is_pkey_is_file
 
-    def get_or_generate_self_signed(self,
-                                    *name_attributes: "x509.NameAttribute") -> SSLConfigurator:
+    def get_or_generate_self_signed(
+            self, *name_attributes: "x509.NameAttribute"
+    ) -> SSLConfigurator:
         """
         Generates self signed certificate for a hostname, and optional IP addresses.
         Copied from https://gist.github.com/bloodearnest/9017111a313777b9cce5
@@ -92,7 +94,7 @@ class SSLConfigurator:
             from cryptography.hazmat.primitives.asymmetric import rsa
         except ImportError:
             raise ImportError(
-                'You need to pip install cryptography for generating self-signed cert'
+                "You need to pip install cryptography for generating self-signed cert"
             )
 
         # Generate our key
@@ -138,20 +140,24 @@ class SSLConfigurator:
                 .sign(self._rsa_private_key, hashes.SHA256(), default_backend())
         )
         cert_pem = cert.public_bytes(
-            encoding=cast(serialization.Encoding, serialization.Encoding.PEM))
+            encoding=cast(serialization.Encoding, serialization.Encoding.PEM)
+        )
         key_pem = self._rsa_private_key.private_bytes(
             encoding=cast(serialization.Encoding, serialization.Encoding.PEM),
-            format=cast(serialization.PrivateFormat,
-                        serialization.PrivateFormat.TraditionalOpenSSL),
+            format=cast(
+                serialization.PrivateFormat,
+                serialization.PrivateFormat.TraditionalOpenSSL,
+            ),
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-        with open(self.cert_path, 'wb') as f1, open(self.pkey_path, 'wb') as f2:
+        with open(self.cert_path, "wb") as f1, open(self.pkey_path, "wb") as f2:
             f1.write(cert_pem)
             f2.write(key_pem)
         return self
 
     def as_input_file(self):
         from aiogram.types import InputFile
-        with open(self.cert_path, 'rb') as f:
+
+        with open(self.cert_path, "rb") as f:
             return InputFile(BytesIO(f.read()))

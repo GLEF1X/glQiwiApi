@@ -9,11 +9,11 @@ from glQiwiApi import QiwiWrapper
 # или YooMoneyAPI
 wallet = QiwiWrapper(
     # Токен, полученный с https://qiwi.com/api
-    api_access_token='token',
+    api_access_token="token",
     # Номер вашего мобильного номера с "+"
-    phone_number='+phone_number',
+    phone_number="+phone_number",
     # Время кэширование запроса в секундах(пока ещё в бета тестировании)
-    cache_time=5
+    cache_time=5,
 )
 
 

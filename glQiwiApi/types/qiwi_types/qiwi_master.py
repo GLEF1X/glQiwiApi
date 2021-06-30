@@ -9,6 +9,7 @@ from glQiwiApi.types.base import Base
 
 class OrderDetails(Base):
     """ object: OrderDetails """
+
     order_id: str = Field(..., alias="id")
     card_alias: str = Field(..., alias="cardAlias")
     status: str
@@ -18,6 +19,7 @@ class OrderDetails(Base):
 
 class CardCredentials(Base):
     """object: CardCredentials"""
+
     qvx_id: int = Field(..., alias="id")
     masked_pan: str = Field(..., alias="maskedPan")
     status: str
@@ -27,8 +29,7 @@ class CardCredentials(Base):
     activated: datetime.datetime
     sms_recender: Optional[datetime.datetime] = Field(..., alias="smsResended")
     post_number: Optional[str] = Field(default=None, alias="postNumber")
-    blocked_date: Optional[datetime.datetime] = Field(default=None,
-                                                      alias="blockedDate")
+    blocked_date: Optional[datetime.datetime] = Field(default=None, alias="blockedDate")
     card_id: int = Field(..., alias="cardId")
     txn_id: int = Field(..., alias="txnId")
     card_expire_month: str = Field(..., alias="cardExpireMonth")
@@ -37,12 +38,14 @@ class CardCredentials(Base):
 
 class Requisite(Base):
     """object: Requisite"""
+
     name: str
     value: str
 
 
 class Details(Base):
     """object: Details"""
+
     info: str
     description: str
     tariff_link: str = Field(..., alias="tariffLink")
@@ -53,6 +56,7 @@ class Details(Base):
 
 class CardInfo(Base):
     """object: CardInfo"""
+
     id_: int = Field(..., alias="id")
     name: str
     alias: str
@@ -67,12 +71,10 @@ class Card(Base):
     object: Card
     description: Данные выпущенных карт
     """
+
     details: CardCredentials = Field(..., alias="qvx")
     balance: Optional[Sum] = None
     info: CardInfo
 
 
-__all__ = (
-    'OrderDetails',
-    'Card'
-)
+__all__ = ("OrderDetails", "Card")

@@ -8,22 +8,26 @@ from glQiwiApi.types.base import Base
 
 class Fields(Base):
     """ Специальные поля """
+
     account: str
 
 
 class State(Base):
     """ State """
+
     code: str
 
 
 class TransactionInfo(Base):
     """ Информация о транзакции """
+
     txn_id: int = Field(..., alias="id")
     state: State
 
 
 class PaymentInfo(Base):
     """Информация о платеже"""
+
     payment_id: int = Field(..., alias="id")
     terms: str
     fields: Optional[Fields] = None
@@ -33,6 +37,4 @@ class PaymentInfo(Base):
     comment: Optional[str] = None
 
 
-__all__ = [
-    'PaymentInfo'
-]
+__all__ = ["PaymentInfo"]

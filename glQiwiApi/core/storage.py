@@ -4,6 +4,7 @@ import typing
 from glQiwiApi.core import BaseStorage
 from glQiwiApi.core.constants import uncached
 from glQiwiApi.types.basics import Cached, Attributes
+from glQiwiApi.utils import errors
 
 
 class Storage(BaseStorage):
@@ -15,10 +16,11 @@ class Storage(BaseStorage):
     >>> print(storage["hello_world"])  # print 5
 
     """
-    # Доступные критерии, по которым проходит валидацию кэш
-    _validator_criteria = ('params', 'json', 'data', 'headers')
 
-    __slots__ = ('data', '_cache_time')
+    # Доступные критерии, по которым проходит валидацию кэш
+    _validator_criteria = ("params", "json", "data", "headers")
+
+    __slots__ = ("data", "_cache_time")
 
     def __init__(self, *, cache_time: typing.Union[float, int]) -> None:
         """
@@ -29,8 +31,9 @@ class Storage(BaseStorage):
         self.data: dict = {}
         self._cache_time = cache_time
 
-    def clear(self, key: typing.Optional[str] = None, *,
-              force: bool = False) -> typing.Any:
+    def clear(
+        self, key: typing.Optional[str] = None, *, force: bool = False
+    ) -> typing.Any:
         """
         Method to delete element from the cache by key,
         or if force passed on its clear all data from the cache
@@ -68,30 +71,23 @@ class Storage(BaseStorage):
                 return False
         return False
 
-    def convert_to_cache(
-            self,
-            result: typing.Any,
-            kwargs: dict,
-            status_code: typing.Union[str, int]
-    ) -> Cached:
+    def convert_to_cache(self, result: typing.Any, kwargs: dict) -> Cached:
         """
         Method, which convert response of API to :class:`Cached`
 
         :param result: response data
         :param kwargs: key/value of request payload data
-        :param status_code: status_code answer
         """
         value = kwargs.get("url")
         if not self._is_contain_uncached(value):
             return Cached(
                 kwargs=Attributes.format(kwargs, self._validator_criteria),
                 response_data=result,
-                status_code=status_code,
-                method=kwargs.get('method')
+                method=kwargs.get("method"),
             )
-        elif isinstance(value, str):
-            if uncached[1] in value:
-                self.clear(value, force=True)
+        else:
+            self.clear(value, force=True)
+            raise errors.InvalidCachePayload()
 
     def update_data(self, obj_to_cache: typing.Any, key: typing.Any) -> None:
         """
@@ -114,9 +110,9 @@ class Storage(BaseStorage):
     @staticmethod
     def _check_get_request(cached: Cached, kwargs: dict) -> bool:
         """ Method to check cached get requests"""
-        if cached.method == 'GET':
-            if kwargs.get('headers') == cached.kwargs.headers:
-                if kwargs.get('params') == cached.kwargs.params:
+        if cached.method == "GET":
+            if kwargs.get("headers") == cached.kwargs.headers:
+                if kwargs.get("params") == cached.kwargs.params:
                     return True
         return False
 
@@ -128,9 +124,9 @@ class Storage(BaseStorage):
         return False
 
     def _validate_other(self, cached: Cached, kwargs: dict) -> bool:
-        keys = (k for k in self._validator_criteria if k != 'headers')
+        keys = (k for k in self._validator_criteria if k != "headers")
         for key in keys:
-            if getattr(cached.kwargs, key) == kwargs.get(key, ''):
+            if getattr(cached.kwargs, key) == kwargs.get(key, ""):
                 return True
         return False
 

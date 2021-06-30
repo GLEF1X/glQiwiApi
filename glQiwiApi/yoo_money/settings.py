@@ -5,11 +5,11 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
 from glQiwiApi.core.abstracts import AbstractRouter
-from glQiwiApi.utils.basics import check_api_method
+from glQiwiApi.utils.api_helper import check_api_method
 
 
 class YooMoneyRouter(AbstractRouter):
-    __head__ = 'https://yoomoney.ru'
+    __head__ = "https://yoomoney.ru"
 
     def setup_config(self) -> YooMoneySettings:
         return get_settings()
@@ -31,34 +31,32 @@ def get_settings() -> YooMoneySettings:
 @dataclass
 class YooMoneySettings:
     # Operations with token
-    BUILD_URL_FOR_AUTH: str = '/oauth/authorize'
-    GET_ACCESS_TOKEN: str = '/oauth/token'
-    REVOKE_API_TOKEN: str = '/api/revoke'
-    ACCOUNT_INFO: str = '/api/account-info'
+    BUILD_URL_FOR_AUTH: str = "/oauth/authorize"
+    GET_ACCESS_TOKEN: str = "/oauth/token"
+    REVOKE_API_TOKEN: str = "/api/revoke"
+    ACCOUNT_INFO: str = "/api/account-info"
     # Transactions
-    TRANSACTIONS: str = '/api/operation-history'
-    TRANSACTION_INFO: str = '/api/operation-details'
+    TRANSACTIONS: str = "/api/operation-history"
+    TRANSACTION_INFO: str = "/api/operation-details"
     # Payments
-    PRE_PROCESS_PAYMENT: str = '/api/request-payment'
-    PROCESS_PAYMENT: str = '/api/process-payment'
-    ACCEPT_INCOMING_TRANSFER: str = '/api/incoming-transfer-accept'
-    INCOMING_TRANSFER_REJECT: str = '/api/incoming-transfer-reject'
+    PRE_PROCESS_PAYMENT: str = "/api/request-payment"
+    PROCESS_PAYMENT: str = "/api/process-payment"
+    ACCEPT_INCOMING_TRANSFER: str = "/api/incoming-transfer-accept"
+    INCOMING_TRANSFER_REJECT: str = "/api/incoming-transfer-reject"
 
     def __init__(self):
         self.DEFAULT_YOOMONEY_HEADERS = {
-            'Host': 'yoomoney.ru',
-            'Content-Type': 'application/x-www-form-urlencoded'
+            "Host": "yoomoney.ru",
+            "Content-Type": "application/x-www-form-urlencoded",
         }
         self.ERROR_CODE_NUMBERS = {
             400: "Ошибка, связанная с типом запроса к апи, "
-                   "возможно вы передали недействительный API токен",
+            "возможно вы передали недействительный API токен",
             401: "Указан несуществующий, просроченный, или отозванный токен",
             403: "Запрошена операция, на которую у токена нет прав",
-            0: "Ошибка, связанная с использованием прокси или непредвиденные ошибки сервера"
+            0: "Ошибка, связанная с использованием прокси или непредвиденные ошибки сервера",
         }
-        self.content_and_auth = {
-            'content_json': True, 'auth': True
-        }
+        self.content_and_auth = {"content_json": True, "auth": True}
 
     DEFAULT_YOOMONEY_HEADERS: Optional[Dict[str, str]] = None
 
@@ -67,4 +65,4 @@ class YooMoneySettings:
     content_and_auth: Optional[Dict[str, bool]] = None
 
 
-__all__ = ('YooMoneyRouter',)
+__all__ = ("YooMoneyRouter",)

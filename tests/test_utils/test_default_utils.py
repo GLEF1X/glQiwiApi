@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from glQiwiApi.utils.basics import async_as_sync, to_datetime
+from glQiwiApi.utils.api_helper import async_as_sync, to_datetime
 
 
 def test_async_as_sync():
@@ -21,4 +21,3 @@ def test_to_datetime_util():
     datetime_as_string: str = "2021-06-02 15:07:55"
 
     assert isinstance(to_datetime(datetime_as_string), datetime)
-

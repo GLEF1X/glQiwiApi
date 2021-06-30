@@ -20,29 +20,30 @@ def test_sync_get_balance(api: QiwiWrapper):
     assert isinstance(result, types.Sum)
 
 
-@pytest.mark.parametrize("params", [
-    {"amount": 1},
-    {"amount": 1, "comment": "test_comment"},
-    {
-        "amount": 1,
-        "comment": "test_comment",
-        "life_time": datetime.datetime.now() + datetime.timedelta(hours=5)
-    },
-    {
-        "amount": 1,
-        "comment": "test_comment",
-        "life_time": datetime.datetime.now() + datetime.timedelta(hours=5),
-        "bill_id": str(uuid.uuid4())
-    }
-])
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"amount": 1},
+        {"amount": 1, "comment": "test_comment"},
+        {
+            "amount": 1,
+            "comment": "test_comment",
+            "life_time": datetime.datetime.now() + datetime.timedelta(hours=5),
+        },
+        {
+            "amount": 1,
+            "comment": "test_comment",
+            "life_time": datetime.datetime.now() + datetime.timedelta(hours=5),
+            "bill_id": str(uuid.uuid4()),
+        },
+    ],
+)
 def test_sync_create_p2p_bill(api: QiwiWrapper, params: dict):
     result = sync(api.create_p2p_bill, **params)
     assert isinstance(result, types.Bill)
 
 
 class SyncApiSessionTest:
-
-    @pytest.mark.last
     def test_is_session_closing(self, api: QiwiWrapper):
         # Send request to API
         sync(api.get_balance)

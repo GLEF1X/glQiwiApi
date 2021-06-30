@@ -2,21 +2,16 @@ import asyncio
 
 from glQiwiApi import QiwiWrapper, RequestError
 
-SECRET_KEY = 'P2P SECRET_KEY'
+SECRET_KEY = "P2P SECRET_KEY"
 
 
 async def p2p_usage():
     async with QiwiWrapper(secret_p2p=SECRET_KEY) as w:
         # bill id будет сгенерирован как str(uuid.uuid4()), если не был передан
-        bill = await w.create_p2p_bill(
-            amount=1,
-            comment='Im using glQiwiApi'
-        )
+        bill = await w.create_p2p_bill(amount=1, comment="Im using glQiwiApi")
         print(bill)
         # Так можно проверить статус на оплаченный
-        status_1 = (await w.check_p2p_bill_status(
-            bill_id=bill.bill_id
-        )) == 'PAID'
+        status_1 = (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == "PAID"
         # Или можно так(выглядит лаконичнее на мой взгляд)
         status_2 = await bill.paid
         print(status_1 == status_2)
@@ -27,8 +22,8 @@ async def p2p_usage():
         except RequestError as ex:
             print(ex)
         # Переназначаем токены
-        w.api_access_token = 'TOKEN from https://qiwi.api'
-        w.phone_number = '+NUMBER'
+        w.api_access_token = "TOKEN from https://qiwi.api"
+        w.phone_number = "+NUMBER"
         print(await w.get_bills(rows_num=20))
 
 

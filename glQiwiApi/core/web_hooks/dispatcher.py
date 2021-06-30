@@ -1,13 +1,9 @@
 import logging
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Awaitable, cast
 
 from .config import EventHandlerFunctor, EventFilter, E
 from .filter import Filter
-from ..builtin import (
-    bill_webhook_filter,
-    transaction_webhook_filter,
-    InterceptHandler
-)
+from ..builtin import bill_webhook_filter, transaction_webhook_filter, InterceptHandler
 
 
 def _setup_logger() -> logging.Logger:
@@ -41,7 +37,7 @@ class EventHandler:
         """
         for filter_ in self._filters:
             if filter_.awaitable:
-                if not await filter_.function(event):
+                if not await cast(Awaitable[bool], filter_.function(event)):
                     break
             else:
                 if not filter_.function(event):
@@ -56,29 +52,26 @@ class Dispatcher:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.transaction_handlers: List[EventHandler] = []
         self.bill_handlers: List[EventHandler] = []
-        self._logger: logging.Logger = _setup_logger()
+        self._logger = _setup_logger()
 
     def register_transaction_handler(
-            self,
-            event_handler: EventHandlerFunctor,
-            *filters: EventFilter
+        self, event_handler: EventHandlerFunctor, *filters: EventFilter
     ):
         self.transaction_handlers.append(
             self.wrap_handler(
-                event_handler, filters,
-                default_filter=transaction_webhook_filter
+                event_handler, filters, default_filter=transaction_webhook_filter
             )
         )
 
-    def register_bill_handler(self, event_handler: EventHandlerFunctor,
-                              *filters: EventFilter):
+    def register_bill_handler(
+        self, event_handler: EventHandlerFunctor, *filters: EventFilter
+    ):
         self.bill_handlers.append(
             self.wrap_handler(
-                event_handler, filters,
-                default_filter=bill_webhook_filter
+                event_handler, filters, default_filter=bill_webhook_filter
             )
         )
 
@@ -97,9 +90,9 @@ class Dispatcher:
 
     @staticmethod
     def wrap_handler(
-            event_handler: EventHandlerFunctor,
-            filters: Tuple[EventFilter, ...],
-            default_filter: Filter
+        event_handler: EventHandlerFunctor,
+        filters: Tuple[EventFilter, ...],
+        default_filter: Filter,
     ) -> EventHandler:
         """
         Add new event handler.
@@ -111,26 +104,28 @@ class Dispatcher:
         :return: this handler manager
         """
         if filters:  # Initially filters are in tuple
-            filters = [
-                default_filter & Filter(f) for idx, f in enumerate(filters)
+            generated_filters = [
+                default_filter & Filter(f)
+                for idx, f in enumerate(filters)
                 if not isinstance(f, Filter)
             ]
         else:
-            filters = [default_filter]
+            generated_filters = [default_filter]
 
-        return EventHandler(event_handler, *filters)
+        return EventHandler(event_handler, *generated_filters)
 
     def transaction_handler_wrapper(
-            self, *filters: EventFilter) -> Callable[[EventHandlerFunctor], EventHandlerFunctor]:
-
+        self, *filters: EventFilter
+    ) -> Callable[[EventHandlerFunctor], EventHandlerFunctor]:
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_transaction_handler(callback, *filters)
             return callback
 
         return decorator
 
-    def bill_handler_wrapper(self, *filters: EventFilter):
-
+    def bill_handler_wrapper(
+        self, *filters: EventFilter
+    ) -> Callable[[EventHandlerFunctor], EventHandlerFunctor]:
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_bill_handler(callback, *filters)
             return callback
