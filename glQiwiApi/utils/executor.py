@@ -40,17 +40,17 @@ T = TypeVar("T")
 
 
 def start_webhook(
-    client: QiwiWrapper,
-    *,
-    host: str = "localhost",
-    port: int = 8080,
-    path: Optional[Path] = None,
-    on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-    tg_app: Optional[TelegramWebhookProxy] = None,
-    app: Optional["web.Application"] = None,
-    ssl_context: Optional[SSLContext] = None,
-    loop: Optional[asyncio.AbstractEventLoop] = None,
+        client: QiwiWrapper,
+        *,
+        host: str = "localhost",
+        port: int = 8080,
+        path: Optional[Path] = None,
+        on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+        tg_app: Optional[TelegramWebhookProxy] = None,
+        app: Optional["web.Application"] = None,
+        ssl_context: Optional[SSLContext] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Blocking function that listens for webhooks
@@ -77,13 +77,13 @@ def start_webhook(
 
 
 def start_polling(
-    client: QiwiWrapper,
-    *,
-    get_updates_from: Optional[datetime] = None,
-    timeout: Union[float, int, ClientTimeout] = 5,
-    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
-    tg_app: Optional[BaseProxy] = None,
+        client: QiwiWrapper,
+        *,
+        get_updates_from: Optional[datetime] = None,
+        timeout: Union[float, int, ClientTimeout] = 5,
+        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        tg_app: Optional[BaseProxy] = None,
 ) -> None:
     """
     Setup for long-polling mode
@@ -106,7 +106,7 @@ def start_polling(
 
 
 async def _inspect_and_execute_callback(
-    client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
+        client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
 ) -> None:
     if inspect.iscoroutinefunction(callback):
         await callback(client)
@@ -115,9 +115,9 @@ async def _inspect_and_execute_callback(
 
 
 def _setup_callbacks(
-    executor: Executor,
-    on_startup: Optional[Callable[..., Any]] = None,
-    on_shutdown: Optional[Callable[..., Any]] = None,
+        executor: Executor,
+        on_startup: Optional[Callable[..., Any]] = None,
+        on_shutdown: Optional[Callable[..., Any]] = None,
 ) -> None:
     """
     Function, which setup callbacks and set it to dispatcher object
@@ -158,10 +158,10 @@ class Executor:
     """
 
     def __init__(
-        self,
-        client: QiwiWrapper,
-        tg_app: Optional[BaseProxy],
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+            self,
+            client: QiwiWrapper,
+            tg_app: Optional[BaseProxy],
+            loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         """
 
@@ -246,16 +246,14 @@ class Executor:
         except NoUpdatesToExecute:
             return
 
-        last_payment: Transaction = history[0]
-        last_txn_id: int = last_payment.transaction_id
+        last_payment = history[0]
+        last_txn_id = last_payment.transaction_id
 
         if self.offset is None:
             first_payment: Transaction = history[-1]
             self.offset = first_payment.transaction_id - 1
 
-        await self._parse_history_and_process_events(
-            history=history, last_payment_id=last_txn_id
-        )
+        await self._parse_history_and_process_events(history=history, last_payment_id=last_txn_id)
 
     async def _start_polling(self, **kwargs: Any) -> None:
         """
@@ -295,7 +293,7 @@ class Executor:
         await self.tg_app.dispatcher.bot.session.close()  # type: ignore
 
     async def _parse_history_and_process_events(
-        self, history: List[Transaction], last_payment_id: int
+            self, history: List[Transaction], last_payment_id: int
     ) -> None:
         """
         Processing events and send callbacks to handlers
@@ -315,10 +313,10 @@ class Executor:
                 break
 
     def start_polling(
-        self,
-        *,
-        get_updates_from: Optional[datetime] = None,
-        timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
+            self,
+            *,
+            get_updates_from: Optional[datetime] = None,
+            timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
     ) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
         try:
@@ -336,13 +334,13 @@ class Executor:
             self._on_shutdown(loop=loop)
 
     def start_webhook(
-        self,
-        *,
-        host: str = "localhost",
-        port: int = 8080,
-        path: Optional[Path] = None,
-        app: Optional[web.Application] = None,
-        ssl_context: Optional[SSLContext] = None,
+            self,
+            *,
+            host: str = "localhost",
+            port: int = 8080,
+            path: Optional[Path] = None,
+            app: Optional[web.Application] = None,
+            ssl_context: Optional[SSLContext] = None,
     ):
         loop: asyncio.AbstractEventLoop = self.loop
         application = app or web.Application()
