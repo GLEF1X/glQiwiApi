@@ -4,35 +4,34 @@ import functools
 import time
 from copy import deepcopy
 from functools import lru_cache
-from typing import Any, cast, Dict
+from typing import Any, Dict
 
 from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.types import WrapperData
-from glQiwiApi.utils.api_helper import check_api_method
 
-__all__ = ("get_api_routes", "QiwiRouter", "QiwiKassaRouter")
+__all__ = ("get_config", "QiwiRouter", "QiwiKassaRouter", "QiwiApiMethods")
 
 
 @lru_cache()
-def get_api_routes() -> QiwiApiMethods:
-    methods: QiwiApiMethods = QiwiApiMethods()
-    return methods
+def get_config() -> QiwiConfig:
+    return QiwiConfig()
 
 
 class QiwiRouter(AbstractRouter):
-    """Class, that delegates building the right paths, except p2p"""
+    """The class that instructs to build the right paths except for QIWI P2P API"""
+
+    def setup_routes(self) -> Any:
+        return QiwiApiMethods()
 
     __head__ = "https://edge.qiwi.com"
 
-    @functools.lru_cache()
-    def build_url(self, api_method: str, **kwargs: Any) -> str:
-        check_api_method(api_method)
-        tail = cast(str, getattr(self.config, api_method, None))
+    @functools.lru_cache(typed=True)
+    def build_url(self, tail: str, **kwargs: Any) -> str:
         pre_build_url = self.__head__ + tail
         return super()._format_url_kwargs(pre_build_url, **kwargs)
 
-    def setup_config(self) -> Any:
-        return get_api_routes()
+    def setup_config(self) -> QiwiConfig:
+        return get_config()
 
     @property
     def default_headers(self) -> Dict[Any, Any]:
@@ -95,9 +94,10 @@ class QiwiApiMethods:
 
     BUY_QIWI_MASTER: str = "/sinap/api/v2/terms/28004/payments"
 
-    _CONFIRM_QIWI_MASTER: str = (
+    CONFIRM_QIWI_MASTER: str = (
         "/cards/v2/persons/{stripped_number}/orders/{order_id}/submit"
     )
+    BUY_QIWI_CARD = "/sinap/test_api/v2/terms/32064/payments"
 
     CARDS_QIWI_MASTER: str = "/cards/v1/cards/?vas-alias=qvc-master"
 
@@ -127,7 +127,9 @@ class QiwiApiMethods:
 
     CHANGE_WEBHOOK_SECRET: str = "/payment-notifier/v1/hooks/{hook_id}/newkey"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+
+class QiwiConfig:
+    def __init__(self) -> None:
         self.DEFAULT_QIWI_HEADERS = {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -143,15 +145,13 @@ class QiwiApiMethods:
             400: "Недостаточно средств для проведения операции",
             401: "Неверный токен или истек срок действия токена API",
             403: "Нет прав на данный запрос" "(недостаточно разрешений у токена API)",
-            404: "Не найдена транзакция или "
-            "отсутствуют платежи с указанными признаками",
+            404: "Не найден объект или отсутствуют объекты с указанными признаками",
             423: "Слишком много запросов, сервис временно недоступен",
             422: "Неправильно указаны домен/подсеть/хост"
             " веб-хука(в параметре new_url для URL веб-хука), "
             "неправильно указаны тип хука или тип транзакции, "
             "попытка создать хук при наличии уже созданного",
-            405: "Ошибка, связанная с типом запроса к апи,"
-            "обратитесь к разработчику или откройте issue",
+            405: "Ошибка, связанная с типом запроса к апи, обратитесь к разработчику или откройте issue",
             500: "Внутренняя ошибка сервиса",
             0: "Ошибка, связанная с использованием прокси или с проблемами библиотеки",
         }
@@ -162,12 +162,6 @@ class QiwiApiMethods:
             "comment": "test",
             "fields": {"account": "", "vas_alias": "qvc-master"},
         }
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-        for arg in args:
-            setattr(self, arg, arg)
 
         self.LIMIT_TYPES = [
             "TURNOVER",

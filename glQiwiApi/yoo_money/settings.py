@@ -1,49 +1,35 @@
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Any
 
 from glQiwiApi.core.abstracts import AbstractRouter
-from glQiwiApi.utils.api_helper import check_api_method
+
+__all__ = ("YooMoneyRouter", "YooMoneyMethods")
 
 
 class YooMoneyRouter(AbstractRouter):
+    def setup_routes(self) -> Any:
+        return YooMoneyMethods()
+
     __head__ = "https://yoomoney.ru"
 
-    def setup_config(self) -> YooMoneySettings:
+    def setup_config(self) -> YooMoneyMethods:
         return get_settings()
 
     @functools.lru_cache()
-    def build_url(self, api_method: str, **kwargs: Any) -> str:
-        check_api_method(api_method)
-        tail_path: Optional[str] = getattr(self.config, api_method, None)
-        pre_build_url = self.__head__ + tail_path
+    def build_url(self, tail: str, **kwargs: Any) -> str:
+        pre_build_url = self.__head__ + tail
         return super()._format_url_kwargs(pre_build_url, **kwargs)
 
 
 @functools.lru_cache()
-def get_settings() -> YooMoneySettings:
-    settings = YooMoneySettings()
+def get_settings() -> YooMoneyMethods:
+    settings = YooMoneyMethods()
     return settings
 
 
-@dataclass
-class YooMoneySettings:
-    # Operations with token
-    BUILD_URL_FOR_AUTH: str = "/oauth/authorize"
-    GET_ACCESS_TOKEN: str = "/oauth/token"
-    REVOKE_API_TOKEN: str = "/api/revoke"
-    ACCOUNT_INFO: str = "/api/account-info"
-    # Transactions
-    TRANSACTIONS: str = "/api/operation-history"
-    TRANSACTION_INFO: str = "/api/operation-details"
-    # Payments
-    PRE_PROCESS_PAYMENT: str = "/api/request-payment"
-    PROCESS_PAYMENT: str = "/api/process-payment"
-    ACCEPT_INCOMING_TRANSFER: str = "/api/incoming-transfer-accept"
-    INCOMING_TRANSFER_REJECT: str = "/api/incoming-transfer-reject"
-
+class YooMoneyConfig:
     def __init__(self):
         self.DEFAULT_YOOMONEY_HEADERS = {
             "Host": "yoomoney.ru",
@@ -58,11 +44,18 @@ class YooMoneySettings:
         }
         self.content_and_auth = {"content_json": True, "auth": True}
 
-    DEFAULT_YOOMONEY_HEADERS: Optional[Dict[str, str]] = None
 
-    ERROR_CODE_NUMBERS: Optional[Dict[int, str]] = None
-
-    content_and_auth: Optional[Dict[str, bool]] = None
-
-
-__all__ = ("YooMoneyRouter",)
+class YooMoneyMethods:
+    # Operations with token
+    BUILD_URL_FOR_AUTH: str = "/oauth/authorize"
+    GET_ACCESS_TOKEN: str = "/oauth/token"
+    REVOKE_API_TOKEN: str = "/api/revoke"
+    ACCOUNT_INFO: str = "/api/account-info"
+    # Transactions
+    TRANSACTIONS: str = "/api/operation-history"
+    TRANSACTION_INFO: str = "/api/operation-details"
+    # Payments
+    PRE_PROCESS_PAYMENT: str = "/api/request-payment"
+    PROCESS_PAYMENT: str = "/api/process-payment"
+    ACCEPT_INCOMING_TRANSFER: str = "/api/incoming-transfer-accept"
+    INCOMING_TRANSFER_REJECT: str = "/api/incoming-transfer-reject"

@@ -23,9 +23,9 @@ from glQiwiApi.types import (
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.yoomoney_types.types import Card
 from glQiwiApi.utils.api_helper import parse_auth_link, parse_headers, datetime_to_str_in_iso, \
-    simple_multiply_parse, check_params, parse_amount
+    simple_multiply_parse, check_params, parse_amount, check_transactions_payload
 from glQiwiApi.utils.errors import NoUrlFound, InvalidData
-from glQiwiApi.yoo_money.settings import YooMoneyRouter
+from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
 class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
@@ -109,11 +109,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'redirect_uri': redirect_uri,
             'scope': " ".join(scope)
         }
-        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).make_request(
-            router.build_url("BUILD_URL_FOR_AUTH"),
-            "POST",
-            headers=headers,
-            data=params
+        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).send_request(
+            YooMoneyMethods.BUILD_URL_FOR_AUTH, router, "POST", headers=headers, data=params
         )
         try:
             return parse_auth_link(response)
@@ -148,8 +145,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'redirect_uri': redirect_uri,
             'client_secret': client_secret
         }
-        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).make_request(
-            router.build_url("GET_ACCESS_TOKEN"), "POST", headers=headers, data=params
+        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).send_request(
+            "POST", YooMoneyMethods.GET_ACCESS_TOKEN, router, headers=headers, data=params
         )
         return cast(str, response.get('access_token'))
 
@@ -160,8 +157,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
         """
         headers = self._auth_token(parse_headers(auth=True))
-        url = self._router.build_url("REVOKE_API_TOKEN")
-        return await self.request_manager.make_request(url, "POST", headers=headers)
+        return await self.request_manager.send_request("POST", YooMoneyMethods.REVOKE_API_TOKEN, self._router,
+                                                       headers=headers)
 
     @property
     async def account_info(self) -> AccountInfo:
@@ -173,8 +170,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :return: объект AccountInfo
         """
         headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
-        url = self._router.build_url("ACCOUNT_INFO")
-        response = await self.request_manager.make_request(url, "POST", headers=headers)
+        response = await self.request_manager.send_request("POST", YooMoneyMethods.ACCOUNT_INFO, self._router,
+                                                           headers=headers)
         return AccountInfo.parse_obj(response)
 
     async def transactions(
@@ -221,34 +218,11 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
          Допустимые значения: от 1 до 100, по умолчанию — 30.
         """
         headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
-
-        if records <= 0 or records > 100:
-            raise InvalidData(
-                'Неверное количество записей. '
-                'Кол-во записей, которые можно запросить,'
-                ' находиться в диапазоне от 1 до 100 включительно'
-            )
         data = {'records': records, 'label': label}
-        if operation_types:
-            if all(isinstance(operation_type, OperationType) for operation_type in operation_types):
-                op_types = [operation_type.value for operation_type in operation_types]
-                data.update({'type': ' '.join(op_types)})
-        if isinstance(start_record, int):
-            if start_record < 0:
-                raise InvalidData('Укажите позитивное число')
-            data.update({'start_record': start_record})
-        if start_date:
-            if not isinstance(start_date, datetime):
-                raise InvalidData('Параметр start_date был передан неправильным типом данных')
-            data.update({'from': datetime_to_str_in_iso(start_date, yoo_money_format=True)})
-
-        if end_date:
-            if not isinstance(end_date, datetime):
-                raise InvalidData('Параметр end_date был передан неправильным типом данных')
-            data.update({'till': datetime_to_str_in_iso(end_date, yoo_money_format=True)})
-        url = self._router.build_url("TRANSACTIONS")
-        response = await self.request_manager.make_request(url, "POST", headers=headers,
-                                                           data=self.request_manager.filter_dict(data))
+        payload = check_transactions_payload(data, records, operation_types, start_date, end_date, start_record)
+        response = await self.request_manager.send_request("POST", YooMoneyMethods.TRANSACTIONS, self._router,
+                                                           headers=headers,
+                                                           data=self.request_manager.filter_dict(payload))
         return simple_multiply_parse(objects=cast(List[Any], response.get('operations')), model=Operation)
 
     async def transaction_info(self, operation_id: str) -> OperationDetails:
@@ -261,9 +235,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param operation_id: Идентификатор операции
         """
         headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
-        payload = {'operation_id': operation_id}
-        url = self._router.build_url("TRANSACTION_INFO")
-        response = await self.request_manager.make_request(url, "POST", data=payload, headers=headers)
+        response = await self.request_manager.send_request("POST", YooMoneyMethods.TRANSACTION_INFO, self._router,
+                                                           data={'operation_id': operation_id}, headers=headers)
         return OperationDetails.parse_obj(response)
 
     async def _pre_process_payment(
@@ -315,8 +288,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'expire_period': expire_period,
             'codepro': protect
         }
-        url = self._router.build_url("PRE_PROCESS_PAYMENT")
-        response = await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        response = await self.request_manager.send_request("POST", YooMoneyMethods.PRE_PROCESS_PAYMENT, self._router,
+                                                           headers=headers, data=payload)
         return PreProcessPaymentResponse.parse_obj(response)
 
     async def send(
@@ -371,10 +344,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             Необязательный параметр. По умолчанию 1.
         """
         if amount < 2:
-            raise InvalidData(
-                'Введите сумму, которая больше минимальной(2 и выше)'
-            )
-        url = self._router.build_url("PROCESS_PAYMENT")
+            raise InvalidData('Введите сумму, которая больше минимальной(2 и выше)')
         pre_payment = await self._pre_process_payment(
             to_account=to_account,
             amount=amount,
@@ -407,7 +377,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
                                     'csc': cvv2_code
                                 },
                             )
-        response = await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        response = await self.request_manager.send_request("POST", YooMoneyMethods.PROCESS_PAYMENT, self._router,
+                                                           headers=headers, data=payload)
         return Payment.parse_obj(response).initialize(pre_payment.protection_code)
 
     @property
@@ -437,8 +408,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'operation_id': operation_id,
             'protection_code': protection_code
         }
-        url = self._router.build_url("ACCEPT_INCOMING_TRANSFER")
-        response = await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        response = await self.request_manager.send_request("POST", YooMoneyMethods.ACCEPT_INCOMING_TRANSFER,
+                                                           self._router, headers=headers, data=payload)
         return IncomingTransaction.parse_obj(response)
 
     async def reject_transaction(self, operation_id: str) -> Dict[str, str]:
@@ -457,9 +428,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :return: словарь в json формате с ответом от апи
         """
         headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
-        url = self._router.build_url("INCOMING_TRANSFER_REJECT")
-        return await self.request_manager.make_request(url, "POST", headers=headers,
-                                                       data={'operation_id': operation_id})
+        return await self.request_manager.send_request("POST", YooMoneyMethods.INCOMING_TRANSFER_REJECT, self._router,
+                                                       headers=headers, data={'operation_id': operation_id})
 
     async def check_transaction(
             self,

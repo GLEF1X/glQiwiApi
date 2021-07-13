@@ -27,17 +27,17 @@ class SSLConfigurator:
     """
 
     def __init__(
-            self,
-            hostname: str,  # your host machine ip address
-            cert_path: Union[str, pathlib.Path] = "cert.pem",
-            pkey_path: Union[str, pathlib.Path] = "pkey.pem",
-            ip_addresses: Optional[Iterable[Any]] = None,
-            rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
-            public_exponent: int = 65537,
-            key_size: int = 2048,
-            backend: Optional[Any] = None,
-            serial_number: int = 1000,
-            expire_days: int = 3650,
+        self,
+        hostname: str,  # your host machine ip address
+        cert_path: Union[str, pathlib.Path] = "cert.pem",
+        pkey_path: Union[str, pathlib.Path] = "pkey.pem",
+        ip_addresses: Optional[Iterable[Any]] = None,
+        rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
+        public_exponent: int = 65537,
+        key_size: int = 2048,
+        backend: Optional[Any] = None,
+        serial_number: int = 1000,
+        expire_days: int = 3650,
     ):
         self.expire_days = expire_days
         self.serial_number = serial_number
@@ -76,7 +76,7 @@ class SSLConfigurator:
         return is_cert_is_file and is_pkey_is_file
 
     def get_or_generate_self_signed(
-            self, *name_attributes: "x509.NameAttribute"
+        self, *name_attributes: "x509.NameAttribute"
     ) -> SSLConfigurator:
         """
         Generates self signed certificate for a hostname, and optional IP addresses.
@@ -129,15 +129,15 @@ class SSLConfigurator:
         now = datetime.utcnow()
         cert = (
             x509.CertificateBuilder()
-                .subject_name(name)
-                .issuer_name(name)
-                .public_key(self._rsa_private_key.public_key())
-                .serial_number(self.serial_number)
-                .not_valid_before(now)
-                .not_valid_after(now + timedelta(days=self.expire_days))
-                .add_extension(basic_constraints, False)
-                .add_extension(san, False)
-                .sign(self._rsa_private_key, hashes.SHA256(), default_backend())
+            .subject_name(name)
+            .issuer_name(name)
+            .public_key(self._rsa_private_key.public_key())
+            .serial_number(self.serial_number)
+            .not_valid_before(now)
+            .not_valid_after(now + timedelta(days=self.expire_days))
+            .add_extension(basic_constraints, False)
+            .add_extension(san, False)
+            .sign(self._rsa_private_key, hashes.SHA256(), default_backend())
         )
         cert_pem = cert.public_bytes(
             encoding=cast(serialization.Encoding, serialization.Encoding.PEM)

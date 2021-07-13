@@ -18,6 +18,8 @@ import pytz
 from pydantic import ValidationError, BaseModel
 from pytz.reference import LocalTimezone
 
+from glQiwiApi import InvalidData
+from glQiwiApi.types import OperationType
 from glQiwiApi.utils import errors
 
 try:
@@ -293,7 +295,7 @@ def hmac_for_transaction(
 ):
     invoice_params = f"{amount.currency}|{amount.amount}|{txn_type}|{account}|{txn_id}"
     webhook_key = base64.b64decode(bytes(webhook_key_base64, "utf-8"))
-    return hmac.new(webhook_key, invoice_params.encode("utf-8"), hashlib.sha256).hexdigest() == txn_hash
+    return (hmac.new(webhook_key, invoice_params.encode("utf-8"), hashlib.sha256).hexdigest() == txn_hash)  # NOQA
 
 
 def custom_load(data):
@@ -356,11 +358,10 @@ def to_datetime(string_representation):
 
 def new_card_data(ph_number, order_id, data):
     payload = deepcopy(data)
-    url = "https://edge.qiwi.com" + "/sinap/test_api/v2/terms/32064/payments"
     payload["fields"].pop("vas_alias")
     payload["fields"].update(order_id=order_id)
     payload["fields"]["account"] = ph_number
-    return url, payload
+    return payload
 
 
 def sync_measure_time(func):
@@ -555,6 +556,44 @@ def check_api_method(api_method):
             f"Invalid type of api_method(must  be string)."
             f" Passed {type(api_method)}"
         )
+
+
+def check_transactions_payload(
+        data,
+        records,
+        operation_types=None,
+        start_date=None,
+        end_date=None,
+        start_record=None,
+):
+    if records <= 0 or records > 100:
+        raise InvalidData(
+            "Неверное количество записей. "
+            "Кол-во записей, которые можно запросить,"
+            " находиться в диапазоне от 1 до 100 включительно"
+        )
+    if operation_types:
+        if all(
+                isinstance(operation_type, OperationType)
+                for operation_type in operation_types
+        ):
+            op_types = [operation_type.value for operation_type in operation_types]
+            data.update({"type": " ".join(op_types)})
+    if isinstance(start_record, int):
+        if start_record < 0:
+            raise InvalidData("Укажите позитивное число")
+        data.update({"start_record": start_record})
+    if start_date:
+        if not isinstance(start_date, datetime.datetime):
+            raise InvalidData(
+                "Параметр start_date был передан неправильным типом данных"
+            )
+        data.update({"from": datetime_to_str_in_iso(start_date, yoo_money_format=True)})
+
+    if end_date:
+        if not isinstance(end_date, datetime.datetime):
+            raise InvalidData("Параметр end_date был передан неправильным типом данных")
+        data.update({"till": datetime_to_str_in_iso(end_date, yoo_money_format=True)})
 
 
 def check_dates_for_statistic_request(start_date, end_date):

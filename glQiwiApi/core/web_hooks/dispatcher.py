@@ -1,10 +1,9 @@
 import logging
 import types
-from typing import List, Tuple, Callable, Union
+from typing import List, Tuple, Callable, Union, TypeVar, Awaitable, Optional, cast
 
-from .config import EventHandlerFunctor, EventFilter, E
 from .filter import BaseFilter, LambdaBasedFilter
-from ..builtin import bill_webhook_filter, transaction_webhook_filter, InterceptHandler  # NOQA
+from ..builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 
 
 def _setup_logger() -> logging.Logger:
@@ -14,6 +13,11 @@ def _setup_logger() -> logging.Logger:
         logger.addHandler(InterceptHandler())
     return logger
 
+
+E = TypeVar("E")
+_T = TypeVar("_T")
+EventFilter = Callable[[E], bool]
+EventHandlerFunctor = Callable[[E], Awaitable[_T]]
 
 HandlerAlias = Callable[[EventHandlerFunctor], EventHandlerFunctor]
 
@@ -33,7 +37,7 @@ class EventHandler:
         self._fn = functor
         self._filters = filters
 
-    async def check_then_execute(self, event: E):
+    async def check_then_execute(self, event: E) -> Optional[_T]:
         """
         Check event, apply all filters and than pass on to handler
 
@@ -44,6 +48,7 @@ class EventHandler:
                 break
         else:
             return await self._fn(event)
+        return None  # hint for mypy(missing return statement)
 
 
 class Dispatcher:
@@ -57,18 +62,24 @@ class Dispatcher:
         self.bill_handlers: List[EventHandler] = []
         self._logger = _setup_logger()
 
-    def register_transaction_handler(self, event_handler: EventHandlerFunctor, *filters: EventFilter) -> None:
+    def register_transaction_handler(
+        self,
+        event_handler: EventHandlerFunctor,
+        *filters: Union[BaseFilter, EventFilter]
+    ) -> None:
         self.transaction_handlers.append(
             self.wrap_handler(
-                event_handler, filters, default_filter=transaction_webhook_filter
+                event_handler, filters, default_filter=TransactionFilter()
             )
         )
 
-    def register_bill_handler(self, event_handler: EventHandlerFunctor, *filters: EventFilter) -> None:
+    def register_bill_handler(
+        self,
+        event_handler: EventHandlerFunctor,
+        *filters: Union[EventFilter, BaseFilter]
+    ) -> None:
         self.bill_handlers.append(
-            self.wrap_handler(
-                event_handler, filters, default_filter=bill_webhook_filter
-            )
+            self.wrap_handler(event_handler, filters, default_filter=BillFilter())
         )
 
     @property
@@ -86,9 +97,9 @@ class Dispatcher:
 
     @staticmethod
     def wrap_handler(
-            event_handler: EventHandlerFunctor,
-            filters: Tuple[EventFilter, ...],
-            default_filter: LambdaBasedFilter,
+        event_handler: EventHandlerFunctor,
+        filters: Tuple[Union[EventFilter, BaseFilter], ...],
+        default_filter: BaseFilter,
     ) -> EventHandler:
         """
         Add new event handler.
@@ -99,27 +110,31 @@ class Dispatcher:
         :param default_filter: default filter for handler
         :return: this handler manager
         """
-        generated_filters = []
+        generated_filters: List[BaseFilter] = []
         if filters:  # Initially filters are in tuple
             for index, filter_ in enumerate(filters):
                 if isinstance(filter_, types.FunctionType):
                     generated_filters.append(LambdaBasedFilter(filter_))
                 else:
-                    generated_filters.append(filter_)
+                    generated_filters.append(cast(BaseFilter, filter_))
             generated_filters.insert(0, default_filter)
         else:
             generated_filters = [default_filter]
 
         return EventHandler(event_handler, *generated_filters)
 
-    def transaction_handler_wrapper(self, *filters: Union[EventFilter, BaseFilter]) -> HandlerAlias:
+    def transaction_handler_wrapper(
+        self, *filters: Union[EventFilter, BaseFilter]
+    ) -> HandlerAlias:
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_transaction_handler(callback, *filters)
             return callback
 
         return decorator
 
-    def bill_handler_wrapper(self, *filters: Union[EventFilter, BaseFilter]) -> HandlerAlias:
+    def bill_handler_wrapper(
+        self, *filters: Union[EventFilter, BaseFilter]
+    ) -> HandlerAlias:
         def decorator(callback: EventHandlerFunctor) -> EventHandlerFunctor:
             self.register_bill_handler(callback, *filters)
             return callback

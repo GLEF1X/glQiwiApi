@@ -1,10 +1,14 @@
-from glQiwiApi.core.web_hooks.filter import LambdaBasedFilter
+from typing import Any
+
+from glQiwiApi.core.web_hooks.filter import BaseFilter
 from glQiwiApi.types import Transaction, WebHook, Notification
 
-# Default filter for transaction handler
-transaction_webhook_filter: LambdaBasedFilter = LambdaBasedFilter(
-    lambda update: isinstance(update, (WebHook, Transaction))
-)
 
-# Default filter for bill handler
-bill_webhook_filter: LambdaBasedFilter = LambdaBasedFilter(lambda update: isinstance(update, Notification))
+class TransactionFilter(BaseFilter):
+    async def check(self, update: Any) -> bool:
+        return isinstance(update, (WebHook, Transaction))
+
+
+class BillFilter(BaseFilter):
+    async def check(self, update: Any) -> bool:
+        return isinstance(update, Notification)

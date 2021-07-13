@@ -14,9 +14,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(name="api")
-async def api_fixture(
-    credentials: dict, capsys: CaptureFixture, monkeypatch: MonkeyPatch
-):
+async def api_fixture(credentials: dict):
     """ Api fixture """
     _wrapper = QiwiWrapper(**credentials)
     yield _wrapper
@@ -263,6 +261,16 @@ async def test_get_cross_rates(api: QiwiWrapper):
         result = await api.get_cross_rates()
 
     assert all(isinstance(r, types.CrossRate) for r in result)
+
+
+async def test_register_webhook(api: QiwiWrapper):
+    async with api:
+        config, key = await api.bind_webhook(
+            url="https://45.147.178.166:80//", delete_old=True
+        )
+
+    assert isinstance(config, types.WebHookConfig)
+    assert isinstance(key, str)
 
 
 class TestFail:

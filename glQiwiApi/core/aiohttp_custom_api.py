@@ -1,8 +1,9 @@
-from typing import Dict, Optional, Any, Union, cast, TypeVar
+from typing import Dict, Optional, Any, Union, cast
 
 import aiohttp
 from aiohttp.typedefs import LooseCookies
 
+from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.core.basic_requests_api import HttpXParser, _ProxyType
 from glQiwiApi.core.storage import Storage
 from glQiwiApi.types.basics import Cached, DEFAULT_CACHE_TIME
@@ -42,6 +43,31 @@ class RequestManager(HttpXParser):
         """ Clear all cache in storage """
         self._cache.clear(force=True)
 
+    async def send_request(
+        self,
+        http_method: str,
+        api_method: str,
+        router: AbstractRouter,
+        set_timeout: bool = True,
+        cookies: Optional[LooseCookies] = None,
+        json: Optional[Any] = None,
+        data: Optional[Dict[Any, Any]] = None,
+        headers: Optional[Dict[Any, Any]] = None,
+        params: Optional[Dict[Any, Any]] = None,
+        **kwargs
+    ) -> Dict[Any, Any]:
+        url = router.build_url(api_method, **kwargs)
+        return await self.make_request(
+            url,
+            http_method,
+            set_timeout=set_timeout,
+            headers=headers,
+            json=json,
+            data=data,
+            params=params,
+            cookies=cookies,
+        )
+
     async def make_request(
         self,
         url: str,
@@ -53,7 +79,7 @@ class RequestManager(HttpXParser):
         headers: Optional[Dict[Any, Any]] = None,
         params: Optional[Dict[Any, Any]] = None,
         **kwargs
-    ) -> dict:
+    ) -> Dict[Any, Any]:
         """ Send request to service(API) """
         request_args = {
             k: v for k, v in locals().items() if not isinstance(v, type(self))

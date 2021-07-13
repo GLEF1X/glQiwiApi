@@ -10,6 +10,7 @@ from __future__ import annotations
 import pathlib
 import uuid
 from abc import ABC
+from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import List, Tuple, Dict, Union, Optional, Any, Pattern, Match, Callable, cast, Iterable, Type
@@ -17,7 +18,7 @@ from typing import List, Tuple, Dict, Union, Optional, Any, Pattern, Match, Call
 from glQiwiApi.core import RequestManager, constants
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
-from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter
+from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
     QiwiAccountInfo,
     Transaction,
@@ -225,11 +226,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         '_dispatcher'
     )
 
-    async def _register_webhook(
-            self,
-            web_url: Optional[str],
-            txn_type: int = 2
-    ) -> WebHookConfig:
+    async def _register_webhook(self, web_url: Optional[str], txn_type: int = 2) -> WebHookConfig:
         """
         This method register a new webhook
 
@@ -237,9 +234,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
         :return: Active Hooks
         """
-        url = self._router.build_url("REG_WEBHOOK")
-        response = await self.request_manager.make_request(
-            url, "PUT", headers=self._auth_token(self._router.default_headers),
+        response = await self.request_manager.send_request(
+            "PUT", QiwiApiMethods.REG_WEBHOOK, self._router,
+            headers=self._auth_token(self._router.default_headers),
             params={'hookType': 1, 'param': web_url, 'txnType': txn_type}
         )
         return WebHookConfig.parse_obj(response)
@@ -252,9 +249,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
          то в ответе содержится только один объект данных
 
         """
-        url = self._router.build_url("GET_CURRENT_WEBHOOK")
-        response = await self.request_manager.make_request(
-            url, "GET",
+        response = await self.request_manager.send_request(
+            "GET", QiwiApiMethods.GET_CURRENT_WEBHOOK, self._router,
             headers=self._auth_token(self._router.default_headers)
         )
         return WebHookConfig.parse_obj(response)
@@ -266,8 +262,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         register_webhook
 
         """
-        url = self._router.build_url("SEND_TEST_NOTIFICATION")
-        return await self.request_manager.make_request(url, "GET",
+        return await self.request_manager.send_request("GET", QiwiApiMethods.SEND_TEST_NOTIFICATION, self._router,
                                                        headers=self._auth_token(self._router.default_headers))
 
     async def get_webhook_secret_key(self, hook_id: str) -> str:
@@ -279,9 +274,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :param hook_id: UUID of webhook
         :return: Base64-закодированный ключ
         """
-        url = self._router.build_url("GET_WEBHOOK_SECRET", hook_id=hook_id)
-        resp = await self.request_manager.make_request(url, "GET",
-                                                       headers=self._auth_token(self._router.default_headers))
+        resp = await self.request_manager.send_request("GET", QiwiApiMethods.GET_WEBHOOK_SECRET, self._router,
+                                                       headers=self._auth_token(self._router.default_headers),
+                                                       hook_id=hook_id)
         return cast(str, resp["key"])
 
     async def delete_current_webhook(self) -> Optional[Dict[str, str]]:
@@ -298,13 +293,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 status_code='422',
                 traceback_info=ex.traceback_info
             ) from None
-
-        url = self._router.build_url(
-            "DELETE_CURRENT_WEBHOOK",
-            hook_id=hook.hook_id
-        )
-        return await self.request_manager.make_request(url, "DELETE",
-                                                       headers=self._auth_token(self._router.default_headers))
+        return await self.request_manager.send_request("DELETE", QiwiApiMethods.DELETE_CURRENT_WEBHOOK, self._router,
+                                                       headers=self._auth_token(self._router.default_headers),
+                                                       hook_id=hook.hook_id)
 
     async def change_webhook_secret(self, hook_id: str) -> str:
         """
@@ -313,9 +304,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :param hook_id: UUID of webhook
         :return: Base64-закодированный ключ
         """
-        url = self._router.build_url("CHANGE_WEBHOOK_SECRET", hook_id=hook_id)
-        response = await self.request_manager.make_request(url, "POST",
-                                                           headers=self._auth_token(self._router.default_headers))
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.CHANGE_WEBHOOK_SECRET, self._router,
+                                                           headers=self._auth_token(self._router.default_headers),
+                                                           hook_id=hook_id)
         return cast(str, response["key"])
 
     async def bind_webhook(
@@ -340,15 +331,13 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         key: Optional[str] = None
 
         if delete_old:
-            await self.delete_current_webhook()
+            with suppress(RequestError):
+                await self.delete_current_webhook()
 
         try:
             # Try to register new webhook
-            webhook = await self._register_webhook(
-                web_url=url,
-                txn_type=transactions_type
-            )
-        except (RequestError, TypeError):
+            webhook = await self._register_webhook(url, transactions_type)
+        except RequestError:
             # Catching exception, if webhook already was registered
             try:
                 webhook = await self.get_current_webhook()
@@ -356,7 +345,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 raise RequestError(
                     message="You didn't pass on url to register new hook "
                             "and you didn't have registered webhooks",
-                    status_code="422",
+                    status_code=ex.status_code,
                     traceback_info=ex.traceback_info
                 ) from None
             key = await self.get_webhook_secret_key(webhook.hook_id)
@@ -394,12 +383,14 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
         return cast(str, response["message"])
 
-    async def get_balance(self, __account_number: int = 1) -> Sum:
+    async def get_balance(self, *, account_number: int = 1) -> Sum:
         """Метод для получения баланса киви"""
+        if account_number <= 0:
+            raise ValueError("Account number cannot be negative")
         headers = self._auth_token(self._router.default_headers)
-        url = self._router.build_url("GET_BALANCE", phone_number=self.phone_number)
-        response = await self.request_manager.make_request(url, "GET", headers=headers)
-        return Sum.parse_obj(response['accounts'][__account_number - 1]['balance'])
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_BALANCE, self._router,
+                                                           headers=headers, phone_number=self.phone_number)
+        return Sum.parse_obj(response['accounts'][account_number - 1]['balance'])
 
     async def transactions(
             self,
@@ -434,9 +425,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             end_date=end_date,
             payload_data={'rows': rows_num, 'operation': operation}
         )
-        url = self._router.build_url("TRANSACTIONS", stripped_number=self.stripped_number)
-        response = await self.request_manager.make_request(url, "GET", params=payload_data,
-                                                           headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.TRANSACTIONS, self._router,
+                                                           params=payload_data,
+                                                           headers=headers, stripped_number=self.stripped_number)
         return api_helper.multiply_objects_parse((response.get('data'),), Transaction)  # type: ignore
 
     async def transaction_info(
@@ -455,8 +446,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         headers = self._auth_token(self._router.default_headers)
         payload_data = {'type': transaction_type}
-        url = self._router.build_url("TRANSACTION_INFO", transaction_id=transaction_id)
-        response = await self.request_manager.make_request(url, "GET", headers=headers, params=payload_data)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.TRANSACTION_INFO, self._router,
+                                                           headers=headers, params=payload_data,
+                                                           transaction_id=transaction_id)
         return Transaction.parse_obj(response)
 
     async def check_restriction(self) -> List[Restriction]:
@@ -469,8 +461,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
          если ограничений нет - возвращает пустой список
         """
         headers = self._auth_token(self._router.default_headers)
-        url = self._router.build_url("CHECK_RESTRICTION", phone_number=self.phone_number)
-        response = await self.request_manager.make_request(url, "GET", headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.CHECK_RESTRICTION, self._router,
+                                                           headers=headers, phone_number=self.phone_number)
         return api_helper.simple_multiply_parse(objects=response, model=Restriction)
 
     @property
@@ -484,8 +476,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return: Response object
         """
         headers = self._auth_token(self._router.default_headers)
-        url = self._router.build_url("GET_IDENTIFICATION", phone_number=self.phone_number)
-        response = await self.request_manager.make_request(url, "GET", headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_IDENTIFICATION, self._router,
+                                                           headers=headers, phone_number=self.phone_number)
         return Identification.parse_obj(response)
 
     async def check_transaction(
@@ -545,8 +537,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         limit_types = self._router.config.LIMIT_TYPES
         for index, limit_type in enumerate(limit_types):
             payload['types[' + str(index) + ']'] = limit_type
-        url = self._router.build_url("GET_LIMITS", stripped_number=self.stripped_number)
-        response = await self.request_manager.make_request(url, "GET", headers=headers, params=payload)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_LIMITS, self._router,
+                                                           headers=headers, params=payload,
+                                                           stripped_number=self.stripped_number)
         return api_helper.parse_limits(response, Limit)
 
     async def get_list_of_cards(self) -> List[Card]:
@@ -555,8 +548,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
         """
         headers = self._auth_token(self._router.default_headers)
-        response = await self.request_manager.make_request(self._router.build_url("GET_LIST_OF_CARDS"),
-                                                           "GET", headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_LIST_OF_CARDS, self._router,
+                                                           headers=headers)
         return api_helper.simple_multiply_parse(objects=response, model=Card)
 
     async def authenticate(
@@ -603,9 +596,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             "snils": snils
         }
         headers = self._auth_token(self._router.default_headers)
-        url = self._router.build_url("AUTHENTICATE", stripped_number=self.stripped_number)
-        return await self.request_manager.make_request(url, "POST", headers=headers,
-                                                       data=self.request_manager.filter_dict(payload))
+        return await self.request_manager.send_request("POST", QiwiApiMethods.AUTHENTICATE,
+                                                       stripped_number=self.stripped_number,
+                                                       headers=headers, data=self.request_manager.filter_dict(payload))
 
     @api_helper.override_error_messages({
         422: {
@@ -650,8 +643,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
         """
         headers = self._auth_token(self._router.default_headers)
-        response = await self.request_manager.make_request(
-            self._router.build_url("ACCOUNT_INFO"), "GET", headers=headers
+        response = await self.request_manager.send_request(
+            "GET", QiwiApiMethods.ACCOUNT_INFO, self._router, headers=headers
         )
         return QiwiAccountInfo.parse_obj(response)
 
@@ -697,8 +690,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         }
         if sources:
             params.update({'sources': ' '.join(sources)})
-        url = self._router.build_url("FETCH_STATISTICS", stripped_number=self.stripped_number)
-        response = await self.request_manager.make_request(url, "GET", params=params, headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.FETCH_STATISTICS, self._router,
+                                                           params=params, headers=headers,
+                                                           stripped_number=self.stripped_number)
         return Statistic.parse_obj(response)
 
     async def list_of_balances(self) -> List[Account]:
@@ -708,12 +702,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#balances_list
 
         """
-        url = self._router.build_url(
-            "LIST_OF_BALANCES",
-            stripped_number=self.stripped_number
-        )
         headers = self._auth_token(self._router.default_headers)
-        response = await self.request_manager.make_request(url, "GET", headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.LIST_OF_BALANCES, self._router,
+                                                           headers=headers, stripped_number=self.stripped_number)
         return api_helper.simple_multiply_parse(cast(Iterable[Any], response.get('accounts')), Account)
 
     @api_helper.allow_response_code(201)
@@ -727,8 +718,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         headers = self._auth_token(self._router.default_headers)
         payload = {'alias': currency_alias}
-        url = self._router.build_url("CREATE_NEW_BALANCE", stripped_number=self.stripped_number)
-        return await self.request_manager.make_request(url, "POST", headers=headers, data=payload)
+        return await self.request_manager.send_request("POST", QiwiApiMethods.CREATE_NEW_BALANCE, self._router,
+                                                       headers=headers, data=payload,
+                                                       stripped_number=self.stripped_number)
 
     async def available_balances(self) -> List[Balance]:
         """
@@ -740,9 +732,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             currency: int
 
         """
-        url = self._router.build_url("AVAILABLE_BALANCES", stripped_number=self.stripped_number)
         headers = self._auth_token(self._router.default_headers)
-        response = await self.request_manager.make_request(url, "GET", headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.AVAILABLE_BALANCES, self._router,
+                                                           headers=headers, stripped_number=self.stripped_number)
         return api_helper.simple_multiply_parse(objects=response, model=Balance)
 
     @api_helper.allow_response_code(status_code=204)
@@ -760,12 +752,10 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
          Пример результата, если запрос был проведен успешно: {"success": True}
         """
         headers = self._auth_token(self._router.default_headers)
-        url = self._router.build_url(
-            "SET_DEFAULT_BALANCE",
-            stripped_number=self.stripped_number,
-            currency_alias=currency_alias
-        )
-        return await self.request_manager.make_request(url, "PATCH", headers=headers, json={'defaultAccount': True})
+        return await self.request_manager.send_request("PATCH", QiwiApiMethods.SET_DEFAULT_BALANCE, self._router,
+                                                       headers=headers, json={'defaultAccount': True},
+                                                       stripped_number=self.stripped_number,
+                                                       currency_alias=currency_alias)
 
     @property
     def transaction_handler(self):
@@ -811,15 +801,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             comment=comment
         )
         data.headers = self._auth_token(headers=data.headers)
-        response = await self.request_manager.make_request(self._router.build_url("TO_WALLET"), "POST", json=data.json,
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.TO_WALLET, self._router,
+                                                           json=data.json,
                                                            headers=data.headers)
         return cast(str, response['transaction']['id'])
 
-    async def to_card(
-            self,
-            trans_sum: Union[float, int],
-            to_card: str
-    ) -> Optional[str]:
+    async def to_card(self, trans_sum: Union[float, int], to_card: str) -> Optional[str]:
         """
         Метод для отправки средств на карту.
         Более подробная документация:
@@ -836,8 +823,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             auth_maker=self._auth_token
         )
         privat_card_id = await self._detect_card_number(card_number=to_card)
-        url = self._router.build_url("TO_CARD", privat_card_id=privat_card_id)
-        response = await self.request_manager.make_request(url, "POST", headers=data.headers, json=data.json)
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.TO_CARD, self._router,
+                                                           headers=data.headers, json=data.json,
+                                                           privat_card_id=privat_card_id)
         return response.get('id')
 
     async def _detect_card_number(self, card_number: str) -> str:
@@ -853,11 +841,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
         return cast(str, response["message"])
 
-    async def commission(
-            self,
-            to_account: str,
-            pay_sum: Union[int, float]
-    ) -> Commission:
+    async def commission(self, to_account: str, pay_sum: Union[int, float]) -> Commission:
         """
         Возвращается полная комиссия QIWI Кошелька
         за платеж в пользу указанного провайдера
@@ -874,8 +858,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             pay_sum=pay_sum
         )
         code: str = special_code or await self._detect_card_number(to_account)
-        url = self._router.build_url("COMMISSION", special_code=code)
-        response = await self.request_manager.make_request(url, "POST", headers=payload.headers, json=payload.json)
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.COMMISSION, self._router,
+                                                           headers=payload.headers, json=payload.json,
+                                                           special_code=code)
         return Commission.parse_obj(response)
 
     async def get_cross_rates(self) -> List[CrossRate]:
@@ -883,8 +868,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         Метод возвращает текущие курсы и кросс-курсы валют КИВИ Банка.
 
         """
-        url = self._router.build_url("GET_CROSS_RATES")
-        response = await self.request_manager.make_request(url, "GET")
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_CROSS_RATES, self._router)
         return api_helper.simple_multiply_parse(objects=response["result"], model=CrossRate)
 
     async def payment_by_payment_details(
@@ -899,11 +883,10 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
         :param payment_id: id платежа, если не передается, используется
          uuid4
-        :param payment_sum: обьект Sum, в котором указывается сумма платежа
+        :param payment_sum: объект Sum, в котором указывается сумма платежа
         :param payment_method: метод платежа
         :param fields: Набор реквизитов платежа
         """
-        url = self._router.build_url("SPECIAL_PAYMENT")
         payload = {
             "id": payment_id if isinstance(payment_id, str) else str(
                 uuid.uuid4()
@@ -912,7 +895,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             "paymentMethod": payment_method.dict(),
             "fields": fields.dict()
         }
-        response = await self.request_manager.make_request(url, "POST", headers=self._router.default_headers,
+        response = await self.request_manager.make_request("POST", QiwiApiMethods.SPECIAL_PAYMENT,
+                                                           headers=self._router.default_headers,
                                                            json=payload)
         return PaymentInfo.parse_obj(response)
 
@@ -931,33 +915,26 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         Эти права вы можете выбрать при создании нового апи токена,
         чтобы пользоваться апи QIWI Master
         """
-        url = self._router.build_url("BUY_QIWI_MASTER")
         payload = api_helper.qiwi_master_data(self.stripped_number, self._router.config.QIWI_MASTER)
-        response = await self.request_manager.make_request(url, "POST",
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.BUY_QIWI_MASTER, self._router,
                                                            headers=self._auth_token(self._router.default_headers),
                                                            json=payload)
         return PaymentInfo.parse_obj(response)
 
-    async def __pre_qiwi_master_request(
-            self,
-            card_alias: str = 'qvc-cpa'
-    ) -> OrderDetails:
+    async def __pre_qiwi_master_request(self, card_alias: str = 'qvc-cpa') -> OrderDetails:
         """
         Метод для выпуска виртуальной карты QIWI Мастер
 
         :param card_alias: Тип карты
         :return: OrderDetails
         """
-        url = self._router.build_url("PRE_QIWI_REQUEST", stripped_number=self.stripped_number)
-        response = await self.request_manager.make_request(url, "POST",
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.PRE_QIWI_REQUEST, self._router,
                                                            headers=self._auth_token(self._router.default_headers),
-                                                           json={"cardAlias": card_alias})
+                                                           json={"cardAlias": card_alias},
+                                                           stripped_number=self.stripped_number)
         return OrderDetails.parse_obj(response)
 
-    async def _confirm_qiwi_master_request(
-            self,
-            card_alias: str = 'qvc-cpa'
-    ) -> OrderDetails:
+    async def _confirm_qiwi_master_request(self, card_alias: str = 'qvc-cpa') -> OrderDetails:
         """
         Подтверждение заказа выпуска карты
 
@@ -965,13 +942,10 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return: OrderDetails
         """
         details = await self.__pre_qiwi_master_request(card_alias)
-        url = self._router.build_url(
-            "_CONFIRM_QIWI_MASTER",
-            stripped_number=self.stripped_number,
-            order_id=details.order_id
-        )
-        response = await self.request_manager.make_request(url, "PUT",
-                                                           headers=self._auth_token(self._router.default_headers))
+        response = await self.request_manager.send_request("PUT", QiwiApiMethods.CONFIRM_QIWI_MASTER, self._router,
+                                                           headers=self._auth_token(self._router.default_headers),
+                                                           stripped_number=self.stripped_number,
+                                                           order_id=details.order_id)
         return OrderDetails.parse_obj(response)
 
     async def __buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
@@ -982,15 +956,13 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return: OrderDetails
         """
         kwargs.update(data=self._router.config.QIWI_MASTER)
-        url, payload = api_helper.new_card_data(**kwargs)
-        response = await self.request_manager.make_request(url, "POST", json=payload,
+        payload = api_helper.new_card_data(**kwargs)
+        response = await self.request_manager.make_request("POST", QiwiApiMethods.BUY_QIWI_CARD, self._router,
+                                                           json=payload,
                                                            headers=self._auth_token(self._router.default_headers))
         return OrderDetails.parse_obj(response)
 
-    async def issue_qiwi_master_card(
-            self,
-            card_alias: str = 'qvc-cpa'
-    ) -> Optional[OrderDetails]:
+    async def issue_qiwi_master_card(self, card_alias: str = 'qvc-cpa') -> Optional[OrderDetails]:
         """
         Выпуск новой карты, используя Qiwi Master API
 
@@ -1019,8 +991,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         Метод для получение списка всех ваших карт QIWI Мастер
 
         """
-        url = self._router.build_url("CARDS_QIWI_MASTER")
-        return await self.request_manager.make_request(url, "GET",
+        return await self.request_manager.send_request("GET", QiwiApiMethods.CARDS_QIWI_MASTER, self._router,
                                                        headers=self._auth_token(self._router.default_headers))
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
@@ -1034,8 +1005,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             raise InvalidData('Не задан p2p токен')
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
-        url = self._p2p_router.build_url("REJECT", bill_id=bill_id)
-        response = await self.request_manager.make_request(url, "POST", headers=headers)
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.REJECT_P2P_BILL, self._p2p_router,
+                                                           headers=headers, bill_id=bill_id)
         return Bill.parse_obj(response)
 
     async def check_p2p_bill_status(self, bill_id: str) -> str:
@@ -1054,8 +1025,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         data = deepcopy(self._router.config.P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
-        url = self._p2p_router.build_url("CHECK_P2P_BILL_STATUS", bill_id=bill_id)
-        response = await self.request_manager.make_request(url, "GET", headers=headers)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.CHECK_P2P_BILL_STATUS,
+                                                           self._p2p_router,
+                                                           headers=headers, bill_id=bill_id)
         return Bill.parse_obj(response).status.value
 
     async def create_p2p_bill(
@@ -1098,8 +1070,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             pay_source_filter=pay_source_filter,
             life_time=str(_life_time)
         )
-        url = self._p2p_router.build_url("CREATE_P2P_BILL", bill_id=bill_id)
-        response = await self.request_manager.make_request(url, "PUT", headers=headers, json=payload)
+        response = await self.request_manager.send_request("PUT", QiwiApiMethods.CREATE_P2P_BILL, self._p2p_router,
+                                                           headers=headers, json=payload, bill_id=bill_id)
         return Bill.parse_obj(response)
 
     async def get_bills(self, rows_num: int, bill_statuses: str = "READY_FOR_PAY") -> List[Bill]:
@@ -1119,8 +1091,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             'rows': rows_num,
             'statuses': bill_statuses
         }
-        response = await self.request_manager.make_request(self._router.build_url("GET_BILLS"), "GET", headers=headers,
-                                                           params=params)
+        response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_BILLS, self._router,
+                                                           headers=headers, params=params)
         return api_helper.simple_multiply_parse(response["bills"], Bill)
 
     async def refund_bill(
@@ -1147,10 +1119,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :param json_bill_data:
         :return: RefundBill object
         """
-        url = self._router.build_url("REFUND_BILL", refund_id=refund_id, bill_id=bill_id)
         headers = self._auth_token(self._router.default_headers, p2p=True)
         json = json_bill_data if isinstance(json_bill_data, dict) else json_bill_data.json()
-        response = await self.request_manager.make_request(url, "PUT", headers=headers, json=json)
+        response = await self.request_manager.send_request("PUT", QiwiApiMethods.REFUND_BILL, self._router,
+                                                           headers=headers, json=json,
+                                                           refund_id=refund_id, bill_id=bill_id)
         return RefundBill.parse_obj(response)
 
     async def create_p2p_keys(
@@ -1164,11 +1137,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :param server_notification_url: url для вебхуков, необязательный
          параметр
         """
-        url = self._router.build_url("CREATE_P2P_KEYS")
         headers = self._auth_token(self._router.default_headers, p2p=True)
         data = {
             'keysPairName': key_pair_name,
             'serverNotificationsUrl': server_notification_url
         }
-        response = await self.request_manager.make_request(url, "POST", headers=headers, json=data)
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.CREATE_P2P_KEYS, self._router,
+                                                           headers=headers, json=data)
         return P2PKeys.parse_obj(response)

@@ -127,7 +127,7 @@ class HttpXParser(AbstractParser):
         headers: Optional[dict] = None,
         params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
         **kwargs,
-    ) -> dict:
+    ) -> Dict[Any, Any]:
         """
         Send request to some url. Method has a similar signature with the `aiohttp.request`
 

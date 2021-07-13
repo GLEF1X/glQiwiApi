@@ -25,8 +25,6 @@ class Path:
 
 
 E = typing.TypeVar("E")
-EventFilter = typing.Callable[[E], bool]
-EventHandlerFunctor = typing.Callable[[E], typing.Awaitable[typing.Any]]
 CF = typing.Callable[[E], typing.Union[typing.Awaitable[bool], bool]]
 
 __all__ = (
@@ -37,8 +35,5 @@ __all__ = (
     "RESPONSE_TIMEOUT",
     "allowed_ips",
     "Path",
-    "E",
-    "EventFilter",
-    "EventHandlerFunctor",
     "CF",
 )

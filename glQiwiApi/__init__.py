@@ -1,5 +1,4 @@
-import sys
-
+from .core import BaseFilter, LambdaBasedFilter
 from .qiwi import QiwiWrapper, QiwiMaps
 from .utils.api_helper import sync, async_as_sync
 from .utils.errors import (
@@ -17,7 +16,7 @@ from .utils.errors import (
 )
 from .yoo_money import YooMoneyAPI
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 __all__ = (
     "QiwiWrapper",
@@ -25,6 +24,8 @@ __all__ = (
     "QiwiMaps",
     "sync",
     "async_as_sync",
+    "LambdaBasedFilter",
+    "BaseFilter",
     # Exceptions
     "InvalidData",
     "NoUrlFound",
@@ -38,17 +39,3 @@ __all__ = (
     "NetworkError",
     "InvalidCachePayload",
 )
-
-
-class VersionError(Exception):
-    """
-    Ошибка возникает, если ваша версия python не поддерживается библиотекой
-
-    """
-
-
-if not sys.version_info[:2] >= (3, 7):
-    raise VersionError(
-        "Ваша версия python не поддерживается библиотекой glQiwiApi."
-        "Минимальная версия для использования python 3.7"
-    )

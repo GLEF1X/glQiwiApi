@@ -8,14 +8,15 @@ from .config import CF
 
 
 class BaseFilter(abc.ABC):
-
     @abc.abstractmethod
     async def check(self, update: Any) -> bool:
         raise NotImplementedError
 
     def __and__(self, other: BaseFilter) -> AndFilter:
         if not isinstance(other, BaseFilter):
-            raise TypeError(f"Can't compose two different types of filters, expected Filter, got {type(other)}")
+            raise TypeError(
+                f"Can't compose two different types of filters, expected Filter, got {type(other)}"
+            )
         return AndFilter(self, other)
 
     def __invert__(self) -> NotFilter:
@@ -23,7 +24,6 @@ class BaseFilter(abc.ABC):
 
 
 class AndFilter(BaseFilter):
-
     def __init__(self, filter1: BaseFilter, filter2: BaseFilter) -> None:
         self.filter2 = filter2
         self.filter1 = filter1
@@ -33,7 +33,6 @@ class AndFilter(BaseFilter):
 
 
 class NotFilter(BaseFilter):
-
     def __init__(self, filter_: BaseFilter):
         self.filter_ = filter_
 
