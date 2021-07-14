@@ -18,6 +18,7 @@ from typing import List, Tuple, Dict, Union, Optional, Any, Pattern, Match, Call
 from glQiwiApi.core import RequestManager, constants
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
+from glQiwiApi.ext.url_builder import WebhookURL
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
     QiwiAccountInfo,
@@ -205,7 +206,7 @@ class BaseWrapper(ABC):
                 *args: Any, **kwargs: Any) -> N:
         if not isinstance(api_access_token, str) and not isinstance(secret_p2p, str):
             if not _is_copy_signal(kwargs):
-                raise RuntimeError("Cannot initialize an instance without any tokens")
+                raise RuntimeError("Unable to initialize instance without tokens")
 
         return super().__new__(cls)  # type: ignore
 
@@ -311,7 +312,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def bind_webhook(
             self,
-            url: Optional[str] = None,
+            url: Optional[Union[str, WebhookURL]] = None,
             transactions_type: int = 2,
             *,
             send_test_notification: bool = False,
@@ -329,6 +330,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return: Tuple of Hook and Base64-encoded key
         """
         key: Optional[str] = None
+        if isinstance(url, WebhookURL):
+            url = url.render_as_string()
 
         if delete_old:
             with suppress(RequestError):
@@ -337,14 +340,15 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         try:
             # Try to register new webhook
             webhook = await self._register_webhook(url, transactions_type)
-        except RequestError:
-            # Catching exception, if webhook already was registered
+        except (RequestError, TypeError):
+            # Catching exceptions, if webhook already was registered or TypeError because missing url to bind
             try:
                 webhook = await self.get_current_webhook()
             except RequestError as ex:
                 raise RequestError(
-                    message="You didn't pass on url to register new hook "
-                            "and you didn't have registered webhooks",
+                    message="Ошибка при получении текущего конфига вебхука. Скорее всего вы не вызывали "
+                            "метод bind_webhook, чтобы зарегистрировать вебхук"
+                            " киви или не передали ссылку для его регистрации",
                     status_code=ex.status_code,
                     traceback_info=ex.traceback_info
                 ) from None
@@ -596,7 +600,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             "snils": snils
         }
         headers = self._auth_token(self._router.default_headers)
-        return await self.request_manager.send_request("POST", QiwiApiMethods.AUTHENTICATE,
+        return await self.request_manager.send_request("POST", QiwiApiMethods.AUTHENTICATE, self._router,
                                                        stripped_number=self.stripped_number,
                                                        headers=headers, data=self.request_manager.filter_dict(payload))
 
@@ -632,7 +636,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         headers = self._auth_token(self._router.default_headers)
         data = {'type': transaction_type, 'format': 'PDF'}
-        url = self._router.build_url("GET_RECEIPT", transaction_id=transaction_id)
+        url = self._router.build_url(QiwiApiMethods.GET_RECEIPT, transaction_id=transaction_id)
         response = await self.request_manager.stream_content(url, "GET", params=data, headers=headers)
         return await api_helper.save_file(dir_path=dir_path, file_name=file_name, data=response)
 
@@ -802,8 +806,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
         data.headers = self._auth_token(headers=data.headers)
         response = await self.request_manager.send_request("POST", QiwiApiMethods.TO_WALLET, self._router,
-                                                           json=data.json,
-                                                           headers=data.headers)
+                                                           json=data.json, headers=data.headers)
         return cast(str, response['transaction']['id'])
 
     async def to_card(self, trans_sum: Union[float, int], to_card: str) -> Optional[str]:
@@ -895,9 +898,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             "paymentMethod": payment_method.dict(),
             "fields": fields.dict()
         }
-        response = await self.request_manager.make_request("POST", QiwiApiMethods.SPECIAL_PAYMENT,
-                                                           headers=self._router.default_headers,
-                                                           json=payload)
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.SPECIAL_PAYMENT, self._router,
+                                                           headers=self._router.default_headers, json=payload)
         return PaymentInfo.parse_obj(response)
 
     async def buy_qiwi_master(self) -> PaymentInfo:
@@ -957,7 +959,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         kwargs.update(data=self._router.config.QIWI_MASTER)
         payload = api_helper.new_card_data(**kwargs)
-        response = await self.request_manager.make_request("POST", QiwiApiMethods.BUY_QIWI_CARD, self._router,
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.BUY_QIWI_CARD, self._router,
                                                            json=payload,
                                                            headers=self._auth_token(self._router.default_headers))
         return OrderDetails.parse_obj(response)
@@ -1026,8 +1028,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         data = deepcopy(self._router.config.P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
         response = await self.request_manager.send_request("GET", QiwiApiMethods.CHECK_P2P_BILL_STATUS,
-                                                           self._p2p_router,
-                                                           headers=headers, bill_id=bill_id)
+                                                           self._p2p_router, headers=headers, bill_id=bill_id)
         return Bill.parse_obj(response).status.value
 
     async def create_p2p_bill(
@@ -1062,14 +1063,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         _life_time = api_helper.datetime_to_str_in_iso(constants.DEFAULT_BILL_TIME if not life_time else life_time)
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
-        payload = api_helper.set_data_p2p_create(
-            wrapped_data=data,
-            amount=amount,
-            comment=comment,
-            theme_code=theme_code,
-            pay_source_filter=pay_source_filter,
-            life_time=str(_life_time)
-        )
+        payload = api_helper.set_data_p2p_create(data, amount, str(_life_time), comment, theme_code, pay_source_filter)
         response = await self.request_manager.send_request("PUT", QiwiApiMethods.CREATE_P2P_BILL, self._p2p_router,
                                                            headers=headers, json=payload, bill_id=bill_id)
         return Bill.parse_obj(response)
@@ -1138,10 +1132,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
          параметр
         """
         headers = self._auth_token(self._router.default_headers, p2p=True)
-        data = {
-            'keysPairName': key_pair_name,
-            'serverNotificationsUrl': server_notification_url
-        }
+        data = {'keysPairName': key_pair_name, 'serverNotificationsUrl': server_notification_url}
         response = await self.request_manager.send_request("POST", QiwiApiMethods.CREATE_P2P_KEYS, self._router,
                                                            headers=headers, json=data)
         return P2PKeys.parse_obj(response)

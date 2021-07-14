@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import typing
 from types import TracebackType
-from typing import Optional, Dict, Any, Union, List, Tuple, Type
+from typing import Optional, Dict, Any, Union, Tuple, Type
 
 from aiohttp import web, RequestInfo
 from aiohttp.typedefs import LooseCookies
@@ -85,10 +85,10 @@ class AbstractParser(abc.ABC):
         method: str,
         set_timeout: bool = True,
         cookies: Optional[LooseCookies] = None,
-        json: Optional[dict] = None,
-        data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
-        headers: Optional[dict] = None,
-        params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+        json: Optional[Any] = None,
+        data: Optional[Any] = None,
+        headers: Optional[Any] = None,
+        params: Optional[Any] = None,
         **kwargs
     ) -> dict:
         raise NotImplementedError
@@ -170,8 +170,6 @@ class BaseWebHookView(web.View):
         Process POST request with basic IP validation.
 
         """
-        self.validate_ip()
-
         update = await self.parse_update()
 
         self._hash_validator(update)

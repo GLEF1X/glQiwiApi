@@ -347,7 +347,7 @@ class Executor:
         loop: asyncio.AbstractEventLoop = self.loop
         application = app or web.Application()
         hook_config, key = loop.run_until_complete(self.client.bind_webhook())
-        server.setup(
+        application = server.setup(
             dispatcher=self.dispatcher,
             app=application,
             path=path,
@@ -368,10 +368,10 @@ class Executor:
         """ Execute on_startup callback"""
         self.dispatcher.logger.debug("Start polling!")
         for callback in self._on_startup_calls:
-            await _inspect_and_execute_callback(callback=callback, client=self.client)
+            await _inspect_and_execute_callback(callback=callback, client=self.client)  # pragma: no cover
 
     async def goodbye(self) -> None:
         """ Execute on_shutdown callback """
         self.dispatcher.logger.debug("Goodbye!")
         for callback in self._on_shutdown_calls:
-            await _inspect_and_execute_callback(callback=callback, client=self.client)
+            await _inspect_and_execute_callback(callback=callback, client=self.client)  # pragma: no cover

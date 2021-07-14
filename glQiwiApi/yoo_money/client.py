@@ -22,8 +22,8 @@ from glQiwiApi.types import (
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.yoomoney_types.types import Card
-from glQiwiApi.utils.api_helper import parse_auth_link, parse_headers, datetime_to_str_in_iso, \
-    simple_multiply_parse, check_params, parse_amount, check_transactions_payload
+from glQiwiApi.utils.api_helper import parse_auth_link, parse_headers, simple_multiply_parse, check_params, \
+    parse_amount, check_transactions_payload
 from glQiwiApi.utils.errors import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
@@ -63,19 +63,12 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         """
         self.api_access_token = api_access_token
         self._router = YooMoneyRouter()
-        self._requests = RequestManager(
-            without_context=without_context,
-            messages=self._router.config.ERROR_CODE_NUMBERS,
-            cache_time=cache_time,
-            proxy=proxy
-        )
+        self._requests = RequestManager(without_context, self._router.config.ERROR_CODE_NUMBERS, cache_time, proxy)
 
         self.set_current(self)
 
-    def _auth_token(self, headers: dict) -> Dict[Any, Any]:
-        headers['Authorization'] = headers['Authorization'].format(
-            token=self.api_access_token
-        )
+    def _auth_token(self, headers: Dict[Any, Any]) -> Dict[Any, Any]:
+        headers['Authorization'] = headers['Authorization'].format(token=self.api_access_token)
         return headers
 
     @property
@@ -109,8 +102,9 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'redirect_uri': redirect_uri,
             'scope': " ".join(scope)
         }
-        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).send_request(
-            YooMoneyMethods.BUILD_URL_FOR_AUTH, router, "POST", headers=headers, data=params
+        url = router.build_url(YooMoneyMethods.BUILD_URL_FOR_AUTH)
+        response = await RequestManager(without_context=True, messages=router.config.ERROR_CODE_NUMBERS).text_content(
+            url, "POST", headers=headers, data=params
         )
         try:
             return parse_auth_link(response)
@@ -462,12 +456,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             # Parse amount and comment,
             # because the parameters depend on the type of transaction
             amount_, comment_ = parse_amount(transaction_type, detail)
-            checked = check_params(
-                amount=amount,
-                transaction_type=transaction_type,
-                amount_=amount_,
-                txn=detail
-            )
+            checked = check_params(amount_, amount, detail, transaction_type)
             if checked:
                 if detail.status == 'success':
                     if comment_ == comment and detail.sender == recipient:

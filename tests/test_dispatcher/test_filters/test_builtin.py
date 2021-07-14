@@ -1,5 +1,5 @@
 import pytest
-from glQiwiApi.core.builtin import transaction_webhook_filter, bill_webhook_filter
+from glQiwiApi.core.builtin import TransactionFilter, BillFilter
 from glQiwiApi import types
 from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA, TXN_RAW_DATA
 
@@ -7,8 +7,9 @@ from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA, TXN_RAW
 @pytest.mark.parametrize(
     "update", [types.Notification.parse_raw(NOTIFICATION_RAW_DATA)]
 )
-def test_bill_webhook_filter(update):
-    assert bill_webhook_filter.function(update)
+@pytest.mark.asyncio
+async def test_bill_webhook_filter(update):
+    assert await BillFilter().check(update)
 
 
 @pytest.mark.parametrize(
@@ -18,5 +19,6 @@ def test_bill_webhook_filter(update):
         types.Transaction.parse_raw(TXN_RAW_DATA),
     ],
 )
-def test_transaction_webhook_filter(update):
-    assert transaction_webhook_filter.function(update)
+@pytest.mark.asyncio
+async def test_transaction_webhook_filter(update):
+    assert await TransactionFilter().check(update)

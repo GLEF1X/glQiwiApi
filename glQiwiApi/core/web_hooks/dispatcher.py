@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import types
 from typing import List, Tuple, Callable, Union, TypeVar, Awaitable, Optional, cast
@@ -18,8 +19,15 @@ E = TypeVar("E")
 _T = TypeVar("_T")
 EventFilter = Callable[[E], bool]
 EventHandlerFunctor = Callable[[E], Awaitable[_T]]
-
 HandlerAlias = Callable[[EventHandlerFunctor], EventHandlerFunctor]
+
+
+class StopHandlingOtherTasks(Exception):
+    ...
+
+
+# It's highly undesirable to use this object outside the module, as this can lead to incorrect work
+_update_handled = asyncio.Event()
 
 
 class EventHandler:
@@ -38,16 +46,18 @@ class EventHandler:
         self._filters = filters
 
     async def check_then_execute(self, event: E) -> Optional[_T]:
-        """
-        Check event, apply all filters and than pass on to handler
+        """Check event, apply all filters and than pass on to handler"""
+        if _update_handled.is_set():
+            return None
 
-        :param event: handler
-        """
         for filter_ in self._filters:
             if not await filter_.check(event):
                 break
         else:
-            return await self._fn(event)
+            async with asyncio.Lock():
+                _update_handled.set()
+            await self._fn(event)
+
         return None  # hint for mypy(missing return statement)
 
 
@@ -61,11 +71,12 @@ class Dispatcher:
         self.transaction_handlers: List[EventHandler] = []
         self.bill_handlers: List[EventHandler] = []
         self._logger = _setup_logger()
+        self._once = False
 
     def register_transaction_handler(
         self,
         event_handler: EventHandlerFunctor,
-        *filters: Union[BaseFilter, EventFilter]
+        *filters: Union[BaseFilter, EventFilter],
     ) -> None:
         self.transaction_handlers.append(
             self.wrap_handler(
@@ -76,7 +87,7 @@ class Dispatcher:
     def register_bill_handler(
         self,
         event_handler: EventHandlerFunctor,
-        *filters: Union[EventFilter, BaseFilter]
+        *filters: Union[EventFilter, BaseFilter],
     ) -> None:
         self.bill_handlers.append(
             self.wrap_handler(event_handler, filters, default_filter=BillFilter())
@@ -92,7 +103,9 @@ class Dispatcher:
         return self._logger
 
     @logger.setter
-    def logger(self, logger: logging.Logger):
+    def logger(self, logger: logging.Logger) -> None:
+        if not isinstance(logger, logging.Logger):
+            raise TypeError(f"Expected Logger instance, instead got {logger}.")
         self._logger = logger
 
     @staticmethod
@@ -146,6 +159,9 @@ class Dispatcher:
         Feed handlers with event.
         :param event: any object that will be translated to handlers
         """
-
+        tasks = []
         for handler in self.handlers:
-            await handler.check_then_execute(event)
+            tasks.append(asyncio.create_task(handler.check_then_execute(event)))
+
+        await asyncio.gather(*tasks)
+        _update_handled.clear()

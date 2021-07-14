@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import binascii
 import concurrent.futures as futures
 import datetime
 import functools as ft
@@ -18,7 +17,6 @@ import pytz
 from pydantic import ValidationError, BaseModel
 from pytz.reference import LocalTimezone
 
-from glQiwiApi import InvalidData
 from glQiwiApi.types import OperationType
 from glQiwiApi.utils import errors
 
@@ -98,7 +96,9 @@ def datetime_to_str_in_iso(obj, *, yoo_money_format=False):
     if yoo_money_format:
         # Приводим время к UTC,
         # так как yoomoney апи принимает именно в таком формате
-        return (pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z")
+        # fmt: off
+        return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z"
+        # fmt: on
     local_date = str(datetime.datetime.now(tz=Local))
     pattern = re.compile(r"[+]\d{2}[:]\d{2}")
     from_pattern = re.findall(pattern, local_date)[0]
@@ -119,7 +119,7 @@ def parse_auth_link(response_data):
 def check_dates(start_date, end_date, payload_data):
     """ Check correctness of transferred dates and add it to request """
     if isinstance(start_date, (datetime.datetime, datetime.timedelta)) and isinstance(
-            end_date, (datetime.datetime, datetime.timedelta)
+        end_date, (datetime.datetime, datetime.timedelta)
     ):
         if (end_date - start_date).total_seconds() > 0:
             payload_data.update(
@@ -143,10 +143,10 @@ def parse_commission_request_payload(default_data, auth_maker, pay_sum, to_accou
 
 
 def parse_card_data(
-        default_data,
-        trans_sum,
-        to_card,
-        auth_maker,
+    default_data,
+    trans_sum,
+    to_card,
+    auth_maker,
 ):
     """Set card data payload"""
     data = deepcopy(default_data)
@@ -190,7 +190,7 @@ def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
 
 
 def set_data_p2p_create(
-        wrapped_data, amount, life_time, comment, theme_code, pay_source_filter
+    wrapped_data, amount, life_time, comment, theme_code, pay_source_filter
 ):
     """
     Setting data for p2p form creation transfer
@@ -282,20 +282,20 @@ def hmac_key(key, amount, status, bill_id, site_id):
     :param bill_id: unique p2p id
     :param site_id:
     """
-    byte_key = binascii.unhexlify(key)
-    invoice_params = (
-        f"{amount.currency}|{amount.value}|{bill_id}|{site_id}|{status.value}"
-    ).encode("utf-8")
-
-    return hmac.new(byte_key, invoice_params, hashlib.sha256).hexdigest().upper()
+    invoice_params = bytes(
+        f"{amount.currency}|{amount.value}|{bill_id}|{site_id}|{status.value}", "utf-8"
+    )
+    return hmac.new(bytes(key), invoice_params, hashlib.sha256).hexdigest()
 
 
 def hmac_for_transaction(
-        webhook_key_base64, amount, txn_type, account, txn_id, txn_hash
+    webhook_key_base64, amount, txn_type, account, txn_id, txn_hash
 ):
     invoice_params = f"{amount.currency}|{amount.amount}|{txn_type}|{account}|{txn_id}"
     webhook_key = base64.b64decode(bytes(webhook_key_base64, "utf-8"))
-    return (hmac.new(webhook_key, invoice_params.encode("utf-8"), hashlib.sha256).hexdigest() == txn_hash)  # NOQA
+    # fmt: off
+    return hmac.new(webhook_key, invoice_params.encode("utf-8"), hashlib.sha256).hexdigest() == txn_hash
+    # fmt: on
 
 
 def custom_load(data):
@@ -559,13 +559,15 @@ def check_api_method(api_method):
 
 
 def check_transactions_payload(
-        data,
-        records,
-        operation_types=None,
-        start_date=None,
-        end_date=None,
-        start_record=None,
+    data,
+    records,
+    operation_types=None,
+    start_date=None,
+    end_date=None,
+    start_record=None,
 ):
+    from glQiwiApi import InvalidData
+
     if records <= 0 or records > 100:
         raise InvalidData(
             "Неверное количество записей. "
@@ -574,15 +576,17 @@ def check_transactions_payload(
         )
     if operation_types:
         if all(
-                isinstance(operation_type, OperationType)
-                for operation_type in operation_types
+            isinstance(operation_type, OperationType)
+            for operation_type in operation_types
         ):
             op_types = [operation_type.value for operation_type in operation_types]
             data.update({"type": " ".join(op_types)})
+
     if isinstance(start_record, int):
         if start_record < 0:
             raise InvalidData("Укажите позитивное число")
         data.update({"start_record": start_record})
+
     if start_date:
         if not isinstance(start_date, datetime.datetime):
             raise InvalidData(
@@ -594,6 +598,7 @@ def check_transactions_payload(
         if not isinstance(end_date, datetime.datetime):
             raise InvalidData("Параметр end_date был передан неправильным типом данных")
         data.update({"till": datetime_to_str_in_iso(end_date, yoo_money_format=True)})
+    return data
 
 
 def check_dates_for_statistic_request(start_date, end_date):

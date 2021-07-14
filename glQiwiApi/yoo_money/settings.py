@@ -14,19 +14,13 @@ class YooMoneyRouter(AbstractRouter):
 
     __head__ = "https://yoomoney.ru"
 
-    def setup_config(self) -> YooMoneyMethods:
-        return get_settings()
+    def setup_config(self) -> YooMoneyConfig:
+        return YooMoneyConfig()
 
     @functools.lru_cache()
     def build_url(self, tail: str, **kwargs: Any) -> str:
         pre_build_url = self.__head__ + tail
         return super()._format_url_kwargs(pre_build_url, **kwargs)
-
-
-@functools.lru_cache()
-def get_settings() -> YooMoneyMethods:
-    settings = YooMoneyMethods()
-    return settings
 
 
 class YooMoneyConfig:

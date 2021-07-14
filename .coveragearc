@@ -3,5 +3,9 @@
 [report]
 exclude_lines =
     pragma: no cover
-    @abstract
+    def __repr__
+    @abstractmethod
     type: ignore
+omit =
+    glQiwiApi/ext/*
+    glQiwiApi/yoo_money/*

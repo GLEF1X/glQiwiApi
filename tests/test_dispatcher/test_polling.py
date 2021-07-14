@@ -1,14 +1,15 @@
 import asyncio
 from datetime import datetime
+from typing import Optional, List
 
 import pytest
 import timeout_decorator
-from _pytest.fixtures import SubRequest
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types
 from glQiwiApi.types import Transaction, Sum
 from glQiwiApi.types.qiwi_types.transaction import Provider
+from tests.types.dataset import WRONG_API_DATA
 
 txn = Transaction(
     txnId=50,
@@ -27,10 +28,24 @@ txn = Transaction(
 )
 
 
+class MockQiwiApi(QiwiWrapper):
+    def __new__(cls, *args, **kwargs):
+        return object().__new__(cls)
+
+    async def transactions(
+        self,
+        rows_num: int = 50,
+        operation: str = "ALL",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+    ) -> List[Transaction]:
+        return [txn]
+
+
 @pytest.fixture(name="api")
-async def api_fixture(credentials: dict, request: SubRequest, capsys):
+async def api_fixture():
     """ Api fixture """
-    _wrapper = QiwiWrapper(**credentials)
+    _wrapper = MockQiwiApi(WRONG_API_DATA)
     yield _wrapper
     await _wrapper.close()
 
@@ -46,13 +61,19 @@ class TestPolling:
     def _start_polling(self, api: QiwiWrapper):
         from glQiwiApi.utils import executor
 
-        self._handled = False
+        self._handled_first = False
+        self._handled_second = False
 
         # Also, without decorators, you can do like this
         # api.dispatcher.register_transaction_handler(my_handler)
         @api.transaction_handler()
-        async def my_handler(event: types.Transaction):
-            self._handled = True
+        async def my_first_handler(event: types.Transaction):
+            self._handled_first = True
+            assert isinstance(event, types.Transaction)
+
+        @api.transaction_handler()
+        async def my_second_handler(event: types.Transaction):
+            self._handled_second = True
             assert isinstance(event, types.Transaction)
 
         executor.start_polling(api, on_startup=_on_startup_callback)
@@ -62,4 +83,5 @@ class TestPolling:
         try:
             self._start_polling(api)
         except timeout_decorator.TimeoutError:
-            assert self._handled is True
+            assert self._handled_first
+            assert not self._handled_second

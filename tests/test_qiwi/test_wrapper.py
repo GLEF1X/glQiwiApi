@@ -4,8 +4,6 @@ import uuid
 from typing import Union
 
 import pytest
-from _pytest.capture import CaptureFixture
-from _pytest.monkeypatch import MonkeyPatch
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types, InvalidData

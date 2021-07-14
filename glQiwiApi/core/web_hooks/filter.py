@@ -55,7 +55,7 @@ class LambdaBasedFilter(BaseFilter):
         if self.awaitable:
             return await cast(Awaitable[bool], self.function(update))
         else:
-            return self.function(update)  # type: ignore
+            return cast(bool, self.function(update))
 
 
 __all__ = ("LambdaBasedFilter", "BaseFilter")

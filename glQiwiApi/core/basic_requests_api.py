@@ -122,10 +122,10 @@ class HttpXParser(AbstractParser):
         method: str,
         set_timeout: bool = True,
         cookies: Optional[LooseCookies] = None,
-        json: Optional[dict] = None,
-        data: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
-        headers: Optional[dict] = None,
-        params: Optional[Dict[str, Union[str, int, List[Union[str, int]]]]] = None,
+        json: Optional[Any] = None,
+        data: Optional[Any] = None,
+        headers: Optional[Any] = None,
+        params: Optional[Any] = None,
         **kwargs,
     ) -> Dict[Any, Any]:
         """
@@ -240,3 +240,33 @@ class HttpXParser(AbstractParser):
             additional_info=f"{__version__} version api",
             traceback_info=traceback_info,
         )
+
+    async def text_content(
+        self,
+        url: str,
+        method: str,
+        set_timeout: bool = True,
+        cookies: Optional[LooseCookies] = None,
+        json: Optional[Any] = None,
+        data: Optional[Any] = None,
+        headers: Optional[Any] = None,
+        params: Optional[Any] = None,
+        encoding: Optional[str] = None,
+        **kwargs,
+    ):
+        headers = headers or self.base_headers
+        # Create new session if old was closed
+        session = await self.create_session(
+            timeout=self._timeout if set_timeout else DEFAULT_TIMEOUT
+        )
+        resp = await session.request(
+            method=method,
+            url=url,
+            data=data,
+            headers=headers,
+            json=json if isinstance(json, dict) else None,
+            cookies=cookies,
+            params=params,
+            **kwargs,
+        )
+        return await resp.text(encoding=encoding)

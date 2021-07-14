@@ -75,9 +75,9 @@ class RequestManager(HttpXParser):
         set_timeout: bool = True,
         cookies: Optional[LooseCookies] = None,
         json: Optional[Any] = None,
-        data: Optional[Dict[Any, Any]] = None,
-        headers: Optional[Dict[Any, Any]] = None,
-        params: Optional[Dict[Any, Any]] = None,
+        data: Optional[Any] = None,
+        headers: Optional[Any] = None,
+        params: Optional[Any] = None,
         **kwargs
     ) -> Dict[Any, Any]:
         """ Send request to service(API) """

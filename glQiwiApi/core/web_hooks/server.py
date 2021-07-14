@@ -49,7 +49,7 @@ class QiwiWalletWebView(BaseWebHookView):
         return types.WebHook.parse_raw(data)
 
     async def post(self) -> web.Response:
-        await super().post()
+        await super(QiwiWalletWebView, self).post()
         return web.Response(text="ok")
 
     def _hash_validator(self, update: types.WebHook) -> None:
@@ -98,7 +98,7 @@ class QiwiBillWebView(BaseWebHookView):
 
     async def parse_update(self) -> types.Notification:
         payload = await self.request.json()
-        return types.Notification.parse_obj(payload)
+        return types.Notification.parse_raw(payload)
 
     async def post(self) -> Response:
         self.validate_ip()
@@ -159,7 +159,7 @@ def setup(
     secret_key: typing.Optional[str] = None,
     base64_key: typing.Optional[str] = None,
     tg_app: typing.Optional[BaseProxy] = None,
-) -> None:
+) -> web.Application:
     """
     Entirely configures the web app for webhooks
 
@@ -174,6 +174,7 @@ def setup(
     setup_bill_data(app, secret_key, dispatcher, path)
     setup_transaction_data(app, base64_key, dispatcher, path)
     _setup_tg_proxy(tg_app, app)
+    return app
 
 
 def _setup_tg_proxy(tg_app: typing.Optional[BaseProxy], app: web.Application) -> None:
@@ -187,6 +188,6 @@ def _setup_tg_proxy(tg_app: typing.Optional[BaseProxy], app: web.Application) ->
         if not isinstance(tg_app, BaseProxy):
             raise TypeError(
                 "Invalid telegram proxy. Expected"
-                f"class that inherit from the parent `BaseTelegramProxy`, got {type(tg_app)}"
+                f"class that inherit from the parent `BaseProxy`, got {type(tg_app)}"
             )
         tg_app.setup(app=app)

@@ -19,38 +19,38 @@ class BillStatus(Base):
     """ Object: BillStatus """
 
     value: str
-    changed_datetime: datetime = Field(alias="changedDateTime")
+    changed_datetime: datetime = Field(..., alias="changedDateTime")
 
 
 class CustomFields(Base):
     """ Object: CustomFields """
 
-    pay_sources_filter: Optional[str] = Field(alias="paySourcesFilter", default=None)
-    theme_code: Optional[str] = Field(alias="themeCode", default=None)
+    pay_sources_filter: Optional[str] = Field(None, alias="paySourcesFilter")
+    theme_code: Optional[str] = Field(None, alias="themeCode")
 
 
 class BillError(Base):
     """ Object: BillError """
 
-    service_name: str = Field(alias="serviceName")
-    error_code: str = Field(alias="errorCode")
+    service_name: str = Field(..., alias="serviceName")
+    error_code: str = Field(..., alias="errorCode")
     description: str
-    user_message: str = Field(alias="userMessage")
-    datetime: str = Field(alias="dateTime")
-    trace_id: str = Field(alias="traceId")
+    user_message: str = Field(..., alias="userMessage")
+    datetime: str = Field(..., alias="dateTime")
+    trace_id: str = Field(..., alias="traceId")
 
 
 class Bill(Base):
     """ Object: Bill """
 
-    site_id: str = Field(alias="siteId")
-    bill_id: str = Field(alias="billId")
+    site_id: str = Field(..., alias="siteId")
+    bill_id: str = Field(..., alias="billId")
     amount: OptionalSum
     status: BillStatus
-    creation_date_time: datetime = Field(alias="creationDateTime")
-    expiration_date_time: datetime = Field(alias="expirationDateTime")
-    pay_url: Optional[str] = Field(alias="payUrl", default=None)
-    custom_fields: Optional[CustomFields] = Field(alias="customFields", default=None)
+    creation_date_time: datetime = Field(..., alias="creationDateTime")
+    expiration_date_time: datetime = Field(..., alias="expirationDateTime")
+    pay_url: Optional[str] = Field(None, alias="payUrl")
+    custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
     customer: Optional[Customer] = None
 
     class Config:

@@ -35,22 +35,22 @@ class WebhookURL(
         )
 
     @classmethod
-    def _assert_int(cls, v: Any, *, param_name: str):
+    def _assert_int(cls, v: Optional[Any], *, param_name: str) -> Optional[int]:
         if v is None:
             return v
 
         if not isinstance(v, int):
-            raise TypeError("%s must be a string" % param_name)
+            raise TypeError("%s must be integer" % param_name)
         return v
 
     @classmethod
     def _assert_str(
         cls,
-        v: Any,
+        v: Optional[Any],
         *,
         param_name: str,
         additional_filter: Optional[Callable[[Any], bool]] = None,
-    ):
+    ) -> Optional[str]:
         if v is None:
             return v
 
@@ -64,9 +64,7 @@ class WebhookURL(
         return v
 
     @classmethod
-    def _assert_host(cls, v: Any, *, param_name: str):
-        if v is None:
-            return v
+    def _assert_host(cls, v: Any, *, param_name: str) -> str:
         regex_pattern = re.compile(
             r"^(http(s?)://)?"
             r"(((www\.)?[a-zA-Z0-9.\-_]+"
