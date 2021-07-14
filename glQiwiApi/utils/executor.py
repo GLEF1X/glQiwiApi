@@ -282,10 +282,10 @@ class Executor:
         loop.run_until_complete(asyncio.gather(*coroutines, loop=loop))
 
     async def _shutdown_tg_app(self) -> None:
-        self.tg_app.dispatcher.stop_polling()  # type: ignore
-        await self.tg_app.dispatcher.storage.close()  # type: ignore
-        await self.tg_app.dispatcher.storage.wait_closed()  # type: ignore
-        await self.tg_app.dispatcher.bot.session.close()  # type: ignore
+        self.telegram_proxy_application.dispatcher.stop_polling()  # type: ignore
+        await self.telegram_proxy_application.dispatcher.storage.close()  # type: ignore
+        await self.telegram_proxy_application.dispatcher.storage.wait_closed()  # type: ignore
+        await self.telegram_proxy_application.dispatcher.bot.session.close()  # type: ignore
 
     async def _parse_history_and_process_events(self, history: List[Transaction]) -> None:
         """

@@ -26,7 +26,7 @@
 ### 💾Installation
 
 ```bash
-pip install glQiwiApi
+pip install glQiwiApi==1.0.3b2
 ```
 
 ---
@@ -179,7 +179,7 @@ asyncio.run(main())
 
 ```python
 
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import QiwiWrapper, types, BaseFilter
 from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
@@ -187,8 +187,13 @@ wallet = QiwiWrapper(
     secret_p2p='secret token from https://qiwi.com/p2p-admin/'
 )
 
+class CustomFilter(BaseFilter):
+    async def check(self, update: types.Transaction) -> bool:
+        # some stuff
+        return True
 
-@wallet.transaction_handler(lambda event: ...)
+
+@wallet.transaction_handler(CustomFilter())  # start with 1.0.3b2 you can use class-based filters, but also combine it with lambda statements, if you want
 async def get_transaction(event: types.WebHook):
     print(event)
 
@@ -204,33 +209,30 @@ executor.start_webhook(wallet, port=80)
 ## 🧑🏻🔬Polling updates
 
 ```python
-import datetime
-
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import BaseFilter, QiwiWrapper, types
 from glQiwiApi.utils import executor
 
-api_access_token = "your token"
-phone_number = "your number"
-
-wallet = QiwiWrapper(
-    api_access_token=api_access_token,
-    phone_number=phone_number
-)
+# let's imagine that payload its a dictionary with your tokens =)
+wallet = QiwiWrapper(**payload)
 
 
-@wallet.transaction_handler()
-async def my_first_handler(update: types.Transaction):
-    assert isinstance(update, types.Transaction)
+class MyFirstFilter(BaseFilter):
+    async def check(self, update: types.Transaction) -> bool:
+        return True
 
 
-def on_startup(wrapper: QiwiWrapper):
-    wrapper.dp.logger.info("This message logged on startup")
+class MySecondFilter(BaseFilter):
+
+    async def check(self, update: types.Transaction) -> bool:
+        return False
 
 
-executor.start_polling(
-    wallet,
-    on_startup=on_startup
-)
+@wallet.transaction_handler(MyFirstFilter(), lambda event: event is not None, ~MySecondFilter())
+async def my_handler(event: types.Transaction):
+    ...
+
+
+executor.start_polling(wallet)
 ```
 
 ## 💳Send to card & check commission

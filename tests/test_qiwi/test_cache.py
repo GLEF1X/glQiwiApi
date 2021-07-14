@@ -14,7 +14,7 @@ CACHE_TIME = 5
 @pytest.fixture(name="api")
 async def api_fixture(credentials: Dict[str, str]):
     """ Api fixture """
-    _wrapper = QiwiWrapper(**credentials, cache_time=CACHE_TIME)
+    _wrapper = QiwiWrapper(**credentials, cache_time=CACHE_TIME)  # type: ignore
     yield _wrapper
     await _wrapper.close()
 
@@ -57,7 +57,7 @@ class TestCache:
         async with api:
             first_response = await api.transactions(**payload1)
             with pytest.raises(asyncio.TimeoutError):
-                await asyncio.wait_for(api.transactions(**payload2), 0.04)
+                await asyncio.wait_for(api.transactions(**payload2), 0.07)
             second_uncached_response = await api.transactions(**payload2)
         assert first_response != second_uncached_response
 
