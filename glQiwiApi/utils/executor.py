@@ -252,7 +252,7 @@ class Executor:
             first_payment: Transaction = history_from_first_to_last[0]
             self.last_handled_txn_id = first_payment.transaction_id - 1
 
-        await self._parse_history_and_process_events(history=history_from_first_to_last)
+        await self._parse_history_and_process_events(history_from_first_to_last)
 
     async def _start_polling(self, **kwargs: Any) -> None:
         """
