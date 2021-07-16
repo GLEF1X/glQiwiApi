@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from http.cookies import SimpleCookie
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 from aiohttp.typedefs import RawHeaders
 
@@ -9,13 +9,13 @@ from glQiwiApi.utils.errors import NetworkError
 
 @dataclass
 class Response:
-    """ object: Response """
+    """object: Response"""
 
     status_code: int
     response_data: Any
     url: Optional[str] = None
     raw_headers: Optional[RawHeaders] = None
-    cookies: Optional[SimpleCookie] = None
+    cookies: Optional[Any] = None
     ok: bool = False
     content_type: Optional[str] = None
     host: Optional[str] = None
@@ -30,12 +30,12 @@ class Response:
 
 @dataclass
 class WrapperData:
-    """ object: WrapperData """
+    """object: WrapperData"""
 
-    headers: dict
-    data: Optional[dict] = None
-    json: Optional[dict] = None
-    cookies: Optional[dict] = None
+    headers: Dict[Any, Any]
+    data: Optional[Dict[Any, Any]] = None
+    json: Optional[Dict[Any, Any]] = None
+    cookies: Optional[Dict[Any, Any]] = None
 
 
 __all__ = ("Response", "WrapperData")

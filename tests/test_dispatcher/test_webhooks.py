@@ -17,9 +17,9 @@ pytestmark = pytest.mark.asyncio
 
 
 async def test_bill_webhooks(
-        app: web.Application,
-        test_aiohttp: Callable[..., Awaitable[TestClient]],
-        mocker: MockerFixture,
+    app: web.Application,
+    test_aiohttp: Callable[..., Awaitable[TestClient]],
+    mocker: MockerFixture,
 ):
     client = await test_aiohttp(app)
     bill_event: asyncio.Event = app["bill_event"]

@@ -46,17 +46,17 @@ T = TypeVar("T")
 
 
 def start_webhook(
-        client: QiwiWrapper,
-        *,
-        host: str = "localhost",
-        port: int = 8080,
-        path: Optional[Path] = None,
-        on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-        on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-        tg_app: Optional[TelegramWebhookProxy] = None,
-        app: Optional["web.Application"] = None,
-        ssl_context: Optional[SSLContext] = None,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+    client: QiwiWrapper,
+    *,
+    host: str = "localhost",
+    port: int = 8080,
+    path: Optional[Path] = None,
+    on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+    on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+    tg_app: Optional[TelegramWebhookProxy] = None,
+    app: Optional["web.Application"] = None,
+    ssl_context: Optional[SSLContext] = None,
+    loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Blocking function that listens for webhooks
@@ -77,17 +77,19 @@ def start_webhook(
     _setup_callbacks(executor, on_startup, on_shutdown)
     if isinstance(tg_app, TelegramWebhookProxy) and ssl_context is None:
         ssl_context = tg_app.ssl_context
-    executor.start_webhook(host=host, port=port, path=path, app=app, ssl_context=ssl_context)
+    executor.start_webhook(
+        host=host, port=port, path=path, app=app, ssl_context=ssl_context
+    )
 
 
 def start_polling(
-        client: QiwiWrapper,
-        *,
-        get_updates_from: Optional[datetime] = None,
-        timeout: Union[float, int, ClientTimeout] = 5,
-        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
-        tg_app: Optional[BaseProxy] = None,
+    client: QiwiWrapper,
+    *,
+    get_updates_from: Optional[datetime] = None,
+    timeout: Union[float, int, ClientTimeout] = 5,
+    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+    tg_app: Optional[BaseProxy] = None,
 ) -> None:
     """
     Setup for long-polling mode
@@ -109,7 +111,9 @@ def start_polling(
     executor.start_polling(get_updates_from=get_updates_from, timeout=timeout)
 
 
-async def _inspect_and_execute_callback(client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]) -> None:
+async def _inspect_and_execute_callback(
+    client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
+) -> None:
     if inspect.iscoroutinefunction(callback):
         await callback(client)
     else:
@@ -118,15 +122,19 @@ async def _inspect_and_execute_callback(client: "QiwiWrapper", callback: Callabl
 
 def _check_callback(callback: Callable[[QiwiWrapper], Any]) -> NoReturn:
     if not isinstance(callback, types.FunctionType):
-        raise BadCallback("Колбек, переданный в on_startup/on_shutdown не является функцией")  # NOQA
+        raise BadCallback(
+            "Колбек, переданный в on_startup/on_shutdown не является функцией"
+        )  # NOQA
     if len(inspect.getfullargspec(callback).args) < 1:
-        raise BadCallback("Функция on_startup или on_shutdown должна принимать аргумент - экземпляр класса QiwiWrapper")
+        raise BadCallback(
+            "Функция on_startup или on_shutdown должна принимать аргумент - экземпляр класса QiwiWrapper"
+        )
 
 
 def _setup_callbacks(
-        executor: Executor,
-        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+    executor: Executor,
+    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
 ) -> None:
     """
     Function, which setup callbacks and set it to dispatcher object
@@ -167,10 +175,10 @@ class Executor:
     """
 
     def __init__(
-            self,
-            client: QiwiWrapper,
-            tg_app: Optional[BaseProxy],
-            loop: Optional[asyncio.AbstractEventLoop] = None,
+        self,
+        client: QiwiWrapper,
+        tg_app: Optional[BaseProxy],
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         """
 
@@ -200,7 +208,9 @@ class Executor:
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
-        return cast(asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop()))
+        return cast(
+            asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop())
+        )
 
     def add_shutdown_callback(self, callback: Callable[[QiwiWrapper], Any]) -> None:
         _check_callback(callback)
@@ -228,7 +238,9 @@ class Executor:
          class Transaction - raise exception
 
         """
-        history = await self.client.transactions(end_date=self.get_updates_until, start_date=self.get_updates_from)
+        history = await self.client.transactions(
+            end_date=self.get_updates_until, start_date=self.get_updates_from
+        )
         if not history or not all(isinstance(txn, Transaction) for txn in history):
             raise NoUpdatesToExecute()
         return history
@@ -276,7 +288,7 @@ class Executor:
         On shutdown, executor gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
         """
-        coroutines: List[Coroutine] = [self.goodbye(), self.client.close()]
+        coroutines = [self.goodbye(), self.client.close()]
         if isinstance(self._tg_app, BaseProxy):
             coroutines.append(self._shutdown_tg_app())
         loop.run_until_complete(asyncio.gather(*coroutines, loop=loop))
@@ -287,7 +299,9 @@ class Executor:
         await self.telegram_proxy_application.dispatcher.storage.wait_closed()  # type: ignore
         await self.telegram_proxy_application.dispatcher.bot.session.close()  # type: ignore
 
-    async def _parse_history_and_process_events(self, history: List[Transaction]) -> None:
+    async def _parse_history_and_process_events(
+        self, history: List[Transaction]
+    ) -> None:
         """
         Processing events and send callbacks to handlers
 
@@ -300,15 +314,17 @@ class Executor:
                 self.get_updates_until = self.get_updates_from
 
     def start_polling(
-            self,
-            *,
-            get_updates_from: Optional[datetime] = None,
-            timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
+        self,
+        *,
+        get_updates_from: Optional[datetime] = None,
+        timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
     ) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
         try:
             loop.run_until_complete(self.welcome())
-            loop.create_task(self._start_polling(get_updates_from=get_updates_from, timeout=timeout))
+            loop.create_task(
+                self._start_polling(get_updates_from=get_updates_from, timeout=timeout)
+            )
             if isinstance(self.telegram_proxy_application, BaseProxy):
                 self.telegram_proxy_application.setup(loop=loop)
             loop.run_forever()
@@ -319,14 +335,14 @@ class Executor:
             self._on_shutdown(loop=loop)
 
     def start_webhook(
-            self,
-            *,
-            host: str = "localhost",
-            port: int = 8080,
-            path: Optional[Path] = None,
-            app: Optional[web.Application] = None,
-            ssl_context: Optional[SSLContext] = None,
-    ):
+        self,
+        *,
+        host: str = "localhost",
+        port: int = 8080,
+        path: Optional[Path] = None,
+        app: Optional[web.Application] = None,
+        ssl_context: Optional[SSLContext] = None,
+    ) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
         application = app or web.Application()
         hook_config, key = loop.run_until_complete(self.client.bind_webhook())
@@ -350,9 +366,13 @@ class Executor:
     async def welcome(self) -> None:
         self.dispatcher.logger.debug("Start polling!")
         for callback in self._on_startup_calls:
-            await _inspect_and_execute_callback(callback=callback, client=self.client)  # pragma: no cover
+            await _inspect_and_execute_callback(
+                callback=callback, client=self.client
+            )  # pragma: no cover
 
     async def goodbye(self) -> None:
         self.dispatcher.logger.debug("Goodbye!")
         for callback in self._on_shutdown_calls:
-            await _inspect_and_execute_callback(callback=callback, client=self.client)  # pragma: no cover
+            await _inspect_and_execute_callback(
+                callback=callback, client=self.client
+            )  # pragma: no cover

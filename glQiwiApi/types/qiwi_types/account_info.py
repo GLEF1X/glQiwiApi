@@ -1,6 +1,6 @@
 import ipaddress
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 
 from pydantic import Field, validator
 
@@ -11,7 +11,7 @@ from glQiwiApi.utils.currency_util import Currency
 
 
 class PassInfo(Base):
-    """ object: PassInfo """
+    """object: PassInfo"""
 
     last_pass_change: str = Field(alias="lastPassChange")
     next_pass_change: str = Field(alias="nextPassChange")
@@ -19,7 +19,7 @@ class PassInfo(Base):
 
 
 class MobilePinInfo(Base):
-    """ object: MobilePinInfo """
+    """object: MobilePinInfo"""
 
     last_mobile_pin_change: Optional[datetime] = Field(alias="lastMobilePinChange")
     mobile_pin_used: bool = Field(alias="mobilePinUsed")
@@ -27,18 +27,18 @@ class MobilePinInfo(Base):
 
 
 class PinInfo(Base):
-    """ object: PinInfo """
+    """object: PinInfo"""
 
     pin_used: bool = Field(alias="pinUsed")
 
 
 class AuthInfo(Base):
-    """ object: AuthInfo """
+    """object: AuthInfo"""
 
     ip: ipaddress.IPv4Address
-    bound_email: Optional[str] = Field(alias="boundEmail", const=None)
-    last_login_date: Optional[datetime] = Field(alias="lastLoginDate", const=None)
-    email_settings: Optional[dict] = Field(alias="emailSettings", const=None)
+    bound_email: Optional[str] = Field(None, alias="boundEmail")
+    last_login_date: Optional[datetime] = Field(None, alias="lastLoginDate")
+    email_settings: Optional[Dict[Any, Any]] = Field(None, alias="emailSettings")
     mobile_pin_info: MobilePinInfo = Field(alias="mobilePinInfo")
     pass_info: PassInfo = Field(alias="passInfo")
     person_id: int = Field(alias="personId")
@@ -47,16 +47,16 @@ class AuthInfo(Base):
 
 
 class SmsNotification(Base):
-    """ object: SmsNotification """
+    """object: SmsNotification"""
 
     price: Sum
     enabled: bool
     active: bool
-    end_date: Optional[datetime] = Field(alias="endDate", const=None)
+    end_date: Optional[datetime] = Field(None, alias="endDate")
 
 
 class IdentificationInfo(Base):
-    """ object: IdentificationInfo """
+    """object: IdentificationInfo"""
 
     bank_alias: str = Field(alias="bankAlias")
     identification_level: str = Field(alias="identificationLevel")
@@ -64,7 +64,7 @@ class IdentificationInfo(Base):
 
 
 class NickName(Base):
-    """ object: NickName """
+    """object: NickName"""
 
     nickname: Optional[str] = None
     can_change: bool = Field(alias="canChange")
@@ -73,7 +73,7 @@ class NickName(Base):
 
 
 class Feature(Base):
-    """ object: Feature """
+    """object: Feature"""
 
     feature_id: int = Field(alias="featureId")
     feature_value: str = Field(alias="featureValue")
@@ -82,7 +82,7 @@ class Feature(Base):
 
 
 class ContractInfo(Base):
-    """ object: ContractInfo """
+    """object: ContractInfo"""
 
     blocked: bool = False
     contract_id: int = Field(alias="contractId")
@@ -94,22 +94,20 @@ class ContractInfo(Base):
 
 
 class UserInfo(Base):
-    """ object: UserInfo """
+    """object: UserInfo"""
 
     default_pay_currency: CurrencyModel = Field(alias="defaultPayCurrency")
-    default_pay_source: Optional[int] = Field(alias="defaultPaySource", const=None)
-    default_pay_account_alias: Optional[str] = Field(
-        alias="defaultPayAccountAlias", const=None
-    )
+    default_pay_source: Optional[int] = Field(None, alias="defaultPaySource")
+    default_pay_account_alias: Optional[str] = Field(None, alias="defaultPayAccountAlias")
     email: Optional[str] = None
     first_transaction_id: int = Field(alias="firstTxnId")
     language: str
     operator: str
     phone_hash: str = Field(alias="phoneHash")
-    promo_enabled: Optional[bool] = Field(alias="promoEnabled", const=None)
+    promo_enabled: Optional[bool] = Field(None, alias="promoEnabled")
 
-    @validator("default_pay_currency", pre=True, check_fields=True)
-    def humanize_pay_currency(cls, v):
+    @validator("default_pay_currency", pre=True)
+    def humanize_pay_currency(cls, v):  # type: ignore
         if not isinstance(v, int):
             return v
         return Currency.get(str(v))
@@ -118,9 +116,9 @@ class UserInfo(Base):
 class QiwiAccountInfo(Base):
     """Информация об аккаунте"""
 
-    auth_info: Optional[AuthInfo] = Field(alias="authInfo", const=None)
-    contract_info: Optional[ContractInfo] = Field(alias="contractInfo", const=None)
-    user_info: Optional[UserInfo] = Field(alias="userInfo", const=None)
+    auth_info: Optional[AuthInfo] = Field(None, alias="authInfo")
+    contract_info: Optional[ContractInfo] = Field(None, alias="contractInfo")
+    user_info: Optional[UserInfo] = Field(None, alias="userInfo")
 
 
 __all__ = ["QiwiAccountInfo"]

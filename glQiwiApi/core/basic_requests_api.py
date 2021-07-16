@@ -24,7 +24,7 @@ _ProxyType = Union[_ProxyChain, _ProxyBasic]
 
 
 def _retrieve_basic(basic: _ProxyBasic) -> Dict[str, Any]:
-    from aiohttp_socks.utils import parse_proxy_url  # type: ignore
+    from aiohttp_socks.utils import parse_proxy_url
 
     proxy_auth: Optional[aiohttp.BasicAuth] = None
 
@@ -51,7 +51,7 @@ def _retrieve_basic(basic: _ProxyBasic) -> Dict[str, Any]:
 def _prepare_connector(
     chain_or_plain: _ProxyType,
 ) -> Tuple[Type["aiohttp.TCPConnector"], Dict[str, Any]]:
-    from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyInfo  # type: ignore
+    from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyInfo
 
     # since tuple is Iterable(compatible with _ProxyChain) object, we assume that
     # user wants chained proxies if tuple is a pair of string(url) and BasicAuth
@@ -126,7 +126,7 @@ class HttpXParser(AbstractParser):
         data: Optional[Any] = None,
         headers: Optional[Any] = None,
         params: Optional[Any] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Dict[Any, Any]:
         """
         Send request to some url. Method has a similar signature with the `aiohttp.request`
@@ -184,7 +184,7 @@ class HttpXParser(AbstractParser):
         :return:
         """
         try:
-            from uvloop import EventLoopPolicy  # type: ignore
+            from uvloop import EventLoopPolicy
 
             set_event_loop_policy(EventLoopPolicy())
         except ImportError:
@@ -194,8 +194,8 @@ class HttpXParser(AbstractParser):
             set_event_loop_policy(EventLoopPolicy())
         return self
 
-    async def create_session(self, **kwargs) -> aiohttp.ClientSession:
-        """ Creating new session if old was close or it's None """
+    async def create_session(self, **kwargs: Any) -> aiohttp.ClientSession:
+        """Creating new session if old was close or it's None"""
         if self.proxy is not None:
             kwargs.update(connector=self._connector_type(**self._connector_init))
 
@@ -212,12 +212,12 @@ class HttpXParser(AbstractParser):
         return self._session
 
     async def close(self) -> None:
-        """ close aiohttp session"""
+        """close aiohttp session"""
         if isinstance(self._session, ClientSession):
             if not self._session.closed:
                 await self._session.close()
 
-    async def stream_content(self, url: str, method: str, **kwargs) -> bytes:
+    async def stream_content(self, url: str, method: str, **kwargs: Any) -> bytes:
         session = await self.create_session()
         resp = await session.request(method, url, **kwargs)
         return await resp.read()
@@ -225,15 +225,15 @@ class HttpXParser(AbstractParser):
     def make_exception(
         self,
         status_code: int,
-        traceback_info: Optional[Union[aiohttp.RequestInfo, dict, str, bytes]] = None,
+        traceback_info: Optional[Union[aiohttp.RequestInfo, Dict[Any, Any], str, bytes]] = None,
         message: Optional[str] = None,
     ) -> RequestError:
-        """ Raise :class:`RequestError` exception with pretty explanation """
-        from glQiwiApi import __version__
+        """Raise :class:`RequestError` exception with pretty explanation"""
+        from glQiwiApi import __version__  # NOQA
 
         if not isinstance(message, str):
             if isinstance(self.messages, dict):
-                message = self.messages.get(status_code, "Unknown")  # type: ignore
+                message = self.messages.get(status_code, "Unknown")
         return RequestError(
             message,
             status_code,
@@ -252,8 +252,8 @@ class HttpXParser(AbstractParser):
         headers: Optional[Any] = None,
         params: Optional[Any] = None,
         encoding: Optional[str] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> str:
         headers = headers or self.base_headers
         # Create new session if old was closed
         session = await self.create_session(

@@ -6,13 +6,13 @@ from glQiwiApi.utils.currency_util import Currency
 
 
 class Balance(Base):
-    """ object: Balance """
+    """object: Balance"""
 
     alias: str
     currency: CurrencyModel
 
-    @validator("currency", pre=True, check_fields=True)
-    def humanize_pay_currency(cls, v):
+    @validator("currency", pre=True)
+    def humanize_pay_currency(cls, v):  # type: ignore
         if not isinstance(v, int):
             return v
         return Currency.get(str(v))

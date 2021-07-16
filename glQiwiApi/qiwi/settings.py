@@ -39,7 +39,7 @@ class QiwiRouter(AbstractRouter):
 
 
 class QiwiKassaRouter(QiwiRouter):
-    """ QIWI P2P router"""
+    """QIWI P2P router"""
 
     __head__ = "https://api.qiwi.com/partner/bill/v1/bills"
 
@@ -47,64 +47,30 @@ class QiwiKassaRouter(QiwiRouter):
 class QiwiApiMethods:
     # Qiwi Wallet
     TO_CARD: str = "/sinap/api/v2/terms/{privat_card_id}"
-
     GET_BALANCE: str = "/funding-sources/v2/persons/{phone_number}/accounts"
-
     TRANSACTIONS: str = "/payment-history/v2/persons/{stripped_number}/payments"
-
     TO_WALLET: str = "/sinap/api/v2/terms/99/payments"
-
     TRANSACTION_INFO: str = "/payment-history/v1/transactions/{transaction_id}"
-
-    CHECK_RESTRICTION: str = (
-        "/person-profile/v1/persons/{phone_number}/status/restrictions"
-    )
-
+    CHECK_RESTRICTION: str = "/person-profile/v1/persons/{phone_number}/status/restrictions"
     GET_IDENTIFICATION: str = "/identification/v1/persons/{phone_number}/identification"
-
     GET_LIMITS: str = "/qw-limits/v1/persons/{stripped_number}/actual-limits"
-
     GET_LIST_OF_CARDS: str = "/cards/v1/cards"
-
     AUTHENTICATE: str = "/identification/v1/persons/{stripped_number}/identification"
-
     GET_BILLS: str = "/checkout-api/api/bill/search"
-
     GET_RECEIPT: str = "/payment-history/v1/transactions/{transaction_id}/cheque/file"
-
     COMMISSION: str = "/sinap/providers/{special_code}/onlineCommission"
-
     ACCOUNT_INFO: str = "/person-profile/v1/profile/current"
-
-    FETCH_STATISTICS: str = (
-        "/payment-history/v2/persons/{stripped_number}/payments/total"
-    )
-
+    FETCH_STATISTICS: str = "/payment-history/v2/persons/{stripped_number}/payments/total"
     LIST_OF_BALANCES: str = "/funding-sources/v2/persons/{stripped_number}/accounts"
-
     CREATE_NEW_BALANCE: str = "/funding-sources/v2/persons/{stripped_number}/accounts"
-
-    AVAILABLE_BALANCES: str = (
-        "/funding-sources/v2/persons/{stripped_number}/accounts/offer"
-    )
-
-    SET_DEFAULT_BALANCE: str = (
-        "/funding-sources/v2/persons/{stripped_number}/accounts/{currency_alias}"
-    )
-
+    AVAILABLE_BALANCES: str = "/funding-sources/v2/persons/{stripped_number}/accounts/offer"
+    SET_DEFAULT_BALANCE: str = "/funding-sources/v2/persons/{stripped_number}/accounts/{currency_alias}"
     BUY_QIWI_MASTER: str = "/sinap/api/v2/terms/28004/payments"
-
-    CONFIRM_QIWI_MASTER: str = (
-        "/cards/v2/persons/{stripped_number}/orders/{order_id}/submit"
-    )
+    CONFIRM_QIWI_MASTER: str = "/cards/v2/persons/{stripped_number}/orders/{order_id}/submit"
     BUY_QIWI_CARD = "/sinap/test_api/v2/terms/32064/payments"
-
     CARDS_QIWI_MASTER: str = "/cards/v1/cards/?vas-alias=qvc-master"
-
     PRE_QIWI_REQUEST: str = "/cards/v2/persons/{number}/orders"
-
     GET_CROSS_RATES: str = "/sinap/crossRates"
-
     SPECIAL_PAYMENT: str = "/sinap/api/v2/terms/1717/payments"
 
     # Qiwi P2P
@@ -116,15 +82,10 @@ class QiwiApiMethods:
 
     # Webhooks
     REG_WEBHOOK: str = "/payment-notifier/v1/hooks"
-
     GET_CURRENT_WEBHOOK: str = "/payment-notifier/v1/hooks/active"
-
     SEND_TEST_NOTIFICATION: str = "/payment-notifier/v1/hooks/test"
-
     GET_WEBHOOK_SECRET: str = "/payment-notifier/v1/hooks/{hook_id}/key"
-
     DELETE_CURRENT_WEBHOOK: str = "/payment-notifier/v1/hooks/{hook_id}"
-
     CHANGE_WEBHOOK_SECRET: str = "/payment-notifier/v1/hooks/{hook_id}/newkey"
 
 

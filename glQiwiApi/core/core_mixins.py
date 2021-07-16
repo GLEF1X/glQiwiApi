@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 class ToolsMixin(object):
-    """ Object: ToolsMixin """
+    """Object: ToolsMixin"""
 
     _requests: RequestManager
 
@@ -19,10 +19,10 @@ class ToolsMixin(object):
         return self
 
     async def close(self) -> None:
-        """ shutdown wrapper, close aiohttp session and clear storage """
+        """shutdown wrapper, close aiohttp session and clear storage"""
         await self._requests.close()
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore
         """Закрываем сессию и очищаем кэш при выходе"""
         await self.close()
 
@@ -32,15 +32,15 @@ class ToolsMixin(object):
         except AttributeError:
             return None
 
-    def __deepcopy__(self, memo) -> ToolsMixin:
+    def __deepcopy__(self, memo: Any) -> ToolsMixin:
         cls = self.__class__
         kw: Dict[str, bool] = {"__copy_signal__": True}
         result = cls.__new__(cls, **kw)  # type: ignore  # pragma: no cover
         memo[id(self)] = result
         dct = {
-            slot: self._get(slot)  # type: ignore
+            slot: self._get(slot)
             for slot in self.__slots__
-            if self._get(slot) is not None  # type: ignore
+            if self._get(slot) is not None
         }
         for k, value in dct.items():
             if k == "_requests":
@@ -48,29 +48,29 @@ class ToolsMixin(object):
             elif k == "dispatcher":
                 value._loop = None
             setattr(result, k, copy.deepcopy(value, memo))  # NOQA
-        return result
+        return cast(ToolsMixin, result)
 
     @property
-    def data(self):
+    def data(self):  # type: ignore
         data = getattr(self, "_data", None)
         if data is None:
             data = {}
             setattr(self, "_data", data)
         return data
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Any) -> Any:
         return self.data[item]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         self.data[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: Any) -> None:
         del self.data[key]
 
-    def __contains__(self, key):
+    def __contains__(self, key: Any) -> bool:
         return key in self.data
 
-    def get(self, key, default=None):
+    def get(self, key, default=None):  # type: ignore
         return self.data.get(key, default)
 
 
@@ -88,7 +88,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
     def get_current(  # noqa: F811
         cls, no_error: bool = True
     ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
-        """ Get current instance from context """
+        """Get current instance from context"""
         # on mypy 0.770 I catch that contextvars.ContextVar always contextvars.ContextVar[Any]
         cls.__context_instance = cast(
             contextvars.ContextVar[ContextInstance], cls.__context_instance

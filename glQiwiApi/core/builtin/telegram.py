@@ -10,9 +10,9 @@ from aiohttp import web
 
 if typing.TYPE_CHECKING:
     try:
-        from aiogram import Dispatcher  # type: ignore
-        from aiogram.types import InputFile  # type: ignore
-    except (ModuleNotFoundError, ImportError):  # type: ignore
+        from aiogram import Dispatcher  # NOQA
+        from aiogram.types import InputFile  # NOQA
+    except (ModuleNotFoundError, ImportError):  # NOQA
         pass
 
 __all__ = ["TelegramWebhookProxy", "TelegramPollingProxy", "BaseProxy"]
@@ -22,7 +22,7 @@ ListOfRoutes = typing.List[web.ResourceRoute]
 SubApps = typing.List[typing.Tuple[str, web.Application, ListOfRoutes]]
 
 
-def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes):
+def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes) -> None:
     """
     Initialize sub application handlers
 
@@ -40,7 +40,7 @@ def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes):
 
 class BaseProxy(abc.ABC):
     def __init__(
-        self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
+            self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
     ):
         self.bot = dispatcher.bot
         self.dispatcher = dispatcher
@@ -74,12 +74,12 @@ class TelegramWebhookProxy(BaseProxy):
     """ You can override the prefix for the application """
 
     def __init__(
-        self,
-        dispatcher: Dispatcher,
-        ssl_certificate: SSLContext,
-        webhook_domain: str,
-        route_name: str = "webhook_handler",
-        sub_apps: typing.Optional[SubApps] = None,
+            self,
+            dispatcher: Dispatcher,
+            ssl_certificate: SSLContext,
+            webhook_domain: str,
+            route_name: str = "webhook_handler",
+            sub_apps: typing.Optional[SubApps] = None,
     ):
         """
 
@@ -89,7 +89,7 @@ class TelegramWebhookProxy(BaseProxy):
         :param route_name: name of aiogram webhook router
         :param sub_apps: list of tuples(prefix as string, web.Application)
         """
-        from aiogram.dispatcher.webhook import WebhookRequestHandler  # type: ignore
+        from aiogram.dispatcher.webhook import WebhookRequestHandler
 
         super(TelegramWebhookProxy, self).__init__(dispatcher)
         self._app: web.Application = web.Application()
@@ -105,7 +105,7 @@ class TelegramWebhookProxy(BaseProxy):
     def ssl_context(self) -> SSLContext:
         return self._ssl_context
 
-    def setup(self, **kwargs) -> web.Application:
+    def setup(self, **kwargs: typing.Any) -> web.Application:
         """
         A method that connects the main application, and the proxy in the form of a telegram
 
@@ -124,7 +124,7 @@ class TelegramWebhookProxy(BaseProxy):
 
         return self._app
 
-    async def configure_webhook(self, **kwargs) -> typing.Any:
+    async def configure_webhook(self, **kwargs: typing.Any) -> typing.Any:
         """
         You can override this method to correctly setup webhooks with aiogram
         API method `set_webhook` like this: self.dispatcher.bot.set_webhook()
@@ -149,17 +149,17 @@ class TelegramPollingProxy(BaseProxy):
     """
 
     def __init__(
-        self,
-        dispatcher: Dispatcher,
-        loop: typing.Optional[AbstractEventLoop] = None,
-        timeout: int = 20,
-        relax: float = 0.1,
-        limit=None,
-        reset_webhook=None,
-        fast: typing.Optional[bool] = True,
-        error_sleep: int = 5,
-        allowed_updates: typing.Optional[typing.List[str]] = None,
-    ):
+            self,
+            dispatcher: Dispatcher,
+            loop: typing.Optional[AbstractEventLoop] = None,
+            timeout: int = 20,
+            relax: float = 0.1,
+            limit: typing.Optional[typing.Any] = None,
+            reset_webhook: typing.Optional[typing.Any] = None,
+            fast: typing.Optional[bool] = True,
+            error_sleep: int = 5,
+            allowed_updates: typing.Optional[typing.List[str]] = None,
+    ) -> None:
         super(TelegramPollingProxy, self).__init__(dispatcher, loop=loop)
         self._allowed_updates = allowed_updates
         self._error_sleep = error_sleep
@@ -169,7 +169,7 @@ class TelegramPollingProxy(BaseProxy):
         self._relax = relax
         self._limit = limit
 
-    def setup(self, **kwargs: typing.Any):
+    def setup(self, **kwargs: typing.Any) -> None:
         """
         Set up polling to run polling qiwi updates concurrently with aiogram
 

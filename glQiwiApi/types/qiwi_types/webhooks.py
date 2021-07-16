@@ -8,7 +8,7 @@ from glQiwiApi.types.base import Base
 
 
 class Payment(Base):
-    """ Scheme of webhook payment object """
+    """Scheme of webhook payment object"""
 
     account: str = Field(..., alias="account")
     comment: str = Field(..., alias="comment")

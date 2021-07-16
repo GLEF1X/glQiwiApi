@@ -40,7 +40,7 @@ class RequestManager(HttpXParser):
         self._cache = Storage(cache_time=cache_time)
 
     def reset_cache(self) -> None:
-        """ Clear all cache in storage """
+        """Clear all cache in storage"""
         self._cache.clear(force=True)
 
     async def send_request(
@@ -54,7 +54,7 @@ class RequestManager(HttpXParser):
         data: Optional[Dict[Any, Any]] = None,
         headers: Optional[Dict[Any, Any]] = None,
         params: Optional[Dict[Any, Any]] = None,
-        **kwargs
+        **kwargs: Any
     ) -> Dict[Any, Any]:
         url = router.build_url(api_method, **kwargs)
         return await self.make_request(
@@ -78,9 +78,9 @@ class RequestManager(HttpXParser):
         data: Optional[Any] = None,
         headers: Optional[Any] = None,
         params: Optional[Any] = None,
-        **kwargs
+        **kwargs: Any
     ) -> Dict[Any, Any]:
-        """ Send request to service(API) """
+        """Send request to service(API)"""
         request_args = {
             k: v for k, v in locals().items() if not isinstance(v, type(self))
         }
@@ -101,13 +101,13 @@ class RequestManager(HttpXParser):
                 await self._close_session()
             self._cache_all(response, **request_args)
             return response
-        return cast(Cached, response).response_data
+        return response.response_data  # type: ignore
 
     async def _close_session(self) -> None:
         return await super(RequestManager, self).close()
 
     async def close(self) -> None:
-        """ Close aiohttp session and reset cache data """
+        """Close aiohttp session and reset cache data"""
         await super(RequestManager, self).close()
         self.reset_cache()
 

@@ -15,7 +15,7 @@ class CrossRate(Base):
     rate: float
 
     @validator("rate_from", "rate_to", pre=True)
-    def humanize_rates(cls, v):
+    def humanize_rates(cls, v):  # type: ignore
         if not isinstance(v, str):
             return v
         cur = Currency.get(v)
@@ -30,7 +30,7 @@ class PaymentMethod(Base):
 
 
 class FreePaymentDetailsFields(Base):
-    """ Набор реквизитов платежа"""
+    """Набор реквизитов платежа"""
 
     name: str
     """Наименование банка получателя"""

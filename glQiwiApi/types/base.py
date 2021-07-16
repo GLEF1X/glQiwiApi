@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class Base(BaseModel):
     @property
     def client(self) -> QiwiWrapper:
-        """ Returning an instance of :class:`QiwiWrapper` """
+        """Returning an instance of :class:`QiwiWrapper`"""
         from glQiwiApi.qiwi.client import QiwiWrapper
 
         instance = QiwiWrapper.get_current()

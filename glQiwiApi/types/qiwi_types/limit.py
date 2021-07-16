@@ -9,14 +9,14 @@ from glQiwiApi.utils.currency_util import Currency
 
 
 class Interval(Base):
-    """ object: Interval """
+    """object: Interval"""
 
     date_from: datetime = Field(alias="dateFrom")
     date_till: datetime = Field(alias="dateTill")
 
 
 class Limit(Base):
-    """ object: Limit """
+    """object: Limit"""
 
     currency: CurrencyModel
     rest: Union[float, int]
@@ -26,7 +26,7 @@ class Limit(Base):
     limit_type: str = Field(alias="type")
 
     @validator("currency", pre=True)
-    def currency_validate(cls, v):
+    def currency_validate(cls, v):  # type: ignore
         if not isinstance(v, str):
             raise ValueError()
         return Currency.get(v)

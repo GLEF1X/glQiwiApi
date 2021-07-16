@@ -5,12 +5,14 @@ import datetime
 import functools as ft
 import hashlib
 import hmac
+import inspect
 import pathlib
 import re
 import time
 from contextvars import ContextVar
 from copy import deepcopy
 from http import HTTPStatus
+from typing import Callable, cast, Any
 
 import aiofiles
 import pytz
@@ -65,22 +67,46 @@ def check_result(error_messages, content_type, status_code, request_info, body):
     )
 
 
-def measure_time(func):
-    """
-    Декоратор для замера времени выполнения функции
+class measure_time(object):  # NOQA
+    def __init__(self, logger=None):
+        self._logger = logger
 
-    :param func:
-    """
+    def __call__(self, func):
+        """
+        Декоратор для замера времени выполнения функции
 
-    @ft.wraps(func)
-    async def wrapper(*args, **kwargs):
-        start_time = time.monotonic()
-        result = await func(*args, **kwargs)
-        execute_time = time.monotonic() - start_time
-        print(f"Function `{func.__name__}` executed for {execute_time} secs")
-        return result
+        :param func:
+        """
 
-    return wrapper
+        if inspect.iscoroutinefunction(func) or inspect.iscoroutine(func):
+
+            @ft.wraps(func)
+            async def wrapper(*args, **kwargs):
+                start_time = time.monotonic()
+                result = await func(*args, **kwargs)
+                execute_time = time.monotonic() - start_time
+                msg = "Function `%s` executed for %s secs"
+                self._log(msg, func.__name__, execute_time)
+                return result
+
+        else:
+
+            @ft.wraps(func)
+            def wrapper(*args, **kwargs):
+                start_time = time.monotonic()
+                result = func(*args, **kwargs)
+                execute_time = time.monotonic() - start_time
+                msg = "Function `%s` executed for %s secs"
+                self._log(msg, func.__name__, execute_time)
+                return result
+
+        return wrapper
+
+    def _log(self, msg, *args):
+        if self._logger is not None:
+            self._logger.info(msg, *args)
+        else:
+            print(msg % args)
 
 
 def datetime_to_str_in_iso(obj, *, yoo_money_format=False):
@@ -117,7 +143,7 @@ def parse_auth_link(response_data):
 
 
 def check_dates(start_date, end_date, payload_data):
-    """ Check correctness of transferred dates and add it to request """
+    """Check correctness of transferred dates and add it to request"""
     if isinstance(start_date, (datetime.datetime, datetime.timedelta)) and isinstance(
         end_date, (datetime.datetime, datetime.timedelta)
     ):
@@ -309,7 +335,7 @@ def custom_load(data):
 
 
 class Parser(BaseModel):
-    """ Модель pydantic для перевода строки в datetime """
+    """Модель pydantic для перевода строки в datetime"""
 
     dt: datetime.datetime
 
@@ -364,24 +390,6 @@ def new_card_data(ph_number, order_id, data):
     return payload
 
 
-def sync_measure_time(func):
-    """
-    Decorator, which measures time your synchronous functions
-
-    :param func:
-    """
-
-    @ft.wraps(func)
-    def wrapper(*args, **kwargs):
-        start_time = time.monotonic()
-        result = func(*args, **kwargs)
-        execute_time = time.monotonic() - start_time
-        print(f"Function `{func.__name__}` executed for {execute_time} secs")
-        return result
-
-    return wrapper
-
-
 def parse_amount(txn_type, txn):
     amount = txn.amount if txn_type == "in" else txn.amount_due
     comment = txn.comment if txn_type == "in" else txn.message
@@ -397,7 +405,7 @@ def check_params(amount_, amount, txn, transaction_type):
 
 
 def run_forever_safe(loop) -> None:
-    """ run a loop for ever and clean up after being stopped """
+    """run a loop for ever and clean up after being stopped"""
 
     loop.run_forever()
     # NOTE: loop.run_forever returns after calling loop.stop
@@ -425,23 +433,23 @@ def safe_cancel(loop) -> None:
     loop.close()
 
 
-def _await_sync(future):
-    """ synchronously waits for a task """
+def await_sync(future):
+    """synchronously waits for a task"""
     return future.result()
 
 
 def _cancel_future(loop, future, executor) -> None:
-    """ cancels future if any exception occurred """
+    """cancels future if any exception occurred"""
     executor.submit(loop.call_soon_threadsafe, future.cancel)
 
 
 def _stop_loop(loop) -> None:
-    """ stops an event loop """
+    """stops an event loop"""
     loop.stop()
 
 
 class AdaptiveExecutor(futures.ThreadPoolExecutor):
-    """ object: AdaptiveExecutor """
+    """object: AdaptiveExecutor"""
 
     def __init__(self, max_workers=None, **kwargs):
         super().__init__(max_workers, "sync_adapter_", **kwargs)
@@ -450,15 +458,20 @@ class AdaptiveExecutor(futures.ThreadPoolExecutor):
 
 
 def _construct_all():
-    """ Get or create new event loop """
+    """Get or create new event loop"""
     loop = take_event_loop()
     executor = AdaptiveExecutor()
     loop.set_default_executor(executor)
     return loop, executor
 
 
-def _on_shutdown(executor, loop):
-    """ Do some cleanup """
+def _on_shutdown(executor, loop, shutdown_callback):
+    """Do some cleanup"""
+    if inspect.iscoroutinefunction(shutdown_callback):
+        future = asyncio.run_coroutine_threadsafe(
+            cast(Callable[..., Any], shutdown_callback)(), loop=loop
+        )
+        await_sync(future)
     if not executor.is_from_running_loop.get():
         loop.call_soon_threadsafe(_stop_loop, loop)
     executor.shutdown(wait=True)
@@ -472,7 +485,10 @@ def sync(func, *args, **kwargs):
     :param args: args, which need your async func
     :param kwargs: kwargs, which need your async func
     """
-
+    try:
+        shutdown_callback = kwargs.pop("__shutdown__callback__")
+    except KeyError:
+        shutdown_callback = None
     # construct an event loop and executor
     loop, executor = _construct_all()
     # Run our coroutine thread safe
@@ -481,20 +497,26 @@ def sync(func, *args, **kwargs):
     executor.submit(run_forever_safe, loop)
     try:
         # Get result
-        return _await_sync(wrapped_future)
+        return await_sync(wrapped_future)
     finally:
         # Cleanup
-        _on_shutdown(executor, loop)
+        _on_shutdown(executor, loop, shutdown_callback)
 
 
-def async_as_sync(func):
-    """ Decorator, which use `sync` function to implement async to sync """
+class async_as_sync:  # NOQA
+    def __init__(self, shutdown_callback=None):
+        self._shutdown_callback = shutdown_callback
 
-    @ft.wraps(func)
-    def wrapper(*args, **kwargs):
-        return sync(func, *args, **kwargs)
+    def __call__(self, func):
+        """Decorator, which use `sync` function to implement async to sync"""
 
-    return wrapper
+        @ft.wraps(func)
+        def wrapper(*args, **kwargs):
+            return sync(
+                func, *args, __shutdown__callback__=self._shutdown_callback, **kwargs
+            )
+
+        return wrapper
 
 
 def check_transaction(transactions, amount, transaction_type, sender, comment):

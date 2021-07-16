@@ -11,10 +11,11 @@ from glQiwiApi.utils.errors import StateError
 
 if TYPE_CHECKING:
     try:
-        from cryptography import x509  # type: ignore
-        from cryptography.hazmat.primitives.asymmetric.rsa import (  # type: ignore
-            RSAPrivateKeyWithSerialization,  # type: ignore
-        )  # type: ignore
+        from aiogram.types import InputFile  # NOQA
+        from cryptography import x509  # NOQA
+        from cryptography.hazmat.primitives.asymmetric.rsa import (
+            RSAPrivateKeyWithSerialization,  # NOQA
+        )  # NOQA
     except ImportError:  # pragma: no cover # type: ignore
         pass
 
@@ -156,7 +157,7 @@ class SSLConfigurator:
             f2.write(key_pem)
         return self
 
-    def as_input_file(self):
+    def as_input_file(self) -> "InputFile":
         from aiogram.types import InputFile
 
         with open(self.cert_path, "rb") as f:

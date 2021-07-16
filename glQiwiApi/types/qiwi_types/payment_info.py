@@ -7,19 +7,19 @@ from glQiwiApi.types.base import Base
 
 
 class Fields(Base):
-    """ Специальные поля """
+    """Специальные поля"""
 
     account: str
 
 
 class State(Base):
-    """ State """
+    """State"""
 
     code: str
 
 
 class TransactionInfo(Base):
-    """ Информация о транзакции """
+    """Информация о транзакции"""
 
     txn_id: int = Field(..., alias="id")
     state: State

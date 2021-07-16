@@ -762,7 +762,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                                                        currency_alias=currency_alias)
 
     @property
-    def transaction_handler(self):
+    def transaction_handler(self):  # type: ignore
         """
         Handler manager for default QIWI transactions,
         you can pass on lambda filter, if you want,
@@ -772,7 +772,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return self.dp.transaction_handler_wrapper
 
     @property
-    def bill_handler(self):
+    def bill_handler(self):  # type: ignore
         """
         Handler manager for P2P bills,
         you can pass on lambda filter, if you want

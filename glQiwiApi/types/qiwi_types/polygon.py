@@ -1,7 +1,10 @@
-class Polygon:
-    """ Polygon class for QiwiMaps class """
+from typing import Tuple, Any, Dict, ItemsView
 
-    def __init__(self, lat_lon_pair_nw: tuple, lat_lon_pair_se: tuple):
+
+class Polygon:
+    """Polygon class for QiwiMaps class"""
+
+    def __init__(self, lat_lon_pair_nw: Tuple[Any, ...], lat_lon_pair_se: Tuple[Any, ...]) -> None:
         self.lat_nw, self.lon_nw = lat_lon_pair_nw
         self.lat_se, self.lon_se = lat_lon_pair_se
 
@@ -13,10 +16,10 @@ class Polygon:
         }
 
     @property
-    def dict(self):
+    def dict(self) -> Dict[Any, Any]:
         return {k: str(double) for k, double in self._get_items()}
 
-    def _get_items(self):
+    def _get_items(self) -> ItemsView[str, Any]:
         return self._dict.items()
 
 

@@ -24,7 +24,7 @@ class YooMoneyRouter(AbstractRouter):
 
 
 class YooMoneyConfig:
-    def __init__(self):
+    def __init__(self) -> None:
         self.DEFAULT_YOOMONEY_HEADERS = {
             "Host": "yoomoney.ru",
             "Content-Type": "application/x-www-form-urlencoded",

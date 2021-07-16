@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import types
 from collections import namedtuple
-from typing import TypeVar, Type, Optional, Any, Callable
+from typing import TypeVar, Type, Optional, Any, Callable, cast
 
 from glQiwiApi.core.web_hooks.config import DEFAULT_QIWI_BILLS_WEBHOOK_PATH
 
@@ -29,7 +29,7 @@ class WebhookURL(
             webhook_path=cls._assert_str(
                 webhook_path,
                 param_name="webhook_path",
-                additional_filter=lambda v: v.startswith("/"),
+                additional_filter=lambda v: v.startswith("/"),  # type: ignore
             ),
             port=cls._assert_int(port, param_name="port"),
         )
@@ -78,7 +78,7 @@ class WebhookURL(
                 "%s must be like https://127.0.0.1/ or https://website.com/"
                 % param_name
             )
-        return v
+        return cast(str, v)
 
     def render_as_string(self) -> str:
         host = self.host

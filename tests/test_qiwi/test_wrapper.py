@@ -13,7 +13,7 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture(name="api")
 async def api_fixture(credentials: dict):
-    """ Api fixture """
+    """Api fixture"""
     _wrapper = QiwiWrapper(**credentials)
     yield _wrapper
     await _wrapper.close()

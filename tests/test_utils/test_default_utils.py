@@ -7,7 +7,7 @@ from glQiwiApi.utils.api_helper import async_as_sync, to_datetime
 def test_async_as_sync():
     result = 0
 
-    @async_as_sync
+    @async_as_sync()
     async def my_async_func():
         nonlocal result
         await asyncio.sleep(0.5)

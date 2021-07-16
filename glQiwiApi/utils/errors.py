@@ -84,7 +84,7 @@ class RequestError(Exception):
         message: Optional[str],
         status_code: Union[str, int],
         additional_info: Optional[str] = None,
-        traceback_info: Optional[Union[RequestInfo, str, bytes, dict]] = None,
+        traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(RequestError, self).__init__()
         self.message = message
@@ -102,7 +102,7 @@ class RequestError(Exception):
         return self.__str__()
 
     def to_model(self) -> ExceptionTraceback:
-        """ Convert exception to :class:`ExceptionTraceback` """
+        """Convert exception to :class:`ExceptionTraceback`"""
         if not isinstance(self.traceback_info, RequestInfo):
             raise TypeError(
                 "Cannot convert exception to `ExceptionTraceback`, because "
@@ -127,7 +127,7 @@ class RequestError(Exception):
             "traceback_info": self.traceback_info,
         }
 
-    def json(self, indent: int = 4, **dump_kw) -> str:
+    def json(self, indent: int = 4, **dump_kw: Any) -> str:
         """
         Method, that makes json format from traceback
 

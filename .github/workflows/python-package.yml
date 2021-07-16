@@ -40,7 +40,7 @@ jobs:
 
       - name: Mypy check
         run: |
-          poetry run mypy glQiwiApi
+          poetry run mypy --strict glQiwiApi
 
       - name: Test with pytest
         run: |

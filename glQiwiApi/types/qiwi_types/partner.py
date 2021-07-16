@@ -5,7 +5,7 @@ from glQiwiApi.types.base import Base
 
 
 class Partner(Base):
-    """ Base partner class """
+    """Base partner class"""
 
     title: str
     id: int

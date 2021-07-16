@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Union, Any, Optional
+from typing import Union, Any, Optional, Tuple, Dict
 
 from pydantic import BaseModel, validator
 
@@ -16,7 +18,7 @@ class Sum(BaseModel):
     currency: Any
 
     @validator("currency", pre=True)
-    def humanize_pay_currency(cls, v):
+    def humanize_pay_currency(cls, v):  # type: ignore
         from glQiwiApi.utils.currency_util import Currency
 
         if not isinstance(v, int):
@@ -28,7 +30,7 @@ class Sum(BaseModel):
 
 
 class OptionalSum(BaseModel):
-    """ object: OptionalSum """
+    """object: OptionalSum"""
 
     value: Union[int, float]
     currency: str
@@ -51,13 +53,13 @@ class Attributes:
 
     """
 
-    headers: Optional[dict] = None
-    json: Optional[dict] = None
-    params: Optional[dict] = None
-    data: Optional[dict] = None
+    headers: Optional[Dict[Any, Any]] = None
+    json: Optional[Dict[Any, Any]] = None
+    params: Optional[Dict[Any, Any]] = None
+    data: Optional[Dict[Any, Any]] = None
 
     @classmethod
-    def format(cls, kwargs: dict, args: tuple):
+    def format(cls, kwargs: Dict[Any, Any], args: Tuple[Any, ...]) -> Attributes:
         return cls(
             **{k: kwargs.get(k) for k in args if isinstance(kwargs.get(k), dict)}
         )

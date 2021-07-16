@@ -7,7 +7,7 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture(name="_")
 def currency_fixture():
-    """ :class:`Currency` fixture """
+    """:class:`Currency` fixture"""
     _ = Currency()
     yield _
 

@@ -8,7 +8,7 @@ from glQiwiApi.types.basics import OptionalSum
 
 
 class Customer(Base):
-    """ Object: Customer """
+    """Object: Customer"""
 
     phone: Optional[str] = None
     email: Optional[str] = None
@@ -16,21 +16,21 @@ class Customer(Base):
 
 
 class BillStatus(Base):
-    """ Object: BillStatus """
+    """Object: BillStatus"""
 
     value: str
     changed_datetime: datetime = Field(..., alias="changedDateTime")
 
 
 class CustomFields(Base):
-    """ Object: CustomFields """
+    """Object: CustomFields"""
 
     pay_sources_filter: Optional[str] = Field(None, alias="paySourcesFilter")
     theme_code: Optional[str] = Field(None, alias="themeCode")
 
 
 class BillError(Base):
-    """ Object: BillError """
+    """Object: BillError"""
 
     service_name: str = Field(..., alias="serviceName")
     error_code: str = Field(..., alias="errorCode")
@@ -41,7 +41,7 @@ class BillError(Base):
 
 
 class Bill(Base):
-    """ Object: Bill """
+    """Object: Bill"""
 
     site_id: str = Field(..., alias="siteId")
     bill_id: str = Field(..., alias="billId")

@@ -66,7 +66,7 @@ async def my_bill_handler(update: Notification, event: Optional[asyncio.Event] =
 
 
 async def my_transaction_handler(
-        update: WebHook, event: Optional[asyncio.Event] = None
+    update: WebHook, event: Optional[asyncio.Event] = None
 ):
     if not isinstance(event, asyncio.Event):
         raise TypeError()
@@ -93,12 +93,16 @@ async def dp_fixture():
 @pytest.fixture(name="add_handlers", scope="module")
 def add_handlers(dp: Dispatcher, txn_event: asyncio.Event, bill_event: asyncio.Event):
     dp.register_bill_handler(functools.partial(my_bill_handler, event=bill_event))
-    dp.register_transaction_handler(functools.partial(my_transaction_handler, event=txn_event))
+    dp.register_transaction_handler(
+        functools.partial(my_transaction_handler, event=txn_event)
+    )
     return txn_event, bill_event
 
 
 @pytest.fixture(name="app", scope="module")
-async def app_fixture(dp: Dispatcher, add_handlers: Tuple[asyncio.Event, asyncio.Event]):
+async def app_fixture(
+    dp: Dispatcher, add_handlers: Tuple[asyncio.Event, asyncio.Event]
+):
     txn_event, bill_event = add_handlers
     app = web.Application()
     app["bill_event"] = bill_event

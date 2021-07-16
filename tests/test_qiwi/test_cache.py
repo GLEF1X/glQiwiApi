@@ -13,7 +13,7 @@ CACHE_TIME = 5
 
 @pytest.fixture(name="api")
 async def api_fixture(credentials: Dict[str, str]):
-    """ Api fixture """
+    """Api fixture"""
     _wrapper = QiwiWrapper(**credentials, cache_time=CACHE_TIME)  # type: ignore
     yield _wrapper
     await _wrapper.close()

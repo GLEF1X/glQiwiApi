@@ -21,7 +21,7 @@ class SingletonABCMeta(abc.ABCMeta):
 
     _instances: Dict[Any, Any] = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args, **kwargs):  # type: ignore
         if cls not in cls._instances:
             cls._instances[cls] = super(SingletonABCMeta, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
@@ -43,8 +43,8 @@ class BaseStorage(abc.ABC):
     def update_data(self, obj_to_cache: Any, key: Any) -> None:
         raise NotImplementedError
 
-    def validate(self, **kwargs) -> bool:
-        """ Should validate some data from cache """
+    def validate(self, **kwargs: Any) -> bool:
+        """Should validate some data from cache"""
 
 
 class AbstractRouter(metaclass=SingletonABCMeta):
@@ -76,7 +76,7 @@ class AbstractRouter(metaclass=SingletonABCMeta):
 
 
 class AbstractParser(abc.ABC):
-    """ Abstract class of parser for send request to different API's"""
+    """Abstract class of parser for send request to different API's"""
 
     @abc.abstractmethod
     async def make_request(
@@ -89,8 +89,8 @@ class AbstractParser(abc.ABC):
         data: Optional[Any] = None,
         headers: Optional[Any] = None,
         params: Optional[Any] = None,
-        **kwargs
-    ) -> dict:
+        **kwargs: Any
+    ) -> Dict[Any, Any]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -105,7 +105,7 @@ class AbstractParser(abc.ABC):
         status_code: int,
         traceback_info: Optional[RequestInfo] = None,
         message: Optional[str] = None,
-    ):
+    ) -> Exception:
         """Метод для обработки исключений и лучшего логирования"""
 
     async def __aenter__(self) -> AbstractParser:
@@ -139,12 +139,12 @@ class BaseWebHookView(web.View):
         """_check_ip checks if given IP is in set of allowed ones"""
         raise NotImplementedError
 
-    async def parse_update(self):
+    async def parse_update(self) -> Any:
         """parse_update method that deals with marshaling json"""
         raise NotImplementedError
 
     def validate_ip(self) -> None:
-        """ validating request ip address """
+        """validating request ip address"""
         if self.request.app.get(self.app_key_check_ip):  # type: ignore
             ip_addr_data = self.check_ip()
             if not ip_addr_data[1]:
@@ -152,7 +152,7 @@ class BaseWebHookView(web.View):
         return None
 
     def check_ip(self) -> Union[Tuple[str, bool], Tuple[None, bool]]:
-        """ checking ip, using headers or peer_name """
+        """checking ip, using headers or peer_name"""
         forwarded_for = self.request.headers.get("X-Forwarded-For")
         if forwarded_for:
             return forwarded_for, self._check_ip(forwarded_for)
@@ -176,12 +176,12 @@ class BaseWebHookView(web.View):
 
         await self.handler_manager.process_event(update)
 
-    def _hash_validator(self, update) -> None:
-        """ Validating by hash of update """
+    def _hash_validator(self, update: Any) -> None:
+        """Validating by hash of update"""
 
     @property
     def handler_manager(self) -> "Dispatcher":
-        """ Return handler manager """
+        """Return handler manager"""
         return self.request.app.get(  # type: ignore
             self.app_key_handler_manager  # type: ignore
-        )  # type: ignore
+        )

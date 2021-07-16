@@ -8,7 +8,7 @@ from glQiwiApi.types.base import Base
 
 
 class OrderDetails(Base):
-    """ object: OrderDetails """
+    """object: OrderDetails"""
 
     order_id: str = Field(..., alias="id")
     card_alias: str = Field(..., alias="cardAlias")

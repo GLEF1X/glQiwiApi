@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any, List
 
 from pydantic import Field
 
@@ -8,7 +8,7 @@ from glQiwiApi.types.basics import Sum
 
 
 class Provider(Base):
-    """ object: Provider """
+    """object: Provider"""
 
     id: Optional[int] = None
     """ID провайдера в QIWI Wallet"""
@@ -25,7 +25,7 @@ class Provider(Base):
     description: Optional[str] = None
     """описание провайдера (HTML)"""
 
-    keys: Optional[Union[str, list]] = None
+    keys: Optional[Union[str, List[Any]]] = None
     """список ключевых слов"""
 
     site_url: Optional[str] = Field(alias="siteUrl", default=None)
@@ -33,7 +33,7 @@ class Provider(Base):
 
 
 class Transaction(Base):
-    """ object: Transaction """
+    """object: Transaction"""
 
     transaction_id: int = Field(alias="txnId")
     """	ID транзакции в сервисе QIWI Кошелек"""
@@ -104,7 +104,7 @@ class Transaction(Base):
     currency_rate: int = Field(alias="currencyRate")
     """Курс конвертации (если применяется в транзакции)"""
 
-    _extras: Optional[dict] = Field(..., alias="extras")
+    _extras: Optional[Dict[Any, Any]] = Field(None, alias="extras")
     """Служебная информация"""
 
     _cheque_ready: bool = Field(..., alias="chequeReady")

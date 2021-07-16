@@ -44,7 +44,7 @@ class MockQiwiApi(QiwiWrapper):
 
 @pytest.fixture(name="api")
 async def api_fixture():
-    """ Api fixture """
+    """Api fixture"""
     _wrapper = MockQiwiApi(WRONG_API_DATA)
     yield _wrapper
     await _wrapper.close()

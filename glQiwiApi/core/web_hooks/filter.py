@@ -43,10 +43,10 @@ class NotFilter(BaseFilter):
 class LambdaBasedFilter(BaseFilter):
     __name__: str
 
-    def __init__(self, function: CF):
+    def __init__(self, function: CF) -> None:  # type: ignore
         self.__name__ = f"Filter around <{function!r}>"
 
-        self.function: CF = function
+        self.function = function
         self.awaitable: bool = inspect.iscoroutinefunction(
             function
         ) or inspect.isawaitable(function)

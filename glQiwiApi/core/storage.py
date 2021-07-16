@@ -28,7 +28,7 @@ class Storage(BaseStorage):
         :param cache_time: Время кэширования в секундах
         """
 
-        self.data: dict = {}
+        self.data: typing.Dict[typing.Any, typing.Any] = {}
         self._cache_time = cache_time
 
     def clear(
@@ -47,10 +47,10 @@ class Storage(BaseStorage):
             return self.data.clear()
         return self.data.pop(key)
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key, value):  # type: ignore
         return self.update_data(value, key)
 
-    def __getitem__(self, item) -> typing.Optional[typing.Any]:
+    def __getitem__(self, item: typing.Any) -> typing.Optional[typing.Any]:
         try:
             obj = self.data[item]
             if not self._is_expire(obj["cached_in"], item):
@@ -71,7 +71,7 @@ class Storage(BaseStorage):
                 return False
         return False
 
-    def convert_to_cache(self, result: typing.Any, kwargs: dict) -> Cached:
+    def convert_to_cache(self, result: typing.Any, kwargs: typing.Dict[typing.Any, typing.Any]) -> Cached:
         """
         Method, which convert response of API to :class:`Cached`
 
@@ -108,8 +108,8 @@ class Storage(BaseStorage):
             }
 
     @staticmethod
-    def _check_get_request(cached: Cached, kwargs: dict) -> bool:
-        """ Method to check cached get requests"""
+    def _check_get_request(cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]) -> bool:
+        """Method to check cached get requests"""
         if cached.method == "GET":
             if kwargs.get("headers") == cached.kwargs.headers:
                 if kwargs.get("params") == cached.kwargs.params:
@@ -117,20 +117,20 @@ class Storage(BaseStorage):
         return False
 
     def _is_expire(self, cached_in: float, key: typing.Any) -> bool:
-        """ Method to check live cache time, and if it expired return True """
+        """Method to check live cache time, and if it expired return True"""
         if time.monotonic() - cached_in > self._cache_time:
             self.clear(key)
             return True
         return False
 
-    def _validate_other(self, cached: Cached, kwargs: dict) -> bool:
+    def _validate_other(self, cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]) -> bool:
         keys = (k for k in self._validator_criteria if k != "headers")
         for key in keys:
             if getattr(cached.kwargs, key) == kwargs.get(key, ""):
                 return True
         return False
 
-    def validate(self, **kwargs) -> bool:
+    def validate(self, **kwargs: typing.Any) -> bool:
         """
         Метод, который по некоторым условиям
         проверяет актуальность кэша и в некоторых

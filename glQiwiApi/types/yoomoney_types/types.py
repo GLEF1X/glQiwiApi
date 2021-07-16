@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class BalanceDetails(BaseModel):
-    """ object: BalanceDetails """
+    """object: BalanceDetails"""
 
     total: float
     available: float
@@ -17,14 +17,14 @@ class BalanceDetails(BaseModel):
 
 
 class CardsLinked(BaseModel):
-    """ object: CardsLinked """
+    """object: CardsLinked"""
 
     pan_fragment: str
     type: str
 
 
 class AccountInfo(BaseModel):
-    """ object: AccountInfo"""
+    """object: AccountInfo"""
 
     account: str
     """Номер счета"""
@@ -115,7 +115,7 @@ class DigitalGoods(BaseModel):
 
 
 class Operation(BaseModel):
-    """ object: Operation """
+    """object: Operation"""
 
     operation_id: str
     """Идентификатор операции."""
@@ -175,7 +175,7 @@ class Operation(BaseModel):
 
 
 class OperationDetails(BaseModel):
-    """ object: OperationDetails """
+    """object: OperationDetails"""
 
     operation_id: Optional[str] = None
     """Идентификатор операции. Можно получить при вызове метода history()"""
@@ -320,13 +320,13 @@ class OperationDetails(BaseModel):
 
 
 class Wallet(BaseModel):
-    """ object: Wallet """
+    """object: Wallet"""
 
     allowed: bool
 
 
 class Item(BaseModel):
-    """ object: Item """
+    """object: Item"""
 
     item_id: str = Field(..., alias="id")
     """
@@ -351,7 +351,7 @@ class Item(BaseModel):
 
 
 class Card(BaseModel):
-    """ object: Card"""
+    """object: Card"""
 
     allowed: bool
     csc_required: bool
@@ -396,7 +396,7 @@ class PreProcessPaymentResponse(BaseModel):
 
 
 class Payment(BaseModel):  # lgtm [py/missing-equals #
-    """ object: Payment """
+    """object: Payment"""
 
     status: str
     """
@@ -497,7 +497,7 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
 
 
 class IncomingTransaction(BaseModel):
-    """ object: IncomingTransaction """
+    """object: IncomingTransaction"""
 
     status: str
     protection_code_attempts_available: int
