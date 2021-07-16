@@ -404,23 +404,27 @@ def check_params(amount_, amount, txn, transaction_type):
     return False
 
 
-def run_forever_safe(loop) -> None:
+def run_forever_safe(loop, callback) -> None:
     """run a loop for ever and clean up after being stopped"""
 
     loop.run_forever()
     # NOTE: loop.run_forever returns after calling loop.stop
 
-    safe_cancel(loop=loop)
+    safe_cancel(loop=loop, callback=callback)
 
 
-def safe_cancel(loop) -> None:
+def safe_cancel(loop, callback) -> None:
     """cancel all tasks and close the loop gracefully"""
 
     loop_tasks_all = asyncio.all_tasks(loop=loop)
 
+    # execute shutdown callback to gracefully shutdown your components
+    if callback is not None:
+        loop.run_until_complete(callback())
+
+    # NOTE: `cancel` does not guarantee that the task will be cancelled
     for task in loop_tasks_all:
         task.cancel()
-    # NOTE: `cancel` does not guarantee that the task will be cancelled
 
     for task in loop_tasks_all:
         if not (task.done() or task.cancelled()):
@@ -465,13 +469,8 @@ def _construct_all():
     return loop, executor
 
 
-def _on_shutdown(executor, loop, shutdown_callback):
+def _on_shutdown(executor, loop):
     """Do some cleanup"""
-    if inspect.iscoroutinefunction(shutdown_callback):
-        future = asyncio.run_coroutine_threadsafe(
-            cast(Callable[..., Any], shutdown_callback)(), loop=loop
-        )
-        await_sync(future)
     if not executor.is_from_running_loop.get():
         loop.call_soon_threadsafe(_stop_loop, loop)
     executor.shutdown(wait=True)
@@ -494,13 +493,13 @@ def sync(func, *args, **kwargs):
     # Run our coroutine thread safe
     wrapped_future = asyncio.run_coroutine_threadsafe(func(*args, **kwargs), loop=loop)
     # Run loop.run_forever(), but do it safely
-    executor.submit(run_forever_safe, loop)
+    executor.submit(run_forever_safe, loop, shutdown_callback)
     try:
         # Get result
         return await_sync(wrapped_future)
     finally:
         # Cleanup
-        _on_shutdown(executor, loop, shutdown_callback)
+        _on_shutdown(executor, loop)
 
 
 class async_as_sync:  # NOQA

@@ -1,7 +1,17 @@
 import asyncio
 from datetime import datetime
 
+import pytest
+
+from glQiwiApi import QiwiMaps, types
 from glQiwiApi.utils.api_helper import async_as_sync, to_datetime
+
+
+@pytest.fixture(name="maps_client", scope="function")
+@pytest.mark.asyncio
+async def maps_client():
+    maps = QiwiMaps()
+    yield maps
 
 
 def test_async_as_sync():
@@ -15,6 +25,19 @@ def test_async_as_sync():
 
     my_async_func()
     assert result == 1
+
+
+def test_async_as_sync_with_callback(maps_client: QiwiMaps):
+    @async_as_sync()
+    async def callback():
+        await maps_client.close()
+
+    @async_as_sync(shutdown_callback=callback)
+    async def my_async_func():
+        partners = await maps_client.partners()
+        assert all(isinstance(p, types.Partner) for p in partners)
+
+    my_async_func()
 
 
 def test_to_datetime_util():
