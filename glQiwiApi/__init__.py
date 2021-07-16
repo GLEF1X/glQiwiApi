@@ -16,7 +16,7 @@ from .utils.errors import (
 )
 from .yoo_money import YooMoneyAPI
 
-__version__ = "1.0.3b2"
+__version__ = "1.0.3"
 
 __all__ = (
     "QiwiWrapper",
