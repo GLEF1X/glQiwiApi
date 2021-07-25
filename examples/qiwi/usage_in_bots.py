@@ -21,24 +21,24 @@ async def create_payment(amount: Union[float, int] = 1) -> qiwi_types.Bill:
         return await wallet.create_p2p_bill(amount=amount)
 
 
-@dp.message_handler(text="Хочу оплатить")
+@dp.message_handler(text="I want to pay")
 async def payment(message: types.Message, state: FSMContext):
     bill = await create_payment()
-    await message.answer(text=f"Хорошо, вот ваш счёт для оплаты:\n {bill.pay_url}")
+    await message.answer(text=f"Ok, here's your invoice:\n {bill.pay_url}")
     await state.set_state("payment")
     await state.update_data(bill=bill)
 
 
-@dp.message_handler(state="payment", text="Оплатил")
+@dp.message_handler(state="payment", text="I have paid this invoice")
 async def successful_payment(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         bill: qiwi_types.Bill = data.get("bill")
     status = await bill.paid
     if status:
-        await message.answer("Вы успешно оплатили счет")
+        await message.answer("You have successfully paid your invoice")
         await state.finish()
     else:
-        await message.answer("Счет не оплачен")
+        await message.answer("Invoice was not paid")
 
 
 if __name__ == "__main__":

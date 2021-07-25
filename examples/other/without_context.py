@@ -3,8 +3,8 @@ import asyncio
 
 from glQiwiApi import QiwiWrapper
 
-# Создаем объект кошелька и обязательно передаем without_context = True,
-# иначе будут проблемы с aiohttp.ClientSession
+# Create a wallet object and be sure to pass without_context = True,
+# otherwise there will be problems with aiohttp.ClientSession
 wallet = QiwiWrapper(
     api_access_token="token",
     phone_number="+number",
@@ -15,9 +15,9 @@ wallet = QiwiWrapper(
 
 async def main():
     bill = await wallet.create_p2p_bill(amount=1)
-    # new version
+    # new version(1.x)
     new_status = await bill.paid
-    # old version
+    # old version(0.x)
     old_status = (await wallet.check_p2p_bill_status(bill.bill_id)) == "PAID"
     assert new_status == old_status
 
