@@ -12,7 +12,7 @@
 
 ## 🌎Official api resources:
 
-* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__ - mostly russian, but also combined with englishgio
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
@@ -26,7 +26,7 @@
 ### 💾Installation
 
 ```bash
-pip install glQiwiApi==1.0.3b2
+pip install glQiwiApi==1.0.3
 ```
 
 ---
@@ -97,8 +97,8 @@ from glQiwiApi import QiwiWrapper
 async def main():
     async with QiwiWrapper(api_access_token='your_token') as w:
         w.phone_number = '+number'
-        # Таким образом мы проверим, была ли транзакция на сумму 999 рублей с комментарием
-        # 'I like glQiwiApi!' и отправителем с номером +7904832168
+        # This way we will check if the transaction was in the amount of 999 rubles with a comment
+        # 'I like glQiwiApi!' and sender with phone number +7904832168
         is_paid = await w.check_transaction(
             amount=999,
             comment='I like glQiwiApi!',
@@ -123,19 +123,18 @@ async def main():
   async with QiwiWrapper(
           secret_p2p="your_secret_p2p"
   ) as w:
-    # Таким образом можно создать p2p счет
-    # В примере указан счёт на 1 рубль с комментарием some_comment
+    # This way you can create P2P bill using QIWI p2p API
     bill = await w.create_p2p_bill(
       amount=1,
       comment='my_comm'
     )
-    # Проверка на статус "оплачено" созданного p2p счёта
+    # This way you can check status of transaction(exactly is transaction was paid)
     if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
       print('Успешно оплачено')
     else:
       print('Транзакция не найдена')
-    # Или, начиная с версии апи 0.2.0
-    print(await bill.paid)  # This will print you bool answer
+    # Or, you can use alias(async property)
+    print(await bill.paid)
 
 
 asyncio.run(main())
@@ -156,14 +155,14 @@ from glQiwiApi import QiwiWrapper
 async def main():
     async with QiwiWrapper(api_access_token="token") as w:
         w.phone_number = "+number"
-        # Так выглядит перевод на другой киви кошелек
-        # в примере перевод будет на номер +7904832168 с комментарием "На шоколадку" и суммой 1 рубль
+        # It looks like a transfer to another qiwi wallet
+        # in the example, the transfer will be to the number +7904832168 with the comment "for a chocolate bar" and the amount of 1 ruble
         trans_id = await w.to_wallet(
             to_number='+7904832168',
-            comment='На шоколадку',
+            comment='for a chocolate bar',
             trans_sum=1
         )
-        # В данном примере мы сохраним чек в директории, где вы запускаете скрипт как my_receipt.pdf
+        # In this example, we will save the receipt in the directory where you run the script as my_receipt.pdf
         await w.get_receipt(
             transaction_id=trans_id,
             transaction_type='OUT',
@@ -246,13 +245,13 @@ from glQiwiApi import QiwiWrapper
 async def main():
     async with QiwiWrapper(api_access_token="token") as w:
         w.phone_number = "+number"
-        # Так можно отправлять средства на карты разных банков, получая при этом айди транзакции
+        # So you can send funds to cards of different banks, while receiving ID transactions
         trans_id = await w.to_card(
             trans_sum=1,
             to_card='4890494756089082'
         )
         print(trans_id)
-        # Так можно предварительно расчитать комиссию за транзакцию
+        # This is how you can pre-calculate the transaction fee.
         commission = await w.commission(
             to_account='4890494756089082',
             pay_sum=1
@@ -271,11 +270,11 @@ import asyncio
 
 from glQiwiApi import QiwiWrapper
 
-# Кэширование по умолчанию отключено, так как
-# эта функция все ещё находиться в бета тестировании и
-# константа DEFAULT_CACHE_TIME = 0, чтобы это исправить и включить кэширование
-# нужно передать cache_time в конструктор класса QiwiWrapper
-# или YooMoneyAPI
+# Caching is disabled by default because
+# this feature is still in beta testing and
+# constant DEFAULT_CACHE_TIME = 0 to fix this and enable caching
+# you need to pass cache_time to the constructor of the QiwiWrapper class
+# or YooMoneyAPI
 wallet = QiwiWrapper(
     # Токен, полученный с https://qiwi.com/api
     api_access_token='token',
@@ -288,20 +287,20 @@ wallet = QiwiWrapper(
 
 async def cache_test():
     async with wallet:
-        # Результат заноситься в кэш
+        # The result will be cached
         print(await wallet.transactions(rows_num=50))
-        # Этот запрос возьмется из кэша
+        # The result will be taken from cache
         print(await wallet.transactions(rows_num=50))
 
-        # Запросы ниже не будут браться из кэша,
-        # причиной тому есть разница в параметрах запроса
-        # Результат все также заноситься в кэш
+        # The requests below will not be taken from the cache,
+        # the reason for this is the difference in the request parameters
+        # The result is also stored in the cache
         print(len(await wallet.transactions(rows_num=30)) == 30)  # True
-        # Однако, повторный запрос к апи будет выполнен, поскольку
-        # при попытке взятие результата из кэша валидатор сравнивает
-        # параметры запроса, если они не совпадают, то
-        # кэш игнорируется
-        # Повторный запрос к апи
+        # However, a second request to the api will be executed, because
+        # when trying to retrieve a result from the cache, the validator compares
+        # request parameters, if they do not match, then
+        # cache is ignored
+        # Repeated request to api
         print(len(await wallet.transactions(rows_num=10)) == 10)  # True
 
 
@@ -343,11 +342,11 @@ __glQiwiApi covers qiwi's MAPS api in QiwiMaps class__
 
 ## Important. How to get YooMoney access token
 
-+ #### Регистрируем своё приложение в YooMoney по ссылке: [click](https://yoomoney.ru/myservices/new)
++ #### We register our application in YooMoney using the link: [click](https://yoomoney.ru/myservices/new)
 
 ![yoo_money_register_app](https://i.imgur.com/Mu6R8Po.png)
 
-+ #### Получаем client_id после регистрации и далее используем уже YooMoneyAPI:
++ #### Here, we get the client_id after registration and then use YooMoneyAPI:
 
 ```python
 import asyncio
@@ -356,20 +355,20 @@ from glQiwiApi import YooMoneyAPI
 
 
 async def get_url_to_auth() -> None:
-    # Получаем ссылку для авторизации, переходим по ней, если получаем invalid_request или какую-то ошибку
-    # значит либо неправильно передан scope параметр, нужно уменьшить список прав или попробовать пересоздать приложение
+    # Get a link for authorization, follow it if we get invalid_request or some kind of error
+    # means either the scope parameter is incorrectly passed, you need to reduce the list of rights or try to recreate the application
     print(await YooMoneyAPI.build_url_for_auth(
-        # Для платежей, проверки аккаунта и истории платежей, нужно указать scope=["account-info", "operation-history", "operation-details", "payment-p2p"]
+        # For payments, account verification and payment history, you need to specify scope = ["account-info", "operation-history", "operation-details", "payment-p2p"]
         scope=["account-info", "operation-history"],
-        client_id='айди, полученный при регистрации приложения выше',
-        redirect_uri='ссылка, указаная при регистрации выше в поле Redirect URI'
+        client_id='ID received when registering the application above',
+        redirect_uri='the link specified during registration above in the Redirect URI field'
     ))
 
 
 asyncio.run(get_url_to_auth())
 ```
 
-+ #### Теперь нужно получить временный код и МАКСИМАЛЬНО БЫСТРО получить токен, используя class method YooMoneyAPI:
++ #### Now you need to get the temporary code and get the token as fast as possible using the YooMoneyAPI class method:
 
 ![reg](https://i2.paste.pics/7660ed1444d1b3fc74b08128c74dbcd4.png?trs=9bfa3b1c0203c2ffe9982e7813a27700d047bfbc7ed23b79b99c1c4ffdd34995)
 
@@ -381,9 +380,9 @@ from glQiwiApi import YooMoneyAPI
 
 async def get_token() -> None:
     print(await YooMoneyAPI.get_access_token(
-        code='код полученный из ссылки, как на скрине выше',
-        client_id='айди приложения, полученое при регистрации',
-        redirect_uri='ссылка, указанная при регистрации'
+        code='the code obtained from the link, as in the screenshot above',
+        client_id='Application ID received when registering the application above',
+        redirect_uri='link provided during registration'
     ))
 
 
@@ -431,14 +430,14 @@ TOKEN = 'your_token'
 async def main():
     w = YooMoneyAPI(TOKEN)
     async with w:
-        # Так вы можете отослать средства на другой счет, в примере это перевод на аккаунт 4100116602400968
-        # на сумму 2 рубля с комментарием "I LOVE glQiwiApi"
+        # So you can send funds to another account, in the example this is a transfer to account 4100116602400968
+        # worth 2 rubles with the comment "I LOVE glQiwiApi"
         payment = await w.send(
             to_account='4100116602400968',
             comment='I LOVE glQiwiApi',
             amount=2
         )
-        # Опционально, так вы можете проверить транзакцию, поступила ли она человеку на счёт
+        # This way you can check the transaction, whether it was received by the person on the account
         print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi',
                                         transaction_type='out'))
 
@@ -460,7 +459,7 @@ TOKEN = 'your_token'
 async def main():
     w = YooMoneyAPI(TOKEN)
     async with w:
-        # Так вы получаете информацию об аккаунте в виде объекта AccountInfo
+        # This gives you account information as AccountInfo object.
         account_info = await w.account_info
         print(account_info.account_status)
         print(account_info.balance)
