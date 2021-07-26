@@ -116,8 +116,6 @@ class UserInfo(Base):
 
 
 class QiwiAccountInfo(Base):
-    """Информация об аккаунте"""
-
     auth_info: Optional[AuthInfo] = Field(None, alias="authInfo")
     contract_info: Optional[ContractInfo] = Field(None, alias="contractInfo")
     user_info: Optional[UserInfo] = Field(None, alias="userInfo")

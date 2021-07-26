@@ -12,7 +12,7 @@
 
 ## 🌎Official api resources:
 
-* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
+* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
@@ -133,7 +133,7 @@ async def main():
     else:
       print('Invoice was not paid')
     # Or, you can use alias(async property)
-    print(await bill.check())
+    print(await bill.paid)
 
 
 asyncio.run(main())
