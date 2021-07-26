@@ -85,17 +85,17 @@ class BaseWrapper(ABC):
         proxy: Any = None,
     ) -> None:
         """
-        :param api_access_token: токен, полученный с https://qiwi.com/api
-        :param phone_number: номер вашего телефона с +
-        :param secret_p2p: секретный ключ, полученный с https://p2p.qiwi.com/
-        :param without_context: bool, указывает, будет ли объект класса
-         "глобальной" переменной или будет использована в async with контексте
-        :param cache_time: Время кэширование запросов в секундах,
-         по умолчанию 0, соответственно,
-         запрос не будет использовать кэш по дефолту, максимальное время
-         кэширование 60 секунд
-        :param proxy: Прокси, которое будет использовано при создании сессии, может замедлить
-            работу АПИ
+        :param api_access_token: QIWI API token received from https://qiwi.com/api
+        :param phone_number: your phone number starting with +
+        :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
+        :param without_context: bool, indicates whether the object of the class will be
+         a "global" variable or will be used in an async with context
+        :param cache_time:Time of caching requests in seconds,
+         default 0, respectively
+         the request will not use the cache by default, the maximum time
+         caching 60 seconds
+        :param proxy: The proxy that will be used when creating a session may slow down
+            API work
         """
         if validate_params:
             self._validate_params(
@@ -140,12 +140,6 @@ class BaseWrapper(ABC):
         self._dispatcher = other
 
     def _auth_token(self, headers: Dict[Any, Any], p2p: bool = False) -> Dict[Any, Any]:
-        """
-        Make auth for API
-
-        :param headers: dictionary
-        :param p2p: boolean
-        """
         headers["Authorization"] = headers["Authorization"].format(
             token=self.api_access_token if not p2p else self.secret_p2p
         )
@@ -180,14 +174,7 @@ class BaseWrapper(ABC):
         without_context: bool,
         cache_time: Union[float, int],
     ) -> None:
-        """
-        Validating all parameters by `isinstance` function or `regex`
-
-        :param api_access_token:
-        :param phone_number:
-        :param without_context:
-        :param cache_time:
-        """
+        """Validating all parameters by `isinstance` function or `regex`"""
         import re
 
         if not isinstance(api_access_token, str):
@@ -280,11 +267,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def get_current_webhook(self) -> WebHookConfig:
         """
-        Список действующих (активных) обработчиков уведомлений,
-         связанных с вашим кошельком, можно получить данным запросом.
-        Так как сейчас используется только один тип хука - webhook,
-         то в ответе содержится только один объект данных
-
+        List of active (active) notification handlers, associated with your wallet can be obtained with this request.
+        Since now only one type of hook is used - webhook, then the response contains only one data object
         """
         response = await self.request_manager.send_request(
             "GET",
@@ -296,10 +280,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def _send_test_notification(self) -> Dict[Any, Any]:
         """
-        Для проверки вашего обработчика webhooks используйте данный запрос.
-        Тестовое уведомление отправляется на адрес, указанный при вызове
-        register_webhook
-
+        Use this request to test your webhooks handler.
+        Test notification is sent to the address specified during the call register_webhook
         """
         return await self.request_manager.send_request(
             "GET",
@@ -310,12 +292,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def get_webhook_secret_key(self, hook_id: str) -> str:
         """
-        Каждое уведомление содержит цифровую подпись сообщения,
-         зашифрованную ключом.
-        Для получения ключа проверки подписи используйте данный запрос.
+        Each notification contains a digital signature of the message, encrypted with a key.
+        To obtain a signature verification key, use this request.
 
         :param hook_id: UUID of webhook
-        :return: Base64-закодированный ключ
+        :return: Base64 encoded key
         """
         resp = await self.request_manager.send_request(
             "GET",
@@ -327,11 +308,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return cast(str, resp["key"])
 
     async def delete_current_webhook(self) -> Optional[Dict[str, str]]:
-        """
-        Method to delete webhook
-
-        :return: Описание результата операции
-        """
+        """Method to delete webhook"""
         try:
             hook = await self.get_current_webhook()
         except RequestError as ex:
@@ -350,10 +327,10 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def change_webhook_secret(self, hook_id: str) -> str:
         """
-        Для смены ключа шифрования уведомлений используйте данный запрос.
+        Use this request to change the encryption key for notifications.
 
         :param hook_id: UUID of webhook
-        :return: Base64-закодированный ключ
+        :return: Base64 encoded key
         """
         response = await self.request_manager.send_request(
             "POST",
@@ -420,14 +397,14 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     @api_helper.override_error_messages(
         {
             404: {
-                "message": "Введена неправильный номер карты, возможно, "
-                "карта на которую вы переводите заблокирована"
+                "message": "Wrong card number entered, possibly"
+                "the card to which you transfer is blocked"
             }
         }
     )
     async def _detect_mobile_number(self, phone_number: str) -> str:
         """
-        Метод для получения идентификатора телефона
+        Help method for getting phone ID
 
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#cards
         """
@@ -463,25 +440,25 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         """
-        Метод для получения транзакций на счёту
-        Более подробная документация:
+        Method for receiving transactions on the account
+        More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#payments_list
 
-        Возможные значения параметра operation:
+        Possible values for the operation parameter:
          - 'ALL'
          - 'IN'
          - 'OUT'
          - 'QIWI_CARD'
 
-        :param rows_num: кол-во транзакций, которые вы хотите получить
+        :param rows_num: number of transactions you want to receive
         :param operation: Тип операций в отчете, для отбора.
-        :param start_date:Начальная дата поиска платежей.
-                            Используется только вместе с end_date.
-        :param end_date: конечная дата поиска платежей.
-                            Используется только вместе со start_date.
+        :param start_date:The starting date for searching for payments.
+                            Used only in conjunction with end_date.
+        :param end_date: the end date of the search for payments.
+                            Used only in conjunction with start_date.
         """
         if rows_num > 50 or rows_num <= 0:
-            raise InvalidData("Можно проверять не более 50 транзакций")
+            raise InvalidData("You can check no more than 50 transactions")
         headers = self._auth_token(self._router.default_headers)
         payload_data = api_helper.check_dates(
             start_date=start_date,
@@ -524,12 +501,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def check_restriction(self) -> List[Restriction]:
         """
-        Метод для проверки ограничений на вашем киви кошельке\n
-        Подробная документация:
+        Method to check limits on your qiwi wallet
+        Detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#restrictions
 
-        :return: Список, где находиться словарь с ограничениями,
-         если ограничений нет - возвращает пустой список
+        :return: List where the dictionary is located with restrictions,
+         if there are no restrictions, it returns an empty list
         """
         headers = self._auth_token(self._router.default_headers)
         response = await self.request_manager.send_request(
@@ -543,10 +520,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     @property
     async def identification(self) -> Identification:
-        """
-        Функция, которая позволяет
-        получить данные идентификации вашего кошелька
-        Более подробная документация:
+        """A function that allows get your wallet identification data
+        More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#ident
 
         :return: Response object
@@ -571,12 +546,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     ) -> bool:
         """
         [ NON API METHOD ]
-        Метод для проверки транзакции.\n
-        Данный метод использует self.transactions(rows_num=rows_num)
-        для получения платежей.\n
-        Для небольшой оптимизации вы можете уменьшить rows_num задав его,
-        однако это не гарантирует правильный результат
-        Возможные значения параметра transaction_type:
+        Method for verifying a transaction.
+        This method uses self.transactions (rows_num = rows_num)
+        to receive payments.
+        For a little optimization, you can decrease rows_num by setting it,
+        however, this does not guarantee the correct result
+        Possible values for the transaction_type parameter:
          - 'IN'
          - 'OUT'
          - 'QIWI_CARD'
@@ -605,13 +580,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def get_limits(self) -> Dict[str, Limit]:
         """
-        Функция для получения лимитов по счёту киви кошелька\n
-        Возвращает лимиты по кошельку в виде списка,
-        если лимита по определенной стране нет, то не включает его в список
-        Подробная документация:
-        https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
+        Function for getting limits on the qiwi wallet account
+        Returns wallet limits as a list,
+        if there is no limit for a certain country, then it does not include it in the list
+        Detailed documentation:
 
-        :return: Limit object of Limit(pydantic)
+        https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
         """
         headers = self._auth_token(self._router.default_headers)
         limit_types = self._router.config.LIMIT_TYPES
@@ -631,10 +605,6 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return api_helper.parse_limits(response, Limit)
 
     async def get_list_of_cards(self) -> List[Card]:
-        """
-        Данный метод позволяет вам получить список ваших карт.
-
-        """
         headers = self._auth_token(self._router.default_headers)
         response = await self.request_manager.send_request(
             "GET", QiwiApiMethods.GET_LIST_OF_CARDS, self._router, headers=headers
@@ -653,22 +623,20 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         snils: Optional[str] = None,
     ) -> Dict[Any, Any]:
         """
-        Данный запрос позволяет отправить данные
-        для идентификации вашего QIWI кошелька.
-        Допускается идентифицировать не более 5 кошельков на одного владельца
+        This request allows you to send data to identify your QIWI wallet.
+        It is allowed to identify no more than 5 wallets per owner
 
-        Для идентификации кошелька вы обязательно должны отправить ФИО,
-        серию/номер паспорта и дату рождения.\n
-        Если данные прошли проверку, то в ответе будет отображен
-        ваш ИНН и упрощенная идентификация кошелька будет установлена.
-        В случае если данные не прошли проверку,
-        кошелек остается в статусе "Минимальный".
+        To identify the wallet, you must send your full name, passport series number and date of birth.
+        If the data has been verified, then the response will display
+        your TIN and simplified wallet identification will be installed.
+        If the data has not been verified,
+        the wallet remains in the "Minimum" status.
 
-        :param birth_date: Дата рождения в виде строки формата 1998-02-11
-        :param first_name: Ваше имя
-        :param last_name: Ваша фамилия
-        :param patronymic: Ваше отчество
-        :param passport: Серия / Номер паспорта. Пример 4400111222
+        :param birth_date: Date of birth as a format string 1998-02-11
+        :param first_name: First name
+        :param last_name: Last name
+        :param patronymic: Middle name
+        :param passport: Series / Number of the passport. Ex: 4400111222
         :param oms:
         :param snils:
         :param inn:
@@ -697,9 +665,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     @api_helper.override_error_messages(
         {
             422: {
-                "message": "Невозможно получить чек, из-за того, что "
-                "транзакция по такому айди не была проведена, "
-                "то есть произошла ошибка при проведении транзакции"
+                "message": "It is impossible to receive a check due to the fact that "
+                "the transaction for this ID has not been completed,"
+                "that is, an error occurred during the transaction"
             }
         }
     )
@@ -711,20 +679,17 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         file_name: Optional[str] = None,
     ) -> Union[bytes, int]:
         """
-        Метод для получения чека в формате байтов или файлом.\n
-        Возможные значения transaction_type:
+        Method for receiving a receipt in byte format or file. \ N
+        Possible transaction_type values:
          - 'IN'
          - 'OUT'
          - 'QIWI_CARD'
 
-        :param transaction_id: str or int, id транзакции,
-         можно получить при вызове методе to_wallet, to_card
-        :param transaction_type: тип транзакции может быть:
-         'IN', 'OUT', 'QIWI_CARD'
-        :param dir_path: путь к директории, куда вы хотите сохранить чек,
-         если не указан, возвращает байты
-        :param file_name: Имя файла без формата. Пример: my_receipt
-        :return: pdf файл в байтовом виде или номер записанных байтов
+        :param transaction_id: transaction id, can be obtained by calling the to_wallet method, to_card
+        :param transaction_type: type of transaction: 'IN', 'OUT', 'QIWI_CARD'
+        :param dir_path: path to the directory where you want to save the receipt, if not specified, returns bytes
+        :param file_name:File name without format. Example: my_receipt
+        :return:pdf file in byte form or number of bytes written
         """
         headers = self._auth_token(self._router.default_headers)
         data = {"type": transaction_type, "format": "PDF"}
@@ -758,23 +723,21 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         sources: Optional[List[str]] = None,
     ) -> Statistic:
         """
-        Данный запрос используется для получения сводной статистики
-        по суммам платежей за заданный период.\n
-        Более подробная документация:
+        This query is used to get summary statistics
+        by the amount of payments for a given period.
+        More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#payments_list
 
-        :param start_date: Начальная дата периода статистики.
-         Обязательный параметр
-        :param end_date: Конечная дата периода статистики.
-         Обязательный параметр
-        :param operation: Тип операций, учитываемых при подсчете статистики.
-         Допустимые значения:
+        :param start_date:The start date of the statistics period.
+        :param end_date: End date of the statistics period.
+        :param operation: The type of operations taken into account when calculating statistics.
+         Allowed values:
             ALL - все операции,
             IN - только пополнения,
             OUT - только платежи,
             QIWI_CARD - только платежи по картам QIWI (QVC, QVP).
             По умолчанию ALL.
-        :param sources: Источники платежа, по которым вернутся данные.
+        :param sources: The sources of payments
             QW_RUB - рублевый счет кошелька,
             QW_USD - счет кошелька в долларах,
             QW_EUR - счет кошелька в евро,
@@ -828,11 +791,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         self, currency_alias: str
     ) -> Optional[Dict[str, bool]]:
         """
-        Запрос создает новый счет и баланс в вашем QIWI Кошельке
+        The request creates a new account and balance in your QIWI Wallet
 
-        :param currency_alias: Псевдоним нового счета
-        :return: Возвращает значение из декоратора allow_response_code
-         Пример результата, если запрос был проведен успешно: {"success": True}
+        :param currency_alias: New account alias
         """
         headers = self._auth_token(self._router.default_headers)
         payload = {"alias": currency_alias}
@@ -847,12 +808,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def available_balances(self) -> List[Balance]:
         """
-        Запрос отображает псевдонимы счетов,
-        доступных для создания в вашем QIWI Кошельке
-        Сигнатура объекта ответа:
-        class Balance(BaseModel):
-            alias: str
-            currency: int
+        The request displays account aliases, available for creation in your QIWI Wallet
 
         """
         headers = self._auth_token(self._router.default_headers)
@@ -868,11 +824,10 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     @api_helper.allow_response_code(status_code=204)
     async def set_default_balance(self, currency_alias: str) -> Any:
         """
-        Запрос устанавливает для вашего QIWI Кошелька счет,
-        баланс которого будет использоваться для фондирования
-        всех платежей по умолчанию.
-        Счет должен содержаться в списке счетов, получить список можно вызвав
-        метод list_of_balances
+        The request sets up an account for your QIWI Wallet, whose balance will be used for funding
+        all payments by default.
+        The account must be contained in the list of accounts, you can get the list by calling
+        list_of_balances method
 
         :param currency_alias: Псевдоним нового счета,
          можно получить из list_of_balances
@@ -918,14 +873,14 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         comment: str = "+comment+",
     ) -> str:
         """
-        Метод для перевода денег на другой кошелек\n
-        Подробная документация:
+        Method for transferring money to another wallet \n
+        Detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#p2p
 
-        :param to_number: номер получателя
-        :param trans_sum: кол-во денег, которое вы хотите перевести
-        :param currency: особенный код валюты
-        :param comment: комментарий к платежу
+        :param to_number: recipient number
+        :param trans_sum: the amount of money you want to transfer
+        :param currency: special currency code
+        :param comment: payment comment
         """
         data = api_helper.set_data_to_wallet(
             data=deepcopy(self._router.config.QIWI_TO_WALLET),
@@ -948,8 +903,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         self, trans_sum: Union[float, int], to_card: str
     ) -> Optional[str]:
         """
-        Метод для отправки средств на карту.
-        Более подробная документация:
+        Method for sending funds to the card.
+        More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/#cards
 
         :param trans_sum: сумма перевода
@@ -975,7 +930,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def _detect_card_number(self, card_number: str) -> str:
         """
-        Метод для получения идентификатора карты
+        Method for getting card ID
 
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#cards
         """
@@ -993,9 +948,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         self, to_account: str, pay_sum: Union[int, float]
     ) -> Commission:
         """
-        Возвращается полная комиссия QIWI Кошелька
-        за платеж в пользу указанного провайдера
-        с учетом всех тарифов по заданному набору платежных реквизитов.
+        Full commission of QIWI Wallet is refunded for payment in favor of the specified provider
+        taking into account all tariffs for a given set of payment details.
 
         :param to_account: номер карты или киви кошелька
         :param pay_sum: сумма, за которую вы хотите узнать комиссию
@@ -1020,7 +974,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def get_cross_rates(self) -> List[CrossRate]:
         """
-        Метод возвращает текущие курсы и кросс-курсы валют КИВИ Банка.
+        The method returns the current exchange rates and cross-rates of the QIWI Bank's currencies.
 
         """
         response = await self.request_manager.send_request(
@@ -1038,13 +992,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         payment_id: Optional[str] = None,
     ) -> PaymentInfo:
         """
-        Оплата услуг коммерческих организаций по их банковским реквизитам.
+        Payment for services of commercial organizations according to their bank details.
 
-        :param payment_id: id платежа, если не передается, используется
-         uuid4
-        :param payment_sum: объект Sum, в котором указывается сумма платежа
-        :param payment_method: метод платежа
-        :param fields: Набор реквизитов платежа
+        :param payment_id: payment id, if not transmitted, is used uuid4 by default
+        :param payment_sum: a Sum object, which indicates the amount of the payment
+        :param payment_method: payment method
+        :param fields: payment details
         """
         payload = {
             "id": payment_id if isinstance(payment_id, str) else str(uuid.uuid4()),
@@ -1063,18 +1016,13 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def buy_qiwi_master(self) -> PaymentInfo:
         """
-        Метод для покупки пакета QIWI Мастер
-
-        Для вызова методов API вам потребуется токен API QIWI Wallet
-        с разрешениями на следующие действия:
-
-        1. Управление виртуальными картами,
-        2. Запрос информации о профиле кошелька,
-        3. Просмотр истории платежей,
-        4. Проведение платежей без SMS.
-
-        Эти права вы можете выбрать при создании нового апи токена,
-        чтобы пользоваться апи QIWI Master
+        Method for buying QIWI Master package
+        To call API methods, you need the QIWI Wallet API token with permissions to do the following:
+        1. Management of virtual cards,
+        2. Request information about the wallet profile,
+        3. View payment history,
+        4. Making payments without SMS.
+        You can choose these rights when creating a new api token, to use api QIWI Master
         """
         payload = api_helper.qiwi_master_data(
             self.stripped_number, self._router.config.QIWI_MASTER
@@ -1091,12 +1039,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     async def __pre_qiwi_master_request(
         self, card_alias: str = "qvc-cpa"
     ) -> OrderDetails:
-        """
-        Метод для выпуска виртуальной карты QIWI Мастер
-
-        :param card_alias: Тип карты
-        :return: OrderDetails
-        """
+        """Method for Issuing QIWI Master Virtual Card"""
         response = await self.request_manager.send_request(
             "POST",
             QiwiApiMethods.PRE_QIWI_REQUEST,
@@ -1110,12 +1053,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     async def _confirm_qiwi_master_request(
         self, card_alias: str = "qvc-cpa"
     ) -> OrderDetails:
-        """
-        Подтверждение заказа выпуска карты
-
-        :param card_alias: Тип карты
-        :return: OrderDetails
-        """
+        """Confirmation of the card issue order"""
         details = await self.__pre_qiwi_master_request(card_alias)
         response = await self.request_manager.send_request(
             "PUT",
@@ -1128,12 +1066,6 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return OrderDetails.parse_obj(response)
 
     async def __buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
-        """
-        Покупка карты, если она платная
-
-        :param kwargs:
-        :return: OrderDetails
-        """
         kwargs.update(data=self._router.config.QIWI_MASTER)
         payload = api_helper.new_card_data(**kwargs)
         response = await self.request_manager.send_request(
@@ -1149,22 +1081,15 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         self, card_alias: str = "qvc-cpa"
     ) -> Optional[OrderDetails]:
         """
-        Выпуск новой карты, используя Qiwi Master API
+        Issuing a new card using the Qiwi Master API
 
-        При выпуске карты производиться 3, а возможно 3 запроса,
-        а именно по такой схеме:
-            - __pre_qiwi_master_request - данный метод создает заявку
-            - _confirm_qiwi_master_request - подтверждает выпуск карты
-            - __buy_new_qiwi_card - покупает новую карту,
-              если такая карта не бесплатна
-
-
-        Подробная документация:
-
+        When issuing a card, 3, and possibly 3 requests are made, namely, according to the following scheme:
+            - __pre_qiwi_master_request - this method creates a request
+            - _confirm_qiwi_master_request - confirms the issue of the card
+            - __buy_new_qiwi_card - buys a new card,
+              if such a card is not free
+        Detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/#qiwi-master-issue-card
-
-        :param card_alias: Тип карты
-        :return: OrderDetails
         """
         pre_response = await self._confirm_qiwi_master_request(card_alias)
         if pre_response.status == "COMPLETED":
@@ -1186,12 +1111,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
-        """
-        Метод для отмены транзакции.
-
-        :param bill_id: номер p2p транзакции
-        :return: Bill obj
-        """
+        """Use this method to cancel unpaid invoice."""
         if not self.secret_p2p:
             raise InvalidData("Не задан p2p токен")
         data = deepcopy(self._p2p_router.config.P2P_DATA)
@@ -1207,8 +1127,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
 
     async def check_p2p_bill_status(self, bill_id: str) -> str:
         """
-        Метод для проверки статуса p2p транзакции.\n
-        Возможные типы транзакции: \n
+        Method for checking the status of a p2p transaction.\n
+        Possible transaction types: \n
         WAITING	Счет выставлен, ожидает оплаты	\n
         PAID	Счет оплачен	\n
         REJECTED	Счет отклонен\n
@@ -1240,22 +1160,23 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         pay_source_filter: Optional[List[str]] = None,
     ) -> Bill:
         """
-        Метод для выставление p2p счёта.
-        Надежный способ для интеграции.
-        Параметры передаются server2server с использованием авторизации.
-        Возможные значения pay_source_filter:
+        It is the reliable method for integration.
+        Parameters are sent by means of server2server requests with authorization.
+        Method allows you to issue an invoice, successful
+         response contains payUrl link to redirect client on Payment Form.
+        Possible values of pay_source_filter:
           - 'qw'
           - 'card'
           - 'mobile'
 
-        :param amount: сумма платежа
-        :param bill_id: уникальный номер транзакции, если не передан,
-         генерируется автоматически,
-        :param life_time: дата, до которой счет будет доступен для оплаты.
-        :param comment: комментарий к платежу
-        :param theme_code: специальный код темы
-        :param pay_source_filter: При открытии формы будут отображаться
-         только указанные способы перевода
+        :param amount: amount of payment
+        :param bill_id: unique transaction number, if not transmitted,
+         generated automatically,
+        :param life_time: the date until which the invoice will be available for payment.
+        :param comment:
+        :param theme_code:
+        :param pay_source_filter: When you open the form, the following will be displayed
+         only the translation methods specified in this parameter
         """
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
@@ -1281,12 +1202,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         self, rows_num: int, bill_statuses: str = "READY_FOR_PAY"
     ) -> List[Bill]:
         """
-        Метод получения списка неоплаченных счетов вашего кошелька.
-        Список строится в обратном хронологическом порядке.
-        По умолчанию, список разбивается на страницы по 50 элементов в каждой,
-        но вы можете задать другое количество элементов (не более 50).
-        В запросе можно использовать фильтры по времени выставления счета,
-        начальному идентификатору счета.
+        A method for getting a list of your wallet's outstanding bills.
+        The list is built in reverse chronological order.
+        By default, the list is paginated with 50 items each,
+        but you can specify a different number of elements (no more than 50).
+        Filters by billing time can be used in the request,
+        the initial account identifier.
         """
         headers = self._auth_token(self._router.default_headers)
         if rows_num > 50:
@@ -1309,20 +1230,20 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         json_bill_data: Union[OptionalSum, Dict[str, Union[str, int]]],
     ) -> RefundBill:
         """
-        Метод позволяет сделать возврат средств по оплаченному счету.
-        в JSON-теле запроса параметра json_bill_data:\n
-         amount.value - сумма возврата. \n
-         amount.currency - валюта возврата.
-        Может быть словарем или объектом OptionalSum\n
-         Пример словаря: {
+        The method allows you to make a refund on a paid invoice.
+         in the JSON body of the request for the json_bill_data parameter:
+         amount.value - refund amount.
+         amount.currency - return currency.
+        Can be a dictionary or an OptionalSum object
+         Dictionary example: {
         "amount": {
             "currency": "RUB",
             "value": 1
             }
         }
 
-        :param bill_id: уникальный идентификатор счета в системе мерчанта
-        :param refund_id: уникальный идентификатор возврата в системе мерчанта.
+        :param bill_id: unique account identifier in the merchant's system
+        :param refund_id: unique identifier of the refund in the merchant's system.
         :param json_bill_data:
         :return: RefundBill object
         """
@@ -1347,10 +1268,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         self, key_pair_name: str, server_notification_url: Optional[str] = None
     ) -> P2PKeys:
         """
-        Метод создает новые p2p ключи
-
-        :param key_pair_name: Название пары токенов P2P (произвольная строка)
-        :param server_notification_url: url для вебхуков, необязательный
+        :param key_pair_name: P2P token pair name (arbitrary string)
+        :param server_notification_url: url for webhooks, optional
          параметр
         """
         headers = self._auth_token(self._router.default_headers, p2p=True)

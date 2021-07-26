@@ -6,31 +6,31 @@ API reference
 
 Payment wrappers
 ----------------
+
 .. automodule:: glQiwiApi
     :members: QiwiWrapper, YooMoneyAPI, QiwiMaps
 
-Qiwi Webhooks
-------------
+Qiwi webhooks and polling API
+-----------------------------
+
 .. automodule:: glQiwiApi.core.web_hooks.filter
    :members:
 
-.. automodule:: glQiwiApi.core.web_hooks.handler
+.. automodule:: glQiwiApi.core.web_hooks.dispatcher
    :members:
 
 .. automodule:: glQiwiApi.core.web_hooks.server
    :members:
 
-
 .. _Executor overview:
 
-Polling
--------
 .. automodule:: glQiwiApi.utils.executor
    :members:
 
 
 Low level API
 -------------
+
 .. automodule:: glQiwiApi.core.basic_requests_api
    :members:
 
@@ -43,19 +43,20 @@ Low level API
 
 Aiogram integration
 -------------------
+
 .. automodule:: glQiwiApi.core.builtin.telegram
     :members:
 
 
 Synchronous adapter
 -------------------
-.. automodule:: glQiwiApi.utils.basics
-    :members: sync, _await_sync, _run_forever_safe
+.. automodule:: glQiwiApi.utils.api_helper
+    :members: sync, await_sync, run_forever_safe, async_as_sync
 
 
 Exceptions
 ----------
-.. automodule:: glQiwiApi.utils.exceptions
+.. automodule:: glQiwiApi.utils.errors
    :members:
 
 

@@ -219,7 +219,7 @@ async def test_check_p2p_on_object(api: QiwiWrapper):
     async with api:
         bill = await api.create_p2p_bill(amount=1)
         assert isinstance(bill, types.Bill)
-        result = await bill.paid
+        result = await bill.check
 
     assert isinstance(result, bool)
 

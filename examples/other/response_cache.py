@@ -8,11 +8,11 @@ from glQiwiApi import QiwiWrapper
 # you need to pass cache_time to the constructor of the QiwiWrapper class
 # or YooMoneyAPI
 wallet = QiwiWrapper(
-    # Токен, полученный с https://qiwi.com/api
+    # QIWI API token from https://qiwi.com/api
     api_access_token="token",
-    # Номер вашего мобильного номера с "+"
+    # phone number startswith "+"
     phone_number="+phone_number",
-    # Время кэширование запроса в секундах(пока ещё в бета тестировании)
+    # Cache time in seconds
     cache_time=5,
 )
 

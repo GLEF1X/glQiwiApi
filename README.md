@@ -133,7 +133,7 @@ async def main():
     else:
       print('Invoice was not paid')
     # Or, you can use alias(async property)
-    print(await bill.paid)
+    print(await bill.check())
 
 
 asyncio.run(main())
@@ -459,7 +459,7 @@ async def main():
     w = YooMoneyAPI(TOKEN)
     async with w:
         # This gives you account information as AccountInfo object.
-        account_info = await w.account_info
+        account_info = await w.account_info()
         print(account_info.account_status)
         print(account_info.balance)
 

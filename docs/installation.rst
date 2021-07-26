@@ -4,34 +4,34 @@
 Installation
 ============
 
-Поддерживаемые версии Python: `3.7` и выше
+Supported Python versions: `3.7` and higher
 
-Стабильный релиз
+Stable release
 ----------------
 
-Для установки glQiwiApi, запустите эту команду в вашем терминале:
+To install glQiwiApi, run this command in your terminal:
 
 .. code-block:: console
 
     $ pip install glQiwiApi
 
-Это предпочтительный метод установки, так как он всегда будет устанавливать самый последний стабильный релиз.
-Если у вас нет установленного `pip`_, этот `Справочник по установке Python`_ может помочь в процессе.
+This is the preferred installation method as it will always install the most recent stable release.
+If you do not have installed `pip`_, this `Python Installation Reference`_ can help you in the process.
 
 .. _pip: https://pip.pypa.io
-.. _Справочник по установке Python: http://docs.python-guide.org/en/latest/starting/installation/
+.. _Python Installation Reference: http://docs.python-guide.org/en/latest/starting/installation/
 
 
-Из исходных файлов
+From source files
 ------------------
 
-Вы можете либо клонировать публичный репозиторий:
+You can either clone the public repository:
 
 .. code-block:: console
 
     $ git clone git://github.com/GLEF1X/glQiwiApi
 
-Как только вы получите копию исходных файлов, вы можете установить их с помощью:
+Once you get a copy of the source files, you can install them with:
 
 .. code-block:: console
 

@@ -33,7 +33,7 @@ async def payment(message: types.Message, state: FSMContext):
 async def successful_payment(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         bill: qiwi_types.Bill = data.get("bill")
-    status = await bill.paid
+    status = await bill.check()
     if status:
         await message.answer("You have successfully paid your invoice")
         await state.finish()

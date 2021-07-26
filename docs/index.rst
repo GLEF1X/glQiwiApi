@@ -1,4 +1,4 @@
-Добро пожаловать в документацию по glQiwiApi!
+Welcome to the glQiwiApi documentation!
 =============================================
 
 ..  image:: https://img.shields.io/pypi/v/glQiwiApi.svg?style=flat-square
@@ -24,7 +24,7 @@
 
 
 .. toctree::
-   :caption: Контент:
+   :caption: Content:
 
    installation
    quick_start
@@ -32,7 +32,7 @@
    types/index
    API
 
-Индекс
+Index
 ======
 * :ref:`genindex`
 * :ref:`modindex`

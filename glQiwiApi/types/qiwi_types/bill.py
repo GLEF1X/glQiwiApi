@@ -62,8 +62,7 @@ class Bill(Base):
         def __repr__(self) -> str:
             return self.__str__()
 
-    @property
-    async def paid(self) -> bool:
+    async def check(self) -> bool:
         """
         Checking p2p payment
 

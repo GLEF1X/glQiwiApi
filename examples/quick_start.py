@@ -18,7 +18,6 @@ async def main_boost():
     # in async with context manager)
     async with QiwiWrapper(api_access_token="your_token") as w:
         w.phone_number = "+number"
-        # Данным вызовом вы получите текущий баланс кошелька.
         print((await w.get_balance()).amount)
 
 
