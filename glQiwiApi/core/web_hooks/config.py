@@ -1,6 +1,17 @@
+from __future__ import annotations
+
 import ipaddress
 import typing
 from dataclasses import dataclass
+from typing import (
+    TYPE_CHECKING,
+)
+
+if TYPE_CHECKING:
+    from glQiwiApi.types import WebHook, Notification, Transaction  # noqa
+    from glQiwiApi.core.web_hooks.dispatcher import EventHandler  # noqa
+
+from ..builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 
 DEFAULT_QIWI_WEBHOOK_PATH = "/web_hooks/qiwi/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI"

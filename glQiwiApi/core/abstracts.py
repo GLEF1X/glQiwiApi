@@ -31,7 +31,6 @@ T = typing.TypeVar("T")
 
 
 class BaseStorage(abc.ABC):
-
     @abc.abstractmethod
     def clear(self, key: typing.Optional[str] = None, *, force: bool = False) -> Any:
         raise NotImplementedError

@@ -12,14 +12,14 @@
 
 ## 🌎Official api resources:
 
-* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__ - mostly russian, but also combined with englishgio
+* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/master/index.html)__
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
 ### 📣Why glQiwiApi?
 
 * :boom:__It's working faster than other async libraries for qiwi__
-* :dizzy:__Frecache_testquent updates and edits__
+* :dizzy:__Frequent updates and edits__
 * :innocent: __The library developer will always help you with any problems you
   might encounter__
 
@@ -65,7 +65,6 @@ async def main():
     # in async with context manager)
     async with QiwiWrapper(api_access_token='your_token') as w:
         w.phone_number = '+number'
-        # Данным вызовом вы получите текущий баланс кошелька. 
         print((await w.get_balance()).amount)
 
 

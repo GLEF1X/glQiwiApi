@@ -395,9 +395,7 @@ def parse_amount(txn_type, txn):
 
 def check_params(amount_, amount, txn, transaction_type):
     return (
-        amount is not None
-        and amount_ >= amount
-        and txn.direction == transaction_type
+        amount is not None and amount_ >= amount and txn.direction == transaction_type
     )
 
 
@@ -592,8 +590,7 @@ def check_transactions_payload(
             " находиться в диапазоне от 1 до 100 включительно"
         )
     if operation_types and all(
-        isinstance(operation_type, OperationType)
-        for operation_type in operation_types
+        isinstance(operation_type, OperationType) for operation_type in operation_types
     ):
         op_types = [operation_type.value for operation_type in operation_types]
         data.update({"type": " ".join(op_types)})

@@ -40,7 +40,7 @@ def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes) -> None:
 
 class BaseProxy(abc.ABC):
     def __init__(
-            self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
+        self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
     ):
         self.bot = dispatcher.bot
         self.dispatcher = dispatcher
@@ -74,12 +74,12 @@ class TelegramWebhookProxy(BaseProxy):
     """ You can override the prefix for the application """
 
     def __init__(
-            self,
-            dispatcher: Dispatcher,
-            ssl_certificate: SSLContext,
-            webhook_domain: str,
-            route_name: str = "webhook_handler",
-            sub_apps: typing.Optional[SubApps] = None,
+        self,
+        dispatcher: Dispatcher,
+        ssl_certificate: SSLContext,
+        webhook_domain: str,
+        route_name: str = "webhook_handler",
+        sub_apps: typing.Optional[SubApps] = None,
     ):
         """
 
@@ -149,16 +149,16 @@ class TelegramPollingProxy(BaseProxy):
     """
 
     def __init__(
-            self,
-            dispatcher: Dispatcher,
-            loop: typing.Optional[AbstractEventLoop] = None,
-            timeout: int = 20,
-            relax: float = 0.1,
-            limit: typing.Optional[typing.Any] = None,
-            reset_webhook: typing.Optional[typing.Any] = None,
-            fast: typing.Optional[bool] = True,
-            error_sleep: int = 5,
-            allowed_updates: typing.Optional[typing.List[str]] = None,
+        self,
+        dispatcher: Dispatcher,
+        loop: typing.Optional[AbstractEventLoop] = None,
+        timeout: int = 20,
+        relax: float = 0.1,
+        limit: typing.Optional[typing.Any] = None,
+        reset_webhook: typing.Optional[typing.Any] = None,
+        fast: typing.Optional[bool] = True,
+        error_sleep: int = 5,
+        allowed_updates: typing.Optional[typing.List[str]] = None,
     ) -> None:
         super(TelegramPollingProxy, self).__init__(dispatcher, loop=loop)
         self._allowed_updates = allowed_updates

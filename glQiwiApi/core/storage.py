@@ -2,7 +2,7 @@ import time
 import typing
 
 from glQiwiApi.core import BaseStorage
-from glQiwiApi.core.constants import uncached
+from glQiwiApi.core.constants import UNCACHED
 from glQiwiApi.types.basics import Cached, Attributes
 from glQiwiApi.utils import errors
 
@@ -32,7 +32,7 @@ class Storage(BaseStorage):
         self._cache_time = cache_time
 
     def clear(
-            self, key: typing.Optional[str] = None, *, force: bool = False
+        self, key: typing.Optional[str] = None, *, force: bool = False
     ) -> typing.Any:
         """
         Method to delete element from the cache by key,
@@ -62,7 +62,7 @@ class Storage(BaseStorage):
         if self._cache_time < 0.1:
             return True
 
-        for coincidence in uncached:
+        for coincidence in UNCACHED:
             try:
                 if value.startswith(coincidence) or coincidence in value:  # type: ignore
                     return True
@@ -70,7 +70,9 @@ class Storage(BaseStorage):
                 return False
         return False
 
-    def convert_to_cache(self, result: typing.Any, kwargs: typing.Dict[typing.Any, typing.Any]) -> Cached:
+    def convert_to_cache(
+        self, result: typing.Any, kwargs: typing.Dict[typing.Any, typing.Any]
+    ) -> Cached:
         """
         Method, which convert response of API to :class:`Cached`
 
@@ -106,12 +108,14 @@ class Storage(BaseStorage):
             }
 
     @staticmethod
-    def _check_get_request(cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]) -> bool:
+    def _check_get_request(
+        cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]
+    ) -> bool:
         """Method to check cached get requests"""
         return (
-                cached.method == "GET"
-                and kwargs.get("headers") == cached.kwargs.headers
-                and kwargs.get("params") == cached.kwargs.params
+            cached.method == "GET"
+            and kwargs.get("headers") == cached.kwargs.headers
+            and kwargs.get("params") == cached.kwargs.params
         )
 
     def _is_expire(self, cached_in: float, key: typing.Any) -> bool:
@@ -121,7 +125,9 @@ class Storage(BaseStorage):
             return True
         return False
 
-    def _validate_other(self, cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]) -> bool:
+    def _validate_other(
+        self, cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]
+    ) -> bool:
         keys = (k for k in self._validator_criteria if k != "headers")
         return any(getattr(cached.kwargs, key) == kwargs.get(key, "") for key in keys)
 

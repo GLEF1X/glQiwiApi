@@ -9,10 +9,10 @@ __all__ = ("YooMoneyRouter", "YooMoneyMethods")
 
 
 class YooMoneyRouter(AbstractRouter):
+    __head__ = "https://yoomoney.ru"
+
     def setup_routes(self) -> Any:
         return YooMoneyMethods()
-
-    __head__ = "https://yoomoney.ru"
 
     def setup_config(self) -> YooMoneyConfig:
         return YooMoneyConfig()
@@ -30,11 +30,11 @@ class YooMoneyConfig:
             "Content-Type": "application/x-www-form-urlencoded",
         }
         self.ERROR_CODE_NUMBERS = {
-            400: "Ошибка, связанная с типом запроса к апи, "
-            "возможно вы передали недействительный API токен",
-            401: "Указан несуществующий, просроченный, или отозванный токен",
-            403: "Запрошена операция, на которую у токена нет прав",
-            0: "Ошибка, связанная с использованием прокси или непредвиденные ошибки сервера",
+            400: "An error related to the type of request to the api,"
+            "you may have passed an invalid API token",
+            401: "A non-existent, expired, or revoked token is specified",
+            403: "An operation has been requested for which the token has no rights",
+            0: "Proxy error or unexpected server errors",
         }
         self.content_and_auth = {"content_json": True, "auth": True}
 

@@ -98,7 +98,9 @@ class UserInfo(Base):
 
     default_pay_currency: CurrencyModel = Field(alias="defaultPayCurrency")
     default_pay_source: Optional[int] = Field(None, alias="defaultPaySource")
-    default_pay_account_alias: Optional[str] = Field(None, alias="defaultPayAccountAlias")
+    default_pay_account_alias: Optional[str] = Field(
+        None, alias="defaultPayAccountAlias"
+    )
     email: Optional[str] = None
     first_transaction_id: int = Field(alias="firstTxnId")
     language: str
