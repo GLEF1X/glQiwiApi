@@ -40,7 +40,6 @@ class RequestManager(HttpXParser):
         self._cache = Storage(cache_time=cache_time)
 
     def reset_cache(self) -> None:
-        """Clear all cache in storage"""
         self._cache.clear(force=True)
 
     async def send_request(
@@ -80,7 +79,6 @@ class RequestManager(HttpXParser):
         params: Optional[Any] = None,
         **kwargs: Any
     ) -> Dict[Any, Any]:
-        """Send request to service(API)"""
         request_args = {
             k: v for k, v in locals().items() if not isinstance(v, type(self))
         }
@@ -120,10 +118,10 @@ class RequestManager(HttpXParser):
 
     @property
     def is_session_closed(self) -> bool:
-        if isinstance(self._session, aiohttp.ClientSession):
-            if not self._session.closed:
-                return True
-        return False
+        return (
+            isinstance(self._session, aiohttp.ClientSession)
+            and not self._session.closed
+        )
 
     @classmethod
     def filter_dict(cls, dictionary: Dict[Any, Any]) -> Dict[Any, Any]:

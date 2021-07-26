@@ -14,16 +14,13 @@ class ToolsMixin(object):
     _requests: RequestManager
 
     async def __aenter__(self) -> ToolsMixin:
-        """Создаем сессию, чтобы не пересоздавать её много раз"""
         await self._requests.create_session()
         return self
 
     async def close(self) -> None:
-        """shutdown wrapper, close aiohttp session and clear storage"""
         await self._requests.close()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore
-        """Закрываем сессию и очищаем кэш при выходе"""
         await self.close()
 
     def _get(self, item: Any) -> Any:

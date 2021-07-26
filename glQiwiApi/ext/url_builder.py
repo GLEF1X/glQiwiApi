@@ -56,11 +56,12 @@ class WebhookURL(
 
         if not isinstance(v, str):
             raise TypeError("%s must be a string" % param_name)
-        if isinstance(additional_filter, types.LambdaType):
-            if not additional_filter(v):
-                raise TypeError(
-                    f"%s must pass a custom filter {additional_filter}" % param_name
-                )
+        if isinstance(
+            additional_filter, types.LambdaType
+        ) and not additional_filter(v):
+            raise TypeError(
+                f"%s must pass a custom filter {additional_filter}" % param_name
+            )
         return v
 
     @classmethod

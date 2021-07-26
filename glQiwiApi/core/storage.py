@@ -25,14 +25,14 @@ class Storage(BaseStorage):
     def __init__(self, *, cache_time: typing.Union[float, int]) -> None:
         """
 
-        :param cache_time: Время кэширования в секундах
+        :param cache_time: cache time in seconds
         """
 
         self.data: typing.Dict[typing.Any, typing.Any] = {}
         self._cache_time = cache_time
 
     def clear(
-        self, key: typing.Optional[str] = None, *, force: bool = False
+            self, key: typing.Optional[str] = None, *, force: bool = False
     ) -> typing.Any:
         """
         Method to delete element from the cache by key,
@@ -41,7 +41,6 @@ class Storage(BaseStorage):
         :param key: by this key to delete an element in storage
         :param force: If this argument is passed as True,
          the date in the storage will be completely cleared.
-
         """
         if force:
             return self.data.clear()
@@ -85,9 +84,8 @@ class Storage(BaseStorage):
                 response_data=result,
                 method=kwargs.get("method"),
             )
-        else:
-            self.clear(value, force=True)
-            raise errors.InvalidCachePayload()
+        self.clear(value, force=True)
+        raise errors.InvalidCachePayload()
 
     def update_data(self, obj_to_cache: typing.Any, key: typing.Any) -> None:
         """
@@ -110,11 +108,11 @@ class Storage(BaseStorage):
     @staticmethod
     def _check_get_request(cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]) -> bool:
         """Method to check cached get requests"""
-        if cached.method == "GET":
-            if kwargs.get("headers") == cached.kwargs.headers:
-                if kwargs.get("params") == cached.kwargs.params:
-                    return True
-        return False
+        return (
+                cached.method == "GET"
+                and kwargs.get("headers") == cached.kwargs.headers
+                and kwargs.get("params") == cached.kwargs.params
+        )
 
     def _is_expire(self, cached_in: float, key: typing.Any) -> bool:
         """Method to check live cache time, and if it expired return True"""
@@ -125,10 +123,7 @@ class Storage(BaseStorage):
 
     def _validate_other(self, cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]) -> bool:
         keys = (k for k in self._validator_criteria if k != "headers")
-        for key in keys:
-            if getattr(cached.kwargs, key) == kwargs.get(key, ""):
-                return True
-        return False
+        return any(getattr(cached.kwargs, key) == kwargs.get(key, "") for key in keys)
 
     def validate(self, **kwargs: typing.Any) -> bool:
         """

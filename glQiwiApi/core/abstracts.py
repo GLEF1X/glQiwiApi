@@ -31,10 +31,6 @@ T = typing.TypeVar("T")
 
 
 class BaseStorage(abc.ABC):
-    """
-    Абстрактный класс контроллера кэша
-
-    """
 
     @abc.abstractmethod
     def clear(self, key: typing.Optional[str] = None, *, force: bool = False) -> Any:
@@ -100,13 +96,14 @@ class AbstractParser(abc.ABC):
         """
         pass
 
+    @abc.abstractmethod
     def make_exception(
         self,
         status_code: int,
         traceback_info: Optional[RequestInfo] = None,
         message: Optional[str] = None,
     ) -> Exception:
-        """Метод для обработки исключений и лучшего логирования"""
+        raise NotImplementedError
 
     async def __aenter__(self) -> AbstractParser:
         return self

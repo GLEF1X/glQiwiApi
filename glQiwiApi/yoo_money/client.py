@@ -353,24 +353,27 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             'request_id': pre_payment.request_id,
             'money_source': 'wallet'
         }
-        if money_source == 'card' and isinstance(pre_payment, PreProcessPaymentResponse):
-            if pre_payment.money_source.cards.allowed == 'true':  # type: ignore
-                if not isinstance(card_type, str):
-                    cards = cast(Card, pre_payment.money_source.cards)  # type: ignore
-                    payload.update({
-                        'money_source': cards.items[0].item_id,
-                        'csc': cvv2_code
-                    })
-                else:
-                    cards = cast(Card, pre_payment.money_source.cards).items  # type: ignore
-                    for card in cards:
-                        if card.item_type == card_type:  # type: ignore
-                            payload.update(
-                                {
-                                    'money_source': card.item_id,  # type: ignore
-                                    'csc': cvv2_code
-                                },
-                            )
+        if (
+                money_source == 'card'
+                and isinstance(pre_payment, PreProcessPaymentResponse)
+                and pre_payment.money_source.cards.allowed == 'true'
+        ):  # type: ignore
+            if not isinstance(card_type, str):
+                cards = cast(Card, pre_payment.money_source.cards)  # type: ignore
+                payload.update({
+                    'money_source': cards.items[0].item_id,
+                    'csc': cvv2_code
+                })
+            else:
+                cards = cast(Card, pre_payment.money_source.cards).items  # type: ignore
+                for card in cards:
+                    if card.item_type == card_type:  # type: ignore
+                        payload.update(
+                            {
+                                'money_source': card.item_id,  # type: ignore
+                                'csc': cvv2_code
+                            },
+                        )
         response = await self.request_manager.send_request("POST", YooMoneyMethods.PROCESS_PAYMENT, self._router,
                                                            headers=headers, data=payload)
         return Payment.parse_obj(response).initialize(pre_payment.protection_code)
@@ -457,13 +460,12 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             # because the parameters depend on the type of transaction
             amount_, comment_ = parse_amount(transaction_type, detail)
             checked = check_params(amount_, amount, detail, transaction_type)
-            if checked:
-                if detail.status == 'success':
-                    if comment_ == comment and detail.sender == recipient:
-                        return True
-                    elif isinstance(comment, str) and isinstance(recipient, str):
-                        continue
-                    elif comment_ == comment:
-                        return True
+            if checked and detail.status == 'success':
+                if comment_ == comment and detail.sender == recipient:
+                    return True
+                elif isinstance(comment, str) and isinstance(recipient, str):
+                    continue
+                elif comment_ == comment:
+                    return True
 
         return False

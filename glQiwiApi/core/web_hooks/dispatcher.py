@@ -102,7 +102,7 @@ class Dispatcher:
                                          EventHandler["Transaction"],
                                          EventHandler["Notification"]]]:
         """Return all registered handlers"""
-        gen = (handler for handler in chain(self.bill_handlers, self.transaction_handlers))
+        gen = iter(chain(self.bill_handlers, self.transaction_handlers))
         return cast(Iterator[Union[EventHandler["WebHook"],
                                    EventHandler["Transaction"],
                                    EventHandler["Notification"]]], gen)
@@ -174,9 +174,10 @@ class Dispatcher:
         Feed handlers with event.
         :param event: any object that will be translated to handlers
         """
-        tasks = []
-        for handler in self.handlers:
-            tasks.append(asyncio.create_task(handler.check_then_execute(event)))  # type: ignore
+        tasks = [
+            asyncio.create_task(handler.check_then_execute(event))
+            for handler in self.handlers
+        ]
 
         await asyncio.gather(*tasks)
         _update_handled.clear()

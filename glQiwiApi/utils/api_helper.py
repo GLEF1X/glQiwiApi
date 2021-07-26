@@ -274,10 +274,7 @@ def simple_multiply_parse(objects, model):
     :param objects: usually its response.response_data
     :param model: pydantic model, which will parse data
     """
-    result = []
-    for obj in objects:
-        result.append(model.parse_obj(obj))
-    return result
+    return [model.parse_obj(obj) for obj in objects]
 
 
 def take_event_loop(set_debug: bool = False):
@@ -397,11 +394,11 @@ def parse_amount(txn_type, txn):
 
 
 def check_params(amount_, amount, txn, transaction_type):
-    if amount is not None:
-        if amount_ >= amount:
-            if txn.direction == transaction_type:
-                return True
-    return False
+    return (
+        amount is not None
+        and amount_ >= amount
+        and txn.direction == transaction_type
+    )
 
 
 def run_forever_safe(loop, callback) -> None:
@@ -520,18 +517,17 @@ class async_as_sync:  # NOQA
 
 def check_transaction(transactions, amount, transaction_type, sender, comment):
     for txn in transactions:
-        if float(txn.sum.amount) >= amount:
-            if txn.type == transaction_type:
-                if txn.comment == comment and txn.to_account == sender:
-                    return True
-                elif comment and sender:
-                    continue
-                elif txn.to_account == sender:
-                    return True
-                elif sender:
-                    continue
-                elif txn.comment == comment:
-                    return True
+        if float(txn.sum.amount) >= amount and txn.type == transaction_type:
+            if txn.comment == comment and txn.to_account == sender:
+                return True
+            elif comment and sender:
+                continue
+            elif txn.to_account == sender:
+                return True
+            elif sender:
+                continue
+            elif txn.comment == comment:
+                return True
     return False
 
 
@@ -595,13 +591,12 @@ def check_transactions_payload(
             "Кол-во записей, которые можно запросить,"
             " находиться в диапазоне от 1 до 100 включительно"
         )
-    if operation_types:
-        if all(
-            isinstance(operation_type, OperationType)
-            for operation_type in operation_types
-        ):
-            op_types = [operation_type.value for operation_type in operation_types]
-            data.update({"type": " ".join(op_types)})
+    if operation_types and all(
+        isinstance(operation_type, OperationType)
+        for operation_type in operation_types
+    ):
+        op_types = [operation_type.value for operation_type in operation_types]
+        data.update({"type": " ".join(op_types)})
 
     if isinstance(start_record, int):
         if start_record < 0:

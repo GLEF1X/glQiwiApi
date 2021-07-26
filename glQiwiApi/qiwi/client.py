@@ -204,9 +204,12 @@ class BaseWrapper(ABC):
                 without_context: bool = False,
                 cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
                 *args: Any, **kwargs: Any) -> N:
-        if not isinstance(api_access_token, str) and not isinstance(secret_p2p, str):
-            if not _is_copy_signal(kwargs):
-                raise RuntimeError("Unable to initialize instance without tokens")
+        if (
+            not isinstance(api_access_token, str)
+            and not isinstance(secret_p2p, str)
+            and not _is_copy_signal(kwargs)
+        ):
+            raise RuntimeError("Unable to initialize instance without tokens")
 
         return super().__new__(cls)  # type: ignore
 
@@ -537,10 +540,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return: Limit object of Limit(pydantic)
         """
         headers = self._auth_token(self._router.default_headers)
-        payload = {}
         limit_types = self._router.config.LIMIT_TYPES
-        for index, limit_type in enumerate(limit_types):
-            payload['types[' + str(index) + ']'] = limit_type
+        payload = {
+            'types[' + str(index) + ']': limit_type
+            for index, limit_type in enumerate(limit_types)
+        }
+
         response = await self.request_manager.send_request("GET", QiwiApiMethods.GET_LIMITS, self._router,
                                                            headers=headers, params=payload,
                                                            stripped_number=self.stripped_number)
