@@ -62,9 +62,9 @@ class EventHandler(Generic[Event]):
     """
 
     def __init__(
-        self,
-        handler: Callable[[Event], Awaitable[_T]],
-        *filters: Optional[BaseFilter[Event]],
+            self,
+            handler: Callable[[Event], Awaitable[_T]],
+            *filters: Optional[BaseFilter[Event]],
     ) -> None:
         """
 
@@ -107,7 +107,7 @@ class Dispatcher:
         self._logger = _setup_logger()
 
     def register_transaction_handler(
-        self, event_handler: TxnRawHandler[_T], *filters: TxnFilters
+            self, event_handler: TxnRawHandler[_T], *filters: TxnFilters
     ) -> None:
         self.transaction_handlers.append(
             cast(
@@ -119,7 +119,7 @@ class Dispatcher:
         )
 
     def register_bill_handler(
-        self, event_handler: BillRawHandler[_T], *filters: BillFilters
+            self, event_handler: BillRawHandler[_T], *filters: BillFilters
     ) -> None:
         self.bill_handlers.append(
             self.wrap_handler(event_handler, filters, default_filter=BillFilter())
@@ -127,7 +127,7 @@ class Dispatcher:
 
     @property
     def handlers(
-        self,
+            self,
     ) -> Iterator[Union[TxnWrappedHandler, EventHandler["Notification"]]]:
         """Return all registered handlers"""
         return iter(chain(self.bill_handlers, self.transaction_handlers))
@@ -144,9 +144,9 @@ class Dispatcher:
 
     @staticmethod
     def wrap_handler(
-        event_handler: Callable[[Event], Awaitable[_T]],
-        filters: Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...],
-        default_filter: Optional[BaseFilter[Event]] = None,
+            event_handler: Callable[[Event], Awaitable[_T]],
+            filters: Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...],
+            default_filter: Optional[BaseFilter[Event]] = None,
     ) -> EventHandler[Event]:
         """
         Add new event handler.
@@ -174,7 +174,7 @@ class Dispatcher:
         return EventHandler(event_handler, *generated_filters)
 
     def transaction_handler_wrapper(
-        self, *filters: TxnFilters
+            self, *filters: TxnFilters
     ) -> Callable[[TxnRawHandler[_T]], TxnRawHandler[_T]]:
         def decorator(callback: TxnRawHandler[_T]) -> TxnRawHandler[_T]:
             self.register_transaction_handler(callback, *filters)
@@ -183,7 +183,7 @@ class Dispatcher:
         return decorator
 
     def bill_handler_wrapper(
-        self, *filters: BillFilters
+            self, *filters: BillFilters
     ) -> Callable[[BillRawHandler[_T]], BillRawHandler[_T]]:
         def decorator(callback: BillRawHandler[_T]) -> BillRawHandler[_T]:
             self.register_bill_handler(callback, *filters)
@@ -200,6 +200,7 @@ class Dispatcher:
             asyncio.create_task(handler.check_then_execute(event))  # type: ignore
             for handler in self.handlers
         ]
-
-        await asyncio.gather(*tasks)
-        _update_handled.clear()
+        try:
+            await asyncio.gather(*tasks)
+        finally:
+            _update_handled.clear()

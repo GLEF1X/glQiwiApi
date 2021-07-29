@@ -1,3 +1,4 @@
+import warnings
 from datetime import datetime
 from typing import Optional, Union
 
@@ -56,18 +57,21 @@ class Bill(Base):
     class Config:
         extra = Extra.allow
 
-        def __str__(self) -> str:
-            return "<Config pydantic model {Bill}>"
-
-        def __repr__(self) -> str:
-            return self.__str__()
-
     @property
     async def paid(self) -> bool:
         """
         Checking p2p payment
 
         """
+        warnings.warn(
+            "`Bill.paid` property is deprecated, and will be removed in next versions, "
+            "use `Bill.check(...)` instead",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
+
+    async def check(self) -> bool:
         return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
 
 
