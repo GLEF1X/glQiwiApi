@@ -3,6 +3,7 @@ Provides effortless work with YooMoney API using asynchronous requests.
 
 """
 import asyncio
+import warnings
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple, cast
 
@@ -164,7 +165,17 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             "POST", YooMoneyMethods.REVOKE_API_TOKEN, self._router, headers=headers
         )
 
+    @property
     async def account_info(self) -> AccountInfo:
+        warnings.warn(
+            "`QiwiWrapper.account_info` property is deprecated, and will be removed in next versions, "
+            "use `QiwiWrapper.retrieve_account_info(...)` instead",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return await self.retrieve_account_info()
+
+    async def retrieve_account_info(self) -> AccountInfo:
         """
         Method for getting information about user account
         Detailed documentation:
@@ -172,9 +183,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
         :return: объект AccountInfo
         """
-        headers = self._auth_token(
-            parse_headers(**self._router.config.content_and_auth)
-        )
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
         response = await self.request_manager.send_request(
             "POST", YooMoneyMethods.ACCOUNT_INFO, self._router, headers=headers
         )
@@ -226,10 +235,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             data, records, operation_types, start_date, end_date, start_record
         )
         response = await self.request_manager.send_request(
-            "POST",
-            YooMoneyMethods.TRANSACTIONS,
-            self._router,
-            headers=headers,
+            "POST", YooMoneyMethods.TRANSACTIONS, self._router, headers=headers,
             data=self.request_manager.filter_dict(payload),
         )
         return simple_multiply_parse(
@@ -415,7 +421,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         return Payment.parse_obj(response).initialize(pre_payment.protection_code)
 
     async def get_balance(self) -> float:
-        return (await self.account_info).balance
+        return (await self.retrieve_account_info()).balance
 
     async def accept_incoming_transaction(
             self, operation_id: str, protection_code: str
@@ -436,16 +442,10 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
          Indicated for an incoming transfer protected by a protection code.
          Not available for on-demand transfers.
         """
-        headers = self._auth_token(
-            parse_headers(**self._router.config.content_and_auth)
-        )
+        headers = self._auth_token(parse_headers(**self._router.config.content_and_auth))
         payload = {"operation_id": operation_id, "protection_code": protection_code}
         response = await self.request_manager.send_request(
-            "POST",
-            YooMoneyMethods.ACCEPT_INCOMING_TRANSFER,
-            self._router,
-            headers=headers,
-            data=payload,
+            "POST", YooMoneyMethods.ACCEPT_INCOMING_TRANSFER, self._router, headers=headers, data=payload,
         )
         return IncomingTransaction.parse_obj(response)
 
@@ -466,10 +466,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
             parse_headers(**self._router.config.content_and_auth)
         )
         return await self.request_manager.send_request(
-            "POST",
-            YooMoneyMethods.INCOMING_TRANSFER_REJECT,
-            self._router,
-            headers=headers,
+            "POST", YooMoneyMethods.INCOMING_TRANSFER_REJECT, self._router, headers=headers,
             data={"operation_id": operation_id},
         )
 
@@ -494,13 +491,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param comment: comment by which the transaction will be verified
         :return: bool, is there such a transaction in the payment history
         """
-        # Generate types of transactions for request
-        types = [
-            OperationType.DEPOSITION
-            if transaction_type == "in"
-            else OperationType.PAYMENT
-        ]
-        # Get transactions by params
+        types = [OperationType.DEPOSITION if transaction_type == "in" else OperationType.PAYMENT]
         transactions = await self.transactions(operation_types=types, records=rows_num)
         tasks = [self.transaction_info(txn.operation_id) for txn in transactions]
         for detail in await asyncio.gather(*tasks):

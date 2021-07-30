@@ -53,7 +53,7 @@ async def test_get_transactions(api: YooMoneyAPI, payload: dict):
 
 async def test_account_info(api: YooMoneyAPI):
     async with api:
-        info = await api.account_info
+        info = await api.retrieve_account_info
 
     assert isinstance(info, types.AccountInfo)
 

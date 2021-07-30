@@ -1,7 +1,7 @@
 from aiogram import Bot
 
 from glQiwiApi import QiwiWrapper, types
-from glQiwiApi.core.web_hooks.config import Path
+from glQiwiApi.core.dispatcher.config import Path
 from glQiwiApi.utils import executor
 
 TOKEN = "token from https://qiwi.com/api/"
@@ -29,13 +29,13 @@ async def main2(event: types.Notification):
 # If you don't pass path in `start_webhook`
 # or dont pass on transaction_path or bill_path
 # Its ok, because it will take a default paths
-# default transaction_path = /web_hooks/qiwi/
+# default transaction_path = /dispatcher/qiwi/
 # default bill_path = /webhooks/qiwi/bills/
 # So, if you dont pass on paths
 # you need to register webhook with url like
 # on this example: http://your_ip:port/web_hooks/qiwi/ - for transactions
 # or http://your_ip:port/webhooks/qiwi/bills/ - for bills
-path = Path(transaction_path="/web_hooks/qiwi", bill_path="/my_webhook/")
+path = Path(transaction_path="/dispatcher/qiwi", bill_path="/my_webhook/")
 
 executor.start_webhook(
     wallet,

@@ -7,11 +7,11 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp.test_utils import TestServer, BaseTestServer
 
-from glQiwiApi.core.web_hooks import server
-from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
-from glQiwiApi.core.web_hooks.server import _check_ip  # NOQA
-from glQiwiApi.core.web_hooks.server import _check_ip  # NOQA
-from glQiwiApi.core.web_hooks.server import _check_ip  # NOQA
+from glQiwiApi.core.dispatcher import server
+from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.server import _check_ip  # NOQA
+from glQiwiApi.core.dispatcher.server import _check_ip  # NOQA
+from glQiwiApi.core.dispatcher.server import _check_ip  # NOQA
 from glQiwiApi.types import Notification, WebHook
 from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA
 

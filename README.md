@@ -456,12 +456,12 @@ TOKEN = 'your_token'
 
 
 async def main():
-    w = YooMoneyAPI(TOKEN)
-    async with w:
-        # This gives you account information as AccountInfo object.
-        account_info = await w.account_info()
-        print(account_info.account_status)
-        print(account_info.balance)
+  w = YooMoneyAPI(TOKEN)
+  async with w:
+    # This gives you account information as AccountInfo object.
+    account_info = await w.retrieve_account_info()
+    print(account_info.account_status)
+    print(account_info.balance)
 
 
 asyncio.run(main())

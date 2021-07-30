@@ -3,7 +3,7 @@ import pytest
 
 from glQiwiApi import QiwiWrapper, InvalidData
 from glQiwiApi.core import RequestManager
-from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter
 
 try:

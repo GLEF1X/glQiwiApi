@@ -8,7 +8,7 @@ from typing import Optional, Dict, Any, Union, Tuple, Type
 from aiohttp import web, RequestInfo
 from aiohttp.typedefs import LooseCookies
 
-from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 
 
 class SingletonABCMeta(abc.ABCMeta):
@@ -170,7 +170,7 @@ class BaseWebHookView(web.View):
 
         self._hash_validator(update)
 
-        await self.handler_manager.process_event(update)
+        await self.handler_manager.feed_event(update)
 
     def _hash_validator(self, update: Any) -> None:
         """Validating by hash of update"""

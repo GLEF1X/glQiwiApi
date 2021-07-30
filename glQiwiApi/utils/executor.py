@@ -17,7 +17,6 @@ from typing import (
     Awaitable,
     TypeVar,
     TYPE_CHECKING,
-    Coroutine,
     Any,
     cast,
     NoReturn,
@@ -27,8 +26,8 @@ from aiohttp import ClientTimeout, web
 
 from glQiwiApi.core.builtin import BaseProxy, logger, TelegramWebhookProxy
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
-from glQiwiApi.core.web_hooks import server
-from glQiwiApi.core.web_hooks.config import Path
+from glQiwiApi.core.dispatcher import server
+from glQiwiApi.core.dispatcher.config import Path
 from glQiwiApi.types import Transaction
 from glQiwiApi.utils.errors import NoUpdatesToExecute
 
@@ -309,7 +308,7 @@ class Executor:
         """
         for event in history:
             if cast(int, self.last_handled_txn_id) < event.transaction_id:
-                await self.dispatcher.process_event(event)
+                await self.dispatcher.feed_event(event)
                 self.last_handled_txn_id = event.transaction_id
                 self.get_updates_until = self.get_updates_from
 

@@ -7,7 +7,7 @@ from aiohttp.web_response import Response
 from glQiwiApi import types
 from glQiwiApi.core.abstracts import BaseWebHookView
 from glQiwiApi.core.builtin import BaseProxy
-from glQiwiApi.core.web_hooks.config import (
+from glQiwiApi.core.dispatcher.config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
     allowed_ips,
     DEFAULT_QIWI_ROUTER_NAME,
@@ -15,7 +15,7 @@ from glQiwiApi.core.web_hooks.config import (
     DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
     Path,
 )
-from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 from glQiwiApi.utils.api_helper import hmac_for_transaction, hmac_key
 
 
@@ -107,7 +107,7 @@ class QiwiBillWebView(BaseWebHookView):
 
         # self._hash_validator(update)
 
-        await self.handler_manager.process_event(update)
+        await self.handler_manager.feed_event(update)
         return web.json_response(data={"error": "0"})
 
     app_key_check_ip = "_qiwi_bill_check_ip"

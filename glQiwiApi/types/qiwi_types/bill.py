@@ -69,7 +69,7 @@ class Bill(Base):
             DeprecationWarning,
             stacklevel=2
         )
-        return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
+        return await self.check()
 
     async def check(self) -> bool:
         return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"

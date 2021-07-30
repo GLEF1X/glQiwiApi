@@ -52,7 +52,7 @@ async def api_fixture():
 
 async def _on_startup_callback(api: QiwiWrapper):
     await asyncio.sleep(1)
-    await api.dp.process_event(txn)
+    await api.dp.feed_event(txn)
 
 
 class TestPolling:

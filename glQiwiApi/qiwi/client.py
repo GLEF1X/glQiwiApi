@@ -30,7 +30,7 @@ from typing import (
 
 from glQiwiApi.core import RequestManager, constants
 from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
-from glQiwiApi.core.web_hooks.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 from glQiwiApi.ext.url_builder import WebhookURL
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
@@ -201,9 +201,9 @@ class BaseWrapper(ABC):
         phone_number_pattern: Pattern[str] = re.compile(
             r"^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$"
         )
-        match: Optional[Match[Any]] = re.fullmatch(phone_number_pattern, phone_number)
+        phone_number_match: Optional[Match[Any]] = re.fullmatch(phone_number_pattern, phone_number)
 
-        if not match:
+        if not phone_number_match:
             raise InvalidData(
                 "Failed to verify parameter `phone_number` by regex. "
                 "Please, enter the correct phone number."

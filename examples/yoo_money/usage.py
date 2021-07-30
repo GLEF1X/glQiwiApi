@@ -20,7 +20,7 @@ async def main():
             )
         )
         # Get account info about account
-        print(await w.account_info())
+        print(await w.retrieve_account_info())
         # Getting balance
         print(await w.get_balance())
 

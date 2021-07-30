@@ -9,11 +9,11 @@ from typing import (
 
 if TYPE_CHECKING:
     from glQiwiApi.types import WebHook, Notification, Transaction  # noqa
-    from glQiwiApi.core.web_hooks.dispatcher import EventHandler  # noqa
+    from glQiwiApi.core.dispatcher.dispatcher import EventHandler  # noqa
 
 from ..builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 
-DEFAULT_QIWI_WEBHOOK_PATH = "/web_hooks/qiwi/"
+DEFAULT_QIWI_WEBHOOK_PATH = "/dispatcher/qiwi/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI"
 
 DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
@@ -27,6 +27,11 @@ allowed_ips = {
     ipaddress.IPv4Network("91.232.230.0/23"),
     ipaddress.IPv4Network("91.213.51.0/24"),
 }
+
+ENUM_EXCLUDE_ATTRS = (
+    '_generate_next_value_', '__module__', '__doc__', '_member_names_', '_member_map_',
+    '_member_type_', '_value2member_map_', '__new__'
+)
 
 
 @dataclass(frozen=True)
@@ -44,6 +49,7 @@ __all__ = (
     "DEFAULT_QIWI_BILLS_WEBHOOK_PATH",
     "DEFAULT_QIWI_BILLS_ROUTER_NAME",
     "RESPONSE_TIMEOUT",
+    "ENUM_EXCLUDE_ATTRS",
     "allowed_ips",
     "Path",
     "CF",

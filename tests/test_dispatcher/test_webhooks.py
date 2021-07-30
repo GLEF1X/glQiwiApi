@@ -6,11 +6,11 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from pytest_mock import MockerFixture
 
-from glQiwiApi.core.web_hooks.config import (
+from glQiwiApi.core.dispatcher.config import (
     DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
     DEFAULT_QIWI_WEBHOOK_PATH,
 )
-from glQiwiApi.core.web_hooks.server import _check_ip  # NOQA
+from glQiwiApi.core.dispatcher.server import _check_ip  # NOQA
 from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA
 
 pytestmark = pytest.mark.asyncio
@@ -25,7 +25,7 @@ async def test_bill_webhooks(
     bill_event: asyncio.Event = app["bill_event"]
     txn_event: asyncio.Event = app["txn_event"]
     # skip ip validation
-    mocker.patch("glQiwiApi.core.web_hooks.server._check_ip", return_value=True)
+    mocker.patch("glQiwiApi.core.dispatcher.server._check_ip", return_value=True)
     bill_response = await client.post(
         path=DEFAULT_QIWI_BILLS_WEBHOOK_PATH, json=NOTIFICATION_RAW_DATA
     )
@@ -34,7 +34,7 @@ async def test_bill_webhooks(
     bill_event.clear()
     # skip hash validation
     mocker.patch(
-        "glQiwiApi.core.web_hooks.server.QiwiWalletWebView._hash_validator",
+        "glQiwiApi.core.dispatcher.server.QiwiWalletWebView._hash_validator",
         return_value=None,
     )
     transaction_response = await client.post(

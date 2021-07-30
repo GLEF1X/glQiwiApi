@@ -1,6 +1,6 @@
 from typing import Union
 
-from glQiwiApi.core.web_hooks.filter import BaseFilter
+from glQiwiApi.core.dispatcher.filter import BaseFilter
 from glQiwiApi.types import Transaction, WebHook, Notification
 
 

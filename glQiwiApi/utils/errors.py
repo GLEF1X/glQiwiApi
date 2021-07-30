@@ -80,11 +80,11 @@ class RequestError(Exception):
     """
 
     def __init__(
-        self,
-        message: Optional[str],
-        status_code: Union[str, int],
-        additional_info: Optional[str] = None,
-        traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
+            self,
+            message: Optional[str],
+            status_code: Union[str, int],
+            additional_info: Optional[str] = None,
+            traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(RequestError, self).__init__()
         self.message = message
@@ -141,6 +141,18 @@ class RequestError(Exception):
         return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
 
 
+class CurrentEventIsEmpty(Exception):
+    """ Exception which identify if event is empty"""
+
+
+class EventTypeWasNotSpecified(Exception):
+    """ Exception which idenify that event type was not specified"""
+
+
+class EventTypeWasNotFound(Exception):
+    ...
+
+
 __all__ = (
     "InvalidData",
     "NoUrlFound",
@@ -152,5 +164,5 @@ __all__ = (
     "NoUpdatesToExecute",
     "StateError",
     "NetworkError",
-    "InvalidCachePayload",
+    "InvalidCachePayload"
 )

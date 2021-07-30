@@ -5,10 +5,10 @@ __pycache__/
 garbage.py
 # C ext
 *.so
-test.py
+glQiwiApi/test.py
 ssl_load_s.py
 setup.py
-*/test.*
+glQiwiApi/test.py
 *.pem
 # Distribution / packaging
 .Python
