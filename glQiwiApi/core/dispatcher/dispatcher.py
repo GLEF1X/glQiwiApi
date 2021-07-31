@@ -15,20 +15,22 @@ from typing import (
     Generic,
     TYPE_CHECKING,
     Iterator,
-    TypeVar,
+    TypeVar, Type, Any,
 )
 
-from glQiwiApi.core.dispatcher.class_based.observers import Observer
+from .class_based import AbstractTransactionHandler, AbstractBillHandler, Handler
 from .filter import BaseFilter, LambdaBasedFilter
 from ..builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 
 if TYPE_CHECKING:
     from glQiwiApi.types import Notification, WebHook, Transaction  # NOQA
+    from glQiwiApi.types.base import Base  # noqa
 
-Event = TypeVar("Event")  # for events that come from api such as Transaction, WebHook or Notification
+Event = TypeVar("Event", bound="Base")  # for events that come from api such as Transaction, WebHook or Notification
 _T = TypeVar("_T")
 EventFilter = Callable[[Event], bool]
-TxnRawHandler = Union[Callable[["WebHook"], Awaitable[_T]], Callable[["Transaction"], Awaitable[_T]], Observer]
+TxnRawHandler = Union[Callable[["WebHook"], Awaitable[Any]], Callable[["Transaction"], Awaitable[Any]],
+                      Type[AbstractTransactionHandler]]
 TxnFilters = Union[
     BaseFilter["Transaction"],
     BaseFilter["WebHook"],
@@ -36,7 +38,7 @@ TxnFilters = Union[
     Callable[["Transaction"], bool],
 ]
 
-BillRawHandler = Union[Callable[["Notification"], Awaitable[_T]], Observer]
+BillRawHandler = Union[Callable[["Notification"], Awaitable[Any]], Type[AbstractBillHandler]]
 BillFilters = Union[Callable[["Notification"], bool], BaseFilter["Notification"]]
 
 
@@ -58,11 +60,12 @@ class EventHandler(Generic[Event]):
 
     """
 
-    def __init__(self, handler: Callable[[Event], Awaitable[_T]], *filters: Optional[BaseFilter[Event]]) -> None:
+    def __init__(self, handler: Union[Callable[[Event], Awaitable[Any]], Type[Handler[Event]]],
+                 *filters: Optional[BaseFilter[Event]]) -> None:
         self._handler = handler
         self._filters: List[BaseFilter[Event]] = list(filterfalse(lambda f: f is not None, filters))  # type: ignore
 
-    async def check_then_execute(self, event: Event) -> Optional[_T]:
+    async def check_then_execute(self, event: Event) -> Optional[Any]:
         """Check event, apply all filters and then pass on to handler"""
         if _update_handled.is_set():
             return None
@@ -74,8 +77,7 @@ class EventHandler(Generic[Event]):
             async with asyncio.Lock():
                 _update_handled.set()
             return await self._handler(event)
-
-        return None
+        return None  # hint for mypy
 
 
 TxnWrappedHandler = Union[EventHandler["Transaction"], EventHandler["WebHook"]]
@@ -92,7 +94,7 @@ class Dispatcher:
         self.bill_handlers: List[EventHandler["Notification"]] = []
         self._logger = _setup_logger()
 
-    def register_transaction_handler(self, event_handler: TxnRawHandler[_T], *filters: TxnFilters) -> None:
+    def register_transaction_handler(self, event_handler: TxnRawHandler, *filters: TxnFilters) -> None:
         self.transaction_handlers.append(
             cast(
                 TxnWrappedHandler,
@@ -100,7 +102,7 @@ class Dispatcher:
             )
         )
 
-    def register_bill_handler(self, event_handler: BillRawHandler[_T], *filters: BillFilters) -> None:
+    def register_bill_handler(self, event_handler: BillRawHandler, *filters: BillFilters) -> None:
         self.bill_handlers.append(self.wrap_handler(event_handler, filters, default_filter=BillFilter()))
 
     @property
@@ -120,7 +122,7 @@ class Dispatcher:
 
     @staticmethod
     def wrap_handler(
-            event_handler: Callable[[Event], Awaitable[_T]],
+            event_handler: Union[Callable[[Event], Awaitable[_T]], Type[Handler[Event]]],
             filters: Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...],
             default_filter: Optional[BaseFilter[Event]] = None,
     ) -> EventHandler[Event]:
@@ -149,15 +151,15 @@ class Dispatcher:
 
         return EventHandler(event_handler, *generated_filters)
 
-    def transaction_handler_wrapper(self, *filters: TxnFilters) -> Callable[[TxnRawHandler[_T]], TxnRawHandler[_T]]:
-        def decorator(callback: TxnRawHandler[_T]) -> TxnRawHandler[_T]:
+    def transaction_handler_wrapper(self, *filters: TxnFilters) -> Callable[[TxnRawHandler], TxnRawHandler]:
+        def decorator(callback: TxnRawHandler) -> TxnRawHandler:
             self.register_transaction_handler(callback, *filters)
             return callback
 
         return decorator
 
-    def bill_handler_wrapper(self, *filters: BillFilters) -> Callable[[BillRawHandler[_T]], BillRawHandler[_T]]:
-        def decorator(callback: BillRawHandler[_T]) -> BillRawHandler[_T]:
+    def bill_handler_wrapper(self, *filters: BillFilters) -> Callable[[BillRawHandler], BillRawHandler]:
+        def decorator(callback: BillRawHandler) -> BillRawHandler:
             self.register_bill_handler(callback, *filters)
             return callback
 

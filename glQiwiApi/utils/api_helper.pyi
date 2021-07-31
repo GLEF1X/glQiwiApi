@@ -29,7 +29,6 @@ class_ = TypeVar("class_", bound="allow_response_code")
 
 def check_result(
     error_messages: Optional[Dict[int, str]],
-    content_type: str,
     status_code: int,
     request_info: RequestInfo,
     body: str,

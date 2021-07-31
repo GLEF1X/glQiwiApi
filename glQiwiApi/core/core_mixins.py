@@ -48,12 +48,12 @@ class ToolsMixin(object):
         return cast(ToolsMixin, result)
 
     @property
-    def data(self):  # type: ignore
+    def data(self) -> Dict[Any, Any]:
         data = getattr(self, "_data", None)
         if data is None:
             data = {}
             setattr(self, "_data", data)
-        return data
+        return cast(Dict[Any, Any], data)
 
     def __getitem__(self, item: Any) -> Any:
         return self.data[item]

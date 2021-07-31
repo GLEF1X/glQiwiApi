@@ -31,26 +31,18 @@ except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
 Local = LocalTimezone()
 
 
-def check_result(error_messages, content_type, status_code, request_info, body):
+def check_result(error_messages, status_code, request_info, body):
     """
     Checks whether `result` is a valid API response.
     A result is considered invalid if:
         - The server returned an HTTP response code other than 200
-        - The content of the result is invalid JSON.
 
     :param error_messages:
     :param status_code: status code
-    :param content_type: content type of result
     :param body: body of response
-    :param request_info: info about request
     :return: The result parsed to a JSON dictionary
     :raises ApiException: if one of the above listed cases is applicable
     """
-
-    if content_type != "application/json":
-        raise errors.NetworkError(
-            f'Invalid response with content type {content_type}: "{body}"'
-        )
 
     try:
         result_json = orjson.loads(body)
@@ -63,7 +55,7 @@ def check_result(error_messages, content_type, status_code, request_info, body):
     raise errors.RequestError(
         message=error_messages[status_code],
         status_code=status_code,
-        traceback_info=request_info,
+        traceback_info=request_info
     )
 
 

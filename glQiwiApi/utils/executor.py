@@ -45,22 +45,22 @@ T = TypeVar("T")
 
 
 def start_webhook(
-    client: QiwiWrapper,
-    *,
-    host: str = "localhost",
-    port: int = 8080,
-    path: Optional[Path] = None,
-    on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-    tg_app: Optional[TelegramWebhookProxy] = None,
-    app: Optional["web.Application"] = None,
-    ssl_context: Optional[SSLContext] = None,
-    loop: Optional[asyncio.AbstractEventLoop] = None,
+        client: QiwiWrapper,
+        *,
+        host: str = "localhost",
+        port: int = 8080,
+        path: Optional[Path] = None,
+        on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+        tg_app: Optional[TelegramWebhookProxy] = None,
+        app: Optional["web.Application"] = None,
+        ssl_context: Optional[SSLContext] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Blocking function that listens for webhooks
 
-    :param client:
+    :param client: instance of QiwiWrapper
     :param host: server host
     :param port: server port that open for tcp/ip trans.
     :param path: path for qiwi that will send requests
@@ -82,18 +82,18 @@ def start_webhook(
 
 
 def start_polling(
-    client: QiwiWrapper,
-    *,
-    get_updates_from: Optional[datetime] = None,
-    timeout: Union[float, int, ClientTimeout] = 5,
-    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
-    tg_app: Optional[BaseProxy] = None,
+        client: QiwiWrapper,
+        *,
+        get_updates_from: Optional[datetime] = None,
+        timeout: Union[float, int, ClientTimeout] = 5,
+        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        tg_app: Optional[BaseProxy] = None,
 ) -> None:
     """
     Setup for long-polling mode
 
-    :param client:
+    :param client: instance of QiwiWrapper
     :param get_updates_from: date from which will be polling,
          if it's None, polling will skip all updates
     :param timeout: timeout of polling in seconds, if the timeout is too small,
@@ -111,7 +111,7 @@ def start_polling(
 
 
 async def _inspect_and_execute_callback(
-    client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
+        client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
 ) -> None:
     if inspect.iscoroutinefunction(callback):
         await callback(client)
@@ -122,18 +122,14 @@ async def _inspect_and_execute_callback(
 def _check_callback(callback: Callable[[QiwiWrapper], Any]) -> NoReturn:
     if not isinstance(callback, types.FunctionType):
         raise BadCallback(
-            "Колбек, переданный в on_startup/on_shutdown не является функцией"
+            "Callback passed to on_startup / on_shutdown is not a function"
         )  # NOQA
-    if len(inspect.getfullargspec(callback).args) < 1:
-        raise BadCallback(
-            "Функция on_startup или on_shutdown должна принимать аргумент - экземпляр класса QiwiWrapper"
-        )
 
 
 def _setup_callbacks(
-    executor: Executor,
-    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        executor: Executor,
+        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
 ) -> None:
     """
     Function, which setup callbacks and set it to dispatcher object
@@ -149,11 +145,6 @@ def _setup_callbacks(
 
 
 def parse_timeout(timeout: Union[float, int, ClientTimeout]) -> float:
-    """
-    Parse timeout
-
-    :param timeout:
-    """
     if isinstance(timeout, float):
         return timeout
     elif isinstance(timeout, int):
@@ -168,16 +159,11 @@ def parse_timeout(timeout: Union[float, int, ClientTimeout]) -> float:
 
 
 class Executor:
-    """
-    Provides normal work of webhooks and polling
-
-    """
-
     def __init__(
-        self,
-        client: QiwiWrapper,
-        tg_app: Optional[BaseProxy],
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+            self,
+            client: QiwiWrapper,
+            tg_app: Optional[BaseProxy],
+            loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         """
 
@@ -193,7 +179,7 @@ class Executor:
             "level": logging.DEBUG,
         }
         self._tg_app = tg_app
-        self.last_handled_txn_id: Optional[int] = None
+        self.offset: Optional[int] = None
         self.get_updates_until: Optional[datetime] = None
         self.get_updates_from: Optional[datetime] = None
         self.client: QiwiWrapper = client
@@ -207,9 +193,7 @@ class Executor:
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
-        return cast(
-            asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop())
-        )
+        return cast(asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop()))
 
     def add_shutdown_callback(self, callback: Callable[[QiwiWrapper], Any]) -> None:
         _check_callback(callback)
@@ -219,9 +203,10 @@ class Executor:
         _check_callback(callback)
         self._on_startup_calls.append(callback)
 
-    async def _pre_process(self, get_updates_from: Optional[datetime]) -> None:
+    async def _prepare_date_boundaries(self, get_updates_from: Optional[datetime]) -> None:
         """
         Preprocess method, which set start date and end date of polling
+
         :param get_updates_from: date from which will be polling
         """
         current_time = datetime.now()
@@ -230,17 +215,9 @@ class Executor:
         self.get_updates_from = get_updates_from
         self.get_updates_until = current_time
 
-    async def _get_history(self) -> List[Transaction]:
-        """
-        Get history by call 'transactions' method from QiwiWrapper.
-        If history is empty or not all transactions not isinstance
-         class Transaction - raise exception
-
-        """
-        history = await self.client.transactions(
-            end_date=self.get_updates_until, start_date=self.get_updates_from
-        )
-        if not history or not all(isinstance(txn, Transaction) for txn in history):
+    async def _fetch_updates(self) -> List[Transaction]:
+        history = await self.client.transactions(end_date=self.get_updates_until, start_date=self.get_updates_from)
+        if not history:
             raise NoUpdatesToExecute()
         return history
 
@@ -250,36 +227,31 @@ class Executor:
 
         :param get_updates_from: date from which will be polling
         """
-        await self._pre_process(get_updates_from)
+        await self._prepare_date_boundaries(get_updates_from)
         try:
             # Here we get transactions from old to new like [3, 2, 1](a list of mock id's of events)
-            history_from_last_to_first: List[Transaction] = await self._get_history()
+            history_from_last_to_first: List[Transaction] = await self._fetch_updates()
         except NoUpdatesToExecute:
             return
         # Convert it to list of transactions with id's like [1, 2, 3] and work with it
         history_from_first_to_last: List[Transaction] = history_from_last_to_first[::-1]
 
-        if self.last_handled_txn_id is None:
+        if self.offset is None:
             first_payment: Transaction = history_from_first_to_last[0]
-            self.last_handled_txn_id = first_payment.transaction_id - 1
+            self.offset = first_payment.transaction_id - 1
 
-        await self._parse_history_and_process_events(history_from_first_to_last)
+        await self.process_events(history_from_first_to_last)
 
     async def _start_polling(self, **kwargs: Any) -> None:
-        """
-        Blocking method, which start polling process
-
-        :param kwargs:
-        """
+        """Blocking method, which start polling process"""
         self._timeout = timeout_to_sleep = parse_timeout(kwargs.pop("timeout"))
         while True:
             try:
                 await self._pool_process(**kwargs)
             except Exception as ex:
                 self.dispatcher.logger.error(
-                    "Handle `%s`. Sleeping %s seconds", repr(ex), timeout_to_sleep + 100
+                    "Handle `%s`. Sleeping %s seconds", repr(ex), self._timeout + 100
                 )
-                timeout_to_sleep += 100
             await asyncio.sleep(timeout_to_sleep)
 
     def _on_shutdown(self, loop: asyncio.AbstractEventLoop) -> None:
@@ -287,10 +259,10 @@ class Executor:
         On shutdown, executor gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
         """
-        coroutines = [self.goodbye(), self.client.close()]
+        callbacks = [self.goodbye(), self.client.close()]
         if isinstance(self._tg_app, BaseProxy):
-            coroutines.append(self._shutdown_tg_app())
-        loop.run_until_complete(asyncio.gather(*coroutines, loop=loop))
+            callbacks.append(self._shutdown_tg_app())
+        loop.run_until_complete(asyncio.gather(*callbacks, loop=loop))
 
     async def _shutdown_tg_app(self) -> None:
         self.telegram_proxy_application.dispatcher.stop_polling()  # type: ignore
@@ -298,49 +270,41 @@ class Executor:
         await self.telegram_proxy_application.dispatcher.storage.wait_closed()  # type: ignore
         await self.telegram_proxy_application.dispatcher.bot.session.close()  # type: ignore
 
-    async def _parse_history_and_process_events(
-        self, history: List[Transaction]
-    ) -> None:
-        """
-        Processing events and send callbacks to handlers
-
-        :param history: [list] list of :class:`Transaction`
-        """
+    async def process_events(self, history: List[Transaction]) -> None:
+        """Processing events and send callbacks to handlers"""
         for event in history:
-            if cast(int, self.last_handled_txn_id) < event.transaction_id:
+            if cast(int, self.offset) < event.transaction_id:
                 await self.dispatcher.feed_event(event)
-                self.last_handled_txn_id = event.transaction_id
+                self.offset = event.transaction_id
                 self.get_updates_until = self.get_updates_from
 
     def start_polling(
-        self,
-        *,
-        get_updates_from: Optional[datetime] = None,
-        timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
+            self,
+            *,
+            get_updates_from: Optional[datetime] = None,
+            timeout: Union[float, int, ClientTimeout] = DEFAULT_TIMEOUT,
     ) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
         try:
             loop.run_until_complete(self.welcome())
-            loop.create_task(
-                self._start_polling(get_updates_from=get_updates_from, timeout=timeout)
-            )
+            loop.create_task(self._start_polling(get_updates_from=get_updates_from, timeout=timeout))
             if isinstance(self.telegram_proxy_application, BaseProxy):
                 self.telegram_proxy_application.setup(loop=loop)
             loop.run_forever()
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # Allow to graceful shutdown
-            pass
+            pass  # pragma: no cover
         finally:
             self._on_shutdown(loop=loop)
 
     def start_webhook(
-        self,
-        *,
-        host: str = "localhost",
-        port: int = 8080,
-        path: Optional[Path] = None,
-        app: Optional[web.Application] = None,
-        ssl_context: Optional[SSLContext] = None,
+            self,
+            *,
+            host: str = "localhost",
+            port: int = 8080,
+            path: Optional[Path] = None,
+            app: Optional[web.Application] = None,
+            ssl_context: Optional[SSLContext] = None,
     ) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
         application = app or web.Application()
@@ -363,7 +327,7 @@ class Executor:
             self._on_shutdown(loop=loop)
 
     async def welcome(self) -> None:
-        self.dispatcher.logger.debug("Start polling!")
+        self.dispatcher.logger.debug("Executor has started work!")
         for callback in self._on_startup_calls:
             await _inspect_and_execute_callback(
                 callback=callback, client=self.client

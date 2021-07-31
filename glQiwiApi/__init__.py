@@ -1,4 +1,4 @@
-from .core import BaseFilter, LambdaBasedFilter
+from .core import BaseFilter, LambdaBasedFilter, Handler, AbstractBillHandler, AbstractTransactionHandler
 from .qiwi import QiwiWrapper, QiwiMaps
 from .utils.api_helper import sync, async_as_sync
 from .utils.errors import (
@@ -26,6 +26,10 @@ __all__ = (
     "async_as_sync",
     "LambdaBasedFilter",
     "BaseFilter",
+    # class-based handlers
+    "AbstractBillHandler",
+    "AbstractTransactionHandler",
+    "Handler",
     # Exceptions
     "InvalidData",
     "NoUrlFound",

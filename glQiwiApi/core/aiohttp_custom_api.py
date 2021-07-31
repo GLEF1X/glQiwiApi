@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any, Union, cast
+from typing import Dict, Optional, Any, Union
 
 import aiohttp
 from aiohttp.typedefs import LooseCookies
@@ -6,7 +6,7 @@ from aiohttp.typedefs import LooseCookies
 from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.core.basic_requests_api import HttpXParser, _ProxyType
 from glQiwiApi.core.storage import Storage
-from glQiwiApi.types.basics import Cached, DEFAULT_CACHE_TIME
+from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.utils import errors
 
 

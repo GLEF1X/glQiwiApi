@@ -145,7 +145,6 @@ class HttpXParser(AbstractParser):
             )
             return check_result(
                 self.messages,
-                resp.content_type,
                 resp.status,
                 resp.request_info,
                 await resp.text(),
