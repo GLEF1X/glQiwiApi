@@ -1,9 +1,9 @@
 import os
 
 API_DATA = {
-    "api_access_token": os.getenv("API_ACCESS_TOKEN"),
-    "secret_p2p": os.getenv("SECRET_P2P"),
-    "phone_number": os.getenv("PHONE_NUMBER"),
+    "api_access_token": "b791f584c0b33b5f905746b4449187d6",
+    "secret_p2p": "eyJ2ZXJzaW9uIjoiUDJQIiwiZGF0YSI6eyJwYXlpbl9tZXJjaGFudF9zaXRlX3VpZCI6ImJuMXZmNy0wMCIsInVzZXJfaWQiOiIzODA5NjgzMTc0NTkiLCJzZWNyZXQiOiJjZDRmODJkNmE4YzUwNDVhYTYzODQwYzQ1ZGJhODVkZWJhNTg1OWNhNDUyMGNhMGI4NDk4NTZjNGQ5NTNmYTBhIn19",
+    "phone_number": "+380968317459",
 }
 
 YOO_MONEY_DATA = {"api_access_token": os.getenv("YOO_API_TOKEN")}
@@ -67,7 +67,8 @@ WEBHOOK_RAW_DATA = """{
                  "type": "OUT"},
     "test": false,
     "version": "1.0.0"
-    }"""
+    }
+"""
 
 TXN_RAW_DATA = """{
     "txnId":9309,

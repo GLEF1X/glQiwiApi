@@ -34,6 +34,4 @@ def credentials():
 @pytest.fixture(name="yoo_credentials")
 def credentials_fixture():
     from .types.dataset import YOO_MONEY_DATA
-
-    """ Юмани credentials fixture """
     yield YOO_MONEY_DATA

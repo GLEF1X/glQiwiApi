@@ -1,23 +1,21 @@
+from __future__ import annotations
+
 import datetime
+import pathlib
 import uuid
 from typing import Dict
 
-import aiohttp
 import pytest
 
-from glQiwiApi import QiwiWrapper, sync
-from glQiwiApi import types
+from glQiwiApi import SyncAdaptedQiwi, RequestError
+from glQiwiApi.core.synchronous.model_adapter import AdaptedBill
+from glQiwiApi.types import Transaction, Limit, Card, QiwiAccountInfo, Statistic, Commission, CrossRate
 
 
-@pytest.fixture(name="api")
+@pytest.fixture(name="api_adapter")
 def sync_api_fixture(credentials: Dict[str, str]):
-    _wrapper = QiwiWrapper(**credentials, without_context=True)
+    _wrapper = SyncAdaptedQiwi(**credentials)
     yield _wrapper
-
-
-def test_sync_get_balance(api: QiwiWrapper):
-    result = sync(api.get_balance)
-    assert isinstance(result, types.Sum)
 
 
 @pytest.mark.parametrize(
@@ -38,24 +36,168 @@ def test_sync_get_balance(api: QiwiWrapper):
         },
     ],
 )
-def test_sync_create_p2p_bill(api: QiwiWrapper, params: dict):
-    result = sync(api.create_p2p_bill, **params)
-    assert isinstance(result, types.Bill)
+def test_create_p2p_bill(api_adapter: SyncAdaptedQiwi, params):
+    adapted_bill = api_adapter.create_p2p_bill(**params)
+    assert isinstance(adapted_bill, AdaptedBill)
 
 
-class SyncApiSessionTest:
-    def test_is_session_closing(self, api: QiwiWrapper):
-        # Send request to API
-        sync(api.get_balance)
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"amount": 1},
+        {"amount": 1, "comment": "test_comment"},
+        {
+            "amount": 1,
+            "comment": "test_comment",
+            "life_time": datetime.datetime.now() + datetime.timedelta(hours=5),
+        },
+        {
+            "amount": 1,
+            "comment": "test_comment",
+            "life_time": datetime.datetime.now() + datetime.timedelta(hours=5),
+            "bill_id": str(uuid.uuid4()),
+        },
+    ],
+)
+def test_p2p_bill_check(api_adapter: SyncAdaptedQiwi, params):
+    adapted_bill = api_adapter.create_p2p_bill(**params)
+    assert isinstance(adapted_bill.check(), bool)
 
-        api_session = api.request_manager._session
 
-        assert isinstance(api_session, aiohttp.ClientSession)
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"rows_num": 50},
+        {"rows_num": 50, "operation": "IN"},
+        {
+            "rows_num": 50,
+            "operation": "IN",
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+        },
+    ],
+)
+def test_transactions(api_adapter: SyncAdaptedQiwi, payload):
+    transactions = api_adapter.transactions(**payload)
+    assert all(isinstance(txn, Transaction) for txn in transactions)
 
-        # Send new request to API
 
-        sync(api.get_balance)
+@pytest.mark.parametrize("rows", [5, 10, 50])
+def test_get_bills(api_adapter: SyncAdaptedQiwi, rows: int):
+    bills = api_adapter.get_bills(rows_num=rows)
+    assert isinstance(bills, list)
 
-        new_session = api.request_manager._session
 
-        assert api_session != new_session
+@pytest.mark.parametrize(
+    "payload", [{"transaction_id": 21601937643, "transaction_type": "OUT"}]
+)
+def test_transaction_info(api_adapter: SyncAdaptedQiwi, payload: dict):
+    res = api_adapter.transaction_info(**payload)
+    assert isinstance(res, Transaction)
+
+
+def check_restriction(api_adapter: SyncAdaptedQiwi):
+    res = api_adapter.check_restriction()
+    assert isinstance(res, list)
+
+
+def test_get_limits(api_adapter: SyncAdaptedQiwi):
+    res = api_adapter.get_limits()
+
+    assert isinstance(res, dict)
+    assert all(isinstance(t, Limit) for t in res.values())
+
+
+def test_get_list_of_cards(api_adapter: SyncAdaptedQiwi):
+    result = api_adapter.get_list_of_cards()
+    assert all(isinstance(c, Card) for c in result)
+
+
+def test_get_receipt_and_save(api_adapter: SyncAdaptedQiwi, path_to_dir: pathlib.Path):
+    from ..types.dataset import RECEIPT_FILE_NAME
+
+    file_name = RECEIPT_FILE_NAME
+    payload = {
+        "transaction_id": 21601937643,
+        "transaction_type": "OUT",
+        "dir_path": path_to_dir,
+    }
+    api_adapter.get_receipt(**payload, file_name=file_name)
+    assert (path_to_dir / (file_name + ".pdf")).is_file()
+
+
+def test_account_info(api_adapter: SyncAdaptedQiwi):
+    info = api_adapter.get_account_info()
+    assert isinstance(info, QiwiAccountInfo)
+
+
+@pytest.mark.parametrize(  # noqa
+    "payload",
+    [
+        {
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+        },
+        {
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+            "operation": "IN",
+        },
+        {
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+            "operation": "OUT",
+        },
+        {
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+            "operation": "ALL",
+        },
+        {
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+            "operation": "ALL",
+            "sources": ["QW_RUB"],
+        },
+        {
+            "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
+            "end_date": datetime.datetime.now(),
+            "operation": "ALL",
+            "sources": ["QW_RUB", "QW_EUR", "QW_USD"],
+        },
+    ],
+)
+def test_fetch_statistic(api_adapter: SyncAdaptedQiwi, payload: dict):
+    result = api_adapter.fetch_statistics(**payload)
+
+    assert isinstance(result, Statistic)
+
+
+def test_check_p2p_bill_status(api_adapter: SyncAdaptedQiwi):
+    result = api_adapter.check_p2p_bill_status(
+        bill_id="8d517426-920a-4711-86c2-4267784bf901"
+    )
+    assert isinstance(result, str)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"to_account": "+380985272064", "pay_sum": 999},
+        {"to_account": "4890494756089082", "pay_sum": 1},
+    ],
+)
+def test_commission(api_adapter: SyncAdaptedQiwi, payload: dict):
+    result = api_adapter.calc_commission(**payload)
+    assert isinstance(result, Commission)
+
+
+def test_get_cross_rates(api_adapter: SyncAdaptedQiwi):
+    cross_rates = api_adapter.get_cross_rates()
+    assert all(isinstance(rate, CrossRate) for rate in cross_rates)
+
+
+def test_buy_qiwi_master(api_adapter: SyncAdaptedQiwi):
+    with pytest.raises(RequestError) as ex:  # not enough money on qiwi wallet to buy it
+        api_adapter.buy_qiwi_master()
+    assert ex.value.status_code == 400

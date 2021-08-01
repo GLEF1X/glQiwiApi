@@ -114,7 +114,7 @@ async def test_get_receipt_and_save(api: QiwiWrapper, path_to_dir: pathlib.Path)
 
 async def test_account_info(api: QiwiWrapper):
     async with api:
-        result = await api.account_info
+        result = await api.get_account_info()
 
     assert isinstance(result, types.QiwiAccountInfo)
 
@@ -219,7 +219,7 @@ async def test_check_p2p_on_object(api: QiwiWrapper):
     async with api:
         bill = await api.create_p2p_bill(amount=1)
         assert isinstance(bill, types.Bill)
-        result = await bill.check
+        result = await bill.check()
 
     assert isinstance(result, bool)
 
@@ -250,7 +250,7 @@ async def test_check_restriction(api: QiwiWrapper):
 )
 async def test_commission(api: QiwiWrapper, payload: dict):
     async with api:
-        result = await api.commission(**payload)
+        result = await api.calc_commission(**payload)
     assert isinstance(result, types.Commission)
 
 

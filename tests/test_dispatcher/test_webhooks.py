@@ -6,44 +6,37 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from pytest_mock import MockerFixture
 
-from glQiwiApi.core.dispatcher.config import (
+from glQiwiApi.core.dispatcher.webhooks.config import (
     DEFAULT_QIWI_BILLS_WEBHOOK_PATH,
     DEFAULT_QIWI_WEBHOOK_PATH,
 )
-from glQiwiApi.core.dispatcher.server import _check_ip  # NOQA
+from glQiwiApi.core.dispatcher.webhooks.utils import check_ip  # NOQA
 from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA
 
 pytestmark = pytest.mark.asyncio
 
 
-async def test_bill_webhooks(
-    app: web.Application,
-    test_aiohttp: Callable[..., Awaitable[TestClient]],
-    mocker: MockerFixture,
-):
+async def test_bill_webhook_handler(app: web.Application, test_aiohttp: Callable[..., Awaitable[TestClient]],
+                                    mocker: MockerFixture):
     client = await test_aiohttp(app)
     bill_event: asyncio.Event = app["bill_event"]
-    txn_event: asyncio.Event = app["txn_event"]
-    # skip ip validation
-    mocker.patch("glQiwiApi.core.dispatcher.server._check_ip", return_value=True)
-    bill_response = await client.post(
-        path=DEFAULT_QIWI_BILLS_WEBHOOK_PATH, json=NOTIFICATION_RAW_DATA
-    )
+    mocker.patch('glQiwiApi.core.dispatcher.webhooks.views.bill_view.QiwiBillWebView.validate_ip', return_value=None)
+    bill_response = await client.post(path=DEFAULT_QIWI_BILLS_WEBHOOK_PATH, json=NOTIFICATION_RAW_DATA)
     assert bill_response.status == 200
     assert bill_event.is_set()
-    bill_event.clear()
+
+
+async def test_transaction_handler(app: web.Application, test_aiohttp: Callable[..., Awaitable[TestClient]],
+                                   mocker: MockerFixture, capsys):
+    client = await test_aiohttp(app)
     # skip hash validation
-    mocker.patch(
-        "glQiwiApi.core.dispatcher.server.QiwiWalletWebView._hash_validator",
-        return_value=None,
-    )
-    transaction_response = await client.post(
-        path=DEFAULT_QIWI_WEBHOOK_PATH, json=WEBHOOK_RAW_DATA
-    )
-    assert transaction_response.status == 200
-    assert txn_event.is_set()
+    mocker.patch('glQiwiApi.core.dispatcher.webhooks.views.transaction_view.QiwiWalletWebView.validate_ip',
+                 return_value=None)
+    mocker.patch('glQiwiApi.utils.api_helper.hmac_for_transaction', return_value=True)
+    transaction_response = await client.post(path=DEFAULT_QIWI_WEBHOOK_PATH, json=WEBHOOK_RAW_DATA)
+    assert transaction_response.status == 500
 
 
 async def test_check_ip_address():
-    assert _check_ip(ip_address="79.142.16.0")
-    assert not _check_ip(ip_address="127.0.0.1")
+    assert check_ip(ip_address="79.142.16.0")
+    assert not check_ip(ip_address="127.0.0.1")

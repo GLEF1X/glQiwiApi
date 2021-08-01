@@ -28,16 +28,16 @@ txn = Transaction(
 )
 
 
-class MockQiwiApi(QiwiWrapper):
+class StubQiwiWrapper(QiwiWrapper):
     def __new__(cls, *args, **kwargs):
         return object().__new__(cls)
 
     async def transactions(
-        self,
-        rows_num: int = 50,
-        operation: str = "ALL",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+            self,
+            rows_num: int = 50,
+            operation: str = "ALL",
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         return [txn]
 
@@ -45,7 +45,7 @@ class MockQiwiApi(QiwiWrapper):
 @pytest.fixture(name="api")
 async def api_fixture():
     """Api fixture"""
-    _wrapper = MockQiwiApi(WRONG_API_DATA)
+    _wrapper = StubQiwiWrapper(WRONG_API_DATA)
     yield _wrapper
     await _wrapper.close()
 
@@ -61,19 +61,20 @@ class TestPolling:
     def _start_polling(self, api: QiwiWrapper):
         from glQiwiApi.utils import executor
 
-        self._handled_first = False
-        self._handled_second = False
+        self._handled_first = asyncio.Event()
+        self._handled_second = asyncio.Event()
+        self.on_shutdown_event = asyncio.Event()
 
         # Also, without decorators, you can do like this
         # api.dispatcher.register_transaction_handler(my_handler)
         @api.transaction_handler()
         async def my_first_handler(event: types.Transaction):
-            self._handled_first = True
+            self._handled_first.set()
             assert isinstance(event, types.Transaction)
 
         @api.transaction_handler()
         async def my_second_handler(event: types.Transaction):
-            self._handled_second = True
+            self._handled_second.set()
             assert isinstance(event, types.Transaction)
 
         executor.start_polling(api, on_startup=_on_startup_callback)
@@ -83,5 +84,8 @@ class TestPolling:
         try:
             self._start_polling(api)
         except timeout_decorator.TimeoutError:
-            assert self._handled_first
-            assert not self._handled_second
+            assert self._handled_first.is_set()
+            assert not self._handled_second.is_set()
+        finally:
+            self._handled_first.clear()
+            self._handled_second.clear()
