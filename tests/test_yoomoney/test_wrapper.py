@@ -19,7 +19,7 @@ async def api_fixture(yoo_credentials: Dict[str, str]):
 
 async def test_get_balance(api: YooMoneyAPI):
     async with api:
-        balance = await api.balance
+        balance = await api.get_balance()
 
     assert isinstance(balance, float)
 
@@ -53,7 +53,7 @@ async def test_get_transactions(api: YooMoneyAPI, payload: dict):
 
 async def test_account_info(api: YooMoneyAPI):
     async with api:
-        info = await api.retrieve_account_info
+        info = await api.retrieve_account_info()
 
     assert isinstance(info, types.AccountInfo)
 
