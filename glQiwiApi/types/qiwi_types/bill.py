@@ -59,10 +59,6 @@ class Bill(Base):
 
     @property
     async def paid(self) -> bool:
-        """
-        Checking p2p payment
-
-        """
         warnings.warn(
             "`Bill.paid` property is deprecated, and will be removed in next versions, "
             "use `Bill.check(...)` instead",
@@ -72,6 +68,7 @@ class Bill(Base):
         return await self.check()
 
     async def check(self) -> bool:
+        """Checking p2p payment status"""
         return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
 
 

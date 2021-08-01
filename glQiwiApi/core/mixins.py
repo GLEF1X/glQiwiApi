@@ -5,7 +5,7 @@ import copy
 from typing import Any, TYPE_CHECKING, TypeVar, Optional, cast, Generic, ClassVar, Dict
 
 if TYPE_CHECKING:
-    from glQiwiApi.core.aiohttp_custom_api import RequestManager
+    from glQiwiApi.core.aiohttp_custom_api import RequestManager  # pragma: no cover
 
 
 class ToolsMixin(object):
@@ -23,13 +23,13 @@ class ToolsMixin(object):
     async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore
         await self.close()
 
-    def _get(self, item: Any) -> Any:
+    def _get(self, item: Any) -> Any:  # pragma: no cover
         try:
             return super().__getattribute__(item)
         except AttributeError:
             return None
 
-    def __deepcopy__(self, memo: Any) -> ToolsMixin:
+    def __deepcopy__(self, memo: Any) -> ToolsMixin:  # pragma: no cover
         cls = self.__class__
         kw: Dict[str, bool] = {"__copy_signal__": True}
         result = cls.__new__(cls, **kw)  # type: ignore  # pragma: no cover
@@ -48,7 +48,7 @@ class ToolsMixin(object):
         return cast(ToolsMixin, result)
 
     @property
-    def data(self) -> Dict[Any, Any]:
+    def data(self) -> Dict[Any, Any]:  # pragma: no cover
         data = getattr(self, "_data", None)
         if data is None:
             data = {}
@@ -56,19 +56,19 @@ class ToolsMixin(object):
         return cast(Dict[Any, Any], data)
 
     def __getitem__(self, item: Any) -> Any:
-        return self.data[item]
+        return self.data[item]  # pragma: no cover
 
     def __setitem__(self, key: Any, value: Any) -> None:
-        self.data[key] = value
+        self.data[key] = value  # pragma: no cover
 
     def __delitem__(self, key: Any) -> None:
-        del self.data[key]
+        del self.data[key]  # pragma: no cover
 
     def __contains__(self, key: Any) -> bool:
-        return key in self.data
+        return key in self.data  # pragma: no cover
 
     def get(self, key, default=None):  # type: ignore
-        return self.data.get(key, default)
+        return self.data.get(key, default)  # pragma: no cover
 
 
 ContextInstance = TypeVar("ContextInstance")
@@ -104,7 +104,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
     @classmethod
     def set_current(cls, value: ContextInstance) -> contextvars.Token[ContextInstance]:
         if not isinstance(value, cls):
-            raise TypeError(
+            raise TypeError(  # pragma: no cover
                 f"Value should be instance of {cls.__name__!r} not {type(value).__name__!r}"
             )
         return cls.__context_instance.set(value)

@@ -2,11 +2,11 @@ from typing import List
 
 from pydantic import Field
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.types.base import ExtraBase
 from glQiwiApi.types.basics import Sum
 
 
-class Statistic(Base):
+class Statistic(ExtraBase):
     """object: Statistic"""
 
     incoming: List[Sum] = Field(alias="incomingTotal")

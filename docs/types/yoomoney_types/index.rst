@@ -3,7 +3,7 @@ YooMoney types
 ==============
 
 .. toctree::
-    account_info
+    get_account_info
     operation
     operation-detail
     pre_payment

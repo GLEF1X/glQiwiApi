@@ -5,7 +5,7 @@ import types
 from collections import namedtuple
 from typing import TypeVar, Type, Optional, Any, Callable, cast
 
-from glQiwiApi.core.dispatcher.config import DEFAULT_QIWI_BILLS_WEBHOOK_PATH
+from glQiwiApi.core.dispatcher.webhooks.config import DEFAULT_QIWI_BILLS_WEBHOOK_PATH
 
 _URL = TypeVar("_URL", bound="WebhookURL")
 

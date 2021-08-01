@@ -1,10 +1,8 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import cur as cur
 import pytest
-import pytz
 
 from glQiwiApi import QiwiMaps, types, async_as_sync
 from glQiwiApi.utils import api_helper
@@ -60,4 +58,3 @@ async def test_measure_time(caplog):
         await api_helper.measure_time(LOGGER).__call__(func)()
 
     assert "Function `func` executed for" in caplog.text
-

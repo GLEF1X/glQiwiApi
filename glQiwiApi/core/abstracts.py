@@ -3,12 +3,10 @@ from __future__ import annotations
 import abc
 import typing
 from types import TracebackType
-from typing import Optional, Dict, Any, Union, Tuple, Type
+from typing import Optional, Dict, Any, Type
 
-from aiohttp import web, RequestInfo
+from aiohttp import RequestInfo
 from aiohttp.typedefs import LooseCookies
-
-from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 
 
 class SingletonABCMeta(abc.ABCMeta):
@@ -25,9 +23,6 @@ class SingletonABCMeta(abc.ABCMeta):
         if cls not in cls._instances:
             cls._instances[cls] = super(SingletonABCMeta, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
-
-
-T = typing.TypeVar("T")
 
 
 class BaseStorage(abc.ABC):
@@ -75,16 +70,16 @@ class AbstractParser(abc.ABC):
 
     @abc.abstractmethod
     async def make_request(
-        self,
-        url: str,
-        method: str,
-        set_timeout: bool = True,
-        cookies: Optional[LooseCookies] = None,
-        json: Optional[Any] = None,
-        data: Optional[Any] = None,
-        headers: Optional[Any] = None,
-        params: Optional[Any] = None,
-        **kwargs: Any
+            self,
+            url: str,
+            method: str,
+            set_timeout: bool = True,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[Any] = None,
+            data: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            params: Optional[Any] = None,
+            **kwargs: Any
     ) -> Dict[Any, Any]:
         raise NotImplementedError
 
@@ -97,10 +92,10 @@ class AbstractParser(abc.ABC):
 
     @abc.abstractmethod
     def make_exception(
-        self,
-        status_code: int,
-        traceback_info: Optional[RequestInfo] = None,
-        message: Optional[str] = None,
+            self,
+            status_code: int,
+            traceback_info: Optional[RequestInfo] = None,
+            message: Optional[str] = None,
     ) -> Exception:
         raise NotImplementedError
 
@@ -108,76 +103,9 @@ class AbstractParser(abc.ABC):
         return self
 
     async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
-
-
-class BaseWebHookView(web.View):
-    """
-    Base webhook view for processing events
-    You can make own view and than use it in code,
-    just inheriting this base class
-
-    """
-
-    app_key_check_ip: Optional[str] = None
-    """app_key_check_ip stores key to a storage"""
-
-    app_key_handler_manager: Optional[str] = None
-    """app_key_handler_manager"""
-
-    @abc.abstractmethod
-    def _check_ip(self, ip_address: str) -> bool:
-        """_check_ip checks if given IP is in set of allowed ones"""
-        raise NotImplementedError
-
-    async def parse_update(self) -> Any:
-        """parse_update method that deals with marshaling json"""
-        raise NotImplementedError
-
-    def validate_ip(self) -> None:
-        """validating request ip address"""
-        if self.request.app.get(self.app_key_check_ip):  # type: ignore
-            ip_addr_data = self.check_ip()
-            if not ip_addr_data[1]:
-                raise web.HTTPUnauthorized()
-        return None
-
-    def check_ip(self) -> Union[Tuple[str, bool], Tuple[None, bool]]:
-        """checking ip, using headers or peer_name"""
-        forwarded_for = self.request.headers.get("X-Forwarded-For")
-        if forwarded_for:
-            return forwarded_for, self._check_ip(forwarded_for)
-        peer_name = self.request.transport.get_extra_info("peername")  # type: ignore
-
-        if peer_name is not None:
-            host, _ = peer_name
-            return host, self._check_ip(host)
-
-        return None, False
-
-    @abc.abstractmethod
-    async def post(self) -> Any:
-        """
-        Process POST request with basic IP validation.
-
-        """
-        update = await self.parse_update()
-
-        self._hash_validator(update)
-
-        await self.handler_manager.feed_event(update)
-
-    def _hash_validator(self, update: Any) -> None:
-        """Validating by hash of update"""
-
-    @property
-    def handler_manager(self) -> "Dispatcher":
-        """Return handler manager"""
-        return self.request.app.get(  # type: ignore
-            self.app_key_handler_manager  # type: ignore
-        )

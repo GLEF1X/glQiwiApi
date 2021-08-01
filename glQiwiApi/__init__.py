@@ -1,6 +1,15 @@
-from .core import BaseFilter, LambdaBasedFilter, Handler, AbstractBillHandler, AbstractTransactionHandler
+from .core import (
+    BaseFilter,
+    LambdaBasedFilter,
+    Handler,
+    AbstractBillHandler,
+    AbstractTransactionHandler,
+    SyncAdaptedQiwi,
+    SyncAdaptedYooMoney,
+    async_as_sync,
+    execute_async_as_sync
+)
 from .qiwi import QiwiWrapper, QiwiMaps
-from .utils.api_helper import sync, async_as_sync
 from .utils.errors import (
     InvalidData,
     NoUrlFound,
@@ -22,7 +31,7 @@ __all__ = (
     "QiwiWrapper",
     "YooMoneyAPI",
     "QiwiMaps",
-    "sync",
+    "execute_async_as_sync",
     "async_as_sync",
     "LambdaBasedFilter",
     "BaseFilter",
@@ -42,4 +51,7 @@ __all__ = (
     "StateError",
     "NetworkError",
     "InvalidCachePayload",
+    # Sync adapted
+    "SyncAdaptedQiwi",
+    "SyncAdaptedYooMoney"
 )

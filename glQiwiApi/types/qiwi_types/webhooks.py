@@ -20,7 +20,7 @@ class Payment(Base):
     status: str = Field(..., alias="status")
     txn_id: str = Field(..., alias="txnId")
     type: str = Field(..., alias="type")
-    commission: Optional[Sum] = Field(default=None, alias="commission")
+    commission: Optional[Sum] = Field(default=None, alias="calc_commission")
     sum: Sum = Field(..., alias="sum")
     total: Sum = Field(..., alias="total")
 

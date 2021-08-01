@@ -1,8 +1,5 @@
-import asyncio
 import logging
 import pathlib
-from asyncio import AbstractEventLoop
-from concurrent.futures import Future
 from datetime import datetime, timedelta
 from typing import (
     Any,
@@ -13,12 +10,9 @@ from typing import (
     List,
     MutableMapping,
     Tuple,
-    Coroutine,
     NoReturn,
     Iterable,
-    Callable,
     TypeVar,
-    Awaitable,
 )
 
 from aiohttp import RequestInfo
@@ -80,7 +74,6 @@ def set_data_p2p_create(
 def multiply_objects_parse(
     lst_of_objects: Union[List[str], Tuple[str, ...]], model: Type[types.N]
 ) -> List[types.N]: ...
-def take_event_loop(set_debug: bool = False) -> AbstractEventLoop: ...
 def hmac_key(
     key: Optional[Any],
     amount: types.OptionalSum,
@@ -115,37 +108,9 @@ class allow_response_code:  # NOQA
 def qiwi_master_data(ph_number: str, data: Dict[Any, Any]) -> Dict[Any, Any]: ...
 def new_card_data(ph_number: str, order_id: str) -> Dict[Any, Any]: ...
 def to_datetime(string_representation: str) -> datetime: ...
-def run_forever_safe(
-    loop: asyncio.AbstractEventLoop,
-    callback: Optional[Callable[..., Awaitable[types.N]]],
-) -> None: ...
-def safe_cancel(
-    loop: asyncio.AbstractEventLoop,
-    callback: Optional[Callable[..., Awaitable[types.N]]],
-) -> None: ...
 def parse_amount(
     txn_type: str, txn: types.OperationDetails
 ) -> Tuple[Union[int, float], str]: ...
-def _cancel_future(
-    loop: asyncio.AbstractEventLoop,
-    future: asyncio.Future[types.N],
-    executor: types.Executors,
-) -> None: ...
-def _stop_loop(loop: asyncio.AbstractEventLoop) -> None: ...
-def await_sync(future: Future[types.N]) -> types.N: ...
-def sync(
-    func: Callable[..., Coroutine[Any, Any, types.N]], *args: object, **kwargs: object
-) -> types.N: ...
-
-class async_as_sync:  # NOQA
-    _shutdown_callback: Callable[..., Awaitable[types.N]]
-    def __init__(
-        self, shutdown_callback: Optional[Callable[..., Awaitable[types.N]]] = None
-    ) -> None: ...
-    def __call__(
-        self, func: Callable[..., Coroutine[Any, Any, types.N]]
-    ) -> Callable[..., types.N]: ...
-
 def check_transaction(
     transactions: List[types.Transaction],
     amount: Union[int, float],

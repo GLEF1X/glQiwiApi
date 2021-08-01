@@ -46,6 +46,7 @@ flake8 = "^3.9.2"
 asynctest = "^0.13.0"
 async-timeout = "^3.0.1"
 pytest-aiohttp = "^0.3.0"
+aiogram = "^2.14.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

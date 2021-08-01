@@ -233,7 +233,7 @@ async def my_handler(event: types.Transaction):
 executor.start_polling(wallet)
 ```
 
-## 💳Send to card & check commission
+## 💳Send to card & check calc_commission
 
 ```python
 import asyncio
@@ -251,11 +251,11 @@ async def main():
         )
         print(trans_id)
         # This is how you can pre-calculate the transaction fee.
-        commission = await w.commission(
+        calc_commission = await w.calc_commission(
             to_account='4890494756089082',
             pay_sum=1
         )
-        print(commission.qiwi_commission.amount)
+        print(calc_commission.qiwi_commission.amount)
 
 
 asyncio.run(main())
@@ -459,9 +459,9 @@ async def main():
   w = YooMoneyAPI(TOKEN)
   async with w:
     # This gives you account information as AccountInfo object.
-    account_info = await w.retrieve_account_info()
-    print(account_info.account_status)
-    print(account_info.balance)
+    get_account_info = await w.retrieve_account_info()
+    print(get_account_info.account_status)
+    print(get_account_info.balance)
 
 
 asyncio.run(main())

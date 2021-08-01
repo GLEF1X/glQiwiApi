@@ -74,11 +74,6 @@ class InvalidCachePayload(Exception):
 
 
 class RequestError(Exception):
-    """
-    Возникает при ошибках сервиса или неправильной передаче параметров
-
-    """
-
     def __init__(
             self,
             message: Optional[str],

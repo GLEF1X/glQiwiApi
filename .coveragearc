@@ -5,7 +5,15 @@ exclude_lines =
     pragma: no cover
     def __repr__
     @abstractmethod
+    @abc.abstractmethod
     type: ignore
+    raise NotImplementedError
+    def __repr__
+    def __str__
+    class .*\bProtocol\):
 omit =
     glQiwiApi/ext/*
     glQiwiApi/yoo_money/*
+    */site-packages/*
+    */tests/*
+    */.eggs/*

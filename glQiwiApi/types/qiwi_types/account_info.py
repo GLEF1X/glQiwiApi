@@ -4,7 +4,7 @@ from typing import Optional, List, Any, Dict
 
 from pydantic import Field, validator
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.types.basics import Sum
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
@@ -115,7 +115,7 @@ class UserInfo(Base):
         return Currency.get(str(v))
 
 
-class QiwiAccountInfo(Base):
+class QiwiAccountInfo(ExtraBase):
     auth_info: Optional[AuthInfo] = Field(None, alias="authInfo")
     contract_info: Optional[ContractInfo] = Field(None, alias="contractInfo")
     user_info: Optional[UserInfo] = Field(None, alias="userInfo")

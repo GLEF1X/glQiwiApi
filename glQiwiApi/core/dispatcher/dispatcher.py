@@ -19,7 +19,7 @@ from typing import (
 )
 
 from .class_based import AbstractTransactionHandler, AbstractBillHandler, Handler
-from .filter import BaseFilter, LambdaBasedFilter
+from .filters import BaseFilter, LambdaBasedFilter
 from ..builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 
 if TYPE_CHECKING:
@@ -44,9 +44,12 @@ BillFilters = Union[Callable[["Notification"], bool], BaseFilter["Notification"]
 
 def _setup_logger() -> logging.Logger:
     logger = logging.getLogger(__name__)
+    aiohttp_logger = logging.getLogger('aiohttp.access')
     logger.setLevel(level=logging.DEBUG)
+    aiohttp_logger.setLevel(level=logging.DEBUG)
     if not logger.handlers:
         logger.addHandler(InterceptHandler())
+        aiohttp_logger.addHandler(InterceptHandler())
     return logger
 
 

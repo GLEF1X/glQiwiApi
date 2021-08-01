@@ -1,7 +1,7 @@
 from aiogram import Bot
 
 from glQiwiApi import QiwiWrapper, types
-from glQiwiApi.core.dispatcher.config import Path
+from glQiwiApi.core.dispatcher.webhooks.config import Path
 from glQiwiApi.utils import executor
 
 TOKEN = "token from https://qiwi.com/api/"

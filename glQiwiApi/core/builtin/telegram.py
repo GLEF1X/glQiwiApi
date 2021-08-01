@@ -9,7 +9,7 @@ from ssl import SSLContext
 from aiohttp import web
 
 if typing.TYPE_CHECKING:
-    try:
+    try:  # pragma: no cover
         from aiogram import Dispatcher  # NOQA  # pragma: no cover
         from aiogram.types import InputFile  # NOQA  # pragma: no cover
     except (ModuleNotFoundError, ImportError):  # NOQA  # pragma: no cover
@@ -29,7 +29,7 @@ def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes) -> None:
     :param app:
     :param routes: list of AbstractRoute subclasses
     """
-    for route in routes:
+    for route in routes:  # pragma: no cover
         app.router.add_route(
             handler=route.handler,
             method=route.method,
@@ -43,9 +43,7 @@ class BaseProxy(abc.ABC):
         self.bot = dispatcher.bot
         self.dispatcher = dispatcher
 
-        if isinstance(loop, AbstractEventLoop):
-            if loop.is_closed():
-                raise RuntimeError("The event loop, that you have passed on is closed")
+        if loop is not None:
             self._loop = loop
         else:
             self._loop = asyncio.get_event_loop()
@@ -78,6 +76,7 @@ class TelegramWebhookProxy(BaseProxy):
             webhook_domain: str,
             route_name: str = "webhook_handler",
             sub_apps: typing.Optional[SubApps] = None,
+            loop: typing.Optional[AbstractEventLoop] = None
     ) -> None:
         """
 
@@ -89,7 +88,7 @@ class TelegramWebhookProxy(BaseProxy):
         """
         from aiogram.dispatcher.webhook import WebhookRequestHandler
 
-        super(TelegramWebhookProxy, self).__init__(dispatcher)
+        super(TelegramWebhookProxy, self).__init__(dispatcher, loop=loop)
         self._app: web.Application = web.Application()
         self._app.router.add_route(
             "*", self.execution_path, WebhookRequestHandler, name=route_name
@@ -168,8 +167,8 @@ class TelegramPollingProxy(BaseProxy):
 
         :param kwargs: you can pass on loop as key/value parameter
         """
-        loop = kwargs.pop("loop") or self._loop
-        loop.create_task(
+        loop = kwargs.pop("loop") or self._loop  # pragma: no cover
+        loop.create_task(  # pragma: no cover
             self.dispatcher.start_polling(
                 timeout=self._timeout,
                 reset_webhook=self._reset_webhook,

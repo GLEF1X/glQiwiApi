@@ -31,7 +31,7 @@ from glQiwiApi.utils.errors import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
-class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
+class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"],):
     """
     A class that implements processing requests to YooMoney
     It is convenient in that it does not just give json such objects,
@@ -168,7 +168,7 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
     @property
     async def account_info(self) -> AccountInfo:
         warnings.warn(
-            "`QiwiWrapper.account_info` property is deprecated, and will be removed in next versions, "
+            "`QiwiWrapper.get_account_info` property is deprecated, and will be removed in next versions, "
             "use `QiwiWrapper.retrieve_account_info(...)` instead",
             DeprecationWarning,
             stacklevel=2
@@ -393,8 +393,8 @@ class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
         payload = {"request_id": pre_payment.request_id, "money_source": "wallet"}
         if (
                 money_source == "card"
-                and isinstance(pre_payment, PreProcessPaymentResponse)
-                and pre_payment.money_source.cards.allowed == "true"  # type: ignore
+                and isinstance(pre_payment, PreProcessPaymentResponse)  # noqa: W503
+                and pre_payment.money_source.cards.allowed == "true"  # type: ignore  # noqa: W503
         ):
             if not isinstance(card_type, str):
                 cards = cast(Card, pre_payment.money_source.cards)  # type: ignore

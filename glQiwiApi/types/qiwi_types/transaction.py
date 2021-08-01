@@ -3,7 +3,7 @@ from typing import Optional, Union, Dict, Any, List
 
 from pydantic import Field
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.types.basics import Sum
 
 
@@ -32,7 +32,7 @@ class Provider(Base):
     """сайт провайдера"""
 
 
-class Transaction(Base):
+class Transaction(ExtraBase):
     """object: Transaction"""
 
     transaction_id: int = Field(alias="txnId")

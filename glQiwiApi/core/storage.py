@@ -114,8 +114,8 @@ class Storage(BaseStorage):
         """Method to check cached get requests"""
         return (
             cached.method == "GET"
-            and kwargs.get("headers") == cached.kwargs.headers
-            and kwargs.get("params") == cached.kwargs.params
+            and kwargs.get("headers") == cached.kwargs.headers  # noqa: W503
+            and kwargs.get("params") == cached.kwargs.params  # noqa: W503
         )
 
     def _is_expire(self, cached_in: float, key: typing.Any) -> bool:

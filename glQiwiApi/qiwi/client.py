@@ -29,8 +29,8 @@ from typing import (
 )
 
 from glQiwiApi.core import RequestManager, constants
-from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
+from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.ext.url_builder import WebhookURL
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
@@ -75,14 +75,14 @@ class BaseWrapper(ABC):
     set_current: Callable[..., Any]
 
     def __init__(
-        self,
-        api_access_token: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        secret_p2p: Optional[str] = None,
-        without_context: bool = False,
-        cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
-        validate_params: bool = False,
-        proxy: Any = None,
+            self,
+            api_access_token: Optional[str] = None,
+            phone_number: Optional[str] = None,
+            secret_p2p: Optional[str] = None,
+            without_context: bool = False,
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
+            validate_params: bool = False,
+            proxy: Any = None,
     ) -> None:
         """
         :param api_access_token: QIWI API token received from https://qiwi.com/api
@@ -168,11 +168,11 @@ class BaseWrapper(ABC):
 
     @staticmethod
     def _validate_params(
-        api_access_token: Optional[str],
-        phone_number: Optional[str],
-        secret_p2p: Optional[str],
-        without_context: bool,
-        cache_time: Union[float, int],
+            api_access_token: Optional[str],
+            phone_number: Optional[str],
+            secret_p2p: Optional[str],
+            without_context: bool,
+            cache_time: Union[float, int],
     ) -> None:
         """Validating all parameters by `isinstance` function or `regex`"""
         import re
@@ -210,19 +210,19 @@ class BaseWrapper(ABC):
             )
 
     def __new__(
-        cls: Type[N],
-        api_access_token: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        secret_p2p: Optional[str] = None,
-        without_context: bool = False,
-        cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
-        *args: Any,
-        **kwargs: Any,
+            cls: Type[N],
+            api_access_token: Optional[str] = None,
+            phone_number: Optional[str] = None,
+            secret_p2p: Optional[str] = None,
+            without_context: bool = False,
+            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+            *args: Any,
+            **kwargs: Any,
     ) -> N:
         if (
-            not isinstance(api_access_token, str)
-            and not isinstance(secret_p2p, str)
-            and not _is_copy_signal(kwargs)
+                not isinstance(api_access_token, str)
+                and not isinstance(secret_p2p, str)  # noqa: W503
+                and not _is_copy_signal(kwargs)  # noqa: W503
         ):
             raise RuntimeError("Unable to initialize instance without tokens")
 
@@ -247,7 +247,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     )
 
     async def _register_webhook(
-        self, web_url: Optional[str], txn_type: int = 2
+            self, web_url: Optional[str], txn_type: int = 2
     ) -> WebHookConfig:
         """
         This method register a new webhook
@@ -342,12 +342,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return cast(str, response["key"])
 
     async def bind_webhook(
-        self,
-        url: Optional[Union[str, WebhookURL]] = None,
-        transactions_type: int = 2,
-        *,
-        send_test_notification: bool = False,
-        delete_old: bool = False,
+            self,
+            url: Optional[Union[str, WebhookURL]] = None,
+            transactions_type: int = 2,
+            *,
+            send_test_notification: bool = False,
+            delete_old: bool = False,
     ) -> Tuple[Optional[WebHookConfig], str]:
         """
         [NON-API] EXCLUSIVE method to register new webhook or get old
@@ -378,8 +378,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             except RequestError as ex:
                 raise RequestError(
                     message="Ошибка при получении текущего конфига вебхука. Скорее всего вы не вызывали "
-                    "метод bind_webhook, чтобы зарегистрировать вебхук"
-                    " киви или не передали ссылку для его регистрации",
+                            "метод bind_webhook, чтобы зарегистрировать вебхук"
+                            " киви или не передали ссылку для его регистрации",
                     status_code=ex.status_code,
                     traceback_info=ex.traceback_info,
                 ) from None
@@ -398,7 +398,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         {
             404: {
                 "message": "Wrong card number entered, possibly"
-                "the card to which you transfer is blocked"
+                           "the card to which you transfer is blocked"
             }
         }
     )
@@ -433,11 +433,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return Sum.parse_obj(response["accounts"][account_number - 1]["balance"])
 
     async def transactions(
-        self,
-        rows_num: int = 50,
-        operation: str = "ALL",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+            self,
+            rows_num: int = 50,
+            operation: str = "ALL",
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         """
         Method for receiving transactions on the account
@@ -476,7 +476,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return api_helper.multiply_objects_parse((response.get("data"),), Transaction)  # type: ignore
 
     async def transaction_info(
-        self, transaction_id: Union[str, int], transaction_type: str
+            self, transaction_id: Union[str, int], transaction_type: str
     ) -> Transaction:
         """
         Метод для получения полной информации о транзакции\n
@@ -537,12 +537,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return Identification.parse_obj(response)
 
     async def check_transaction(
-        self,
-        amount: Union[int, float],
-        transaction_type: str = "IN",
-        sender: Optional[str] = None,
-        rows_num: int = 50,
-        comment: Optional[str] = None,
+            self,
+            amount: Union[int, float],
+            transaction_type: str = "IN",
+            sender: Optional[str] = None,
+            rows_num: int = 50,
+            comment: Optional[str] = None,
     ) -> bool:
         """
         [ NON API METHOD ]
@@ -612,15 +612,15 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return api_helper.simple_multiply_parse(objects=response, model=Card)
 
     async def authenticate(
-        self,
-        birth_date: str,
-        first_name: str,
-        last_name: str,
-        patronymic: str,
-        passport: str,
-        oms: Optional[str] = None,
-        inn: Optional[str] = None,
-        snils: Optional[str] = None,
+            self,
+            birth_date: str,
+            first_name: str,
+            last_name: str,
+            patronymic: str,
+            passport: str,
+            oms: Optional[str] = None,
+            inn: Optional[str] = None,
+            snils: Optional[str] = None,
     ) -> Dict[Any, Any]:
         """
         This request allows you to send data to identify your QIWI wallet.
@@ -666,20 +666,20 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         {
             422: {
                 "message": "It is impossible to receive a check due to the fact that "
-                "the transaction for this ID has not been completed,"
-                "that is, an error occurred during the transaction"
+                           "the transaction for this ID has not been completed,"
+                           "that is, an error occurred during the transaction"
             }
         }
     )
     async def get_receipt(
-        self,
-        transaction_id: Union[str, int],
-        transaction_type: str,
-        dir_path: Union[str, pathlib.Path, None] = None,
-        file_name: Optional[str] = None,
+            self,
+            transaction_id: Union[str, int],
+            transaction_type: str,
+            dir_path: Union[str, pathlib.Path, None] = None,
+            file_name: Optional[str] = None,
     ) -> Union[bytes, int]:
         """
-        Method for receiving a receipt in byte format or file. \ N
+        Method for receiving a receipt in byte format or file. \n
         Possible transaction_type values:
          - 'IN'
          - 'OUT'
@@ -703,8 +703,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             dir_path=dir_path, file_name=file_name, data=response
         )
 
-    @property
-    async def account_info(self) -> QiwiAccountInfo:
+    async def get_account_info(self) -> QiwiAccountInfo:
         """
         Метод для получения информации об аккаунте
 
@@ -716,11 +715,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return QiwiAccountInfo.parse_obj(response)
 
     async def fetch_statistics(
-        self,
-        start_date: Union[datetime, timedelta],
-        end_date: Union[datetime, timedelta],
-        operation: str = "ALL",
-        sources: Optional[List[str]] = None,
+            self,
+            start_date: Union[datetime, timedelta],
+            end_date: Union[datetime, timedelta],
+            operation: str = "ALL",
+            sources: Optional[List[str]] = None,
     ) -> Statistic:
         """
         This query is used to get summary statistics
@@ -787,9 +786,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
 
     @api_helper.allow_response_code(201)
-    async def create_new_balance(
-        self, currency_alias: str
-    ) -> Optional[Dict[str, bool]]:
+    async def create_new_balance(self, currency_alias: str) -> Optional[Dict[str, bool]]:
         """
         The request creates a new account and balance in your QIWI Wallet
 
@@ -866,11 +863,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return self.dp.bill_handler_wrapper
 
     async def to_wallet(
-        self,
-        to_number: str,
-        trans_sum: Union[str, float, int],
-        currency: str = "643",
-        comment: str = "+comment+",
+            self,
+            to_number: str,
+            trans_sum: Union[str, float, int],
+            currency: str = "643",
+            comment: str = "+comment+",
     ) -> str:
         """
         Method for transferring money to another wallet \n
@@ -900,7 +897,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return cast(str, response["transaction"]["id"])
 
     async def to_card(
-        self, trans_sum: Union[float, int], to_card: str
+            self, trans_sum: Union[float, int], to_card: str
     ) -> Optional[str]:
         """
         Method for sending funds to the card.
@@ -944,11 +941,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
         return cast(str, response["message"])
 
-    async def commission(
-        self, to_account: str, pay_sum: Union[int, float]
-    ) -> Commission:
+    async def calc_commission(self, to_account: str, pay_sum: Union[int, float]) -> Commission:
         """
-        Full commission of QIWI Wallet is refunded for payment in favor of the specified provider
+        Full calc_commission of QIWI Wallet is refunded for payment in favor of the specified provider
         taking into account all tariffs for a given set of payment details.
 
         :param to_account: номер карты или киви кошелька
@@ -985,11 +980,11 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
 
     async def payment_by_payment_details(
-        self,
-        payment_sum: Sum,
-        payment_method: PaymentMethod,
-        fields: FreePaymentDetailsFields,
-        payment_id: Optional[str] = None,
+            self,
+            payment_sum: Sum,
+            payment_method: PaymentMethod,
+            fields: FreePaymentDetailsFields,
+            payment_id: Optional[str] = None,
     ) -> PaymentInfo:
         """
         Payment for services of commercial organizations according to their bank details.
@@ -1037,7 +1032,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return PaymentInfo.parse_obj(response)
 
     async def __pre_qiwi_master_request(
-        self, card_alias: str = "qvc-cpa"
+            self, card_alias: str = "qvc-cpa"
     ) -> OrderDetails:
         """Method for Issuing QIWI Master Virtual Card"""
         response = await self.request_manager.send_request(
@@ -1051,7 +1046,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return OrderDetails.parse_obj(response)
 
     async def _confirm_qiwi_master_request(
-        self, card_alias: str = "qvc-cpa"
+            self, card_alias: str = "qvc-cpa"
     ) -> OrderDetails:
         """Confirmation of the card issue order"""
         details = await self.__pre_qiwi_master_request(card_alias)
@@ -1078,7 +1073,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return OrderDetails.parse_obj(response)
 
     async def issue_qiwi_master_card(
-        self, card_alias: str = "qvc-cpa"
+            self, card_alias: str = "qvc-cpa"
     ) -> Optional[OrderDetails]:
         """
         Issuing a new card using the Qiwi Master API
@@ -1129,15 +1124,15 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         Method for checking the status of a p2p transaction.\n
         Possible transaction types: \n
-        WAITING	Счет выставлен, ожидает оплаты	\n
-        PAID	Счет оплачен	\n
-        REJECTED	Счет отклонен\n
+        WAITING	Bill is waiting for pay	\n
+        PAID	Bill was paid	\n
+        REJECTED	Bill was rejected\n
         EXPIRED	Время жизни счета истекло. Счет не оплачен\n
-        Более подробная документация:
+        Docs:
         https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
 
-        :param bill_id: номер p2p транзакции
-        :return: статус транзакции строкой
+        :param bill_id:
+        :return: status of bill
         """
         data = deepcopy(self._router.config.P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
@@ -1151,13 +1146,13 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return Bill.parse_obj(response).status.value
 
     async def create_p2p_bill(
-        self,
-        amount: Union[int, float],
-        bill_id: Optional[str] = None,
-        comment: Optional[str] = None,
-        life_time: Optional[datetime] = None,
-        theme_code: Optional[str] = None,
-        pay_source_filter: Optional[List[str]] = None,
+            self,
+            amount: Union[int, float],
+            bill_id: Optional[str] = None,
+            comment: Optional[str] = None,
+            life_time: Optional[datetime] = None,
+            theme_code: Optional[str] = None,
+            pay_source_filter: Optional[List[str]] = None,
     ) -> Bill:
         """
         It is the reliable method for integration.
@@ -1199,7 +1194,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return Bill.parse_obj(response)
 
     async def get_bills(
-        self, rows_num: int, bill_statuses: str = "READY_FOR_PAY"
+            self, rows_num: int, bill_statuses: str = "READY_FOR_PAY"
     ) -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
@@ -1224,10 +1219,10 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         return api_helper.simple_multiply_parse(response["bills"], Bill)
 
     async def refund_bill(
-        self,
-        bill_id: Union[str, int],
-        refund_id: Union[str, int],
-        json_bill_data: Union[OptionalSum, Dict[str, Union[str, int]]],
+            self,
+            bill_id: Union[str, int],
+            refund_id: Union[str, int],
+            json_bill_data: Union[OptionalSum, Dict[str, Union[str, int]]],
     ) -> RefundBill:
         """
         The method allows you to make a refund on a paid invoice.
@@ -1253,20 +1248,12 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             if isinstance(json_bill_data, dict)
             else json_bill_data.json()
         )
-        response = await self.request_manager.send_request(
-            "PUT",
-            QiwiApiMethods.REFUND_BILL,
-            self._router,
-            headers=headers,
-            json=json,
-            refund_id=refund_id,
-            bill_id=bill_id,
-        )
+        response = await self.request_manager.send_request("PUT", QiwiApiMethods.REFUND_BILL, self._router,
+                                                           headers=headers, json=json, refund_id=refund_id,
+                                                           bill_id=bill_id, )
         return RefundBill.parse_obj(response)
 
-    async def create_p2p_keys(
-        self, key_pair_name: str, server_notification_url: Optional[str] = None
-    ) -> P2PKeys:
+    async def create_p2p_keys(self, key_pair_name: str, server_notification_url: Optional[str] = None) -> P2PKeys:
         """
         :param key_pair_name: P2P token pair name (arbitrary string)
         :param server_notification_url: url for webhooks, optional
@@ -1277,11 +1264,6 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             "keysPairName": key_pair_name,
             "serverNotificationsUrl": server_notification_url,
         }
-        response = await self.request_manager.send_request(
-            "POST",
-            QiwiApiMethods.CREATE_P2P_KEYS,
-            self._router,
-            headers=headers,
-            json=data,
-        )
+        response = await self.request_manager.send_request("POST", QiwiApiMethods.CREATE_P2P_KEYS, self._router,
+                                                           headers=headers, json=data, )
         return P2PKeys.parse_obj(response)

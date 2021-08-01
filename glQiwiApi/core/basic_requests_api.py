@@ -183,8 +183,8 @@ class HttpXParser(AbstractParser):
 
         if (
             isinstance(self._session, ClientSession)
-            and self._session.closed
-            or not isinstance(self._session, ClientSession)
+            and self._session.closed  # noqa: W503
+            or not isinstance(self._session, ClientSession)  # noqa: W503
         ):
             self._session = ClientSession(**kwargs)
             self._should_reset_connector = False
@@ -209,7 +209,7 @@ class HttpXParser(AbstractParser):
         message: Optional[str] = None,
     ) -> RequestError:
         """Raise :class:`RequestError` exception with pretty explanation"""
-        from glQiwiApi import __version__  # NOQA
+        from glQiwiApi import __version__  # NOQA  # pragma: no cover
 
         if not isinstance(message, str) and isinstance(self.messages, dict):
             message = self.messages.get(status_code, "Unknown")

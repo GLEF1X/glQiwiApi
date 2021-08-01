@@ -7,27 +7,26 @@ from glQiwiApi.types.base import Base
 
 
 class Fields(Base):
-    """Специальные поля"""
+    """object: Fields"""
 
     account: str
 
 
 class State(Base):
-    """State"""
+    """object: State"""
 
     code: str
 
 
 class TransactionInfo(Base):
-    """Информация о транзакции"""
+    """object: TransactionInfo"""
 
     txn_id: int = Field(..., alias="id")
     state: State
 
 
 class PaymentInfo(Base):
-    """Информация о платеже"""
-
+    """object: PaymentInfo"""
     payment_id: int = Field(..., alias="id")
     terms: str
     fields: Optional[Fields] = None

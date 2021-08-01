@@ -119,8 +119,8 @@ class RequestManager(HttpXParser):
     @property
     def is_session_closed(self) -> bool:
         return (
-            isinstance(self._session, aiohttp.ClientSession)
-            and not self._session.closed
+            isinstance(self._session, aiohttp.ClientSession)  # noqa: W503
+            and not self._session.closed  # noqa: W503
         )
 
     @classmethod

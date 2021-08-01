@@ -1,6 +1,4 @@
-import asyncio
 import base64
-import concurrent.futures as futures
 import datetime
 import functools as ft
 import hashlib
@@ -9,10 +7,8 @@ import inspect
 import pathlib
 import re
 import time
-from contextvars import ContextVar
 from copy import deepcopy
 from http import HTTPStatus
-from typing import Callable, cast, Any
 
 import aiofiles
 import pytz
@@ -110,16 +106,17 @@ def datetime_to_str_in_iso(obj, *, yoo_money_format=False):
     :return: string - parsed date
     """
     if not isinstance(obj, datetime.datetime):
-        return ""
+        return ""  # pragma: no cover
     if yoo_money_format:
         # Приводим время к UTC,
         # так как yoomoney апи принимает именно в таком формате
         # fmt: off
-        return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z"
+        return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z"  # pragma: no cover
         # fmt: on
     local_date = str(datetime.datetime.now(tz=Local))
     pattern = re.compile(r"[+]\d{2}[:]\d{2}")
     from_pattern = re.findall(pattern, local_date)[0]
+    # Here will be format like YEAR-MONTH-DAYTHOUR:MINUTE:SECOND+03:00
     return obj.isoformat(" ").replace(" ", "T") + from_pattern
 
 
@@ -130,14 +127,14 @@ def parse_auth_link(response_data):
 
     :param response_data:
     """
-    regexp = re.compile(r"https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+")
-    return re.findall(regexp, str(response_data))[0]
+    regexp = re.compile(r"https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+")  # pragma: no cover
+    return re.findall(regexp, str(response_data))[0]  # pragma: no cover
 
 
 def check_dates(start_date, end_date, payload_data):
     """Check correctness of transferred dates and add it to request"""
     if isinstance(start_date, (datetime.datetime, datetime.timedelta)) and isinstance(
-        end_date, (datetime.datetime, datetime.timedelta)
+            end_date, (datetime.datetime, datetime.timedelta)
     ):
         if (end_date - start_date).total_seconds() > 0:
             payload_data.update(
@@ -152,7 +149,7 @@ def check_dates(start_date, end_date, payload_data):
 
 
 def parse_commission_request_payload(default_data, auth_maker, pay_sum, to_account):
-    """Set commission payload"""
+    """Set calc_commission payload"""
     payload = deepcopy(default_data)
     payload.headers = auth_maker(payload.headers)
     payload.json["purchaseTotals"]["total"]["amount"] = pay_sum
@@ -161,10 +158,10 @@ def parse_commission_request_payload(default_data, auth_maker, pay_sum, to_accou
 
 
 def parse_card_data(
-    default_data,
-    trans_sum,
-    to_card,
-    auth_maker,
+        default_data,
+        trans_sum,
+        to_card,
+        auth_maker,
 ):
     """Set card data payload"""
     data = deepcopy(default_data)
@@ -208,7 +205,7 @@ def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
 
 
 def set_data_p2p_create(
-    wrapped_data, amount, life_time, comment, theme_code, pay_source_filter
+        wrapped_data, amount, life_time, comment, theme_code, pay_source_filter
 ):
     """
     Setting data for p2p form creation transfer
@@ -237,7 +234,6 @@ def set_data_p2p_create(
     return wrapped_data.json
 
 
-#
 def multiply_objects_parse(lst_of_objects, model):
     """
     Function to handle list of objects
@@ -255,7 +251,7 @@ def multiply_objects_parse(lst_of_objects, model):
             for detached_obj in obj:
                 objects.append(model.parse_obj(detached_obj))
         except ValidationError as ex:
-            print(ex.json(indent=4))
+            objects.append(ex)
     return objects
 
 
@@ -267,24 +263,6 @@ def simple_multiply_parse(objects, model):
     :param model: pydantic model, which will parse data
     """
     return [model.parse_obj(obj) for obj in objects]
-
-
-def take_event_loop(set_debug: bool = False):
-    """
-    Get new or running event loop
-    !THIS FUNCTION IS IRRELEVANT, DON'T USE IT!
-
-    :param set_debug:
-    """
-    try:
-        loop = asyncio.get_running_loop()
-        if loop.is_closed():
-            raise RuntimeError()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    loop.set_debug(set_debug)
-    return loop
 
 
 def hmac_key(key, amount, status, bill_id, site_id):
@@ -303,9 +281,7 @@ def hmac_key(key, amount, status, bill_id, site_id):
     return hmac.new(bytes(key), invoice_params, hashlib.sha256).hexdigest()
 
 
-def hmac_for_transaction(
-    webhook_key_base64, amount, txn_type, account, txn_id, txn_hash
-):
+def hmac_for_transaction(webhook_key_base64, amount, txn_type, account, txn_id, txn_hash):
     invoice_params = f"{amount.currency}|{amount.amount}|{txn_type}|{account}|{txn_id}"
     webhook_key = base64.b64decode(bytes(webhook_key_base64, "utf-8"))
     # fmt: off
@@ -315,12 +291,11 @@ def hmac_for_transaction(
 
 def custom_load(data):
     """
-    Custom loads for each pydantic model, because
-    it guard API from different errors
+    Custom loads for each pydantic model, because it guard API from different errors
 
     :param data: class data
     """
-    return orjson.loads(orjson.dumps(data))
+    return orjson.loads(orjson.dumps(data))  # pragma: no cover
 
 
 class Parser(BaseModel):
@@ -386,123 +361,7 @@ def parse_amount(txn_type, txn):
 
 
 def check_params(amount_, amount, txn, transaction_type):
-    return (
-        amount is not None and amount_ >= amount and txn.direction == transaction_type
-    )
-
-
-def run_forever_safe(loop, callback) -> None:
-    """run a loop for ever and clean up after being stopped"""
-
-    loop.run_forever()
-    # NOTE: loop.run_forever returns after calling loop.stop
-
-    safe_cancel(loop=loop, callback=callback)
-
-
-def safe_cancel(loop, callback) -> None:
-    """cancel all tasks and close the loop gracefully"""
-
-    loop_tasks_all = asyncio.all_tasks(loop=loop)
-
-    # execute shutdown callback to gracefully shutdown your components
-    if callback is not None:
-        loop.run_until_complete(callback())
-
-    # NOTE: `cancel` does not guarantee that the task will be cancelled
-    for task in loop_tasks_all:
-        task.cancel()
-
-    for task in loop_tasks_all:
-        if not (task.done() or task.cancelled()):
-            try:
-                # wait for task cancellations
-                loop.run_until_complete(task)
-            except asyncio.CancelledError:
-                pass
-    # Finally, close event loop
-    loop.close()
-
-
-def await_sync(future):
-    """synchronously waits for a task"""
-    return future.result()
-
-
-def _cancel_future(loop, future, executor) -> None:
-    """cancels future if any exception occurred"""
-    executor.submit(loop.call_soon_threadsafe, future.cancel)
-
-
-def _stop_loop(loop) -> None:
-    """stops an event loop"""
-    loop.stop()
-
-
-class AdaptiveExecutor(futures.ThreadPoolExecutor):
-    """object: AdaptiveExecutor"""
-
-    def __init__(self, max_workers=None, **kwargs):
-        super().__init__(max_workers, "sync_adapter_", **kwargs)
-        self.max_workers = max_workers
-        self.is_from_running_loop = ContextVar("Adapter_", default=False)
-
-
-def _construct_all():
-    """Get or create new event loop"""
-    loop = take_event_loop()
-    executor = AdaptiveExecutor()
-    loop.set_default_executor(executor)
-    return loop, executor
-
-
-def _on_shutdown(executor, loop):
-    """Do some cleanup"""
-    if not executor.is_from_running_loop.get():
-        loop.call_soon_threadsafe(_stop_loop, loop)
-    executor.shutdown(wait=True)
-
-
-def sync(func, *args, **kwargs):
-    """
-    Function to execute async functions synchronously
-
-    :param func: Async function, which you want to execute in synchronous code
-    :param args: args, which need your async func
-    :param kwargs: kwargs, which need your async func
-    """
-    try:
-        shutdown_callback = kwargs.pop("__shutdown__callback__")
-    except KeyError:
-        shutdown_callback = None
-    # construct an event loop and executor
-    loop, executor = _construct_all()
-    # Run our coroutine thread safe
-    wrapped_future = asyncio.run_coroutine_threadsafe(func(*args, **kwargs), loop=loop)
-    # Run loop.run_forever(), but do it safely
-    executor.submit(run_forever_safe, loop, shutdown_callback)
-    try:
-        # Get result
-        return await_sync(wrapped_future)
-    finally:
-        # Cleanup
-        _on_shutdown(executor, loop)
-
-
-class async_as_sync:  # NOQA
-    def __init__(self, shutdown_callback=None):
-        self._shutdown_callback = shutdown_callback
-
-    def __call__(self, func):
-        """Decorator, which use `sync` function to implement async to sync"""
-
-        @ft.wraps(func)
-        def wrapper(*args, **kwargs):
-            return sync(
-                func, *args, __shutdown__callback__=self._shutdown_callback, **kwargs
-            )
-
-        return wrapper
+    return amount is not None and amount <= amount_ and txn.direction == transaction_type
 
 
 def check_transaction(transactions, amount, transaction_type, sender, comment):
@@ -566,12 +425,12 @@ def check_api_method(api_method):
 
 
 def check_transactions_payload(
-    data,
-    records,
-    operation_types=None,
-    start_date=None,
-    end_date=None,
-    start_record=None,
+        data,
+        records,
+        operation_types=None,
+        start_date=None,
+        end_date=None,
+        start_record=None,
 ):
     from glQiwiApi import InvalidData
 
@@ -582,7 +441,7 @@ def check_transactions_payload(
             " находиться в диапазоне от 1 до 100 включительно"
         )
     if operation_types and all(
-        isinstance(operation_type, OperationType) for operation_type in operation_types
+            isinstance(operation_type, OperationType) for operation_type in operation_types
     ):
         op_types = [operation_type.value for operation_type in operation_types]
         data.update({"type": " ".join(op_types)})
@@ -616,13 +475,9 @@ def check_dates_for_statistic_request(start_date, end_date):
     if first_expression or second_expression:
         delta: datetime.timedelta = end_date - start_date
         if delta.days > 90:
-            raise ValueError(
-                "Максимальный период для выгрузки" " статистики - 90 календарных дней."
-            )
+            raise ValueError("The maximum period for downloading statistics is 90 calendar days.")
     else:
-        raise ValueError(
-            "Вы передали значения начальной " "и конечной даты в неправильном формате."
-        )
+        raise ValueError("You passed in the start and end date values in the wrong format.")
 
 
 async def save_file(dir_path, file_name, data):
@@ -634,13 +489,13 @@ async def save_file(dir_path, file_name, data):
     :param data:
     """
     if dir_path is None and file_name is None:
-        return data
+        return data  # pragma: no cover
 
     if isinstance(dir_path, str):
-        dir_path = pathlib.Path(dir_path)
+        dir_path = pathlib.Path(dir_path)  # pragma: no cover
 
     if not dir_path.is_dir():
-        raise TypeError("Invalid path to save, its not directory!")
+        raise TypeError("Invalid path to save, its not directory!")  # pragma: no cover
 
     path_to_file: pathlib.Path = dir_path / (file_name + ".pdf")
     async with aiofiles.open(path_to_file, "wb") as file:

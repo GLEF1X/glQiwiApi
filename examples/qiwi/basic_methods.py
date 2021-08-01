@@ -26,7 +26,7 @@ async def basic_usage():
         )
         print(stats)
         # Full account information
-        info = await wallet.account_info
+        info = await wallet.get_account_info
         # Get the ip address from which the last login was made
         print(info.auth_info.ip)
         # We transfer money to another wallet, while receiving the ID of the payment

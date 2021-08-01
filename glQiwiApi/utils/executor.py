@@ -26,15 +26,16 @@ from aiohttp import ClientTimeout, web
 
 from glQiwiApi.core.builtin import BaseProxy, logger, TelegramWebhookProxy
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
-from glQiwiApi.core.dispatcher import server
-from glQiwiApi.core.dispatcher.config import Path
+from glQiwiApi.core.dispatcher.webhooks import server
+from glQiwiApi.core.dispatcher.webhooks.config import Path
+from glQiwiApi.core.synchronous.decorator import run_forever_safe
 from glQiwiApi.types import Transaction
 from glQiwiApi.utils.errors import NoUpdatesToExecute
 
 __all__ = ["start_webhook", "start_polling"]
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.client import QiwiWrapper
+    from glQiwiApi.qiwi.client import QiwiWrapper  # pragma: no cover
 
 
 class BadCallback(Exception):
@@ -76,9 +77,7 @@ def start_webhook(
     _setup_callbacks(executor, on_startup, on_shutdown)
     if isinstance(tg_app, TelegramWebhookProxy) and ssl_context is None:
         ssl_context = tg_app.ssl_context
-    executor.start_webhook(
-        host=host, port=port, path=path, app=app, ssl_context=ssl_context
-    )
+    executor.start_webhook(host=host, port=port, path=path, app=app, ssl_context=ssl_context)
 
 
 def start_polling(
@@ -116,14 +115,12 @@ async def _inspect_and_execute_callback(
     if inspect.iscoroutinefunction(callback):
         await callback(client)
     else:
-        callback(client)
+        callback(client)  # pragma: no cover
 
 
 def _check_callback(callback: Callable[[QiwiWrapper], Any]) -> NoReturn:
     if not isinstance(callback, types.FunctionType):
-        raise BadCallback(
-            "Callback passed to on_startup / on_shutdown is not a function"
-        )  # NOQA
+        raise BadCallback("Callback passed to on_startup / on_shutdown is not a function")  # NOQA  # pragma: no cover
 
 
 def _setup_callbacks(
@@ -141,10 +138,10 @@ def _setup_callbacks(
     if on_startup is not None:
         executor.add_startup_callback(on_startup)
     if on_shutdown is not None:
-        executor.add_shutdown_callback(on_shutdown)
+        executor.add_shutdown_callback(on_shutdown)  # pragma: no cover
 
 
-def parse_timeout(timeout: Union[float, int, ClientTimeout]) -> float:
+def parse_timeout(timeout: Union[float, int, ClientTimeout]) -> float:  # pragma: no cover
     if isinstance(timeout, float):
         return timeout
     elif isinstance(timeout, int):
@@ -171,7 +168,7 @@ class Executor:
         :param tg_app: optional proxy to connect aiogram polling/webhook mode
         """
         if loop is not None:
-            self._loop = loop
+            self._loop = loop  # pragma: no cover
 
         self.dispatcher = client.dp
         self._logger_config = {
@@ -191,9 +188,22 @@ class Executor:
     def telegram_proxy_application(self) -> Optional[BaseProxy]:
         return self._tg_app
 
+    def _create_new_loop_if_closed(self) -> None:
+        if self._loop.is_closed():
+            self._loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self._loop)
+
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
-        return cast(asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop()))
+        self._loop = cast(asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop()))
+        # There is a issue, connected with aiohttp.web application, because glQiwiApi wants to have the same interface
+        # for polling and webhooks on_startup & on_shutdown callbacks,
+        # so we don't use app.on_shutdown.append(...), on the contrary we use self-written
+        # system of callbacks, and so aiohttp.web.Application close event loop on shutdown, that's why we need to
+        # create new event loop to gracefully execute shutdown callback.
+        # It is highly undesirable to delete this line because you will always catch RuntimeWarning and RuntimeError.
+        self._create_new_loop_if_closed()
+        return self._loop
 
     def add_shutdown_callback(self, callback: Callable[[QiwiWrapper], Any]) -> None:
         _check_callback(callback)
@@ -254,7 +264,7 @@ class Executor:
                 )
             await asyncio.sleep(timeout_to_sleep)
 
-    def _on_shutdown(self, loop: asyncio.AbstractEventLoop) -> None:
+    def _on_shutdown(self) -> None:
         """
         On shutdown, executor gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
@@ -262,7 +272,7 @@ class Executor:
         callbacks = [self.goodbye(), self.client.close()]
         if isinstance(self._tg_app, BaseProxy):
             callbacks.append(self._shutdown_tg_app())
-        loop.run_until_complete(asyncio.gather(*callbacks, loop=loop))
+        self.loop.run_until_complete(asyncio.gather(*callbacks))
 
     async def _shutdown_tg_app(self) -> None:
         self.telegram_proxy_application.dispatcher.stop_polling()  # type: ignore
@@ -290,12 +300,12 @@ class Executor:
             loop.create_task(self._start_polling(get_updates_from=get_updates_from, timeout=timeout))
             if isinstance(self.telegram_proxy_application, BaseProxy):
                 self.telegram_proxy_application.setup(loop=loop)
-            loop.run_forever()
+            run_forever_safe(loop=loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # Allow to graceful shutdown
             pass  # pragma: no cover
         finally:
-            self._on_shutdown(loop=loop)
+            self._on_shutdown()
 
     def start_webhook(
             self,
@@ -324,7 +334,7 @@ class Executor:
             # Allow to graceful shutdown
             pass
         finally:
-            self._on_shutdown(loop=loop)
+            self._on_shutdown()
 
     async def welcome(self) -> None:
         self.dispatcher.logger.debug("Executor has started work!")

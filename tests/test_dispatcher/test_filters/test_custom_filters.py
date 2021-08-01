@@ -52,5 +52,3 @@ async def test_check_lambda_filter(mocker: MockerFixture):
     lambda_filter: filters.LambdaBasedFilter[Transaction] = filters.LambdaBasedFilter(lambda x: x is not None)
     mock = mocker.Mock(spec=Transaction)
     assert await lambda_filter.check(mock) is True
-
-

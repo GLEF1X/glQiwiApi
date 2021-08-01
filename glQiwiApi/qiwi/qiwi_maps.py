@@ -2,7 +2,7 @@ import typing
 
 from glQiwiApi import types
 from glQiwiApi.core import RequestManager
-from glQiwiApi.core.core_mixins import ContextInstanceMixin, ToolsMixin
+from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.utils import api_helper
 

@@ -1,15 +1,10 @@
 from pydantic import Field
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.types.basics import Sum
 
 
-class Commission(Base):
-    """
-    Комиссия за платеж
-
-    """
-
+class Commission(ExtraBase):
     provider_id: int = Field(alias="providerId")
     withdraw_sum: Sum = Field(alias="withdrawSum")
     enrollment_sum: Sum = Field(alias="enrollmentSum")

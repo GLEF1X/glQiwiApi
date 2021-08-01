@@ -14,9 +14,7 @@ class BaseFilter(abc.ABC, Generic[_T]):
 
     def __and__(self, other: BaseFilter[_T]) -> AndFilter[_T]:
         if not isinstance(other, BaseFilter):
-            raise TypeError(
-                f"Can't compose two different types of filters, expected Filter, got {type(other)}"
-            )
+            raise TypeError(f"Can't compose two different types of filters, expected Filter, got {type(other)}")
         return AndFilter(self, other)
 
     def __invert__(self) -> NotFilter[_T]:
@@ -47,9 +45,7 @@ class LambdaBasedFilter(BaseFilter[_T]):
         self.__name__ = f"Filter around <{function!r}>"
 
         self.function = function
-        self.awaitable: bool = inspect.iscoroutinefunction(
-            function
-        ) or inspect.isawaitable(function)
+        self.awaitable: bool = inspect.iscoroutinefunction(function) or inspect.isawaitable(function)
 
     async def check(self, update: _T) -> bool:
         if self.awaitable:
@@ -58,4 +54,4 @@ class LambdaBasedFilter(BaseFilter[_T]):
             return cast(bool, self.function(update))
 
 
-__all__ = ("LambdaBasedFilter", "BaseFilter")
+__all__ = ("LambdaBasedFilter", "BaseFilter", "NotFilter", "AndFilter")
