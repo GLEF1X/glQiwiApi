@@ -143,7 +143,7 @@ asyncio.run(main())
 
 ![form](https://i.ibb.co/T0C5RYz/2021-03-21-14-58-33.png)
 
-## ⛏Send to another wallet & get receipt(получение чека транзакции)
+## ⛏Send to another wallet & get receipt
 
 ```python
 import asyncio
@@ -233,7 +233,7 @@ async def my_handler(event: types.Transaction):
 executor.start_polling(wallet)
 ```
 
-## 💳Send to card & check calc_commission
+## 💳Send to card & predict commission
 
 ```python
 import asyncio
