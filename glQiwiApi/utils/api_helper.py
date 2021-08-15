@@ -13,8 +13,8 @@ from http import HTTPStatus
 import aiofiles
 import pytz
 from pydantic import ValidationError, BaseModel
-from pytz.reference import LocalTimezone
 
+from glQiwiApi.core import constants
 from glQiwiApi.types import OperationType
 from glQiwiApi.utils import errors
 
@@ -22,9 +22,6 @@ try:
     import orjson  # type: ignore
 except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
     import json as orjson  # type: ignore
-
-# Gets your local time zone
-Local = LocalTimezone()
 
 
 def check_result(error_messages, status_code, request_info, body):
@@ -36,6 +33,7 @@ def check_result(error_messages, status_code, request_info, body):
     :param error_messages:
     :param status_code: status code
     :param body: body of response
+    :param request_info:
     :return: The result parsed to a JSON dictionary
     :raises ApiException: if one of the above listed cases is applicable
     """
@@ -97,27 +95,29 @@ class measure_time(object):  # NOQA
             print(msg % args)
 
 
-def datetime_to_str_in_iso(obj, *, yoo_money_format=False):
+# fmt: off
+def datetime_to_utc(obj):
+    return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z"  # pragma: no cover
+
+
+# fmt: on
+
+
+def datetime_to_str_in_iso8601(obj):
     """
     Converts a date to a standard format for API's
 
     :param obj: datetime object to parse to string
-    :param yoo_money_format: boolean
     :return: string - parsed date
     """
     if not isinstance(obj, datetime.datetime):
         return ""  # pragma: no cover
-    if yoo_money_format:
-        # Приводим время к UTC,
-        # так как yoomoney апи принимает именно в таком формате
-        # fmt: off
-        return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z"  # pragma: no cover
-        # fmt: on
-    local_date = str(datetime.datetime.now(tz=Local))
-    pattern = re.compile(r"[+]\d{2}[:]\d{2}")
-    from_pattern = re.findall(pattern, local_date)[0]
-    # Here will be format like YEAR-MONTH-DAYTHOUR:MINUTE:SECOND+03:00
-    return obj.isoformat(" ").replace(" ", "T") + from_pattern
+    naive_datetime = obj.replace(microsecond=0)
+    return (
+        pytz.timezone(constants.DEFAULT_QIWI_TIMEZONE)
+            .localize(naive_datetime)
+            .isoformat()
+    )
 
 
 def parse_auth_link(response_data):
@@ -139,8 +139,8 @@ def check_dates(start_date, end_date, payload_data):
         if (end_date - start_date).total_seconds() > 0:
             payload_data.update(
                 {
-                    "startDate": datetime_to_str_in_iso(start_date),
-                    "endDate": datetime_to_str_in_iso(end_date),
+                    "startDate": datetime_to_str_in_iso8601(start_date),
+                    "endDate": datetime_to_str_in_iso8601(end_date),
                 }
             )
         else:
@@ -171,7 +171,7 @@ def parse_card_data(
     return data
 
 
-def parse_headers(content_json=False, auth=False):
+def retrieve_base_headers_for_yoomoney(content_json=False, auth=False):
     """
     Функция для добавления некоторых заголовков в запрос
     """
@@ -204,7 +204,7 @@ def set_data_to_wallet(data, to_number, trans_sum, comment, currency):
     return data
 
 
-def set_data_p2p_create(
+def patch_p2p_create_payload(
         wrapped_data, amount, life_time, comment, theme_code, pay_source_filter
 ):
     """
@@ -456,12 +456,12 @@ def check_transactions_payload(
             raise InvalidData(
                 "Параметр start_date был передан неправильным типом данных"
             )
-        data.update({"from": datetime_to_str_in_iso(start_date, yoo_money_format=True)})
+        data.update({"from": datetime_to_utc(start_date)})
 
     if end_date:
         if not isinstance(end_date, datetime.datetime):
             raise InvalidData("Параметр end_date был передан неправильным типом данных")
-        data.update({"till": datetime_to_str_in_iso(end_date, yoo_money_format=True)})
+        data.update({"till": datetime_to_utc(end_date)})
     return data
 
 

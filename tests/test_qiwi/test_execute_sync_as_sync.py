@@ -48,7 +48,7 @@ class SyncApiSessionTest:
         # Send request to API
         execute_async_as_sync(api.get_balance)
 
-        api_session = api.request_manager._session
+        api_session = api._requests._session
 
         assert isinstance(api_session, aiohttp.ClientSession)
 
@@ -56,6 +56,6 @@ class SyncApiSessionTest:
 
         execute_async_as_sync(api.get_balance)
 
-        new_session = api.request_manager._session
+        new_session = api._requests._session
 
         assert api_session != new_session

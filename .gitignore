@@ -134,3 +134,6 @@ dmypy.json
 .pyre/
 .idea/*
 .env
+
+docker_test/*
+docker_test

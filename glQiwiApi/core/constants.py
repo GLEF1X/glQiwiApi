@@ -11,4 +11,9 @@ USER_AGENT = (
 
 UNCACHED = ("https://api.qiwi.com/partner/bill", "/sinap/api/v2/terms/")
 
-DEFAULT_BILL_TIME = datetime.now() + timedelta(days=2)
+
+def get_default_bill_time() -> datetime:
+    return datetime.now() + timedelta(days=2)
+
+
+DEFAULT_QIWI_TIMEZONE = 'Europe/Moscow'

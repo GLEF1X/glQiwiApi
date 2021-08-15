@@ -59,7 +59,7 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = self.request_manager.filter_dict(
+        params = self._requests.filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -73,7 +73,7 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
             }
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        response = await self.request_manager.make_request(url, "GET", params=params)
+        response = await self._requests.make_request(url, "GET", params=params)
         return api_helper.multiply_objects_parse(
             typing.cast(typing.List[typing.Any], response), types.Terminal
         )
@@ -84,7 +84,7 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         :return: list of TTPGroups
         """
         url = "http://edge.qiwi.com/locator/v3/ttp-groups"
-        response = await self.request_manager.make_request(
+        response = await self._requests.make_request(
             url, "GET", headers={"Content-type": "text/json"}
         )
         return api_helper.multiply_objects_parse(

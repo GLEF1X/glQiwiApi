@@ -23,13 +23,13 @@ class TestAiohttpSession:
         # initially session is None,
         # it's done  to save performance and
         # it creates new session when you make a request (API method call)
-        assert api.request_manager._session is None
+        assert api._requests._session is None
 
         # such a session is created under the hood(when you call API method)
         await api._requests.create_session()
 
         # And now it's aiohttp.ClientSession instance
-        assert isinstance(api.request_manager._session, aiohttp.ClientSession)
+        assert isinstance(api._requests._session, aiohttp.ClientSession)
 
         assert isinstance(api._router, QiwiRouter)
         assert isinstance(api._requests, RequestManager)
@@ -58,7 +58,7 @@ class TestAiohttpSession:
 
         await api._requests.create_session()
 
-        aiohttp_session = api.request_manager._session
+        aiohttp_session = api._requests._session
 
         with patch("aiohttp.ClientSession.close", new=CoroutineMock()) as mocked_close:
             await aiohttp_session.close()
