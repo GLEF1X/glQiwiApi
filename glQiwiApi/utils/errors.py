@@ -87,12 +87,9 @@ class APIError(Exception):
         self.additional_info = additional_info
         self.traceback_info = traceback_info
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}" ""
         return resp.format(sc=self.status_code, msg=self.message, info=self.additional_info)
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
     def to_model(self) -> ExceptionTraceback:
         """Convert exception to :class:`ExceptionTraceback`"""
@@ -112,7 +109,7 @@ class APIError(Exception):
             ),
         )
 
-    def _make_json_without_request_info(self) -> Dict[str, Any]:
+    def _make_dict(self) -> Dict[str, Any]:
         return {
             "code": self.status_code,
             "msg": self.message,
@@ -130,7 +127,7 @@ class APIError(Exception):
         if isinstance(self.traceback_info, RequestInfo):
             info = self.to_model().dict(exclude_none=True)
         else:
-            info = self._make_json_without_request_info()
+            info = self._make_dict()
         return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
 
 

@@ -28,7 +28,7 @@ def safe_cancel(
 def _cancel_future(
         loop: asyncio.AbstractEventLoop,
         future: asyncio.Future[types.N],
-        executor: types.Executors,
+        executor: types.AnyExecutor,
 ) -> None: ...
 
 

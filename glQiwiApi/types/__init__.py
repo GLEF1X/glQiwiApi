@@ -29,7 +29,8 @@ from .qiwi_types import (
     Card,
     Restriction,
     Commission,
-    InvoiceStatus
+    InvoiceStatus,
+    TransactionType
 )
 from .yoomoney_types import (
     OperationType,
@@ -76,9 +77,7 @@ ALL_TYPES = Union[
     InvoiceStatus
 ]
 
-Executors = TypeVar(
-    "Executors", futures.ThreadPoolExecutor, futures.ProcessPoolExecutor, Optional[None]
-)
+AnyExecutor = TypeVar("AnyExecutor", futures.ThreadPoolExecutor, futures.ProcessPoolExecutor, Optional[None])
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
@@ -119,7 +118,7 @@ __all__ = (
     "WebHookConfig",
     "WebHook",
     "Notification",
-    "Executors",
+    "AnyExecutor",
     "FuncT",
     "N",
     "CrossRate",
@@ -127,4 +126,5 @@ __all__ = (
     "PaymentMethod",
     "Card",
     "Restriction",
+    "TransactionType"
 )

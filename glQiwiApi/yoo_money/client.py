@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple, cast
 
 from glQiwiApi.core import RequestManager, ToolsMixin, ContextInstanceMixin
+from glQiwiApi.core.mixins import DataMixin
 from glQiwiApi.types import (
     AccountInfo,
     OperationType,
@@ -31,7 +32,7 @@ from glQiwiApi.utils.errors import NoUrlFound, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
-class YooMoneyAPI(ToolsMixin, ContextInstanceMixin["YooMoneyAPI"]):
+class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     """
     A class that implements processing requests to YooMoney
     It is convenient in that it does not just give json such objects,

@@ -248,7 +248,7 @@ class Executor:
 
         if self.offset is None:
             first_payment: Transaction = history_from_first_to_last[0]
-            self.offset = first_payment.transaction_id - 1
+            self.offset = first_payment.id - 1
 
         await self.process_events(history_from_first_to_last)
 
@@ -283,9 +283,9 @@ class Executor:
     async def process_events(self, history: List[Transaction]) -> None:
         """Processing events and send callbacks to handlers"""
         for event in history:
-            if cast(int, self.offset) < event.transaction_id:
+            if cast(int, self.offset) < event.id:
                 await self.dispatcher.feed_event(event)
-                self.offset = event.transaction_id
+                self.offset = event.id
                 self.get_updates_until = self.get_updates_from
 
     def start_polling(

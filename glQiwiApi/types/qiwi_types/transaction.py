@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from typing import Optional, Union, Dict, Any, List
 
@@ -5,6 +6,13 @@ from pydantic import Field
 
 from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.types.basics import Sum
+
+
+class TransactionType(enum.Enum):
+    IN = "IN"
+    OUT = "OUT"
+    ALL = "ALL"
+    QIWI_CARD = "QIWI_CARD"
 
 
 class Provider(Base):
@@ -35,7 +43,7 @@ class Provider(Base):
 class Transaction(ExtraBase):
     """object: Transaction"""
 
-    transaction_id: int = Field(alias="txnId")
+    id: int = Field(alias="txnId")
     """	ID транзакции в сервисе QIWI Кошелек"""
 
     person_id: int = Field(alias="personId")
@@ -62,7 +70,7 @@ class Transaction(ExtraBase):
     ERROR - ошибка платежа.
     """
 
-    type: str
+    type: TransactionType
     """
     Тип платежа. Возможные значения:
     IN - пополнение,
@@ -122,10 +130,5 @@ class Transaction(ExtraBase):
     _regular_payment_enabled: bool = Field(..., alias="regularPaymentEnabled")
     """Специальное поле"""
 
-    def __str__(self) -> str:
-        return f"""Статус транзакции: {self.status}
-Дата проведения платежа: {self.date}
-Сумма платежа: {self.sum.amount}
-Комментарий: {self.comment if isinstance(self.comment, str) else '-'}
-{"Кому" if self.type == "OUT" else "От кого"}: {self.to_account}
-"""
+    class Config:
+        use_enum_values = True

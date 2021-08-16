@@ -366,7 +366,7 @@ def check_params(amount_, amount, txn, transaction_type):
 
 def check_transaction(transactions, amount, transaction_type, sender, comment):
     for txn in transactions:
-        if float(txn.sum.amount) >= amount and txn.type == transaction_type:
+        if float(txn.sum.amount) >= amount and txn.type == transaction_type.value:
             if txn.comment == comment and txn.to_account == sender:
                 return True
             elif comment and sender:
@@ -411,7 +411,7 @@ class override_error_messages:  # NOQA
                         traceback_info=error.get("json_info"),
                         additional_info=ex.additional_info,
                     )
-                raise ex
+                raise ex from None
 
         return wrapper
 
@@ -494,4 +494,3 @@ async def save_file(dir_path, file_name, data):
     path_to_file: pathlib.Path = dir_path / (file_name + ".pdf")
     async with aiofiles.open(path_to_file, "wb") as file:
         return await file.write(data)
-

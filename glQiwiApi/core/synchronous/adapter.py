@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any, Union, Tuple, List
 from typing import TypeVar, Type
 
 from glQiwiApi.core import ContextInstanceMixin
+from glQiwiApi.core.mixins import DataMixin
 from glQiwiApi.core.synchronous.decorator import async_as_sync
 from glQiwiApi.core.synchronous.model_adapter import AdaptedBill, adapt_type
 from glQiwiApi.ext.url_builder import WebhookURL
@@ -36,7 +37,7 @@ class SyncAdapterMeta(ABCMeta):
         return super().__new__(mcs, name, bases, attrs)  # type: ignore
 
 
-class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], metaclass=SyncAdapterMeta,
+class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], DataMixin, metaclass=SyncAdapterMeta,
                       adapted_cls=QiwiWrapper):
 
     def __init__(

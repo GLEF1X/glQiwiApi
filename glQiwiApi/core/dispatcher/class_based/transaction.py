@@ -10,7 +10,7 @@ class AbstractTransactionHandler(Handler[Transaction], ClientMixin[Transaction],
 
     @property
     def txn_id(self) -> int:
-        return self.event.transaction_id
+        return self.event.id
 
     @property
     def txn_sum(self) -> Sum:

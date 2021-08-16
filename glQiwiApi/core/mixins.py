@@ -31,7 +31,7 @@ class ToolsMixin(object):
 
     def __deepcopy__(self, memo: Any) -> ToolsMixin:  # pragma: no cover
         cls = self.__class__
-        kw: Dict[str, bool] = {"__copy_signal__": True}
+        kw = {"__copy_signal__": True}
         result = cls.__new__(cls, **kw)  # type: ignore  # pragma: no cover
         memo[id(self)] = result
         dct = {

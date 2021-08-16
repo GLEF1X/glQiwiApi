@@ -19,6 +19,7 @@ from aiohttp import RequestInfo
 
 from glQiwiApi import types
 from glQiwiApi.core import RequestManager
+from glQiwiApi.types import TransactionType
 
 class_ = TypeVar("class_", bound="allow_response_code")
 
@@ -114,7 +115,7 @@ def parse_amount(
 def check_transaction(
     transactions: List[types.Transaction],
     amount: Union[int, float],
-    transaction_type: str = "IN",
+    transaction_type: TransactionType = TransactionType.IN,
     sender: Optional[str] = None,
     comment: Optional[str] = None,
 ) -> bool: ...

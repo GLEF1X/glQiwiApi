@@ -13,7 +13,7 @@ from .qiwi_master import OrderDetails, Card
 from .restriction import Restriction
 from .stats import Statistic
 from .terminal import Terminal
-from .transaction import Transaction
+from .transaction import Transaction, TransactionType
 from .webhooks import WebHookConfig, WebHook
 
 __all__ = (
@@ -42,5 +42,6 @@ __all__ = (
     "Card",
     "Restriction",
     "Commission",
-    "InvoiceStatus"
+    "InvoiceStatus",
+    "TransactionType"
 )

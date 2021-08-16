@@ -30,7 +30,7 @@ from typing import (
 
 from glQiwiApi.core import RequestManager, constants
 from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
-from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin
+from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin, DataMixin
 from glQiwiApi.ext.url_builder import WebhookURL
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
@@ -55,7 +55,7 @@ from glQiwiApi.types import (
     P2PKeys,
     RefundBill,
     WebHookConfig,
-    N,
+    N, TransactionType,
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.qiwi_types.bill import InvoiceStatus
@@ -64,9 +64,9 @@ from glQiwiApi.utils.errors import APIError, InvalidData
 from glQiwiApi.utils.payload import make_payload
 
 
-def _is_copy_signal(kwargs: Dict[Any, Any]) -> bool:
+def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
     try:
-        return cast(bool, kwargs.pop("__copy_signal__"))
+        return kwargs.pop("__copy_signal__")
     except KeyError:
         return False
 
@@ -126,6 +126,16 @@ class BaseWrapper(ABC):
 
         # Method from ContextInstanceMixin
         self.set_current(self)
+
+    @property
+    def request_manager(self) -> RequestManager:
+        return self._requests
+
+    @request_manager.setter
+    def request_manager(self, other: RequestManager) -> None:
+        if not isinstance(other, RequestManager):
+            raise TypeError(f"Expected `RequestManager` instance, despite got {type(other)}")
+        self._requests = other
 
     @property
     def dp(self) -> Dispatcher:
@@ -219,7 +229,7 @@ class BaseWrapper(ABC):
         return super().__new__(cls)  # type: ignore
 
 
-class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
+class QiwiWrapper(BaseWrapper, ToolsMixin, DataMixin, ContextInstanceMixin["QiwiWrapper"]):
     """
     Delegates the work of QIWI API, webhooks, polling.
     Fast and versatile wrapper.
@@ -236,9 +246,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         "_dispatcher",
     )
 
-    async def _register_webhook(
-            self, web_url: Optional[str], txn_type: int = 2
-    ) -> WebHookConfig:
+    async def _register_webhook(self, web_url: Optional[str], txn_type: int = 2) -> WebHookConfig:
         """
         This method register a new webhook
 
@@ -363,9 +371,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                 webhook = await self.get_current_webhook()
             except APIError as ex:
                 raise APIError(
-                    message="Ошибка при получении текущего конфига вебхука. Скорее всего вы не вызывали "
-                            "метод bind_webhook, чтобы зарегистрировать вебхук"
-                            " киви или не передали ссылку для его регистрации",
+                    message="An error occurred while getting the current webhook config. Most likely you did not call "
+                            "method `QiwiWrapper.bind_webhook(...)` to register webhook"
+                            " or did not pass on url to register it",
                     status_code=ex.status_code,
                     traceback_info=ex.traceback_info,
                 ) from None
@@ -412,7 +420,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     async def transactions(
             self,
             rows_num: int = 50,
-            operation: str = "ALL",
+            operation: TransactionType = TransactionType.ALL,
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
@@ -428,7 +436,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
          - 'QIWI_CARD'
 
         :param rows_num: number of transactions you want to receive
-        :param operation: Тип операций в отчете, для отбора.
+        :param operation: The type of operations in the report for selection.
         :param start_date:The starting date for searching for payments.
                             Used only in conjunction with end_date.
         :param end_date: the end date of the search for payments.
@@ -440,16 +448,14 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         payload_data = api_helper.check_dates(
             start_date=start_date,
             end_date=end_date,
-            payload_data={"rows": rows_num, "operation": operation},
+            payload_data={"rows": rows_num, "operation": operation.value},
         )
         response = await self._requests.send_request("GET", QiwiApiMethods.TRANSACTIONS, self._router,
                                                      params=payload_data, headers=headers,
                                                      stripped_number=self.stripped_number, )
         return api_helper.multiply_objects_parse((response.get("data"),), Transaction)  # type: ignore
 
-    async def transaction_info(
-            self, transaction_id: Union[str, int], transaction_type: str
-    ) -> Transaction:
+    async def transaction_info(self, transaction_id: Union[str, int], transaction_type: TransactionType) -> Transaction:
         """
         Метод для получения полной информации о транзакции\n
         Подробная документация:
@@ -460,7 +466,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return: Transaction object
         """
         headers = self._auth_token(self._router.default_headers)
-        payload_data = {"type": transaction_type}
+        payload_data = {"type": transaction_type.value}
         response = await self._requests.send_request("GET", QiwiApiMethods.TRANSACTION_INFO, self._router,
                                                      headers=headers, params=payload_data,
                                                      transaction_id=transaction_id, )
@@ -476,22 +482,16 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
          if there are no restrictions, it returns an empty list
         """
         headers = self._auth_token(self._router.default_headers)
-        response = await self._requests.send_request(
-            "GET",
-            QiwiApiMethods.CHECK_RESTRICTION,
-            self._router,
-            headers=headers,
-            phone_number=self.phone_number,
-        )
+        response = await self._requests.send_request("GET", QiwiApiMethods.CHECK_RESTRICTION, self._router,
+                                                     headers=headers, phone_number=self.phone_number, )
         return api_helper.simple_multiply_parse(objects=response, model=Restriction)
 
     @property
     async def identification(self) -> Identification:
-        """A function that allows get your wallet identification data
+        """
+        This method allows get your wallet identification data
         More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#ident
-
-        :return: Response object
         """
         headers = self._auth_token(self._router.default_headers)
         response = await self._requests.send_request("GET", QiwiApiMethods.GET_IDENTIFICATION, self._router,
@@ -501,36 +501,34 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     async def check_transaction(
             self,
             amount: Union[int, float],
-            transaction_type: str = "IN",
+            transaction_type: TransactionType = TransactionType.IN,
             sender: Optional[str] = None,
             rows_num: int = 50,
             comment: Optional[str] = None,
     ) -> bool:
         """
         [ NON API METHOD ]
+
         Method for verifying a transaction.
-        This method uses self.transactions (rows = rows)
-        to receive payments.
+        This method uses self.transactions (rows = rows) "under the hood" to check payment.
+
         For a little optimization, you can decrease rows by setting it,
         however, this does not guarantee the correct result
+
         Possible values for the transaction_type parameter:
          - 'IN'
          - 'OUT'
          - 'QIWI_CARD'
 
 
-        :param amount: сумма платежа
-        :param transaction_type: тип платежа
-        :param sender: номер получателя
-        :param rows_num: кол-во платежей, которое будет проверяться
-        :param comment: комментарий, по которому будет проверяться транзакция
-        :return: bool, есть ли такая транзакция в истории платежей
+        :param amount: amount of payment
+        :param transaction_type: type of payment
+        :param sender: number of receiver
+        :param rows_num: number of payments to be checked
+        :param comment: comment by which the transaction will be verified
         """
-        if transaction_type not in ["IN", "OUT", "QIWI_CARD"]:
-            raise InvalidData("Вы ввели неправильный метод транзакции")
-
-        elif rows_num > 50 or rows_num <= 0:
-            raise InvalidData("Можно проверять не более 50 транзакций")
+        if rows_num > 50 or rows_num <= 0:
+            raise InvalidData("You can check no more than 50 transactions.")
         transactions = await self.transactions(rows_num=rows_num)
         return api_helper.check_transaction(
             transactions=transactions,
@@ -635,7 +633,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
     async def get_receipt(
             self,
             transaction_id: Union[str, int],
-            transaction_type: str,
+            transaction_type: TransactionType,
             dir_path: Union[str, pathlib.Path, None] = None,
             file_name: Optional[str] = None,
     ) -> Union[bytes, int]:
@@ -653,7 +651,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         :return:pdf file in byte form or number of bytes written
         """
         headers = self._auth_token(self._router.default_headers)
-        data = {"type": transaction_type, "format": "PDF"}
+        data = {"type": transaction_type.value, "format": "PDF"}
         url = self._router.build_url(QiwiApiMethods.GET_RECEIPT, transaction_id=transaction_id)
         response = await self._requests.stream_content(url, "GET", params=data, headers=headers)
         return await api_helper.save_file(dir_path=dir_path, file_name=file_name, data=response)
@@ -819,9 +817,7 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
                                                      headers=data.headers, )
         return cast(str, response["transaction"]["id"])
 
-    async def to_card(
-            self, trans_sum: Union[float, int], to_card: str
-    ) -> Optional[str]:
+    async def to_card(self, trans_sum: Union[float, int], to_card: str) -> Optional[str]:
         """
         Method for sending funds to the card.
         More detailed documentation:
@@ -1099,19 +1095,22 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
         return await self.retrieve_bills(rows=rows_num, statuses=bill_statuses)
 
-    async def retrieve_bills(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
+    async def retrieve_bills(self, rows: int, statuses: str = constants.DEFAULT_BILL_STATUSES) -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
+
         The list is built in reverse chronological order.
+
         By default, the list is paginated with 50 items each,
         but you can specify a different number of elements (no more than 50).
+
         Filters by billing time can be used in the request,
         the initial account identifier.
         """
         params = make_payload(**locals())
         headers = self._auth_token(self._router.default_headers)
         if rows > 50:
-            raise InvalidData("Можно получить не более 50 счетов")
+            raise InvalidData("You can get no more than 50 invoices")
         response = await self._requests.send_request("GET", QiwiApiMethods.GET_BILLS, self._router, headers=headers,
                                                      params=params, )
         return api_helper.simple_multiply_parse(response["bills"], Bill)
@@ -1165,14 +1164,15 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         )
         response = await self._requests.send_request("PUT", QiwiApiMethods.REFUND_BILL, self._router,
                                                      headers=headers, json=json, refund_id=refund_id,
-                                                     bill_id=bill_id, )
+                                                     bill_id=bill_id)
         return RefundBill.parse_obj(response)
 
     async def create_p2p_keys(self, key_pair_name: str, server_notification_url: Optional[str] = None) -> P2PKeys:
         """
-        :param key_pair_name: P2P token pair name (arbitrary string)
-        :param server_notification_url: url for webhooks, optional
-         параметр
+        Creates new pair of P2P keys to interact with P2P QIWI API
+
+        :param key_pair_name: P2P token pair name
+        :param server_notification_url: url for webhooks
         """
         headers = self._auth_token(self._router.default_headers, p2p=True)
         data = {
