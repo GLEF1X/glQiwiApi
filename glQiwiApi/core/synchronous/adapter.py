@@ -172,9 +172,9 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], meta
         """
         [ NON API METHOD ]
         Method for verifying a transaction.
-        This method uses self.transactions (rows_num = rows_num)
+        This method uses self.transactions (rows = rows)
         to receive payments.
-        For a little optimization, you can decrease rows_num by setting it,
+        For a little optimization, you can decrease rows by setting it,
         however, this does not guarantee the correct result
         Possible values for the transaction_type parameter:
          - 'IN'
@@ -767,8 +767,8 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
     ) -> bool:
         """
         Method for verifying a transaction.
-        This method uses self.transactions (rows_num = rows_num) to receive payments.
-        For a little optimization, you can decrease rows_num by setting it,
+        This method uses self.transactions (rows = rows) to receive payments.
+        For a little optimization, you can decrease rows by setting it,
         however, this does not guarantee the correct result
 
         :param amount: payment amount

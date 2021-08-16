@@ -1,6 +1,6 @@
 import warnings
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 
 from pydantic import Field, Extra
 
@@ -53,6 +53,7 @@ class Bill(Base):
     pay_url: Optional[str] = Field(None, alias="payUrl")
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
     customer: Optional[Customer] = None
+    workaround_url: Optional[str] = None
 
     class Config:
         extra = Extra.allow
@@ -110,4 +111,10 @@ class P2PKeys(Base):
     secret_key: str = Field(..., alias="SecretKey")
 
 
-__all__ = ("Bill", "BillError", "RefundBill", "Notification", "P2PKeys")
+class InvoiceStatus(Base):
+    invoice_status: str
+    is_sms_confirm: bool
+    pay_results: Dict[Any, Any] = Field(..., alias="WALLET_ACCEPT_PAY_RESULT")
+
+
+__all__ = ("Bill", "BillError", "RefundBill", "Notification", "P2PKeys", "InvoiceStatus")

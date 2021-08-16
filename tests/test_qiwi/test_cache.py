@@ -23,10 +23,10 @@ class TestCache:
     @pytest.mark.parametrize(
         "payload",
         [
-            {"rows_num": 50},
-            {"rows_num": 50, "operation": "IN"},
+            {"rows": 50},
+            {"rows": 50, "operation": "IN"},
             {
-                "rows_num": 50,
+                "rows": 50,
                 "operation": "IN",
                 "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
                 "end_date": datetime.datetime.now(),
@@ -49,8 +49,8 @@ class TestCache:
     @pytest.mark.parametrize(
         "payload1,payload2",
         [
-            ({"rows_num": 50}, {"rows_num": 40}),
-            ({"rows_num": 50, "operation": "IN"}, {"rows_num": 50, "operation": "OUT"}),
+            ({"rows": 50}, {"rows": 40}),
+            ({"rows": 50, "operation": "IN"}, {"rows": 50, "operation": "OUT"}),
         ],
     )
     async def test_uncached(self, api: QiwiWrapper, payload1: dict, payload2: dict):
@@ -64,10 +64,10 @@ class TestCache:
     @pytest.mark.parametrize(
         "payload",
         [
-            {"rows_num": 50},
-            {"rows_num": 50, "operation": "IN"},
+            {"rows": 50},
+            {"rows": 50, "operation": "IN"},
             {
-                "rows_num": 50,
+                "rows": 50,
                 "operation": "IN",
                 "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
                 "end_date": datetime.datetime.now(),

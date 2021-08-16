@@ -481,13 +481,7 @@ def check_dates_for_statistic_request(start_date, end_date):
 
 
 async def save_file(dir_path, file_name, data):
-    """
-    Saving file in dir_path/file_name.pdf with some data
-
-    :param dir_path:
-    :param file_name:
-    :param data:
-    """
+    """Saving file in dir_path/file_name.pdf with some data"""
     if dir_path is None and file_name is None:
         return data  # pragma: no cover
 
@@ -500,3 +494,4 @@ async def save_file(dir_path, file_name, data):
     path_to_file: pathlib.Path = dir_path / (file_name + ".pdf")
     async with aiofiles.open(path_to_file, "wb") as file:
         return await file.write(data)
+

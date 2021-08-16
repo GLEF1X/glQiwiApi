@@ -18,6 +18,7 @@ from typing import (
 from aiohttp import RequestInfo
 
 from glQiwiApi import types
+from glQiwiApi.core import RequestManager
 
 class_ = TypeVar("class_", bound="allow_response_code")
 

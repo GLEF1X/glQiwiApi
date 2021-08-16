@@ -29,6 +29,7 @@ from .qiwi_types import (
     Card,
     Restriction,
     Commission,
+    InvoiceStatus
 )
 from .yoomoney_types import (
     OperationType,
@@ -72,6 +73,7 @@ ALL_TYPES = Union[
     PaymentMethod,
     Card,
     Restriction,
+    InvoiceStatus
 ]
 
 Executors = TypeVar(
@@ -88,6 +90,7 @@ __all__ = (
     "Bill",
     "BillError",
     "P2PKeys",
+    "InvoiceStatus",
     "Statistic",
     "Limit",
     "Account",

@@ -70,11 +70,11 @@ async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
     [
         {"amount": 2},
         {"amount": 2, "transaction_type": "out"},
-        {"amount": 2, "transaction_type": "out", "rows_num": 20},
+        {"amount": 2, "transaction_type": "out", "rows": 20},
         {
             "amount": 2,
             "transaction_type": "out",
-            "rows_num": 20,
+            "rows": 20,
             "recipient": "4100116633099701",
         },
     ],

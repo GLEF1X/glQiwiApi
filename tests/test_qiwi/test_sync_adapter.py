@@ -67,10 +67,10 @@ def test_p2p_bill_check(api_adapter: SyncAdaptedQiwi, params):
 @pytest.mark.parametrize(
     "payload",
     [
-        {"rows_num": 50},
-        {"rows_num": 50, "operation": "IN"},
+        {"rows": 50},
+        {"rows": 50, "operation": "IN"},
         {
-            "rows_num": 50,
+            "rows": 50,
             "operation": "IN",
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),

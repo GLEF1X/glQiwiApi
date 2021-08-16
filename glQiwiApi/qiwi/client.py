@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pathlib
 import uuid
+import warnings
 from abc import ABC
 from contextlib import suppress
 from copy import deepcopy
@@ -57,8 +58,10 @@ from glQiwiApi.types import (
     N,
 )
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
+from glQiwiApi.types.qiwi_types.bill import InvoiceStatus
 from glQiwiApi.utils import api_helper
 from glQiwiApi.utils.errors import RequestError, InvalidData
+from glQiwiApi.utils.payload import make_payload
 
 
 def _is_copy_signal(kwargs: Dict[Any, Any]) -> bool:
@@ -506,9 +509,9 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """
         [ NON API METHOD ]
         Method for verifying a transaction.
-        This method uses self.transactions (rows_num = rows_num)
+        This method uses self.transactions (rows = rows)
         to receive payments.
-        For a little optimization, you can decrease rows_num by setting it,
+        For a little optimization, you can decrease rows by setting it,
         however, this does not guarantee the correct result
         Possible values for the transaction_type parameter:
          - 'IN'
@@ -1084,12 +1087,19 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             data, amount, str(life_time), comment, theme_code, pay_source_filter
         )
         response = await self._requests.send_request("PUT", QiwiApiMethods.CREATE_P2P_BILL, self._p2p_router,
-                                                     headers=headers, json=payload, bill_id=bill_id, )
+                                                     headers=headers, json=payload, bill_id=bill_id)
         return Bill.parse_obj(response)
 
-    async def get_bills(
-            self, rows_num: int, bill_statuses: str = "READY_FOR_PAY"
-    ) -> List[Bill]:
+    async def get_bills(self, rows_num: int, bill_statuses: str = "READY_FOR_PAY") -> List[Bill]:
+        warnings.warn(
+            "`QiwiWrapper.get_bills` is deprecated, and will be removed in next versions, "
+            "use `QiwiWrapper.retrieve_bills(...)` instead",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return await self.retrieve_bills(rows=rows_num, statuses=bill_statuses)
+
+    async def retrieve_bills(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
         The list is built in reverse chronological order.
@@ -1098,19 +1108,30 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         Filters by billing time can be used in the request,
         the initial account identifier.
         """
+        params = make_payload(**locals())
         headers = self._auth_token(self._router.default_headers)
-        if rows_num > 50:
+        if rows > 50:
             raise InvalidData("Можно получить не более 50 счетов")
-
-        params = {"rows": rows_num, "statuses": bill_statuses}
-        response = await self._requests.send_request(
-            "GET",
-            QiwiApiMethods.GET_BILLS,
-            self._router,
-            headers=headers,
-            params=params,
-        )
+        response = await self._requests.send_request("GET", QiwiApiMethods.GET_BILLS, self._router, headers=headers,
+                                                     params=params, )
         return api_helper.simple_multiply_parse(response["bills"], Bill)
+
+    async def pay_the_invoice(self, invoice_uid: str, currency: str) -> InvoiceStatus:
+        """
+        Execution of unconditional payment of the invoice without SMS-confirmation.
+
+        ! Warning !
+        To use this method correctly you need to tick "Проведение платежей без SMS"
+        when registering QIWI API and retrieve token
+
+        :param invoice_uid: Bill ID in QIWI system
+        :param currency:
+        """
+        payload = make_payload(**locals())
+        headers = self._auth_token(self._router.default_headers)
+        response = await self._requests.send_request("POST", QiwiApiMethods.GET_BILLS, self._router, headers=headers,
+                                                     json=payload)
+        return InvoiceStatus.parse_obj(response)
 
     async def refund_bill(
             self,

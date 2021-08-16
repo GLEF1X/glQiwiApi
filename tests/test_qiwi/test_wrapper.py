@@ -31,10 +31,10 @@ async def test_get_balance(api: QiwiWrapper):
 @pytest.mark.parametrize(
     "payload",
     [
-        {"rows_num": 50},
-        {"rows_num": 50, "operation": "IN"},
+        {"rows": 50},
+        {"rows": 50, "operation": "IN"},
         {
-            "rows_num": 50,
+            "rows": 50,
             "operation": "IN",
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
@@ -227,7 +227,7 @@ async def test_check_p2p_on_object(api: QiwiWrapper):
 @pytest.mark.parametrize("rows", [5, 10, 50])
 async def test_get_bills(api: QiwiWrapper, rows: int):
     async with api:
-        result = await api.get_bills(rows_num=rows)
+        result = await api.retrieve_bills(rows=rows)
 
     assert isinstance(result, list)
     assert all(isinstance(b, types.Bill) for b in result)
@@ -272,7 +272,7 @@ async def test_register_webhook(api: QiwiWrapper):
 
 
 class TestFail:
-    @pytest.mark.parametrize("rows_num", [-5, 51, 0])
+    @pytest.mark.parametrize("rows", [-5, 51, 0])
     async def test_transactions_fail(self, api: QiwiWrapper, rows_num: int):
         async with api:
             with pytest.raises(InvalidData):

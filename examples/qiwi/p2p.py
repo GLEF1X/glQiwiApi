@@ -18,13 +18,13 @@ async def p2p_usage():
         # This will throw an error as api_access_token and phone_number are not passed
         # You can reassign a token or number at any time
         try:
-            await w.get_bills(rows_num=50)
+            await w.retrieve_bills(rows=50)
         except RequestError as ex:
             print(ex)
         # Reassign tokens and no longer observe errors
         w.api_access_token = "TOKEN from https://qiwi.api"
         w.phone_number = "+NUMBER"
-        print(await w.get_bills(rows_num=20))
+        print(await w.retrieve_bills(rows=20))
 
 
 asyncio.run(p2p_usage())

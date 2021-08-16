@@ -1,7 +1,7 @@
 from .account import Account
 from .account_info import QiwiAccountInfo
 from .balance import Balance
-from .bill import Bill, BillError, RefundBill, Notification, P2PKeys
+from .bill import Bill, BillError, RefundBill, Notification, P2PKeys, InvoiceStatus
 from .commission import Commission
 from .identification import Identification
 from .limit import Limit
@@ -42,4 +42,5 @@ __all__ = (
     "Card",
     "Restriction",
     "Commission",
+    "InvoiceStatus"
 )
