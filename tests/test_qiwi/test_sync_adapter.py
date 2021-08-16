@@ -7,7 +7,7 @@ from typing import Dict
 
 import pytest
 
-from glQiwiApi import SyncAdaptedQiwi, RequestError
+from glQiwiApi import SyncAdaptedQiwi, APIError
 from glQiwiApi.core.synchronous.model_adapter import AdaptedBill
 from glQiwiApi.types import Transaction, Limit, Card, QiwiAccountInfo, Statistic, Commission, CrossRate
 
@@ -198,6 +198,6 @@ def test_get_cross_rates(api_adapter: SyncAdaptedQiwi):
 
 
 def test_buy_qiwi_master(api_adapter: SyncAdaptedQiwi):
-    with pytest.raises(RequestError) as ex:  # not enough money on qiwi wallet to buy it
+    with pytest.raises(APIError) as ex:  # not enough money on qiwi wallet to buy it
         api_adapter.buy_qiwi_master()
     assert ex.value.status_code == 400

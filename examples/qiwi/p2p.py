@@ -1,6 +1,6 @@
 import asyncio
 
-from glQiwiApi import QiwiWrapper, RequestError
+from glQiwiApi import QiwiWrapper, APIError
 
 SECRET_KEY = "P2P SECRET_KEY"
 
@@ -19,7 +19,7 @@ async def p2p_usage():
         # You can reassign a token or number at any time
         try:
             await w.retrieve_bills(rows=50)
-        except RequestError as ex:
+        except APIError as ex:
             print(ex)
         # Reassign tokens and no longer observe errors
         w.api_access_token = "TOKEN from https://qiwi.api"

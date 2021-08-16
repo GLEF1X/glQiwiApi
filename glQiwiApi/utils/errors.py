@@ -73,7 +73,7 @@ class InvalidCachePayload(Exception):
     ...
 
 
-class RequestError(Exception):
+class APIError(Exception):
     def __init__(
             self,
             message: Optional[str],
@@ -81,7 +81,7 @@ class RequestError(Exception):
             additional_info: Optional[str] = None,
             traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
-        super(RequestError, self).__init__()
+        super(APIError, self).__init__()
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info
@@ -89,9 +89,7 @@ class RequestError(Exception):
 
     def __str__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}" ""
-        return resp.format(
-            sc=self.status_code, msg=self.message, info=self.additional_info
-        )
+        return resp.format(sc=self.status_code, msg=self.message, info=self.additional_info)
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -155,7 +153,7 @@ __all__ = (
     "RequestProxyError",
     "InvalidCardNumber",
     "InvalidToken",
-    "RequestError",
+    "APIError",
     "NoUpdatesToExecute",
     "StateError",
     "NetworkError",

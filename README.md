@@ -33,12 +33,12 @@ pip install glQiwiApi
 
 ## 🐦Dependencies  
 
-| Library | Description                                    |
-|:-------:|:----------------------------------------------:|
-|aiohttp  | default http server                            |
-|aiofiles | saving receipts in pdf                         |
-|uvloop   | Optional(can boost API), but work only on Linux|
-|pydantic | Json data validator. Very fast instead of custom|
+| Library | Description                                            |
+|:-------:|:----------------------------------------------:        |
+|aiohttp  | Asynchronous HTTP Client/Server for asyncio and Python.|
+|aiofiles | saving receipts in pdf                                 |
+|uvloop   | Optional(can boost API), but work only on Linux        |
+|pydantic | Json data validator. Very fast instead of custom       |
 |loguru   | library which aims to bring enjoyable logging in Python|
 
 ---
@@ -132,8 +132,8 @@ async def main():
       print('You have successfully paid your invoice')
     else:
       print('Invoice was not paid')
-    # Or, you can use alias(async property)
-    print(await bill.paid)
+    # Or, you can use method check on the instance of Bill 
+    print(await bill.check())
 
 
 asyncio.run(main())
@@ -313,17 +313,17 @@ asyncio.run(cache_test())
 ```python
 import asyncio
 
-from glQiwiApi import QiwiWrapper, RequestError
+from glQiwiApi import QiwiWrapper, APIError
 
 
 async def main():
-    async with QiwiWrapper(api_access_token='your_token') as w:
-        w.phone_number = '+number'
-        try:
-            await w.to_card(to_card="some_card", trans_sum=2)
-        except RequestError as ex:
-            # Its give u full traceback from api if response was bad
-            print(ex.json())
+  async with QiwiWrapper(api_access_token='your_token') as w:
+    w.phone_number = '+number'
+    try:
+      await w.to_card(to_card="some_card", trans_sum=2)
+    except APIError as ex:
+      # Its give u full traceback from api if response was bad
+      print(ex.json())
 
 
 asyncio.run(main())

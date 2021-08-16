@@ -17,13 +17,20 @@ from .utils.errors import (
     RequestProxyError,
     NetworkError,
     InvalidCardNumber,
-    RequestError,
+    APIError,
     NoUpdatesToExecute,
     StateError,
     InvalidToken,
     InvalidCachePayload,
 )
 from .yoo_money import YooMoneyAPI
+
+try:
+    import uvloop  # pragma: no cover  # NOQA
+
+    uvloop.install()
+except ImportError:
+    pass  # pragma: no cover
 
 __version__ = "1.0.4"
 
@@ -46,12 +53,14 @@ __all__ = (
     "RequestProxyError",
     "InvalidCardNumber",
     "InvalidToken",
-    "RequestError",
+    "APIError",
     "NoUpdatesToExecute",
     "StateError",
     "NetworkError",
     "InvalidCachePayload",
     # Sync adapted
     "SyncAdaptedQiwi",
-    "SyncAdaptedYooMoney"
+    "SyncAdaptedYooMoney",
+    # other
+    "__version__"
 )

@@ -46,7 +46,7 @@ def check_result(error_messages, status_code, request_info, body):
     if status_code == HTTPStatus.OK:
         return result_json
 
-    raise errors.RequestError(
+    raise errors.APIError(
         message=error_messages[status_code],
         status_code=status_code,
         traceback_info=request_info
@@ -313,11 +313,11 @@ class allow_response_code:  # NOQA
 
         @ft.wraps(func)
         async def wrapper(*args, **kwargs):
-            from glQiwiApi import RequestError
+            from glQiwiApi import APIError
 
             try:
                 await func(*args, **kwargs)
-            except RequestError as error:
+            except APIError as error:
                 if error.status_code == str(status_code):
                     info = error.traceback_info
                     return {"success": True} if not info else info
@@ -398,14 +398,14 @@ class override_error_messages:  # NOQA
 
         @ft.wraps(func)
         async def wrapper(*args, **kwargs):
-            from glQiwiApi import RequestError
+            from glQiwiApi import APIError
 
             try:
                 return await func(*args, **kwargs)
-            except RequestError as ex:
+            except APIError as ex:
                 if int(ex.status_code) in status_codes.keys():
                     error = status_codes.get(int(ex.status_code))
-                    ex = RequestError(
+                    ex = APIError(
                         message=error.get("message"),
                         status_code=ex.status_code,
                         traceback_info=error.get("json_info"),

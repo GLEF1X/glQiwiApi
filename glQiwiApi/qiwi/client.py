@@ -60,7 +60,7 @@ from glQiwiApi.types import (
 from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.types.qiwi_types.bill import InvoiceStatus
 from glQiwiApi.utils import api_helper
-from glQiwiApi.utils.errors import RequestError, InvalidData
+from glQiwiApi.utils.errors import APIError, InvalidData
 from glQiwiApi.utils.payload import make_payload
 
 
@@ -301,8 +301,8 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
         """Method to delete webhook"""
         try:
             hook = await self.get_current_webhook()
-        except RequestError as ex:
-            raise RequestError(
+        except APIError as ex:
+            raise APIError(
                 message=" You didn't register any webhook to delete ",
                 status_code="422",
                 traceback_info=ex.traceback_info,
@@ -351,18 +351,18 @@ class QiwiWrapper(BaseWrapper, ToolsMixin, ContextInstanceMixin["QiwiWrapper"]):
             url = url.render_as_string()
 
         if delete_old:
-            with suppress(RequestError):
+            with suppress(APIError):
                 await self.delete_current_webhook()
 
         try:
             # Try to register new webhook
             webhook = await self._register_webhook(url, transactions_type)
-        except (RequestError, TypeError):
+        except (APIError, TypeError):
             # Catching exceptions, if webhook already was registered or TypeError because missing url to bind
             try:
                 webhook = await self.get_current_webhook()
-            except RequestError as ex:
-                raise RequestError(
+            except APIError as ex:
+                raise APIError(
                     message="Ошибка при получении текущего конфига вебхука. Скорее всего вы не вызывали "
                             "метод bind_webhook, чтобы зарегистрировать вебхук"
                             " киви или не передали ссылку для его регистрации",

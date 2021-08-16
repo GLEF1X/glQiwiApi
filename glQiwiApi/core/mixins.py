@@ -47,6 +47,9 @@ class ToolsMixin(object):
             setattr(result, k, copy.deepcopy(value, memo))  # NOQA
         return cast(ToolsMixin, result)
 
+
+class DataMixin:
+
     @property
     def data(self) -> Dict[Any, Any]:  # pragma: no cover
         data = getattr(self, "_data", None)
@@ -83,7 +86,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
 
     @classmethod  # noqa: F811
     def get_current(  # noqa: F811
-        cls, no_error: bool = True
+            cls, no_error: bool = True
     ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
         """Get current instance from context"""
         # on mypy 0.770 I catch that contextvars.ContextVar always contextvars.ContextVar[Any]

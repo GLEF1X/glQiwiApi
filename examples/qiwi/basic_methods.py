@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 
-from glQiwiApi import QiwiWrapper, RequestError
+from glQiwiApi import QiwiWrapper, APIError
 
 TOKEN = "YOUR_API_ACCESS_TOKEN"
 WALLET = "+NUMBER"
@@ -37,7 +37,7 @@ async def basic_usage():
         # handling types exceptions and get json representation
         try:
             await wallet.to_wallet(to_number="+WRONG_NUMBER", trans_sum=999)
-        except RequestError as ex:
+        except APIError as ex:
             print(ex.json())
 
 

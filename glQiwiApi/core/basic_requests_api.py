@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from asyncio import set_event_loop_policy
 from typing import Dict, Optional, Any, Union, Tuple, Type, Iterable, cast, List
 
 import aiohttp
@@ -16,7 +15,7 @@ from aiohttp.typedefs import LooseCookies
 from glQiwiApi.core import AbstractParser
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
 from glQiwiApi.utils.api_helper import check_result
-from glQiwiApi.utils.errors import RequestError
+from glQiwiApi.utils.errors import APIError
 
 _ProxyBasic = Union[str, Tuple[str, aiohttp.BasicAuth]]
 _ProxyChain = Iterable[_ProxyBasic]
@@ -49,14 +48,14 @@ def _retrieve_basic(basic: _ProxyBasic) -> Dict[str, Any]:
 
 
 def _prepare_connector(
-    chain_or_plain: _ProxyType,
+        chain_or_plain: _ProxyType,
 ) -> Tuple[Type["aiohttp.TCPConnector"], Dict[str, Any]]:
     from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyInfo
 
     # since tuple is Iterable(compatible with _ProxyChain) object, we assume that
     # user wants chained proxies if tuple is a pair of string(url) and BasicAuth
     if isinstance(chain_or_plain, str) or (
-        isinstance(chain_or_plain, tuple) and len(chain_or_plain) == 2
+            isinstance(chain_or_plain, tuple) and len(chain_or_plain) == 2
     ):
         chain_or_plain = cast(_ProxyBasic, chain_or_plain)
         return ProxyConnector, _retrieve_basic(chain_or_plain)
@@ -76,9 +75,9 @@ class HttpXParser(AbstractParser):
     """
 
     def __init__(
-        self,
-        proxy: Optional[_ProxyType] = None,
-        messages: Optional[Dict[int, str]] = None,
+            self,
+            proxy: Optional[_ProxyType] = None,
+            messages: Optional[Dict[int, str]] = None,
     ) -> None:
         self.base_headers = {
             "User-Agent": "glQiwiApi/1.0beta",
@@ -117,16 +116,16 @@ class HttpXParser(AbstractParser):
         self._should_reset_connector = True
 
     async def make_request(
-        self,
-        url: str,
-        method: str,
-        set_timeout: bool = True,
-        cookies: Optional[LooseCookies] = None,
-        json: Optional[Any] = None,
-        data: Optional[Any] = None,
-        headers: Optional[Any] = None,
-        params: Optional[Any] = None,
-        **kwargs: Any,
+            self,
+            url: str,
+            method: str,
+            set_timeout: bool = True,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[Any] = None,
+            data: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            params: Optional[Any] = None,
+            **kwargs: Any,
     ) -> Dict[Any, Any]:
         headers = headers or self.base_headers
         session = await self.create_session(
@@ -150,28 +149,11 @@ class HttpXParser(AbstractParser):
                 await resp.text(),
             )
         except (
-            ClientProxyConnectionError,
-            ServerDisconnectedError,
-            ClientConnectionError,
+                ClientProxyConnectionError,
+                ServerDisconnectedError,
+                ClientConnectionError,
         ):
             raise self.make_exception(status_code=500)
-
-    def fast(self) -> HttpXParser:
-        """
-        Method to fetching faster with using faster event loop(uvloop) \n
-        USE IT ONLY ON LINUX SYSTEMS,
-        on Windows or Mac its dont give performance!
-        """
-        try:
-            from uvloop import EventLoopPolicy
-
-            set_event_loop_policy(EventLoopPolicy())
-        except ImportError:
-            # Catching import error and forsake standard policy
-            from asyncio import DefaultEventLoopPolicy as EventLoopPolicy  # type: ignore
-
-            set_event_loop_policy(EventLoopPolicy())
-        return self
 
     async def create_session(self, **kwargs: Any) -> aiohttp.ClientSession:
         """Creating new session if old was close or it's None"""
@@ -182,9 +164,9 @@ class HttpXParser(AbstractParser):
             await self._session.close()
 
         if (
-            isinstance(self._session, ClientSession)
-            and self._session.closed  # noqa: W503
-            or not isinstance(self._session, ClientSession)  # noqa: W503
+                isinstance(self._session, ClientSession)
+                and self._session.closed  # noqa: W503
+                or not isinstance(self._session, ClientSession)  # noqa: W503
         ):
             self._session = ClientSession(**kwargs)
             self._should_reset_connector = False
@@ -201,19 +183,19 @@ class HttpXParser(AbstractParser):
         return await resp.read()
 
     def make_exception(
-        self,
-        status_code: int,
-        traceback_info: Optional[
-            Union[aiohttp.RequestInfo, Dict[Any, Any], str, bytes]
-        ] = None,
-        message: Optional[str] = None,
-    ) -> RequestError:
-        """Raise :class:`RequestError` exception with pretty explanation"""
-        from glQiwiApi import __version__  # NOQA  # pragma: no cover
+            self,
+            status_code: int,
+            traceback_info: Optional[
+                Union[aiohttp.RequestInfo, Dict[Any, Any], str, bytes]
+            ] = None,
+            message: Optional[str] = None,
+    ) -> APIError:
+        """Raise :class:`APIError` exception with pretty explanation"""
+        from glQiwiApi import __version__
 
         if not isinstance(message, str) and isinstance(self.messages, dict):
             message = self.messages.get(status_code, "Unknown")
-        return RequestError(
+        return APIError(
             message,
             status_code,
             additional_info=f"{__version__} version api",
@@ -221,17 +203,17 @@ class HttpXParser(AbstractParser):
         )
 
     async def text_content(
-        self,
-        url: str,
-        method: str,
-        set_timeout: bool = True,
-        cookies: Optional[LooseCookies] = None,
-        json: Optional[Any] = None,
-        data: Optional[Any] = None,
-        headers: Optional[Any] = None,
-        params: Optional[Any] = None,
-        encoding: Optional[str] = None,
-        **kwargs: Any,
+            self,
+            url: str,
+            method: str,
+            set_timeout: bool = True,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[Any] = None,
+            data: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            params: Optional[Any] = None,
+            encoding: Optional[str] = None,
+            **kwargs: Any,
     ) -> str:
         headers = headers or self.base_headers
         # Create new session if old was closed
