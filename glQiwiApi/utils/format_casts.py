@@ -9,7 +9,8 @@ from glQiwiApi.core import constants
 
 
 def datetime_to_utc(obj: datetime) -> str:
-    return pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ").replace(" ", "T") + "Z"  # pragma: no cover
+    iso_format_date = pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ")
+    return iso_format_date.replace(" ", "T") + "Z"
 
 
 def datetime_to_str_in_iso8601(obj: Optional[datetime]) -> str:
@@ -24,6 +25,6 @@ def datetime_to_str_in_iso8601(obj: Optional[datetime]) -> str:
     naive_datetime = obj.replace(microsecond=0)
     return (
         pytz.timezone(constants.DEFAULT_QIWI_TIMEZONE)
-        .localize(naive_datetime)
-        .isoformat()
+            .localize(naive_datetime)
+            .isoformat()
     )

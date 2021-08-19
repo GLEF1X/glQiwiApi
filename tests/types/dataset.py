@@ -16,7 +16,7 @@ WRONG_API_DATA = {
     "validate_params": True,
 }
 
-EMPTY_DATA: Dict[Any] = {}
+EMPTY_DATA: Dict[Any, Any] = {}
 
 TO_WALLET_DATA = {"to_number": "+380985272064", "trans_sum": 1, "comment": "unit_test"}
 
