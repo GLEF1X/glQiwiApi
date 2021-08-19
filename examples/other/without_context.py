@@ -14,8 +14,8 @@ wallet = QiwiWrapper(
 
 async def main():
     bill = await wallet.create_p2p_bill(amount=1)
-    # new version(1.x)
-    new_status = await bill.paid
+    # new versions
+    new_status = await bill.check()  # or bill.paid
     # old version(0.x)
     old_status = (await wallet.check_p2p_bill_status(bill.bill_id)) == "PAID"
     assert new_status == old_status

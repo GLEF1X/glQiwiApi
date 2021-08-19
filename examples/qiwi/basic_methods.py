@@ -2,6 +2,7 @@ import asyncio
 import datetime
 
 from glQiwiApi import QiwiWrapper, APIError
+from glQiwiApi.types import TransactionType
 
 TOKEN = "YOUR_API_ACCESS_TOKEN"
 WALLET = "+NUMBER"
@@ -15,7 +16,7 @@ async def basic_usage():
         # So you can get information on a transaction, knowing its ID and type
         print(
             await wallet.transaction_info(
-                transaction_type="OUT", transaction_id=21249852701
+                transaction_type=TransactionType.OUT, transaction_id=21249852701
             )
         )
         # This way you can get the statistics of the qiwi wallet
@@ -31,12 +32,12 @@ async def basic_usage():
         print(info.auth_info.ip)
         # We transfer money to another wallet, while receiving the ID of the payment
         payment_id = await wallet.to_wallet(
-            trans_sum=999, to_number="some_number", comment="I love glQiwiApi"
+            amount=999, to_number="some_number", comment="I love glQiwiApi"
         )
         print(payment_id)
         # handling types exceptions and get json representation
         try:
-            await wallet.to_wallet(to_number="+WRONG_NUMBER", trans_sum=999)
+            await wallet.to_wallet(to_number="+WRONG_NUMBER", amount=999)
         except APIError as ex:
             print(ex.json())
 

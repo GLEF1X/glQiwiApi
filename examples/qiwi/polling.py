@@ -15,7 +15,7 @@ async def my_first_handler(update: types.Transaction):
 
 
 def on_startup(wrapper: QiwiWrapper):
-    wrapper.dp.logger.info("This message logged on startup")
+    wrapper.dispatcher.logger.info("This message logged on startup")
 
 
 executor.start_polling(

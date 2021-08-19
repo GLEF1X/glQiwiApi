@@ -15,13 +15,13 @@ bot = Bot(token="BOT_TOKEN")
 # There is a lambda expression for "cutting off" test payments
 @wallet.transaction_handler(lambda event: event.payment is not None)
 async def main(event: types.WebHook):
-    event.client.dp.logger.info("New transaction: {}", event)
+    event.client.dispatcher.logger.info("New transaction: {}", event)
     await bot.send_message(chat_id="1219185039", text=event.hook_id)
 
 
 @wallet.bill_handler()
 async def main2(event: types.Notification):
-    event.client.dp.logger.info("P2P EVENT {}", event)
+    event.client.dispatcher.logger.info("P2P EVENT {}", event)
 
 
 # Also, you can specify a path for webhook

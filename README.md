@@ -152,21 +152,21 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-    async with QiwiWrapper(api_access_token="token") as w:
-        w.phone_number = "+number"
-        # It looks like a transfer to another qiwi wallet
-        # in the example, the transfer will be to the number +7904832168 with the comment "for a chocolate bar" and the amount of 1 ruble
-        trans_id = await w.to_wallet(
-            to_number='+7904832168',
-            comment='for a chocolate bar',
-            trans_sum=1
-        )
-        # In this example, we will save the receipt in the directory where you run the script as my_receipt.pdf
-        await w.get_receipt(
-            transaction_id=trans_id,
-            transaction_type='OUT',
-            file_path='my_receipt'
-        )
+  async with QiwiWrapper(api_access_token="token") as w:
+    w.phone_number = "+number"
+    # It looks like a transfer to another qiwi wallet
+    # in the example, the transfer will be to the number +7904832168 with the comment "for a chocolate bar" and the amount of 1 ruble
+    trans_id = await w.to_wallet(
+      to_number='+7904832168',
+      comment='for a chocolate bar',
+      amount=1
+    )
+    # In this example, we will save the receipt in the directory where you run the script as my_receipt.pdf
+    await w.get_receipt(
+      transaction_id=trans_id,
+      transaction_type='OUT',
+      file_path='my_receipt'
+    )
 
 
 asyncio.run(main())
@@ -181,26 +181,28 @@ from glQiwiApi import QiwiWrapper, types, BaseFilter
 from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
-    api_access_token='token from https://qiwi.com/api/',
-    secret_p2p='secret token from https://qiwi.com/p2p-admin/'
+  api_access_token='token from https://qiwi.com/api/',
+  secret_p2p='secret token from https://qiwi.com/p2p-admin/'
 )
 
+
 class CustomFilter(BaseFilter):
-    async def check(self, update: types.Transaction) -> bool:
-        # some stuff
-        return True
+  async def check(self, update: types.Transaction) -> bool:
+    # some stuff
+    return True
 
 
-@wallet.transaction_handler(CustomFilter())  # start with 1.0.3b2 you can use class-based filters, but also combine it with lambda statements, if you want
+@wallet.transaction_handler(
+  CustomFilter())  # start with 1.0.3b2 you can use class-based filters, but also combine it with lambda statements, if you want
 async def get_transaction(event: types.WebHook):
-    print(event)
+  print(event)
 
 
 @wallet.bill_handler()
 async def fetch_bill(notification: types.Notification):
-    print(notification)
+  print(notification)
 
-    
+
 executor.start_webhook(wallet, port=80)
 ```
 
@@ -215,19 +217,19 @@ wallet = QiwiWrapper(**payload)
 
 
 class MyFirstFilter(BaseFilter):
-    async def check(self, update: types.Transaction) -> bool:
-        return True
+  async def check(self, update: types.Transaction) -> bool:
+    return True
 
 
 class MySecondFilter(BaseFilter):
 
-    async def check(self, update: types.Transaction) -> bool:
-        return False
+  async def check(self, update: types.Transaction) -> bool:
+    return False
 
 
 @wallet.transaction_handler(MyFirstFilter(), lambda event: event is not None, ~MySecondFilter())
 async def my_handler(event: types.Transaction):
-    ...
+  ...
 
 
 executor.start_polling(wallet)
@@ -275,32 +277,32 @@ from glQiwiApi import QiwiWrapper
 # you need to pass cache_time to the constructor of the QiwiWrapper class
 # or YooMoneyAPI
 wallet = QiwiWrapper(
-    # Qiwi token from https://qiwi.com/api
-    api_access_token='token',
-    # Your phone number startswith "+"
-    phone_number='+phone_number',
-    # Cache time in seconds
-    cache_time=5
+  # Qiwi token from https://qiwi.com/api
+  api_access_token='token',
+  # Your phone number startswith "+"
+  phone_number='+phone_number',
+  # Cache time in seconds
+  cache_time=5
 )
 
 
 async def cache_test():
-    async with wallet:
-        # The result will be cached
-        print(await wallet.transactions(rows_num=50))
-        # The result will be taken from cache
-        print(await wallet.transactions(rows_num=50))
+  async with wallet:
+    # The result will be cached
+    print(await wallet.transactions(rows=50))
+    # The result will be taken from cache
+    print(await wallet.transactions(rows=50))
 
-        # The requests below will not be taken from the cache,
-        # the reason for this is the difference in the request parameters
-        # The result is also stored in the cache
-        print(len(await wallet.transactions(rows_num=30)) == 30)  # True
-        # However, a second request to the api will be executed, because
-        # when trying to retrieve a result from the cache, the validator compares
-        # request parameters, if they do not match, then
-        # cache is ignored
-        # Repeated request to api
-        print(len(await wallet.transactions(rows_num=10)) == 10)  # True
+    # The requests below will not be taken from the cache,
+    # the reason for this is the difference in the request parameters
+    # The result is also stored in the cache
+    print(len(await wallet.transactions(rows=30)) == 30)  # True
+    # However, a second request to the api will be executed, because
+    # when trying to retrieve a result from the cache, the validator compares
+    # request parameters, if they do not match, then
+    # cache is ignored
+    # Repeated request to api
+    print(len(await wallet.transactions(rows=10)) == 10)  # True
 
 
 asyncio.run(cache_test())
@@ -427,18 +429,18 @@ TOKEN = 'your_token'
 
 
 async def main():
-    w = YooMoneyAPI(TOKEN)
-    async with w:
-        # So you can send funds to another account, in the example this is a transfer to account 4100116602400968
-        # worth 2 rubles with the comment "I LOVE glQiwiApi"
-        payment = await w.send(
-            to_account='4100116602400968',
-            comment='I LOVE glQiwiApi',
-            amount=2
-        )
-        # This way you can check the transaction, whether it was received by the person on the account
-        print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi',
-                                        transaction_type='out'))
+  w = YooMoneyAPI(TOKEN)
+  async with w:
+    # So you can send funds to another account, in the example this is a transfer to account 4100116602400968
+    # worth 2 rubles with the comment "I LOVE glQiwiApi"
+    payment = await w.send(
+      to_account='4100116602400968',
+      comment='I LOVE glQiwiApi',
+      amount=2
+    )
+    # This way you can check the transaction, whether it was received by the person on the account
+    print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi',
+                                    operation_type='out'))
 
 
 asyncio.run(main())

@@ -1,6 +1,6 @@
 import datetime
 
-from glQiwiApi import QiwiWrapper, sync
+from glQiwiApi import QiwiWrapper, execute_async_as_sync
 
 TOKEN = "Api token from https://qiwi.com/api"
 WALLET = "+phone_number"
@@ -18,7 +18,7 @@ def sync_function() -> None:
     start_date = datetime.datetime.now() - datetime.timedelta(days=5)
     # Use the sync () function and pass the function we want to execute
     # without calling it, that is, pass it as a regular variable
-    result = sync(
+    result = execute_async_as_sync(
         wallet.transactions,
         rows_num=50,
         start_date=start_date,

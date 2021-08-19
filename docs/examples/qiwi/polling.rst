@@ -4,6 +4,9 @@ Polling updates
 
 .. tip:: 👩🏻🎨 ``start_polling`` has the same signature as ``start_webhook`` "under the hood"
 
+Guidelines
+~~~~~~~~~~
+
 👩🏻🔬This API method gives a chance to hook updates without webhooks on your machine,
 but it's possible to use both approaches anyway.
 
