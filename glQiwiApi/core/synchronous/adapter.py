@@ -7,52 +7,93 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Union, Tuple, List
 from typing import TypeVar, Type
 
-from glQiwiApi.core import ContextInstanceMixin
+from glQiwiApi.core import ContextInstanceMixin, constants
 from glQiwiApi.core.mixins import DataMixin
 from glQiwiApi.core.synchronous.decorator import async_as_sync
 from glQiwiApi.core.synchronous.model_adapter import AdaptedBill, adapt_type
 from glQiwiApi.ext.url_builder import WebhookURL
 from glQiwiApi.qiwi.client import BaseWrapper, QiwiWrapper
-from glQiwiApi.types import WebHookConfig, Sum, Transaction, Restriction, Limit, Card, QiwiAccountInfo, Account, \
-    Balance, Commission, CrossRate, PaymentMethod, FreePaymentDetailsFields, PaymentInfo, OrderDetails, RefundBill, \
-    OptionalSum, P2PKeys, Statistic, AccountInfo, Operation, OperationDetails, PreProcessPaymentResponse, Payment, \
-    IncomingTransaction, OperationType
-from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
+from glQiwiApi.types import (
+    WebHookConfig,
+    Sum,
+    Transaction,
+    Restriction,
+    Limit,
+    Card,
+    QiwiAccountInfo,
+    Account,
+    Balance,
+    Commission,
+    CrossRate,
+    PaymentMethod,
+    FreePaymentDetailsFields,
+    PaymentInfo,
+    OrderDetails,
+    RefundBill,
+    OptionalSum,
+    P2PKeys,
+    Statistic,
+    AccountInfo,
+    Operation,
+    OperationDetails,
+    PreProcessPaymentResponse,
+    Payment,
+    IncomingTransaction,
+    OperationType,
+    TransactionType,
+)
+from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.yoo_money.client import YooMoneyAPI
 
 _T = TypeVar("_T")
 
 
 class SyncAdapterMeta(ABCMeta):
-
-    def __new__(mcs: Type[_T], name: str, bases: Tuple[Any, ...], attrs: Dict[Any, Any], **extra: Any) -> _T:
+    def __new__(
+        mcs: Type[_T],
+        name: str,
+        bases: Tuple[Any, ...],
+        attrs: Dict[Any, Any],
+        **extra: Any,
+    ) -> _T:
         adapted_instance = extra.get("adapted_cls")
         for attr, value in adapted_instance.__dict__.items():
             if inspect.iscoroutinefunction(value):
                 if not attr.startswith("_"):
-                    attrs[attr] = async_as_sync(sync_shutdown_callback=adapt_type).__call__(value)
+                    attrs[attr] = async_as_sync(
+                        sync_shutdown_callback=adapt_type
+                    ).__call__(value)
                 else:
                     attrs[attr] = value
 
         return super().__new__(mcs, name, bases, attrs)  # type: ignore
 
 
-class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], DataMixin, metaclass=SyncAdapterMeta,
-                      adapted_cls=QiwiWrapper):
-
+class SyncAdaptedQiwi(
+    BaseWrapper,
+    ContextInstanceMixin["SyncAdaptedQiwi"],
+    DataMixin,
+    metaclass=SyncAdapterMeta,
+    adapted_cls=QiwiWrapper,
+):
     def __init__(
-            self,
-            api_access_token: Optional[str] = None,
-            phone_number: Optional[str] = None,
-            secret_p2p: Optional[str] = None,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
-            validate_params: bool = False,
-            proxy: Any = None,
+        self,
+        api_access_token: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        secret_p2p: Optional[str] = None,
+        cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
+        validate_params: bool = False,
+        proxy: Any = None,
     ) -> None:
-        super(SyncAdaptedQiwi, self).__init__(api_access_token, phone_number=phone_number,
-                                              secret_p2p=secret_p2p, without_context=True,
-                                              cache_time=cache_time, validate_params=validate_params,
-                                              proxy=proxy)
+        super(SyncAdaptedQiwi, self).__init__(
+            api_access_token,
+            phone_number=phone_number,
+            secret_p2p=secret_p2p,
+            without_context=True,
+            cache_time=cache_time,
+            validate_params=validate_params,
+            proxy=proxy,
+        )
 
     def get_current_webhook(self) -> WebHookConfig:
         """
@@ -88,12 +129,12 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def bind_webhook(
-            self,
-            url: Optional[Union[str, WebhookURL]] = None,
-            transactions_type: int = 2,
-            *,
-            send_test_notification: bool = False,
-            delete_old: bool = False,
+        self,
+        url: Optional[Union[str, WebhookURL]] = None,
+        transactions_type: int = 2,
+        *,
+        send_test_notification: bool = False,
+        delete_old: bool = False,
     ) -> Tuple[Optional[WebHookConfig], str]:
         """
         [NON-API] EXCLUSIVE method to register new webhook or get old
@@ -113,11 +154,11 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def transactions(
-            self,
-            rows_num: int = 50,
-            operation: str = "ALL",
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
+        self,
+        rows_num: int = 50,
+        operation: str = "ALL",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         """
         Method for receiving transactions on the account
@@ -139,7 +180,9 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         """
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
-    def transaction_info(self, transaction_id: Union[str, int], transaction_type: str) -> Transaction:
+    def transaction_info(
+        self, transaction_id: Union[str, int], transaction_type: str
+    ) -> Transaction:
         """
         Метод для получения полной информации о транзакции\n
         Подробная документация:
@@ -163,12 +206,12 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def check_transaction(
-            self,
-            amount: Union[int, float],
-            transaction_type: str = "IN",
-            sender: Optional[str] = None,
-            rows_num: int = 50,
-            comment: Optional[str] = None,
+        self,
+        amount: Union[int, float],
+        transaction_type: str = "IN",
+        sender: Optional[str] = None,
+        rows_num: int = 50,
+        comment: Optional[str] = None,
     ) -> bool:
         """
         [ NON API METHOD ]
@@ -207,15 +250,15 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def authenticate(
-            self,
-            birth_date: str,
-            first_name: str,
-            last_name: str,
-            patronymic: str,
-            passport: str,
-            oms: Optional[str] = None,
-            inn: Optional[str] = None,
-            snils: Optional[str] = None,
+        self,
+        birth_date: str,
+        first_name: str,
+        last_name: str,
+        patronymic: str,
+        passport: str,
+        oms: Optional[str] = None,
+        inn: Optional[str] = None,
+        snils: Optional[str] = None,
     ) -> Dict[Any, Any]:
         """
         This request allows you to send data to identify your QIWI wallet.
@@ -239,11 +282,11 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def get_receipt(
-            self,
-            transaction_id: Union[str, int],
-            transaction_type: str,
-            dir_path: Union[str, pathlib.Path, None] = None,
-            file_name: Optional[str] = None,
+        self,
+        transaction_id: Union[str, int],
+        transaction_type: str,
+        dir_path: Union[str, pathlib.Path, None] = None,
+        file_name: Optional[str] = None,
     ) -> Union[bytes, int]:
         """
         Method for receiving a receipt in byte format or file. \n
@@ -261,11 +304,11 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def fetch_statistics(
-            self,
-            start_date: Union[datetime, timedelta],
-            end_date: Union[datetime, timedelta],
-            operation: str = "ALL",
-            sources: Optional[List[str]] = None,
+        self,
+        start_date: Union[datetime, timedelta],
+        end_date: Union[datetime, timedelta],
+        operation: TransactionType = TransactionType.ALL,
+        sources: Optional[List[str]] = None,
     ) -> Statistic:
         """
         This query is used to get summary statistics
@@ -331,11 +374,11 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def to_wallet(
-            self,
-            to_number: str,
-            trans_sum: Union[str, float, int],
-            currency: str = "643",
-            comment: str = "+comment+",
+        self,
+        to_number: str,
+        trans_sum: Union[str, float, int],
+        currency: str = "643",
+        comment: str = "+comment+",
     ) -> str:
         """
         Method for transferring money to another wallet \n
@@ -361,7 +404,9 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         """
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
-    def calc_commission(self, to_account: str, pay_sum: Union[int, float]) -> Commission:
+    def calc_commission(
+        self, to_account: str, pay_sum: Union[int, float]
+    ) -> Commission:
         """
         Full calc_commission of QIWI Wallet is refunded for payment in favor of the specified provider
         taking into account all tariffs for a given set of payment details.
@@ -380,11 +425,11 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass
 
     def payment_by_payment_details(
-            self,
-            payment_sum: Sum,
-            payment_method: PaymentMethod,
-            fields: FreePaymentDetailsFields,
-            payment_id: Optional[str] = None,
+        self,
+        payment_sum: Sum,
+        payment_method: PaymentMethod,
+        fields: FreePaymentDetailsFields,
+        payment_id: Optional[str] = None,
     ) -> PaymentInfo:
         """
         Payment for services of commercial organizations according to their bank details.
@@ -408,7 +453,9 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         """
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
-    def issue_qiwi_master_card(self, card_alias: str = "qvc-cpa") -> Optional[OrderDetails]:
+    def issue_qiwi_master_card(
+        self, card_alias: str = "qvc-cpa"
+    ) -> Optional[OrderDetails]:
         """
         Issuing a new card using the Qiwi Master API
 
@@ -443,13 +490,13 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def create_p2p_bill(
-            self,
-            amount: Union[int, float],
-            bill_id: Optional[str] = None,
-            comment: Optional[str] = None,
-            life_time: Optional[datetime] = None,
-            theme_code: Optional[str] = None,
-            pay_source_filter: Optional[List[str]] = None,
+        self,
+        amount: Union[int, float],
+        bill_id: Optional[str] = None,
+        comment: Optional[str] = None,
+        life_time: Optional[datetime] = None,
+        theme_code: Optional[str] = None,
+        pay_source_filter: Optional[List[str]] = None,
     ) -> AdaptedBill:
         """
         It is the reliable method for integration.
@@ -472,7 +519,9 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         """
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
-    def get_bills(self, rows_num: int, bill_statuses: str = "READY_FOR_PAY") -> List[AdaptedBill]:
+    def retrieve_bills(
+        self, rows: int, statuses: str = constants.DEFAULT_BILL_STATUSES
+    ) -> List[AdaptedBill]:
         """
         A method for getting a list of your wallet's outstanding bills.
         The list is built in reverse chronological order.
@@ -484,10 +533,10 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
     def refund_bill(
-            self,
-            bill_id: Union[str, int],
-            refund_id: Union[str, int],
-            json_bill_data: Union[OptionalSum, Dict[str, Union[str, int]]],
+        self,
+        bill_id: Union[str, int],
+        refund_id: Union[str, int],
+        json_bill_data: Union[OptionalSum, Dict[str, Union[str, int]]],
     ) -> RefundBill:
         """
         The method allows you to make a refund on a paid invoice.
@@ -509,7 +558,9 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         """
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
-    def create_p2p_keys(self, key_pair_name: str, server_notification_url: Optional[str] = None) -> P2PKeys:
+    def create_p2p_keys(
+        self, key_pair_name: str, server_notification_url: Optional[str] = None
+    ) -> P2PKeys:
         """
         :param key_pair_name: P2P token pair name (arbitrary string)
         :param server_notification_url: url for webhooks, optional
@@ -518,11 +569,14 @@ class SyncAdaptedQiwi(BaseWrapper, ContextInstanceMixin["SyncAdaptedQiwi"], Data
         pass  # real implementation in the QiwiWrapper class  # pragma: no cover
 
 
-class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass=SyncAdapterMeta,
-                          adapted_cls=YooMoneyAPI):
+class SyncAdaptedYooMoney(
+    ContextInstanceMixin["SyncAdaptedYooMoney"],
+    metaclass=SyncAdapterMeta,
+    adapted_cls=YooMoneyAPI,
+):
     @classmethod
     def build_url_for_auth(
-            cls, scope: List[str], client_id: str, redirect_uri: str = "https://example.com"
+        cls, scope: List[str], client_id: str, redirect_uri: str = "https://example.com"
     ) -> Optional[str]:
         """
         Method to get the link for further authorization and obtaining a token
@@ -539,11 +593,11 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
 
     @classmethod
     def get_access_token(
-            cls,
-            code: str,
-            client_id: str,
-            redirect_uri: str = "https://example.com",
-            client_secret: Optional[str] = None,
+        cls,
+        code: str,
+        client_id: str,
+        redirect_uri: str = "https://example.com",
+        client_secret: Optional[str] = None,
     ) -> str:
         """
         Method for obtaining a token for requests to the YooMoney API
@@ -577,15 +631,15 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
         pass  # real implementation in the YooMoneyAPI class  # pragma: no cover
 
     async def transactions(
-            self,
-            operation_types: Optional[
-                Union[List[OperationType], Tuple[OperationType, ...]]
-            ] = None,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
-            start_record: Optional[int] = None,
-            records: int = 30,
-            label: Optional[Union[str, int]] = None,
+        self,
+        operation_types: Optional[
+            Union[List[OperationType], Tuple[OperationType, ...]]
+        ] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        start_record: Optional[int] = None,
+        records: int = 30,
+        label: Optional[Union[str, int]] = None,
     ) -> List[Operation]:
         """
         Подробная документация:
@@ -628,14 +682,14 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
         pass  # real implementation in the YooMoneyAPI class  # pragma: no cover
 
     def _pre_process_payment(
-            self,
-            to_account: str,
-            amount: Union[int, float],
-            pattern_id: str = "p2p",
-            comment_for_history: Optional[str] = None,
-            comment_for_receiver: Optional[str] = None,
-            protect: bool = False,
-            expire_period: int = 1,
+        self,
+        to_account: str,
+        amount: Union[int, float],
+        pattern_id: str = "p2p",
+        comment_for_history: Optional[str] = None,
+        comment_for_receiver: Optional[str] = None,
+        protect: bool = False,
+        expire_period: int = 1,
     ) -> PreProcessPaymentResponse:
         """
         More detailed documentation:
@@ -668,17 +722,17 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
         pass  # real implementation in the YooMoneyAPI class  # pragma: no cover
 
     def send(
-            self,
-            to_account: str,
-            amount: Union[int, float],
-            money_source: str = "wallet",
-            pattern_id: str = "p2p",
-            cvv2_code: str = "",
-            card_type: Optional[str] = None,
-            protect: bool = False,
-            comment_for_history: Optional[str] = None,
-            comment: Optional[str] = None,
-            expire_period: int = 1,
+        self,
+        to_account: str,
+        amount: Union[int, float],
+        money_source: str = "wallet",
+        pattern_id: str = "p2p",
+        cvv2_code: str = "",
+        card_type: Optional[str] = None,
+        protect: bool = False,
+        comment_for_history: Optional[str] = None,
+        comment: Optional[str] = None,
+        expire_period: int = 1,
     ) -> Payment:
         """
         A method for sending money to another person's account or card.
@@ -724,7 +778,9 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
     def get_balance(self) -> float:
         pass  # real implementation in the YooMoneyAPI class  # pragma: no cover
 
-    def accept_incoming_transaction(self, operation_id: str, protection_code: str) -> IncomingTransaction:
+    def accept_incoming_transaction(
+        self, operation_id: str, protection_code: str
+    ) -> IncomingTransaction:
         """
         Acceptance of incoming transfers protected by a protection code,
         if you passed the protect parameter to the send method
@@ -759,12 +815,12 @@ class SyncAdaptedYooMoney(ContextInstanceMixin["SyncAdaptedYooMoney"], metaclass
         pass  # real implementation in the YooMoneyAPI class  # pragma: no cover
 
     def check_transaction(
-            self,
-            amount: Union[int, float],
-            transaction_type: str = "in",
-            comment: Optional[str] = None,
-            rows_num: int = 100,
-            recipient: Optional[str] = None,
+        self,
+        amount: Union[int, float],
+        transaction_type: str = "in",
+        comment: Optional[str] = None,
+        rows_num: int = 100,
+        recipient: Optional[str] = None,
     ) -> bool:
         """
         Method for verifying a transaction.

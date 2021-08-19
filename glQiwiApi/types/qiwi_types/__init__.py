@@ -7,7 +7,7 @@ from .identification import Identification
 from .limit import Limit
 from .other import CrossRate, FreePaymentDetailsFields, PaymentMethod
 from .partner import Partner
-from .payment_info import PaymentInfo
+from .payment_info import PaymentInfo, QiwiPayment
 from .polygon import Polygon
 from .qiwi_master import OrderDetails, Card
 from .restriction import Restriction
@@ -43,5 +43,6 @@ __all__ = (
     "Restriction",
     "Commission",
     "InvoiceStatus",
-    "TransactionType"
+    "TransactionType",
+    "QiwiPayment",
 )

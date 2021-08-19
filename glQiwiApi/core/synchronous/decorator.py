@@ -132,7 +132,12 @@ class async_as_sync:  # NOQA
     def __call__(self, func):
         @ft.wraps(func)
         def wrapper(*args, **kwargs):
-            result = execute_async_as_sync(func, *args, __shutdown__callback__=self._async_shutdown_callback, **kwargs)
+            result = execute_async_as_sync(
+                func,
+                *args,
+                __shutdown__callback__=self._async_shutdown_callback,
+                **kwargs
+            )
             if self._sync_shutdown_callback is not None:
                 return self.execute_sync_callback(result)
             return result

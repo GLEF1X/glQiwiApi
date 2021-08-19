@@ -1,4 +1,4 @@
-from .filters import TransactionFilter, BillFilter
+from .filters import TransactionFilter, BillFilter, ErrorFilter
 from .logger import InterceptHandler
 from .telegram import TelegramPollingProxy, TelegramWebhookProxy, BaseProxy
 
@@ -9,4 +9,5 @@ __all__ = (
     "TransactionFilter",
     "BillFilter",
     "InterceptHandler",
+    "ErrorFilter",
 )

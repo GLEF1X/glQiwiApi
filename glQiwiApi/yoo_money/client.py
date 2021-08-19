@@ -7,8 +7,8 @@ import warnings
 from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple, cast
 
-from glQiwiApi.core import RequestManager, ToolsMixin, ContextInstanceMixin
-from glQiwiApi.core.mixins import DataMixin
+from glQiwiApi.core.aiohttp_custom_api import RequestManager
+from glQiwiApi.core.mixins import DataMixin, ContextInstanceMixin, ToolsMixin
 from glQiwiApi.types import (
     AccountInfo,
     OperationType,
@@ -18,17 +18,17 @@ from glQiwiApi.types import (
     Payment,
     IncomingTransaction,
 )
-from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
+from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.types.yoomoney_types.types import Card
-from glQiwiApi.utils.api_helper import (
+from glQiwiApi.utils.payload import (
     parse_auth_link,
     retrieve_base_headers_for_yoomoney,
-    simple_multiply_parse,
+    parse_iterable_to_list_of_objects,
     check_params,
     parse_amount,
     check_transactions_payload,
 )
-from glQiwiApi.utils.errors import NoUrlFound, InvalidData
+from glQiwiApi.utils.errors import CantParseUrl, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
@@ -42,14 +42,14 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
     """
 
-    __slots__ = ("api_access_token", "_requests", "_router")
+    __slots__ = ("api_access_token", "_requests", "_router", "__context_instance")
 
     def __init__(
-            self,
-            api_access_token: str,
-            without_context: bool = False,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
-            proxy: Optional[Any] = None,
+        self,
+        api_access_token: str,
+        without_context: bool = False,
+        cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
+        proxy: Optional[Any] = None,
     ) -> None:
         """
         The constructor accepts a token obtained from the method class get_access_token
@@ -80,7 +80,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
     @classmethod
     async def build_url_for_auth(
-            cls, scope: List[str], client_id: str, redirect_uri: str = "https://example.com"
+        cls, scope: List[str], client_id: str, redirect_uri: str = "https://example.com"
     ) -> Optional[str]:
         """
         Method to get the link for further authorization and obtaining a token
@@ -108,17 +108,17 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         try:
             return parse_auth_link(response)
         except IndexError:
-            raise NoUrlFound(
+            raise CantParseUrl(
                 "Could not find the authorization link in the response from the api, check the client_id value"
             )
 
     @classmethod
     async def get_access_token(
-            cls,
-            code: str,
-            client_id: str,
-            redirect_uri: str = "https://example.com",
-            client_secret: Optional[str] = None,
+        cls,
+        code: str,
+        client_id: str,
+        redirect_uri: str = "https://example.com",
+        client_secret: Optional[str] = None,
     ) -> str:
         """
         Method for obtaining a token for requests to the YooMoney API
@@ -168,7 +168,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
             "`QiwiWrapper.get_account_info` property is deprecated, and will be removed in next versions, "
             "use `QiwiWrapper.retrieve_account_info(...)` instead",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         return await self.retrieve_account_info()
 
@@ -180,29 +180,32 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
         :return: объект AccountInfo
         """
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         response = await self._requests.send_request(
             "POST", YooMoneyMethods.ACCOUNT_INFO, self._router, headers=headers
         )
         return AccountInfo.parse_obj(response)
 
     async def transactions(
-            self,
-            operation_types: Optional[
-                Union[List[OperationType], Tuple[OperationType, ...]]
-            ] = None,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
-            start_record: Optional[int] = None,
-            records: int = 30,
-            label: Optional[Union[str, int]] = None,
+        self,
+        operation_types: Optional[
+            Union[List[OperationType], Tuple[OperationType, ...]]
+        ] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        start_record: Optional[int] = None,
+        records: int = 30,
+        label: Optional[Union[str, int]] = None,
     ) -> List[Operation]:
         """
         Подробная документация:
         https://yoomoney.ru/docs/wallet/user-account/operation-history\n
         The method allows you to view the history of transactions (in whole or in part) in page mode.
         History records are displayed in reverse chronological order from most recent to earlier.
-        Possible values:
+
+        Possible values: \n
         DEPOSITION — refill ;\n
         PAYMENT — consumption;\n
         INCOMING(incoming-transfers-unaccepted) — unaccepted incoming P2P transfers of any type.\n
@@ -224,14 +227,23 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param records:	The number of transaction history records requested.
          Valid values are from 1 to 100, the default is 30.
         """
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         data = {"records": records, "label": label}
-        payload = check_transactions_payload(data, records, operation_types, start_date, end_date, start_record)
+        payload = check_transactions_payload(
+            data, records, operation_types, start_date, end_date, start_record
+        )
         response = await self._requests.send_request(
-            "POST", YooMoneyMethods.TRANSACTIONS, self._router, headers=headers,
+            "POST",
+            YooMoneyMethods.TRANSACTIONS,
+            self._router,
+            headers=headers,
             data=self._requests.filter_dict(payload),
         )
-        return simple_multiply_parse(objects=cast(List[Any], response.get("operations")), model=Operation)
+        return parse_iterable_to_list_of_objects(
+            iterable=cast(List[Any], response.get("operations")), model=Operation
+        )
 
     async def transaction_info(self, operation_id: str) -> OperationDetails:
         """
@@ -242,7 +254,9 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
         :param operation_id: Operation ID
         """
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         response = await self._requests.send_request(
             "POST",
             YooMoneyMethods.TRANSACTION_INFO,
@@ -253,14 +267,14 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         return OperationDetails.parse_obj(response)
 
     async def _pre_process_payment(
-            self,
-            to_account: str,
-            amount: Union[int, float],
-            pattern_id: str = "p2p",
-            comment_for_history: Optional[str] = None,
-            comment_for_receiver: Optional[str] = None,
-            protect: bool = False,
-            expire_period: int = 1,
+        self,
+        to_account: str,
+        amount: Union[int, float],
+        pattern_id: str = "p2p",
+        comment_for_history: Optional[str] = None,
+        comment_for_receiver: Optional[str] = None,
+        protect: bool = False,
+        expire_period: int = 1,
     ) -> PreProcessPaymentResponse:
         """
         More detailed documentation:
@@ -290,7 +304,9 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
             The parameter value must be in the range from 1 to 365.
             Optional parameter. The default is 1.
         """
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         payload = {
             "pattern_id": pattern_id,
             "to": to_account,
@@ -310,17 +326,17 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         return PreProcessPaymentResponse.parse_obj(response)
 
     async def send(
-            self,
-            to_account: str,
-            amount: Union[int, float],
-            money_source: str = "wallet",
-            pattern_id: str = "p2p",
-            cvv2_code: str = "",
-            card_type: Optional[str] = None,
-            protect: bool = False,
-            comment_for_history: Optional[str] = None,
-            comment: Optional[str] = None,
-            expire_period: int = 1,
+        self,
+        to_account: str,
+        amount: Union[int, float],
+        money_source: str = "wallet",
+        pattern_id: str = "p2p",
+        cvv2_code: str = "",
+        card_type: Optional[str] = None,
+        protect: bool = False,
+        comment_for_history: Optional[str] = None,
+        comment: Optional[str] = None,
+        expire_period: int = 1,
     ) -> Payment:
         """
         A method for sending money to another person's account or card.
@@ -362,7 +378,9 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
 
         """
         if amount < 2:
-            raise InvalidData("Enter the amount that is more than the minimum (2 or more)")
+            raise InvalidData(
+                "Enter the amount that is more than the minimum (2 or more)"
+            )
         pre_payment = await self._pre_process_payment(
             to_account=to_account,
             amount=amount,
@@ -372,12 +390,14 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
             protect=protect,
             pattern_id=pattern_id,
         )
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         payload = {"request_id": pre_payment.request_id, "money_source": "wallet"}
         if (
-                money_source == "card"
-                and isinstance(pre_payment, PreProcessPaymentResponse)  # noqa: W503
-                and pre_payment.money_source.cards.allowed == "true"  # type: ignore  # noqa: W503
+            money_source == "card"
+            and isinstance(pre_payment, PreProcessPaymentResponse)  # noqa: W503
+            and pre_payment.money_source.cards.allowed == "true"  # type: ignore  # noqa: W503
         ):
             if not isinstance(card_type, str):
                 cards = cast(Card, pre_payment.money_source.cards)  # type: ignore
@@ -407,7 +427,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         return (await self.retrieve_account_info()).balance
 
     async def accept_incoming_transaction(
-            self, operation_id: str, protection_code: str
+        self, operation_id: str, protection_code: str
     ) -> IncomingTransaction:
         """
         Acceptance of incoming transfers protected by a protection code,
@@ -425,10 +445,16 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
          Indicated for an incoming transfer protected by a protection code.
          Not available for on-demand transfers.
         """
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         payload = {"operation_id": operation_id, "protection_code": protection_code}
         response = await self._requests.send_request(
-            "POST", YooMoneyMethods.ACCEPT_INCOMING_TRANSFER, self._router, headers=headers, data=payload,
+            "POST",
+            YooMoneyMethods.ACCEPT_INCOMING_TRANSFER,
+            self._router,
+            headers=headers,
+            data=payload,
         )
         return IncomingTransaction.parse_obj(response)
 
@@ -445,19 +471,24 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param operation_id: Operation identifier, parameter value
          operation_id of history () method response.
         """
-        headers = self._auth_token(retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth))
+        headers = self._auth_token(
+            retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
+        )
         return await self._requests.send_request(
-            "POST", YooMoneyMethods.INCOMING_TRANSFER_REJECT, self._router, headers=headers,
+            "POST",
+            YooMoneyMethods.INCOMING_TRANSFER_REJECT,
+            self._router,
+            headers=headers,
             data={"operation_id": operation_id},
         )
 
     async def check_transaction(
-            self,
-            amount: Union[int, float],
-            transaction_type: str = "in",
-            comment: Optional[str] = None,
-            rows_num: int = 100,
-            recipient: Optional[str] = None,
+        self,
+        amount: Union[int, float],
+        operation_type: str = "in",
+        comment: Optional[str] = None,
+        rows: int = 100,
+        recipient: Optional[str] = None,
     ) -> bool:
         """
         Method for verifying a transaction.
@@ -466,20 +497,24 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         however, this does not guarantee the correct result
 
         :param amount: payment amount
-        :param transaction_type: payment type
+        :param operation_type: payment type
         :param recipient: recipient number
-        :param rows_num: number of payments to be checked
+        :param rows: number of payments to be checked
         :param comment: comment by which the transaction will be verified
         :return: bool, is there such a transaction in the payment history
         """
-        types = [OperationType.DEPOSITION if transaction_type == "in" else OperationType.PAYMENT]
-        transactions = await self.transactions(operation_types=types, records=rows_num)
-        tasks = [self.transaction_info(txn.operation_id) for txn in transactions]
+        types = [
+            OperationType.DEPOSITION
+            if operation_type == "in"
+            else OperationType.PAYMENT
+        ]
+        transactions = await self.transactions(operation_types=types, records=rows)
+        tasks = [self.transaction_info(txn.id) for txn in transactions]
         for detail in await asyncio.gather(*tasks):
             # Parse amount and comment,
             # because the parameters depend on the type of transaction
-            amount_, comment_ = parse_amount(transaction_type, detail)
-            checked = check_params(amount_, amount, detail, transaction_type)
+            amount_, comment_ = parse_amount(operation_type, detail)
+            checked = check_params(amount_, amount, detail, operation_type)
             if checked and detail.status == "success":
                 if comment_ == comment and detail.sender == recipient:
                     return True

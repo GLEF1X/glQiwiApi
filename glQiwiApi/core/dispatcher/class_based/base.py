@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Generic, TypeVar, TYPE_CHECKING, Dict
+from typing import Any, Generic, TypeVar, TYPE_CHECKING, Dict, Union
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.client import QiwiWrapper  # NOQA  # pragma: no cover
     from glQiwiApi.types.base import Base  # NOQA # pragma: no cover
 
-T = TypeVar("T", bound="Base")
+T = TypeVar("T", bound=Union[Exception, "Base"])
 
 
 class BaseHandlerMixin(Generic[T]):

@@ -5,9 +5,10 @@ from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.core.basic_requests_api import HttpXParser, _ProxyType
+from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.core.storage import Storage
-from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
 from glQiwiApi.utils import errors
+from glQiwiApi.utils.payload import make_payload
 
 
 class RequestManager(HttpXParser):
@@ -132,3 +133,22 @@ class RequestManager(HttpXParser):
         :return: filtered dict
         """
         return {k: str(v) for k, v in dictionary.items() if v is not None}
+
+    async def text_content(
+        self,
+        url: str,
+        method: str,
+        set_timeout: bool = True,
+        cookies: Optional[LooseCookies] = None,
+        json: Optional[Any] = None,
+        data: Optional[Any] = None,
+        headers: Optional[Any] = None,
+        params: Optional[Any] = None,
+        encoding: Optional[str] = None,
+    ) -> str:
+        prepared_payload = make_payload(**locals())
+        result = await super().text_content(**prepared_payload)
+        if self.without_context:
+            await self._close_session()
+
+        return result

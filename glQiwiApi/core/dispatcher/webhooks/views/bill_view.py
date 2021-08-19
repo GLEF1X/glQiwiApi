@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+from typing import cast
+
 from aiohttp import web
 from pydantic import ValidationError
 
 from glQiwiApi import types
 from glQiwiApi.core.dispatcher.webhooks.base import BaseWebHookView
-from glQiwiApi.core.dispatcher.webhooks.utils import check_ip
-from glQiwiApi.utils.api_helper import hmac_key
+from glQiwiApi.utils.errors import WebhookSignatureUnverified
+
+try:
+    import orjson as json
+except ImportError:
+    import json  # type: ignore
 
 
 class QiwiBillWebView(BaseWebHookView[types.Notification]):
@@ -16,37 +22,31 @@ class QiwiBillWebView(BaseWebHookView[types.Notification]):
 
     """
 
-    def _check_ip(self, ip_address: str) -> bool:
-        return check_ip(ip_address)
-
-    def _hash_validator(self, update: types.Notification) -> None:
+    def _validate_event_signature(self, update: types.Notification) -> None:
         if update.bill is None:
             return None
 
-        sha256_signature = self.request.headers.get("X-Api-Signature-SHA256")
-        _secret = self.request.app.get("_secret_key")
-        bill = update.bill
-        answer = hmac_key(_secret, bill.amount, bill.status, bill.bill_id, bill.site_id)
+        sha256_signature = cast(str, self.request.headers.get("X-Api-Signature-SHA256"))
+        webhook_base64 = cast(str, self.request.app.get("_secret_key"))
 
-        if answer != sha256_signature:
+        try:
+            update.verify_signature(sha256_signature, webhook_base64)
+        except WebhookSignatureUnverified:
+            self.dispatcher.logger.warning(
+                "Blocking request due to invalid signature of json request payload."
+            )
             raise web.HTTPBadRequest()
 
     async def parse_update(self) -> types.Notification:
-        payload = await self.request.json()
+        payload = await self.request.json(loads=json.loads)
+
         try:
             return types.Notification.parse_raw(payload)
-        except ValidationError as ex:
-            raise web.HTTPBadRequest(text=ex.json())
+        except ValidationError:
+            raise web.HTTPBadRequest()
 
-    async def post(self) -> web.Response:
-        self.validate_ip()
-
-        update = await self.parse_update()
-
-        # self._hash_validator(update)
-
-        await self.handler_manager.feed_event(update)
+    def ok_response(self) -> web.Response:
         return web.json_response(data={"error": "0"})
 
     app_key_check_ip = "_qiwi_bill_check_ip"
-    app_key_handler_manager = "_qiwi_bill_handler_manager"
+    app_key_dispatcher = "_qiwi_bill_dispatcher"

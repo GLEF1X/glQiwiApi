@@ -70,16 +70,16 @@ class AbstractParser(abc.ABC):
 
     @abc.abstractmethod
     async def make_request(
-            self,
-            url: str,
-            method: str,
-            set_timeout: bool = True,
-            cookies: Optional[LooseCookies] = None,
-            json: Optional[Any] = None,
-            data: Optional[Any] = None,
-            headers: Optional[Any] = None,
-            params: Optional[Any] = None,
-            **kwargs: Any
+        self,
+        url: str,
+        method: str,
+        set_timeout: bool = True,
+        cookies: Optional[LooseCookies] = None,
+        json: Optional[Any] = None,
+        data: Optional[Any] = None,
+        headers: Optional[Any] = None,
+        params: Optional[Any] = None,
+        **kwargs: Any
     ) -> Dict[Any, Any]:
         raise NotImplementedError
 
@@ -92,10 +92,10 @@ class AbstractParser(abc.ABC):
 
     @abc.abstractmethod
     def make_exception(
-            self,
-            status_code: int,
-            traceback_info: Optional[RequestInfo] = None,
-            message: Optional[str] = None,
+        self,
+        status_code: int,
+        traceback_info: Optional[RequestInfo] = None,
+        message: Optional[str] = None,
     ) -> Exception:
         raise NotImplementedError
 
@@ -103,9 +103,9 @@ class AbstractParser(abc.ABC):
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()

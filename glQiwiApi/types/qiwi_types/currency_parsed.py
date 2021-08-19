@@ -1,9 +1,9 @@
 from typing import Union, Optional
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.types.base import HashableBase
 
 
-class CurrencyModel(Base):
+class CurrencyModel(HashableBase):
     code: str
     decimal_digits: int
     name: str

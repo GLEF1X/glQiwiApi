@@ -18,11 +18,14 @@ class WebhookURL(
 ):
     host: str
     webhook_path: Optional[str]
-    port: int
+    port: Optional[int]
 
     @classmethod
     def create(
-        cls: Type[_URL], host: str, port: int, webhook_path: Optional[str] = None
+        cls: Type[_URL],
+        host: str,
+        port: Optional[int] = None,
+        webhook_path: Optional[str] = None,
     ) -> _URL:
         return cls(
             host=cls._assert_host(host, param_name="host"),
@@ -88,5 +91,10 @@ class WebhookURL(
             host = host[: host.rindex("/")]
         if webhook_path is None:
             webhook_path = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
+        url = host
+        if port is not None:
+            url += f":{port}"
+        return f"{url}{webhook_path}"
 
-        return f"{host}:{port}{webhook_path}"
+    def __str__(self) -> str:
+        return self.render_as_string()

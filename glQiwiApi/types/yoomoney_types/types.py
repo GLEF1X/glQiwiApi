@@ -117,7 +117,7 @@ class DigitalGoods(BaseModel):
 class Operation(BaseModel):
     """object: Operation"""
 
-    operation_id: str
+    id: str = Field(..., alias="operation_id")
     """Идентификатор операции."""
 
     status: str
@@ -177,7 +177,7 @@ class Operation(BaseModel):
 class OperationDetails(BaseModel):
     """object: OperationDetails"""
 
-    operation_id: Optional[str] = None
+    id: str = Field(..., alias="operation_id")
     """Идентификатор операции. Можно получить при вызове метода history()"""
 
     status: Optional[str] = None

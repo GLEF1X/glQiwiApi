@@ -76,7 +76,9 @@ class SSLConfigurator:
 
         return is_cert_is_file and is_pkey_is_file
 
-    def get_or_generate_self_signed(self, *name_attributes: "x509.NameAttribute") -> SSLConfigurator:
+    def get_or_generate_self_signed(
+        self, *name_attributes: "x509.NameAttribute"
+    ) -> SSLConfigurator:
         """
         Generates self signed certificate for a hostname, and optional IP addresses.
         Copied from https://gist.github.com/bloodearnest/9017111a313777b9cce5

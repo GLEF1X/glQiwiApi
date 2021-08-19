@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any, Dict
 
 from pydantic import Field
 
@@ -27,6 +27,7 @@ class TransactionInfo(Base):
 
 class PaymentInfo(Base):
     """object: PaymentInfo"""
+
     payment_id: int = Field(..., alias="id")
     terms: str
     fields: Optional[Fields] = None
@@ -36,4 +37,17 @@ class PaymentInfo(Base):
     comment: Optional[str] = None
 
 
-__all__ = ["PaymentInfo"]
+class PaymentMethod(Base):
+    type: str = "Account"
+    account_id: int = Field(643, alias="accountId")
+
+
+class QiwiPayment(Base):
+    id: int
+    sum: Sum
+    method: PaymentMethod = Field(..., alias="paymentMethod")
+    fields: Dict[Any, Any]
+    comment: Optional[str] = None
+
+
+__all__ = ["PaymentInfo", "QiwiPayment"]

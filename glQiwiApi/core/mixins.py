@@ -2,7 +2,29 @@ from __future__ import annotations
 
 import contextvars
 import copy
-from typing import Any, TYPE_CHECKING, TypeVar, Optional, cast, Generic, ClassVar, Dict
+import logging
+from typing import (
+    Any,
+    TYPE_CHECKING,
+    TypeVar,
+    Optional,
+    cast,
+    Generic,
+    ClassVar,
+    Dict,
+    Type,
+    Union,
+)
+
+from glQiwiApi.core.dispatcher.dispatcher import (
+    Dispatcher,
+    TxnRawHandler,
+    TxnFilters,
+    BillFilters,
+    BillRawHandler,
+    ErrorRawHandler,
+)
+from glQiwiApi.core.dispatcher.filters import BaseFilter
 
 if TYPE_CHECKING:
     from glQiwiApi.core.aiohttp_custom_api import RequestManager  # pragma: no cover
@@ -49,7 +71,6 @@ class ToolsMixin(object):
 
 
 class DataMixin:
-
     @property
     def data(self) -> Dict[Any, Any]:  # pragma: no cover
         data = getattr(self, "_data", None)
@@ -86,7 +107,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
 
     @classmethod  # noqa: F811
     def get_current(  # noqa: F811
-            cls, no_error: bool = True
+        cls, no_error: bool = True
     ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
         """Get current instance from context"""
         # on mypy 0.770 I catch that contextvars.ContextVar always contextvars.ContextVar[Any]
@@ -115,3 +136,69 @@ class ContextInstanceMixin(Generic[ContextInstance]):
     @classmethod
     def reset_current(cls, token: contextvars.Token[ContextInstance]) -> None:
         cls.__context_instance.reset(token)
+
+
+class HandlerCollectionMixin:
+    _dispatcher: Optional[Dispatcher]
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__()
+        cls._dispatcher = None
+
+    @property
+    def dispatcher(self) -> Dispatcher:
+        if not self._dispatcher:
+            self._dispatcher = Dispatcher()
+        return self._dispatcher
+
+    @dispatcher.setter
+    def dispatcher(self, other: Dispatcher) -> None:
+        if not isinstance(other, Dispatcher):
+            raise TypeError(f"Expected `Dispatcher`, got wrong type {type(other)}")
+        self._dispatcher = other
+
+    @property
+    def transaction_handler(self):  # type: ignore
+        """
+        Handler manager for default QIWI transactions,
+        you can pass on lambda filter, if you want,
+        but it must to return a boolean
+        """
+        return self.dispatcher.transaction_handler
+
+    @property
+    def error_handler(self):  # type: ignore
+        return self.dispatcher.error_handler
+
+    @property
+    def bill_handler(self):  # type: ignore
+        """
+        Handler manager for P2P bills,
+        you can pass on lambda filter, if you want
+        But it must to return a boolean
+        """
+        return self.dispatcher.bill_handler
+
+    def register_transaction_handler(
+        self, event_handler: TxnRawHandler, *filters: TxnFilters
+    ) -> None:
+        return self.dispatcher.register_transaction_handler(event_handler, *filters)
+
+    def register_bill_handler(
+        self, event_handler: BillRawHandler, *filters: BillFilters
+    ) -> None:
+        return self.dispatcher.register_bill_handler(event_handler, *filters)
+
+    def register_error_handler(
+        self,
+        event_handler: ErrorRawHandler,
+        exception: Optional[Union[Type[Exception], Exception]] = None,
+        *filters: BaseFilter[Exception],
+    ) -> None:
+        return self.dispatcher.register_error_handler(
+            event_handler, exception, *filters
+        )
+
+    @property
+    def logger(self) -> logging.Logger:
+        return self.dispatcher.logger

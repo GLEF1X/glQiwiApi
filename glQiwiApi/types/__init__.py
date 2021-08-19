@@ -30,7 +30,8 @@ from .qiwi_types import (
     Restriction,
     Commission,
     InvoiceStatus,
-    TransactionType
+    TransactionType,
+    QiwiPayment,
 )
 from .yoomoney_types import (
     OperationType,
@@ -74,10 +75,16 @@ ALL_TYPES = Union[
     PaymentMethod,
     Card,
     Restriction,
-    InvoiceStatus
+    InvoiceStatus,
+    QiwiPayment,
 ]
 
-AnyExecutor = TypeVar("AnyExecutor", futures.ThreadPoolExecutor, futures.ProcessPoolExecutor, Optional[None])
+AnyExecutor = TypeVar(
+    "AnyExecutor",
+    futures.ThreadPoolExecutor,
+    futures.ProcessPoolExecutor,
+    Optional[None],
+)
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
@@ -126,5 +133,6 @@ __all__ = (
     "PaymentMethod",
     "Card",
     "Restriction",
-    "TransactionType"
+    "TransactionType",
+    "QiwiPayment",
 )

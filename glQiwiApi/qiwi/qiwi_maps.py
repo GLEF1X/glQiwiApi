@@ -2,15 +2,15 @@ import typing
 
 from glQiwiApi import types
 from glQiwiApi.core import RequestManager
-from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin
-from glQiwiApi.types.basics import DEFAULT_CACHE_TIME
-from glQiwiApi.utils import api_helper
+from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin, DataMixin
+from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
+from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects
 
 
-class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
+class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
     """
-    API Карты терминалов QIWI позволяет установить местонахождение
-    терминалов QIWI на территории РФ
+    QIWI Terminal Maps API allows you to locate
+    QIWI terminals on the territory of the Russian Federation
 
     """
 
@@ -74,7 +74,7 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
         response = await self._requests.make_request(url, "GET", params=params)
-        return api_helper.multiply_objects_parse(
+        return parse_iterable_to_list_of_objects(
             typing.cast(typing.List[typing.Any], response), types.Terminal
         )
 
@@ -87,6 +87,6 @@ class QiwiMaps(ToolsMixin, ContextInstanceMixin["QiwiMaps"]):
         response = await self._requests.make_request(
             url, "GET", headers={"Content-type": "text/json"}
         )
-        return api_helper.multiply_objects_parse(
+        return parse_iterable_to_list_of_objects(
             typing.cast(typing.List[typing.Any], response), types.Partner
         )

@@ -8,7 +8,6 @@ from glQiwiApi.types import Bill, OptionalSum
 
 
 class AbstractBillHandler(Handler[Bill], ClientMixin[Bill], abc.ABC):
-
     @property
     def bill_id(self) -> str:
         return self.event.bill_id

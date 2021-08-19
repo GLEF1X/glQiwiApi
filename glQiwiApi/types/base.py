@@ -10,7 +10,10 @@ if TYPE_CHECKING:
 
 class Base(BaseModel):
     if TYPE_CHECKING:  # pragma: no cover
-        from glQiwiApi.core.synchronous.adapter import SyncAdaptedQiwi  # pragma: no cover
+        from glQiwiApi.core.synchronous.adapter import (
+            SyncAdaptedQiwi,
+        )  # pragma: no cover
+
         sync_client: SyncAdaptedQiwi  # only for synchronous adapter  # pragma: no cover
 
     @property
@@ -27,6 +30,17 @@ class Base(BaseModel):
                 "`QiwiWrapper.set_current(...)`"
             )
         return instance
+
+
+class HashableBase(Base):
+    class Config:
+        allow_mutation = False
+
+    def __hash__(self):
+        return hash((type(self),) + tuple(self.__dict__.values()))
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
 
 
 class ExtraBase(Base):

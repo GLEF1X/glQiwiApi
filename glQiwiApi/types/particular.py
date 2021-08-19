@@ -33,8 +33,8 @@ class WrapperData:
     """object: WrapperData"""
 
     headers: Dict[Any, Any]
+    json: Dict[Any, Any]
     data: Optional[Dict[Any, Any]] = None
-    json: Optional[Dict[Any, Any]] = None
     cookies: Optional[Dict[Any, Any]] = None
 
 

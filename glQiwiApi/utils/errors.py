@@ -5,51 +5,36 @@ from aiohttp import RequestInfo
 from pydantic import BaseModel
 
 
-class NoUrlFound(Exception):
-    """Данная ошибка возникает при неправильной авторизации yoomoney"""
-
-
-class RequestProxyError(Exception):
-    """Возникает, если были переданы неправильные параметры запроса"""
+class CantParseUrl(Exception):
+    pass
 
 
 class NetworkError(Exception):
-    ...
-
-
-class InvalidCardNumber(Exception):
-    """
-    Ошибка, при передаче номера карты в неправильном формате
-
-    """
+    pass
 
 
 class RequestAuthError(Exception):
-    """
-    Ошибка при неправильной аутентификации POST or GET data
-
-    """
-
-
-class InvalidToken(Exception):
-    """
-    Ошибка, возникающая, если был передан неверный токен
-
-    """
+    pass
 
 
 class InvalidData(TypeError):
-    """
-    Ошибка возникает если были переданы или получены невалидные данные
-
-    """
+    pass
 
 
 class NoUpdatesToExecute(Exception):
-    """
-    Ошибка возбуждается если при полинге нет транзакций, чтобы обрабатывать
+    pass
 
-    """
+
+class StateError(Exception):
+    pass
+
+
+class InvalidCachePayload(Exception):
+    pass
+
+
+class WebhookSignatureUnverified(Exception):
+    pass
 
 
 class RequestInfoModel(BaseModel):
@@ -65,21 +50,13 @@ class ExceptionTraceback(BaseModel):
     request_info: Optional[RequestInfoModel] = None
 
 
-class StateError(Exception):
-    ...
-
-
-class InvalidCachePayload(Exception):
-    ...
-
-
 class APIError(Exception):
     def __init__(
-            self,
-            message: Optional[str],
-            status_code: Union[str, int],
-            additional_info: Optional[str] = None,
-            traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
+        self,
+        message: Optional[str],
+        status_code: Union[str, int],
+        additional_info: Optional[str] = None,
+        traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(APIError, self).__init__()
         self.message = message
@@ -89,7 +66,9 @@ class APIError(Exception):
 
     def __repr__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}" ""
-        return resp.format(sc=self.status_code, msg=self.message, info=self.additional_info)
+        return resp.format(
+            sc=self.status_code, msg=self.message, info=self.additional_info
+        )
 
     def to_model(self) -> ExceptionTraceback:
         """Convert exception to :class:`ExceptionTraceback`"""
@@ -131,28 +110,18 @@ class APIError(Exception):
         return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
 
 
-class CurrentEventIsEmpty(Exception):
-    """ Exception which identify if event is empty"""
-
-
-class EventTypeWasNotSpecified(Exception):
-    """ Exception which idenify that event type was not specified"""
-
-
-class EventTypeWasNotFound(Exception):
+class BadCallback(Exception):
     ...
 
 
 __all__ = (
     "InvalidData",
-    "NoUrlFound",
-    "RequestAuthError",
-    "RequestProxyError",
-    "InvalidCardNumber",
-    "InvalidToken",
+    "CantParseUrl",
     "APIError",
     "NoUpdatesToExecute",
     "StateError",
     "NetworkError",
-    "InvalidCachePayload"
+    "InvalidCachePayload",
+    "BadCallback",
+    "WebhookSignatureUnverified",
 )

@@ -5,7 +5,7 @@ from typing import Union, Any, Optional, Tuple, Dict
 
 from pydantic import BaseModel, validator
 
-DEFAULT_CACHE_TIME = 0
+from glQiwiApi.types.base import HashableBase
 
 
 class Sum(BaseModel):
@@ -29,11 +29,19 @@ class Sum(BaseModel):
         return Currency.get(str(v))
 
 
+class HashableSum(HashableBase, Sum):
+    ...
+
+
 class OptionalSum(BaseModel):
     """object: OptionalSum"""
 
     value: Union[int, float]
     currency: str
+
+
+class HashableOptionalSum(HashableBase, OptionalSum):
+    ...
 
 
 class Type(BaseModel):
@@ -77,4 +85,4 @@ class Cached:
     method: Optional[Any]
 
 
-__all__ = ["Sum", "OptionalSum", "Type", "Cached", "DEFAULT_CACHE_TIME", "Attributes"]
+__all__ = ["Sum", "OptionalSum", "Type", "Cached", "Attributes"]

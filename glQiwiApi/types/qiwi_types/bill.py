@@ -1,14 +1,18 @@
+import base64
+import hashlib
+import hmac
 import warnings
 from datetime import datetime
 from typing import Optional, Union, Dict, Any
 
 from pydantic import Field, Extra
 
-from glQiwiApi.types.base import Base
-from glQiwiApi.types.basics import OptionalSum
+from glQiwiApi.types.base import Base, HashableBase
+from glQiwiApi.types.basics import OptionalSum, HashableOptionalSum
+from glQiwiApi.utils.errors import WebhookSignatureUnverified
 
 
-class Customer(Base):
+class Customer(HashableBase):
     """Object: Customer"""
 
     phone: Optional[str] = None
@@ -16,21 +20,21 @@ class Customer(Base):
     account: Optional[str] = None
 
 
-class BillStatus(Base):
+class BillStatus(HashableBase):
     """Object: BillStatus"""
 
     value: str
-    changed_datetime: datetime = Field(..., alias="changedDateTime")
+    changed_datetime: Optional[datetime] = Field(None, alias="changedDateTime")
 
 
-class CustomFields(Base):
+class CustomFields(HashableBase):
     """Object: CustomFields"""
 
     pay_sources_filter: Optional[str] = Field(None, alias="paySourcesFilter")
     theme_code: Optional[str] = Field(None, alias="themeCode")
 
 
-class BillError(Base):
+class BillError(HashableBase):
     """Object: BillError"""
 
     service_name: str = Field(..., alias="serviceName")
@@ -41,15 +45,15 @@ class BillError(Base):
     trace_id: str = Field(..., alias="traceId")
 
 
-class Bill(Base):
+class Bill(HashableBase):
     """Object: Bill"""
 
     site_id: str = Field(..., alias="siteId")
     bill_id: str = Field(..., alias="billId")
-    amount: OptionalSum
+    amount: HashableOptionalSum
     status: BillStatus
-    creation_date_time: datetime = Field(..., alias="creationDateTime")
-    expiration_date_time: datetime = Field(..., alias="expirationDateTime")
+    creation_date_time: Optional[datetime] = Field(None, alias="creationDateTime")
+    expiration_date_time: Optional[datetime] = Field(None, alias="expirationDateTime")
     pay_url: Optional[str] = Field(None, alias="payUrl")
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
     customer: Optional[Customer] = None
@@ -64,7 +68,7 @@ class Bill(Base):
             "`Bill.paid` property is deprecated, and will be removed in next versions, "
             "use `Bill.check(...)` instead",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         return await self.check()
 
@@ -74,10 +78,7 @@ class Bill(Base):
 
 
 class RefundBill(Base):
-    """
-    Модель счёта киви апи
-
-    """
+    """object: RefundBill"""
 
     amount: OptionalSum
     datetime: datetime
@@ -91,19 +92,31 @@ class RefundBill(Base):
         return self.amount.value
 
 
-class Notification(Base):
+class Notification(HashableBase):
     """Object: Notification"""
 
     version: str = Field(..., alias="version")
     bill: Optional[Bill] = Field(default=None, alias="bill")
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         if isinstance(self.bill, Bill):
             return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
         return f"Test notification. QIWI API version -> {self.version}"
 
-    def __repr__(self) -> str:
-        return self.__str__()
+    def verify_signature(self, sha256_signature: str, webhook_base64_key: str) -> None:
+        if self.bill is None:
+            # we do nothing and just return, because it's test notification
+            return
+
+        webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
+        bill = self.bill
+        invoice_params = f"{bill.amount.currency}|{bill.amount.value}|{bill.bill_id}|{bill.site_id}|{bill.status.value}"
+        generated_signature = hmac.new(
+            webhook_key, invoice_params.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
+
+        if generated_signature != sha256_signature:
+            raise WebhookSignatureUnverified()
 
 
 class P2PKeys(Base):
@@ -117,4 +130,12 @@ class InvoiceStatus(Base):
     pay_results: Dict[Any, Any] = Field(..., alias="WALLET_ACCEPT_PAY_RESULT")
 
 
-__all__ = ("Bill", "BillError", "RefundBill", "Notification", "P2PKeys", "InvoiceStatus")
+__all__ = (
+    "Bill",
+    "BillError",
+    "RefundBill",
+    "Notification",
+    "P2PKeys",
+    "InvoiceStatus",
+    "BillStatus",
+)

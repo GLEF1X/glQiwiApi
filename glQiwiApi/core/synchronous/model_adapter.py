@@ -14,6 +14,7 @@ class AdaptedBill(Bill):
 @no_type_check
 def adapt_type(result):
     from .adapter import SyncAdaptedQiwi
+
     adapted_instance = SyncAdaptedQiwi.get_current()
     if not isinstance(result, Base):
         return result

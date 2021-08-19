@@ -133,16 +133,6 @@ class QiwiConfig:
             "comment": "test",
             "fields": {"account": "", "vas_alias": "qvc-master"},
         }
-
-        self.LIMIT_TYPES = [
-            "TURNOVER",
-            "REFILL",
-            "PAYMENTS_P2P",
-            "PAYMENTS_PROVIDER_INTERNATIONALS",
-            "PAYMENTS_PROVIDER_PAYOUT",
-            "WITHDRAW_CASH",
-        ]
-
         self.QIWI_TO_CARD: WrapperData = WrapperData(
             json={
                 "id": str(int(time.time() * 1000)),
@@ -184,3 +174,11 @@ class QiwiConfig:
             },
             headers=self.DEFAULT_QIWI_HEADERS,
         )
+        self.DEFAULT_LIMIT_TYPES = [
+            "TURNOVER",
+            "REFILL",
+            "PAYMENTS_P2P",
+            "PAYMENTS_PROVIDER_INTERNATIONALS",
+            "PAYMENTS_PROVIDER_PAYOUT",
+            "WITHDRAW_CASH",
+        ]

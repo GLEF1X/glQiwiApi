@@ -6,10 +6,16 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from glQiwiApi.types import WebHook, Notification, Transaction  # noqa  # pragma: no cover
-    from glQiwiApi.core.dispatcher.dispatcher import EventHandler  # noqa  # pragma: no cover
+    from glQiwiApi.types import (
+        WebHook,
+        Notification,
+        Transaction,
+    )  # noqa  # pragma: no cover
+    from glQiwiApi.core.dispatcher.dispatcher import (
+        EventHandler,
+    )  # noqa  # pragma: no cover
 
-from glQiwiApi.core.builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
+from glQiwiApi.builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 
 DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI"
