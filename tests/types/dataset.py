@@ -1,4 +1,5 @@
 import os
+from typing import Any, Dict
 
 API_DATA = {
     "api_access_token": os.getenv("API_ACCESS_TOKEN"),
@@ -15,7 +16,7 @@ WRONG_API_DATA = {
     "validate_params": True,
 }
 
-EMPTY_DATA: dict = {}
+EMPTY_DATA: Dict[Any] = {}
 
 TO_WALLET_DATA = {"to_number": "+380985272064", "trans_sum": 1, "comment": "unit_test"}
 

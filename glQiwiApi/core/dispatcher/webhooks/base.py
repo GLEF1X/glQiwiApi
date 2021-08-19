@@ -98,7 +98,7 @@ class BaseWebHookView(web.View, Generic[Event]):
         await self.process_event(event)
         return self.ok_response()
 
-    async def get(self):
+    async def get(self) -> web.Response:
         self.validate_ip()
         return web.Response(text="")
 
@@ -117,7 +117,7 @@ class BaseWebHookView(web.View, Generic[Event]):
                 "There is no check_ip function to validate ip."
                 " Please, override `app_key_dispatcher` attribute"
             )
-        return self.request.app[self.app_key_dispatcher]
+        return cast(Dispatcher, self.request.app[self.app_key_dispatcher])
 
     def avoid_multiply_events_collision(self, event: Event) -> Any:
         """

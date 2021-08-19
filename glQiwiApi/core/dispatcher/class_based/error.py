@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import abc
+from typing import Any
 
 from .base import Handler
 
 
 class ErrorHandler(Handler[Exception], abc.ABC):
-    def __init__(self, event: Exception, *args):
+    def __init__(self, event: Exception, *args: Any) -> None:
         super().__init__(event)
         self.args = args
 

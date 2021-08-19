@@ -18,7 +18,7 @@ from typing import (
     TypeVar,
     Type,
     Any,
-    Iterable,
+    Iterable, no_type_check,
 )
 
 from glQiwiApi.builtin import (
@@ -51,7 +51,7 @@ TxnFilters = Union[
 
 BillFilters = Union[Callable[["Notification"], bool], BaseFilter["Notification"]]
 
-HandlerType = TypeVar("HandlerType", bound="EventHandler")
+HandlerType = TypeVar("HandlerType", bound="EventHandler[Any]")
 
 # handlers
 TxnRawHandler = Union[Type[AbstractTransactionHandler], Callable[..., Awaitable[Any]]]
@@ -85,16 +85,16 @@ class EventHandler(Generic[Event]):
     """
 
     def __init__(
-        self,
-        handler: Union[Callable[..., Awaitable[_T]], Type[Handler[Event]]],
-        *filters: BaseFilter[Event],
+            self,
+            handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            *filters: BaseFilter[Event],
     ) -> None:
         self._handler = handler
         self._filters = list(
             filter(lambda f: operator.not_(operator.eq(f, None)), filters)
         )
 
-    async def check_then_execute(self, event: Event, *args: Any) -> Optional[_T]:
+    async def check_then_execute(self, event: Event, *args: Any) -> Optional[Any]:
         """Check event, apply all filters and then pass on to handler"""
         for filter_ in self._filters:
             if not await filter_.check(event):
@@ -151,6 +151,7 @@ class Dispatcher:
         self.error_handlers: HandlerCollection[Exception] = HandlerCollection()
         self._logger = _setup_logger()
 
+    @no_type_check
     def _wrap_callback_for_error_handling(self, callback):
         @functools.wraps(callback)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -167,7 +168,7 @@ class Dispatcher:
         return wrapper
 
     def register_transaction_handler(
-        self, event_handler: TxnRawHandler, *filters: TxnFilters
+            self, event_handler: TxnRawHandler, *filters: TxnFilters
     ) -> None:
         self.transaction_handlers.subscribe(
             cast(  # type: ignore
@@ -181,7 +182,7 @@ class Dispatcher:
         )
 
     def register_bill_handler(
-        self, event_handler: BillRawHandler, *filters: BillFilters
+            self, event_handler: BillRawHandler, *filters: BillFilters
     ) -> None:
         self.bill_handlers.subscribe(
             self.wrap_handler(
@@ -192,10 +193,10 @@ class Dispatcher:
         )
 
     def register_error_handler(
-        self,
-        event_handler: ErrorRawHandler,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
+            self,
+            event_handler: ErrorRawHandler,
+            exception: Optional[Union[Type[Exception], Exception]] = None,
+            *filters: BaseFilter[Exception],
     ) -> None:
         self.error_handlers.subscribe(
             self.wrap_handler(
@@ -204,7 +205,7 @@ class Dispatcher:
         )
 
     @property
-    def __all_handlers__(self):
+    def __all_handlers__(self):  # type: ignore
         """Return all registered handlers, except error handlers"""
         return self.bill_handlers, self.transaction_handlers
 
@@ -220,11 +221,11 @@ class Dispatcher:
 
     @staticmethod
     def wrap_handler(
-        event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        filters: Optional[
-            Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...]
-        ] = None,
-        default_filter: Optional[BaseFilter[Event]] = None,
+            event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            filters: Optional[
+                Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...]
+            ] = None,
+            default_filter: Optional[BaseFilter[Event]] = None,
     ) -> EventHandler[Event]:
         """
         Add new event handler.
@@ -253,7 +254,7 @@ class Dispatcher:
         return EventHandler(event_handler, *generated_filters)
 
     def transaction_handler(
-        self, *filters: TxnFilters
+            self, *filters: TxnFilters
     ) -> Callable[[TxnRawHandler], TxnRawHandler]:
         def decorator(callback: TxnRawHandler) -> TxnRawHandler:
             self.register_transaction_handler(callback, *filters)
@@ -262,7 +263,7 @@ class Dispatcher:
         return decorator
 
     def bill_handler(
-        self, *filters: BillFilters
+            self, *filters: BillFilters
     ) -> Callable[[BillRawHandler], BillRawHandler]:
         def decorator(callback: BillRawHandler) -> BillRawHandler:
             self.register_bill_handler(callback, *filters)
@@ -271,9 +272,9 @@ class Dispatcher:
         return decorator
 
     def error_handler(
-        self,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
+            self,
+            exception: Optional[Union[Type[Exception], Exception]] = None,
+            *filters: BaseFilter[Exception],
     ) -> Callable[[ErrorRawHandler], ErrorRawHandler]:
         def decorator(callback: ErrorRawHandler) -> ErrorRawHandler:
             self.register_error_handler(callback, exception, *filters)

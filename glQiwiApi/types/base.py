@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Hashable
 
 from pydantic import BaseModel, Extra
 
@@ -36,10 +36,10 @@ class HashableBase(Base):
     class Config:
         allow_mutation = False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((type(self),) + tuple(self.__dict__.values()))
 
-    def __eq__(self, other):
+    def __eq__(self, other: Hashable) -> bool:
         return self.__hash__() == other.__hash__()
 
 
