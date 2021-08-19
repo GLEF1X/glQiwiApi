@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any, Union, Tuple, List
 from typing import TypeVar, Type
 
 from glQiwiApi.core import ContextInstanceMixin, constants
+from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.core.mixins import DataMixin
 from glQiwiApi.core.synchronous.decorator import async_as_sync
 from glQiwiApi.core.synchronous.model_adapter import AdaptedBill, adapt_type
@@ -42,7 +43,6 @@ from glQiwiApi.types import (
     OperationType,
     TransactionType,
 )
-from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.yoo_money.client import YooMoneyAPI
 
 _T = TypeVar("_T")

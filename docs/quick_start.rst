@@ -19,12 +19,6 @@ Create a new async function with instance of QiwiWrapper.
     :language: python
     :lines: 6-13
 
-Get your balance, using get_balance() method
-
-.. literalinclude:: ./../examples/quick_start.py
-    :language: python
-    :lines: 14
-
 .. note:: Change from 0.2.0+ version. **You can use the async context manager from the 0.2.0 version of the API. This improves performance if many functions are called in 1 block of the context call.**
 
 

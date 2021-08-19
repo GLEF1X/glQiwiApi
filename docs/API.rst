@@ -4,23 +4,38 @@
 API reference
 =============
 
+.. topic:: API reference
+
+    Here you can find all API reference to glQiwiApi or almost all =)
+
 Payment wrappers
 ----------------
 
+Qiwi API
+~~~~~~~~
+
 .. automodule:: glQiwiApi
-    :members: QiwiWrapper, YooMoneyAPI, QiwiMaps
+    :members: QiwiWrapper
+
+YooMoney API
+~~~~~~~~~~~~
+
+.. automodule:: glQiwiApi
+   :members: YooMoneyAPI
+
+Qiwi maps API
+~~~~~~~~~~~~~
+
+.. automodule:: glQiwiApi
+   :members: QiwiMaps
 
 Qiwi webhooks and polling API
 -----------------------------
 
-.. automodule:: glQiwiApi.core.web_hooks.filter
+
+.. automodule:: glQiwiApi.core.dispatcher
    :members:
 
-.. automodule:: glQiwiApi.core.web_hooks.dispatcher
-   :members:
-
-.. automodule:: glQiwiApi.core.web_hooks.server
-   :members:
 
 .. _Executor overview:
 
@@ -40,18 +55,36 @@ Low level API
 .. automodule:: glQiwiApi.core.storage
    :members:
 
+.. automodule:: glQiwiApi.core.abstracts
+   :members:
+
+Extensions
+----------
+
+.. automodule:: glQiwiApi.ext.ssl_configurator
+   :members:
+
+.. automodule:: glQiwiApi.ext.url_builder
+   :members:
 
 Aiogram integration
 -------------------
 
-.. automodule:: glQiwiApi.core.builtin.telegram
+.. automodule:: glQiwiApi.builtin.telegram
     :members:
 
 
 Synchronous adapter
 -------------------
-.. automodule:: glQiwiApi.utils.api_helper
+
+.. automodule:: glQiwiApi.core.synchronous.decorator
     :members: sync, await_sync, run_forever_safe, async_as_sync
+
+.. automodule:: glQiwiApi.core.synchronous.adapter
+    :members:
+
+.. automodule:: glQiwiApi.core.synchronous.model_adapter
+   :members:
 
 
 Exceptions

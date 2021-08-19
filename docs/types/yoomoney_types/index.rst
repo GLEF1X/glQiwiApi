@@ -2,12 +2,7 @@
 YooMoney types
 ==============
 
-.. toctree::
-    get_account_info
-    operation
-    operation-detail
-    pre_payment
-    payment
-    incoming-txn
+.. automodule:: glQiwiApi.types.yoomoney_types
+   :members:
 
 

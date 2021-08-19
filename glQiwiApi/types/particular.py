@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from http.cookies import SimpleCookie
 from typing import Optional, Any, Dict
 
 from aiohttp.typedefs import RawHeaders

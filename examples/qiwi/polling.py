@@ -1,5 +1,3 @@
-import datetime
-
 from glQiwiApi import QiwiWrapper, types
 from glQiwiApi.utils import executor
 
@@ -18,8 +16,4 @@ def on_startup(wrapper: QiwiWrapper):
     wrapper.dispatcher.logger.info("This message logged on startup")
 
 
-executor.start_polling(
-    wallet,
-    get_updates_from=datetime.datetime.now() - datetime.timedelta(hours=1),
-    on_startup=on_startup,
-)
+executor.start_polling(wallet, on_startup=on_startup, skip_updates=True)

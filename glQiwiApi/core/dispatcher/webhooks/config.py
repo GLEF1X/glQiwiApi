@@ -6,14 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from glQiwiApi.types import (
-        WebHook,
-        Notification,
-        Transaction,
-    )  # noqa  # pragma: no cover
-    from glQiwiApi.core.dispatcher.dispatcher import (
-        EventHandler,
-    )  # noqa  # pragma: no cover
+    pass
 
 from glQiwiApi.builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 

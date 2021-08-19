@@ -1,8 +1,8 @@
 from .base import Handler
 from .bill import AbstractBillHandler
+from .error import ErrorHandler
 from .transaction import AbstractTransactionHandler
 from .webhook_transaction import AbstractWebHookHandler
-from .error import ErrorHandler
 
 __all__ = (
     "AbstractTransactionHandler",

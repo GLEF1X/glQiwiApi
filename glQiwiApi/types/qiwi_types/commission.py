@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from glQiwiApi.types.base import Base, ExtraBase
+from glQiwiApi.types.base import ExtraBase
 from glQiwiApi.types.basics import Sum
 
 

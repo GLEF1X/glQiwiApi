@@ -2,13 +2,5 @@
 Qiwi types
 ==========
 
-.. toctree::
-    transaction
-    account
-    bill
-    balance
-    limit
-    stats
-    identification
-    account-info
-    hook
+.. automodule:: glQiwiApi.types.qiwi_types
+   :members:
