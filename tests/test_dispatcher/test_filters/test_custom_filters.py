@@ -16,7 +16,6 @@ class FirstCustomFilter(BaseFilter[Transaction]):
 
 
 class SecondCustomFilter(BaseFilter[Transaction]):
-
     async def check(self, update: Transaction) -> bool:
         return True
 
@@ -41,7 +40,10 @@ async def test_not_filter(mocker: MockerFixture):
     assert await not_filter.check(mock) is False
 
 
-@pytest.mark.xfail(raises=TypeError, reason="We cannot chain two filters, if they don't inherits from BaseFilter")
+@pytest.mark.xfail(
+    raises=TypeError,
+    reason="We cannot chain two filters, if they don't inherits from BaseFilter",
+)
 async def test_fail_chain_filters():
     first_filter = FirstCustomFilter()
     second_filter = lambda x: x is not None  # wrong type  # noqa
@@ -49,6 +51,8 @@ async def test_fail_chain_filters():
 
 
 async def test_check_lambda_filter(mocker: MockerFixture):
-    lambda_filter: filters.LambdaBasedFilter[Transaction] = filters.LambdaBasedFilter(lambda x: x is not None)
+    lambda_filter: filters.LambdaBasedFilter[Transaction] = filters.LambdaBasedFilter(
+        lambda x: x is not None
+    )
     mock = mocker.Mock(spec=Transaction)
     assert await lambda_filter.check(mock) is True

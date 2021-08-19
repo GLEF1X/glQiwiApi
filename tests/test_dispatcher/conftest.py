@@ -1,16 +1,15 @@
 import asyncio
-from typing import Tuple
 
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp.test_utils import TestServer, BaseTestServer
 
+from glQiwiApi.core import QiwiWebHookWebView, QiwiBillWebView
 from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks import server
-from glQiwiApi.core.dispatcher.webhooks.utils import check_ip  # NOQA
 from glQiwiApi.types import Notification, WebHook
-from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA
+from tests.types.dataset import BASE64_WEBHOOK_KEY
 
 pytestmark = pytest.mark.asyncio
 
@@ -60,19 +59,18 @@ async def aiohttp_client():
 
 
 async def my_bill_handler(update: Notification):
-    assert update == Notification.parse_raw(NOTIFICATION_RAW_DATA)
+    assert isinstance(update, Notification)
     _bill_event.set()
 
 
 async def my_transaction_handler(update: WebHook):
-    assert update == WebHook.parse_raw(WEBHOOK_RAW_DATA)
+    assert isinstance(update, WebHook)
     _txn_event.set()
 
 
 @pytest.fixture(name="dp", scope="module")
 async def dp_fixture():
-    dp = Dispatcher()
-    yield dp
+    return Dispatcher()
 
 
 @pytest.fixture(name="add_handlers", scope="module")
@@ -86,4 +84,5 @@ async def app_fixture(dp: Dispatcher, add_handlers):
     app = web.Application()
     app["bill_event"] = _bill_event
     app["txn_event"] = _txn_event
-    return server.setup(dp, app=app)
+    app["_base64_key"] = BASE64_WEBHOOK_KEY
+    return server.configure_app(dp, app=app, base64_key=BASE64_WEBHOOK_KEY)

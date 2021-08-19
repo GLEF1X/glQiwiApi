@@ -34,7 +34,7 @@ class TestAiohttpSession:
         assert isinstance(api._router, QiwiRouter)
         assert isinstance(api._requests, RequestManager)
         assert isinstance(api._p2p_router, QiwiKassaRouter)
-        assert isinstance(api.dp, Dispatcher)
+        assert isinstance(api.dispatcher, Dispatcher)
 
         # close session =)
         await api.close()

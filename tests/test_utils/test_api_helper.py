@@ -1,11 +1,10 @@
 import asyncio
 import logging
-from datetime import datetime
 
 import pytest
 
 from glQiwiApi import QiwiMaps, types, async_as_sync
-from glQiwiApi.utils import api_helper
+from glQiwiApi.utils.decorators import measure_time
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,18 +42,12 @@ def test_async_as_sync_with_callback(maps_client: QiwiMaps):
     my_async_func()
 
 
-def test_to_datetime_util():
-    datetime_as_string: str = "2021-06-02 15:07:55"
-
-    assert isinstance(api_helper.to_datetime(datetime_as_string), datetime)
-
-
 @pytest.mark.asyncio
 async def test_measure_time(caplog):
     async def func():
         await asyncio.sleep(0.5)
 
     with caplog.at_level(logging.INFO):
-        await api_helper.measure_time(LOGGER).__call__(func)()
+        await measure_time(LOGGER).__call__(func)()
 
     assert "Function `func` executed for" in caplog.text

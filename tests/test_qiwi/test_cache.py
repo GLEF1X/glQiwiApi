@@ -5,6 +5,7 @@ from typing import Dict
 import pytest
 
 from glQiwiApi import QiwiWrapper
+from glQiwiApi.types import TransactionType
 
 pytestmark = pytest.mark.asyncio
 
@@ -24,10 +25,10 @@ class TestCache:
         "payload",
         [
             {"rows": 50},
-            {"rows": 50, "operation": "IN"},
+            {"rows": 50, "operation": TransactionType.IN},
             {
                 "rows": 50,
-                "operation": "IN",
+                "operation": TransactionType.IN,
                 "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
                 "end_date": datetime.datetime.now(),
             },
@@ -50,7 +51,10 @@ class TestCache:
         "payload1,payload2",
         [
             ({"rows": 50}, {"rows": 40}),
-            ({"rows": 50, "operation": "IN"}, {"rows": 50, "operation": "OUT"}),
+            (
+                {"rows": 50, "operation": TransactionType.IN},
+                {"rows": 50, "operation": TransactionType.OUT},
+            ),
         ],
     )
     async def test_uncached(self, api: QiwiWrapper, payload1: dict, payload2: dict):
@@ -65,10 +69,10 @@ class TestCache:
         "payload",
         [
             {"rows": 50},
-            {"rows": 50, "operation": "IN"},
+            {"rows": 50, "operation": TransactionType.IN},
             {
                 "rows": 50,
-                "operation": "IN",
+                "operation": TransactionType.IN,
                 "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
                 "end_date": datetime.datetime.now(),
             },

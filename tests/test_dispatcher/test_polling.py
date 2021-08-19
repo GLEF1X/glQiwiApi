@@ -24,7 +24,7 @@ txn = Transaction(
     provider=Provider(),
     commission=Sum(amount=999, currency=643),
     currencyRate=643,
-    type="OUT",
+    type=types.TransactionType.OUT,
 )
 
 
@@ -33,11 +33,11 @@ class StubQiwiWrapper(QiwiWrapper):
         return object().__new__(cls)
 
     async def transactions(
-            self,
-            rows_num: int = 50,
-            operation: str = "ALL",
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
+        self,
+        rows: int = 50,
+        operation: str = "ALL",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         return [txn]
 
@@ -52,7 +52,7 @@ async def api_fixture():
 
 async def _on_startup_callback(api: QiwiWrapper):
     await asyncio.sleep(1)
-    await api.dp.feed_event(txn)
+    await api.dispatcher.process_event(txn)
 
 
 class TestPolling:

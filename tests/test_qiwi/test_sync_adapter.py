@@ -9,7 +9,16 @@ import pytest
 
 from glQiwiApi import SyncAdaptedQiwi, APIError
 from glQiwiApi.core.synchronous.model_adapter import AdaptedBill
-from glQiwiApi.types import Transaction, Limit, Card, QiwiAccountInfo, Statistic, Commission, CrossRate
+from glQiwiApi.types import (
+    Transaction,
+    Limit,
+    Card,
+    QiwiAccountInfo,
+    Statistic,
+    Commission,
+    CrossRate,
+    TransactionType,
+)
 
 
 @pytest.fixture(name="api_adapter")
@@ -68,10 +77,10 @@ def test_p2p_bill_check(api_adapter: SyncAdaptedQiwi, params):
     "payload",
     [
         {"rows": 50},
-        {"rows": 50, "operation": "IN"},
+        {"rows": 50, "operation": TransactionType.IN},
         {
             "rows": 50,
-            "operation": "IN",
+            "operation": TransactionType.IN,
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
         },
@@ -84,12 +93,13 @@ def test_transactions(api_adapter: SyncAdaptedQiwi, payload):
 
 @pytest.mark.parametrize("rows", [5, 10, 50])
 def test_get_bills(api_adapter: SyncAdaptedQiwi, rows: int):
-    bills = api_adapter.get_bills(rows_num=rows)
+    bills = api_adapter.retrieve_bills(rows=rows)
     assert isinstance(bills, list)
 
 
 @pytest.mark.parametrize(
-    "payload", [{"transaction_id": 21601937643, "transaction_type": "OUT"}]
+    "payload",
+    [{"transaction_id": 21601937643, "transaction_type": TransactionType.OUT}],
 )
 def test_transaction_info(api_adapter: SyncAdaptedQiwi, payload: dict):
     res = api_adapter.transaction_info(**payload)
@@ -105,7 +115,7 @@ def test_get_limits(api_adapter: SyncAdaptedQiwi):
     res = api_adapter.get_limits()
 
     assert isinstance(res, dict)
-    assert all(isinstance(t, Limit) for t in res.values())
+    assert all([isinstance(t, list) for t in res.values()])
 
 
 def test_get_list_of_cards(api_adapter: SyncAdaptedQiwi):
@@ -113,17 +123,9 @@ def test_get_list_of_cards(api_adapter: SyncAdaptedQiwi):
     assert all(isinstance(c, Card) for c in result)
 
 
-def test_get_receipt_and_save(api_adapter: SyncAdaptedQiwi, path_to_dir: pathlib.Path):
-    from ..types.dataset import RECEIPT_FILE_NAME
-
-    file_name = RECEIPT_FILE_NAME
-    payload = {
-        "transaction_id": 21601937643,
-        "transaction_type": "OUT",
-        "dir_path": path_to_dir,
-    }
-    api_adapter.get_receipt(**payload, file_name=file_name)
-    assert (path_to_dir / (file_name + ".pdf")).is_file()
+def test_get_receipt(api_adapter: SyncAdaptedQiwi):
+    payload = {"transaction_id": 21601937643, "transaction_type": TransactionType.OUT}
+    assert isinstance(api_adapter.get_receipt(**payload), bytes)
 
 
 def test_account_info(api_adapter: SyncAdaptedQiwi):
@@ -141,28 +143,28 @@ def test_account_info(api_adapter: SyncAdaptedQiwi):
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "IN",
+            "operation": TransactionType.IN,
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "OUT",
+            "operation": TransactionType.OUT,
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "ALL",
+            "operation": TransactionType.ALL,
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "ALL",
+            "operation": TransactionType.ALL,
             "sources": ["QW_RUB"],
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "ALL",
+            "operation": TransactionType.ALL,
             "sources": ["QW_RUB", "QW_EUR", "QW_USD"],
         },
     ],

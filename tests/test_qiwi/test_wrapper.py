@@ -1,12 +1,13 @@
 import datetime
 import pathlib
 import uuid
-from typing import Union
+from typing import Union, List
 
 import pytest
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types, InvalidData
+from glQiwiApi.types import TransactionType
 
 pytestmark = pytest.mark.asyncio
 
@@ -32,10 +33,10 @@ async def test_get_balance(api: QiwiWrapper):
     "payload",
     [
         {"rows": 50},
-        {"rows": 50, "operation": "IN"},
+        {"rows": 50, "operation": TransactionType.IN},
         {
             "rows": 50,
-            "operation": "IN",
+            "operation": TransactionType.IN,
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
         },
@@ -49,7 +50,8 @@ async def test_transactions(api: QiwiWrapper, payload: dict):
 
 
 @pytest.mark.parametrize(
-    "payload", [{"transaction_id": 21601937643, "transaction_type": "OUT"}]
+    "payload",
+    [{"transaction_id": 21601937643, "transaction_type": TransactionType.OUT}],
 )
 async def test_transaction_info(api: QiwiWrapper, payload: dict):
     async with api:
@@ -68,10 +70,14 @@ async def test_identification(api: QiwiWrapper):
 @pytest.mark.parametrize(
     "payload",
     [
-        {"transaction_type": "OUT", "amount": 1},
-        {"transaction_type": "OUT", "amount": 1, "sender": "+380985272064"},
+        {"transaction_type": TransactionType.OUT, "amount": 1},
         {
-            "transaction_type": "OUT",
+            "transaction_type": TransactionType.OUT,
+            "amount": 1,
+            "sender": "+380985272064",
+        },
+        {
+            "transaction_type": TransactionType.OUT,
             "amount": 1,
             "sender": "+380985272064",
             "comment": "+comment+",
@@ -89,7 +95,7 @@ async def test_get_limits(api: QiwiWrapper):
         result = await api.get_limits()
 
     assert isinstance(result, dict)
-    assert all(isinstance(t, types.Limit) for t in result.values())
+    assert all([isinstance(t, list) for t in result.values()])
 
 
 async def test_get_list_of_cards(api: QiwiWrapper):
@@ -98,18 +104,12 @@ async def test_get_list_of_cards(api: QiwiWrapper):
     assert all(isinstance(c, types.Card) for c in result)
 
 
-async def test_get_receipt_and_save(api: QiwiWrapper, path_to_dir: pathlib.Path):
-    from ..types.dataset import RECEIPT_FILE_NAME
-
-    file_name = RECEIPT_FILE_NAME
-    payload = {
-        "transaction_id": 21601937643,
-        "transaction_type": "OUT",
-        "dir_path": path_to_dir,
-    }
+async def test_get_receipt(api: QiwiWrapper):
+    payload = {"transaction_id": 21601937643, "transaction_type": TransactionType.OUT}
     async with api:
-        await api.get_receipt(**payload, file_name=file_name)  # type: ignore
-    assert (path_to_dir / (file_name + ".pdf")).is_file()
+        response = await api.get_receipt(**payload)  # type: ignore
+
+    assert isinstance(response, bytes)
 
 
 async def test_account_info(api: QiwiWrapper):
@@ -129,28 +129,28 @@ async def test_account_info(api: QiwiWrapper):
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "IN",
+            "operation": TransactionType.IN,
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "OUT",
+            "operation": TransactionType.OUT,
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "ALL",
+            "operation": TransactionType.ALL,
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "ALL",
+            "operation": TransactionType.ALL,
             "sources": ["QW_RUB"],
         },
         {
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "operation": "ALL",
+            "operation": TransactionType.ALL,
             "sources": ["QW_RUB", "QW_EUR", "QW_USD"],
         },
     ],
@@ -273,10 +273,10 @@ async def test_register_webhook(api: QiwiWrapper):
 
 class TestFail:
     @pytest.mark.parametrize("rows", [-5, 51, 0])
-    async def test_transactions_fail(self, api: QiwiWrapper, rows_num: int):
+    async def test_transactions_fail(self, api: QiwiWrapper, rows: int):
         async with api:
             with pytest.raises(InvalidData):
-                await api.transactions(rows_num=rows_num)
+                await api.transactions(rows=rows)
 
     @pytest.mark.parametrize(
         "start_date,end_date",
@@ -294,8 +294,8 @@ class TestFail:
     async def test_fetch_statistic_fail(
         self,
         api: QiwiWrapper,
-        start_date: Union[datetime.datetime, datetime.timedelta],
-        end_date: Union[datetime.datetime, datetime.timedelta],
+        start_date: datetime.datetime,
+        end_date: datetime.datetime,
     ):
         async with api:
             with pytest.raises(ValueError):

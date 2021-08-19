@@ -69,11 +69,11 @@ async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
     "payload",
     [
         {"amount": 2},
-        {"amount": 2, "transaction_type": "out"},
-        {"amount": 2, "transaction_type": "out", "rows": 20},
+        {"amount": 2, "operation_type": "out"},
+        {"amount": 2, "operation_type": "out", "rows": 20},
         {
             "amount": 2,
-            "transaction_type": "out",
+            "operation_type": "out",
             "rows": 20,
             "recipient": "4100116633099701",
         },
@@ -91,5 +91,5 @@ async def test_send_and_check_txn(api: YooMoneyAPI):
     async with api:
         payload = {"amount": 2, "comment": "unit_test"}
         await api.send(to_account="4100116633099701", **payload)
-        answer = await api.check_transaction(**payload, transaction_type="out")
+        answer = await api.check_transaction(**payload, operation_type="out")
     assert answer is True

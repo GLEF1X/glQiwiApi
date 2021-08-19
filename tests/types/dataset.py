@@ -49,26 +49,20 @@ NOTIFICATION_RAW_DATA = """{
   "version": "1"
 }"""
 
-WEBHOOK_RAW_DATA = """{
-    "hash": "50779a03d90c4fa60ac44dfd158dbceec0e9c57fa4cf4f5298450fdde1868945",
-    "hookId": "f57f95e2-149f-4278-b2cb-4114bc319727",
-    "messageId": "f9a197a8-26b6-4d42-aac4-d86b789c373c",
-    "payment": {"account": "thedandod",
-                 "comment": "",
-                 "date": "2018-05-18T16:05:15+03:00",
-                 "errorCode": "0",
-                 "personId": 79254914194,
-                 "provider": 25549,
-                 "signFields": "sum.currency,sum.amount,type,account,txnId",
-                 "status": "WAITING",
-                 "sum": {"amount": 1.73, "currency": 643},
-                 "total": {"amount": 1.73, "currency": 643},
-                 "txnId": "13117338074",
-                 "type": "OUT"},
-    "test": false,
-    "version": "1.0.0"
-    }
-    """
+BASE64_WEBHOOK_KEY = "JcyVhjHCvHQwufz+IHXolyqHgEc5MoayBfParl6Guoc="
+
+WEBHOOK_RAW_DATA = """{"messageId": "7814c49d-2d29-4b14-b2dc-36b377c76156",
+                    "hookId": "5e2027d1-f5f3-4ad1-b409-058b8b8a8c22",
+                    "payment": {"txnId": "13353941550", "date": "2018-06-27T13:39:00+03:00", "type": "IN",
+                                "status": "SUCCESS",
+                                "errorCode": "0", "personId": 78000008000, "account": "+79165238345", "comment": "",
+                                "provider": 7,
+                                "sum": {"amount": 1, "currency": 643}, "commission": {"amount": 0, "currency": 643},
+                                "total": {"amount": 1, "currency": 643},
+                                "signFields": "sum.currency,sum.amount,type,account,txnId"},
+                    "hash": "76687ffe5c516c793faa46fafba0994e7ca7a6d735966e0e0c0b65eaa43bdca0",
+                    "version": "1.0.0",
+                    "test": false}"""
 
 TXN_RAW_DATA = """{
     "txnId":9309,
@@ -111,5 +105,3 @@ TXN_RAW_DATA = """{
 """
 
 TEMP_DIRECTORY_NAME: str = "temp"
-
-RECEIPT_FILE_NAME: str = "receipt"
