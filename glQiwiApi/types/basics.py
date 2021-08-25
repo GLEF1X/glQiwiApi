@@ -85,4 +85,4 @@ class Cached:
     method: Optional[Any]
 
 
-__all__ = ["Sum", "OptionalSum", "Type", "Cached", "Attributes"]
+__all__ = ("Sum", "OptionalSum", "Type", "Cached", "Attributes", "HashableOptionalSum")

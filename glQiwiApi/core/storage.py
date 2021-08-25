@@ -4,7 +4,7 @@ import typing
 from glQiwiApi.core import BaseStorage
 from glQiwiApi.core.constants import UNCACHED
 from glQiwiApi.types.basics import Cached, Attributes
-from glQiwiApi.utils import errors
+from glQiwiApi.utils import exceptions
 
 
 class Storage(BaseStorage):
@@ -87,7 +87,7 @@ class Storage(BaseStorage):
                 method=kwargs.get("method"),
             )
         self.clear(value, force=True)
-        raise errors.InvalidCachePayload()
+        raise exceptions.InvalidCachePayload()
 
     def update_data(self, obj_to_cache: typing.Any, key: typing.Any) -> None:
         """

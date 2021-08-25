@@ -35,7 +35,7 @@ from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.core.dispatcher.webhooks.config import Path
 from glQiwiApi.core.synchronous.decorator import run_forever_safe
 from glQiwiApi.types import Transaction
-from glQiwiApi.utils.errors import NoUpdatesToExecute, BadCallback
+from glQiwiApi.utils.exceptions import NoUpdatesToExecute, BadCallback
 
 __all__ = ["start_webhook", "start_polling"]
 
@@ -57,7 +57,7 @@ def _parse_timeout(timeout: Union[float, int]) -> float:
 
 
 async def _inspect_and_execute_callback(
-    client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
+        client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
 ) -> None:
     if inspect.iscoroutinefunction(callback):
         await callback(client)
@@ -73,9 +73,9 @@ def _check_callback(callback: Callable[[QiwiWrapper], Any]) -> None:
 
 
 def _setup_callbacks(
-    executor: BaseExecutor,
-    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        executor: BaseExecutor,
+        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
 ) -> None:
     """
     Function, which setup callbacks and set it to dispatcher object
@@ -91,17 +91,17 @@ def _setup_callbacks(
 
 
 def start_webhook(
-    client: QiwiWrapper,
-    *,
-    host: str = "localhost",
-    port: int = 8080,
-    path: Optional[Path] = None,
-    on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-    tg_app: Optional[TelegramWebhookProxy] = None,
-    app: Optional["web.Application"] = None,
-    ssl_context: Optional[SSLContext] = None,
-    loop: Optional[asyncio.AbstractEventLoop] = None,
+        client: QiwiWrapper,
+        *,
+        host: str = "localhost",
+        port: int = 8080,
+        path: Optional[Path] = None,
+        on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
+        tg_app: Optional[TelegramWebhookProxy] = None,
+        app: Optional["web.Application"] = None,
+        ssl_context: Optional[SSLContext] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Blocking function that listens for webhooks
@@ -126,14 +126,14 @@ def start_webhook(
 
 
 def start_polling(
-    client: QiwiWrapper,
-    *,
-    skip_updates: bool = False,
-    timeout: Union[float, int] = 5,
-    on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-    on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
-    tg_app: Optional[BaseProxy] = None,
-    loop: Optional[asyncio.AbstractEventLoop] = None,
+        client: QiwiWrapper,
+        *,
+        skip_updates: bool = False,
+        timeout: Union[float, int] = 5,
+        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        tg_app: Optional[BaseProxy] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Setup for long-polling mode. Support only `glQiwiApi.types.Transaction` as event.
@@ -159,10 +159,10 @@ def start_polling(
 
 class BaseExecutor(abc.ABC):
     def __init__(
-        self,
-        client: QiwiWrapper,
-        tg_app: Optional[BaseProxy],
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+            self,
+            client: QiwiWrapper,
+            tg_app: Optional[BaseProxy],
+            loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         if loop is not None:
             self._loop = loop  # pragma: no cover
@@ -239,12 +239,12 @@ class BaseExecutor(abc.ABC):
 
 class PollingExecutor(BaseExecutor):
     def __init__(
-        self,
-        client: QiwiWrapper,
-        tg_app: Optional[BaseProxy],
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        timeout: Union[float, int] = DEFAULT_TIMEOUT,
-        skip_updates: bool = False,
+            self,
+            client: QiwiWrapper,
+            tg_app: Optional[BaseProxy],
+            loop: Optional[asyncio.AbstractEventLoop] = None,
+            timeout: Union[float, int] = DEFAULT_TIMEOUT,
+            skip_updates: bool = False,
     ) -> None:
         """
 
@@ -323,46 +323,64 @@ class PollingExecutor(BaseExecutor):
         await asyncio.gather(*tasks)
 
     def _set_exception_timeout(
-        self, exception_timeout: Union[int, float] = TIMEOUT_IF_EXCEPTION
+            self, exception_timeout: Union[int, float] = TIMEOUT_IF_EXCEPTION
     ) -> None:
         self._timeout = exception_timeout
 
     def _set_default_timeout(
-        self, default_timeout: Union[int, float] = DEFAULT_TIMEOUT
+            self, default_timeout: Union[int, float] = DEFAULT_TIMEOUT
     ) -> None:
         self._timeout = default_timeout
 
 
 class WebhookExecutor(BaseExecutor):
-    def _add_application_into_client_data(self, application: web.Application) -> None:
-        self.client[DEFAULT_APPLICATION_KEY] = application
+
+    def __init__(self,
+                 client: QiwiWrapper,
+                 tg_app: Optional[BaseProxy],
+                 loop: Optional[asyncio.AbstractEventLoop] = None):
+        super().__init__(client, tg_app, loop)
+        self._application = web.Application()
+
+    def _add_application_into_client_data(self) -> None:
+        self.client[DEFAULT_APPLICATION_KEY] = self._application
 
     def start_webhook(
-        self,
-        *,
-        host: str = "localhost",
-        port: int = 8080,
-        path: Optional[Path] = None,
-        app: Optional[web.Application] = None,
-        ssl_context: Optional[SSLContext] = None,
+            self,
+            *,
+            host: str = "localhost",
+            port: int = 8080,
+            path: Optional[Path] = None,
+            app: Optional[web.Application] = None,
+            ssl_context: Optional[SSLContext] = None,
     ) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
-        application = app or web.Application()
-        hook_config, key = loop.run_until_complete(self.client.bind_webhook())
-        application = server.configure_app(
+        if app is not None:
+            self._application = app
+        self._application = server.configure_app(
             dispatcher=self._dispatcher,
-            app=application,
+            app=self._application,
             path=path,
             secret_key=self.client.secret_p2p,
-            base64_key=key,
             tg_app=self._tg_app,
         )
-        self._add_application_into_client_data(application)
+        self._add_application_into_client_data()
         try:
             loop.run_until_complete(self.welcome())
-            web.run_app(application, host=host, port=port, ssl_context=ssl_context)
+            web.run_app(self._application, host=host, port=port, ssl_context=ssl_context)
         except (KeyboardInterrupt, SystemExit):
             # Allow to graceful shutdown
             pass
         finally:
             self._on_shutdown()
+
+    async def welcome(self) -> None:
+        """
+        We have to override `welcome` method to gracefully get webhook base64 encoded key to decode webhook entities.
+        It allow you to bind webhook in on_startup callback and don't do it separately
+        """
+        await super(WebhookExecutor, self).welcome()
+        # call to `bind_webhook` without args gives us data about
+        # the current webhook config and base64 encoded key to decode webhook entities
+        hook_config, base64_key = await self.client.bind_webhook()
+        self._application["_base64_key"] = base64_key

@@ -3,10 +3,6 @@ from __future__ import annotations
 import ipaddress
 import typing
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
 
 from glQiwiApi.builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
 

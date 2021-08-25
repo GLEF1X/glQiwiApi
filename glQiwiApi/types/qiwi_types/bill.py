@@ -7,9 +7,9 @@ from typing import Optional, Union, Dict, Any
 
 from pydantic import Field, Extra
 
+from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.types.basics import OptionalSum, HashableOptionalSum
-from glQiwiApi.utils.errors import WebhookSignatureUnverified
 
 
 class Customer(HashableBase):
@@ -61,6 +61,7 @@ class Bill(HashableBase):
 
     class Config:
         extra = Extra.allow
+        allow_mutation = True
 
     @property
     async def paid(self) -> bool:
@@ -96,20 +97,15 @@ class Notification(HashableBase):
     """Object: Notification"""
 
     version: str = Field(..., alias="version")
-    bill: Optional[Bill] = Field(default=None, alias="bill")
+    bill: Bill = Field(..., alias="bill")
 
     def __repr__(self) -> str:
-        if isinstance(self.bill, Bill):
-            return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
-        return f"Test notification. QIWI API version -> {self.version}"
+        return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
 
     def verify_signature(self, sha256_signature: str, webhook_base64_key: str) -> None:
-        if self.bill is None:
-            # we do nothing and just return, because it's test notification
-            return
-
         webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
         bill = self.bill
+
         invoice_params = f"{bill.amount.currency}|{bill.amount.value}|{bill.bill_id}|{bill.site_id}|{bill.status.value}"
         generated_signature = hmac.new(
             webhook_key, invoice_params.encode("utf-8"), hashlib.sha256

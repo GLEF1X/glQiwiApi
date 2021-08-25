@@ -8,7 +8,7 @@ from pydantic import Field, root_validator
 
 from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.types.basics import HashableSum
-from glQiwiApi.utils.errors import WebhookSignatureUnverified
+from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 
 
 def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[Any]) -> Any:
@@ -63,6 +63,10 @@ class WebHook(HashableBase):
 
     signature: str
     """NOT API field, this signature is generating in `webhook_signature_collector`"""
+
+    @property
+    def is_testable(self) -> bool:
+        return self.test and not self.payment
 
     @root_validator(pre=True)
     def webhook_signature_collector(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:

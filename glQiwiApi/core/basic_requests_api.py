@@ -14,7 +14,7 @@ from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core import AbstractParser
 from glQiwiApi.core.constants import DEFAULT_TIMEOUT
-from glQiwiApi.utils.errors import APIError
+from glQiwiApi.utils.exceptions import APIError
 from glQiwiApi.utils.payload import check_result
 
 _ProxyBasic = Union[str, Tuple[str, aiohttp.BasicAuth]]

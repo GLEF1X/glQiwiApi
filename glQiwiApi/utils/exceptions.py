@@ -13,10 +13,6 @@ class NetworkError(Exception):
     pass
 
 
-class RequestAuthError(Exception):
-    pass
-
-
 class InvalidData(TypeError):
     pass
 
@@ -25,15 +21,7 @@ class NoUpdatesToExecute(Exception):
     pass
 
 
-class StateError(Exception):
-    pass
-
-
 class InvalidCachePayload(Exception):
-    pass
-
-
-class WebhookSignatureUnverified(Exception):
     pass
 
 
@@ -52,11 +40,11 @@ class ExceptionTraceback(BaseModel):
 
 class APIError(Exception):
     def __init__(
-        self,
-        message: Optional[str],
-        status_code: Union[str, int],
-        additional_info: Optional[str] = None,
-        traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
+            self,
+            message: Optional[str],
+            status_code: Union[str, int],
+            additional_info: Optional[str] = None,
+            traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(APIError, self).__init__()
         self.message = message
@@ -64,7 +52,7 @@ class APIError(Exception):
         self.additional_info = additional_info
         self.traceback_info = traceback_info
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         resp = "code={sc} doc={msg}, additional_info={info}" ""
         return resp.format(
             sc=self.status_code, msg=self.message, info=self.additional_info
@@ -119,9 +107,7 @@ __all__ = (
     "CantParseUrl",
     "APIError",
     "NoUpdatesToExecute",
-    "StateError",
     "NetworkError",
     "InvalidCachePayload",
     "BadCallback",
-    "WebhookSignatureUnverified",
 )

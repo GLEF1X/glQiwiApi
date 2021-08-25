@@ -8,6 +8,8 @@ from glQiwiApi.types.base import Base
 
 class AdaptedBill(Bill):
     def check(self) -> bool:  # type: ignore
+        if self.sync_client is None:
+            raise RuntimeError("No synchronous client found in context")
         return self.sync_client.check_p2p_bill_status(bill_id=self.bill_id) == "PAID"
 
 

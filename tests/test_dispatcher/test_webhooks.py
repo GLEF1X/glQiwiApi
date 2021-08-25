@@ -31,10 +31,10 @@ async def test_bill_webhook_handler(
         "glQiwiApi.core.dispatcher.webhooks.views.bill_view.QiwiBillWebView._validate_event_signature",
         return_value=None,
     )
-    bill_response = await client.post(
+    response = await client.post(
         path=DEFAULT_QIWI_BILLS_WEBHOOK_PATH, json=NOTIFICATION_RAW_DATA
     )
-    assert bill_response.status == 200
+    assert response.status == 200
     assert bill_event.is_set()
 
 
@@ -49,10 +49,10 @@ async def test_transaction_handler(
         "glQiwiApi.core.dispatcher.webhooks.views.transaction_view.QiwiWebHookWebView.validate_ip",
         return_value=None,
     )
-    transaction_response = await client.post(
+    response = await client.post(
         path=DEFAULT_QIWI_WEBHOOK_PATH, json=WEBHOOK_RAW_DATA
     )
-    assert transaction_response.status == 200
+    assert response.status == 200
 
 
 async def test_check_ip_address():

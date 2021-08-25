@@ -11,16 +11,15 @@ from .core import (
     execute_async_as_sync,
 )
 from .qiwi import QiwiWrapper, QiwiMaps
-from .utils.errors import (
+from .types.exceptions import WebhookSignatureUnverified
+from .utils.exceptions import (
     InvalidData,
     CantParseUrl,
     NetworkError,
     APIError,
     NoUpdatesToExecute,
-    StateError,
     InvalidCachePayload,
     BadCallback,
-    WebhookSignatureUnverified,
 )
 from .yoo_money import YooMoneyAPI
 
@@ -51,7 +50,6 @@ __all__ = (
     "CantParseUrl",
     "APIError",
     "NoUpdatesToExecute",
-    "StateError",
     "NetworkError",
     "InvalidCachePayload",
     "BadCallback",

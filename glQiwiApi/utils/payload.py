@@ -22,14 +22,14 @@ from aiohttp import RequestInfo
 from pydantic import BaseModel
 
 from glQiwiApi import types
-from glQiwiApi.utils.format_casts import datetime_to_str_in_iso8601, datetime_to_utc
+from glQiwiApi.utils.format_casts import datetime_to_iso8601, datetime_to_utc
 
 try:
     import orjson
 except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
     import json as orjson  # type: ignore
 
-from glQiwiApi.utils import errors
+from glQiwiApi.utils import exceptions
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -69,7 +69,7 @@ def check_result(
     if status_code == HTTPStatus.OK:
         return result_json
 
-    raise errors.APIError(
+    raise exceptions.APIError(
         message=error_messages[status_code],
         status_code=status_code,
         traceback_info=request_info,
@@ -99,8 +99,8 @@ def check_dates(
         if (end_date - start_date).total_seconds() > 0:
             payload_data.update(
                 {
-                    "startDate": datetime_to_str_in_iso8601(start_date),
-                    "endDate": datetime_to_str_in_iso8601(end_date),
+                    "startDate": datetime_to_iso8601(start_date),
+                    "endDate": datetime_to_iso8601(end_date),
                 }
             )
         else:

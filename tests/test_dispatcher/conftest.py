@@ -5,7 +5,6 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp.test_utils import TestServer, BaseTestServer
 
-from glQiwiApi.core import QiwiWebHookWebView, QiwiBillWebView
 from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.types import Notification, WebHook
@@ -85,4 +84,4 @@ async def app_fixture(dp: Dispatcher, add_handlers):
     app["bill_event"] = _bill_event
     app["txn_event"] = _txn_event
     app["_base64_key"] = BASE64_WEBHOOK_KEY
-    return server.configure_app(dp, app=app, base64_key=BASE64_WEBHOOK_KEY)
+    return server.configure_app(dp, app=app)

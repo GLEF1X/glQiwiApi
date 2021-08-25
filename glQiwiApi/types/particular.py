@@ -3,7 +3,7 @@ from typing import Optional, Any, Dict
 
 from aiohttp.typedefs import RawHeaders
 
-from glQiwiApi.utils.errors import NetworkError
+from glQiwiApi.utils.exceptions import NetworkError
 
 
 @dataclass

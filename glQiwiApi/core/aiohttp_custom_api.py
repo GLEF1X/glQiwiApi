@@ -7,7 +7,7 @@ from glQiwiApi.core.abstracts import AbstractRouter
 from glQiwiApi.core.basic_requests_api import HttpXParser, _ProxyType
 from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.core.storage import Storage
-from glQiwiApi.utils import errors
+from glQiwiApi.utils import exceptions
 from glQiwiApi.utils.payload import make_payload
 
 
@@ -114,7 +114,7 @@ class RequestManager(HttpXParser):
         try:
             resolved = self._cache.convert_to_cache(result=body, kwargs=kwargs)
             self._cache[kwargs["url"]] = resolved
-        except errors.InvalidCachePayload:
+        except exceptions.InvalidCachePayload:
             pass
 
     @property

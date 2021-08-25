@@ -13,7 +13,7 @@ def datetime_to_utc(obj: datetime) -> str:
     return iso_format_date.replace(" ", "T") + "Z"
 
 
-def datetime_to_str_in_iso8601(obj: Optional[datetime]) -> str:
+def datetime_to_iso8601(obj: Optional[datetime]) -> str:
     """
     Converts a date to a standard format for API's
 

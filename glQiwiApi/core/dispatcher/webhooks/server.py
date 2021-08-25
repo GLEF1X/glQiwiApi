@@ -17,12 +17,10 @@ from glQiwiApi.core.dispatcher.webhooks.views.transaction_view import QiwiWebHoo
 
 
 def configure_transaction_view(
-    app: web.Application,
-    base64_key: typing.Optional[str],
-    dispatcher: Dispatcher,
-    path: typing.Optional[Path] = None,
+        app: web.Application,
+        dispatcher: Dispatcher,
+        path: typing.Optional[Path] = None,
 ) -> None:
-    app["_base64_key"] = base64_key
     app[QiwiWebHookWebView.app_key_check_ip] = check_ip
     app[QiwiWebHookWebView.app_key_dispatcher] = dispatcher
     if isinstance(path, Path):
@@ -35,10 +33,10 @@ def configure_transaction_view(
 
 
 def configure_bill_view(
-    app: web.Application,
-    secret_key: typing.Optional[str],
-    dispatcher: Dispatcher,
-    path: typing.Optional[Path] = None,
+        app: web.Application,
+        secret_key: typing.Optional[str],
+        dispatcher: Dispatcher,
+        path: typing.Optional[Path] = None,
 ) -> None:
     app["_secret_key"] = secret_key
     app[QiwiBillWebView.app_key_check_ip] = check_ip
@@ -55,12 +53,11 @@ def configure_bill_view(
 
 
 def configure_app(
-    dispatcher: Dispatcher,
-    app: web.Application,
-    path: typing.Optional[Path] = None,
-    secret_key: typing.Optional[str] = None,
-    base64_key: typing.Optional[str] = None,
-    tg_app: typing.Optional[BaseProxy] = None,
+        dispatcher: Dispatcher,
+        app: web.Application,
+        path: typing.Optional[Path] = None,
+        secret_key: typing.Optional[str] = None,
+        tg_app: typing.Optional[BaseProxy] = None,
 ) -> web.Application:
     """
     Entirely configures the web app for webhooks
@@ -69,12 +66,11 @@ def configure_app(
     :param app: aiohttp.web.Application
     :param path: Path obj, contains two paths
     :param secret_key: secret p2p key
-    :param base64_key: Base64-encoded webhook key
     :param tg_app:
     """
 
     configure_bill_view(app, secret_key, dispatcher, path)
-    configure_transaction_view(app, base64_key, dispatcher, path)
+    configure_transaction_view(app, dispatcher, path)
     _setup_tg_proxy(tg_app, app)
     return app
 

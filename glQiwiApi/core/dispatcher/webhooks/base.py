@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 import abc
-from typing import Optional, Generic, TypeVar, TYPE_CHECKING, Tuple, cast, List, Any
+from typing import Optional, Generic, TypeVar, TYPE_CHECKING, Tuple, cast, Any, Type
 
 from aiohttp import web
+from pydantic import ValidationError
 
 from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.webhooks.collision_detectors import HashBasedCollisionDetector, \
+    CollisionError
 
 if TYPE_CHECKING:  # pragma: no cover
     from glQiwiApi.types.base import HashableBase  # pragma: no cover  # noqa
 
 Event = TypeVar("Event", bound="HashableBase")
-
-
-class UpdateHasAlreadyBeenProcessed(Exception):
-    pass
 
 
 class BaseWebHookView(web.View, Generic[Event]):
@@ -31,11 +30,36 @@ class BaseWebHookView(web.View, Generic[Event]):
     app_key_dispatcher: Optional[str] = None
     """app_key_handler_dispatcher store Dispatcher instance to feed events to handlers"""
 
-    _already_processed_object_hashes: List[int] = []
+    collision_detector: HashBasedCollisionDetector[Event] = HashBasedCollisionDetector()
+    """
+    QIWI API can send the same update twice or more, so we need to avoid this problem anyway.
+    Also, you can override it with redis usage or more advanced hashing.
+    """
 
-    @abc.abstractmethod
+    _event_type: Type[Event]
+    """Need to be overriden"""
+
     async def parse_update(self) -> Event:
-        raise NotImplementedError
+        """Parse raw update and return pydantic model"""
+        data = await self._json_body()
+        try:
+            if isinstance(data, str):
+                return self._event_type.parse_raw(data)
+            elif isinstance(data, dict):
+                return self._event_type.parse_obj(data)
+            else:
+                raise ValidationError
+        except ValidationError:
+            raise web.HTTPBadRequest()
+
+    async def _json_body(self) -> Any:
+        try:
+            import orjson as json
+        except ImportError:
+            import json  # type: ignore
+
+        text = await self.request.text()
+        return json.loads(text)
 
     def check_ip(self) -> Tuple[Optional[str], bool]:
         """
@@ -90,8 +114,9 @@ class BaseWebHookView(web.View, Generic[Event]):
         event = await self.parse_update()
 
         try:
-            self.avoid_multiply_events_collision(event)
-        except UpdateHasAlreadyBeenProcessed:
+            self.collision_detector.remember_processed_object(event)
+        except CollisionError:
+            self.dispatcher.logger.debug("Detect collision on event")
             return self.ok_response()
 
         self._validate_event_signature(event)
@@ -118,17 +143,3 @@ class BaseWebHookView(web.View, Generic[Event]):
                 " Please, override `app_key_dispatcher` attribute"
             )
         return cast(Dispatcher, self.request.app[self.app_key_dispatcher])
-
-    def avoid_multiply_events_collision(self, event: Event) -> Any:
-        """
-        QIWI API can send the same update twice or more, so we need to avoid this problem anyway.
-        Also, you can override it with redis usage or more advanced hashing.
-        """
-        event_hash = hash(event)
-        if any(
-            event_hash == processed_hash
-            for processed_hash in self._already_processed_object_hashes
-        ):
-            raise UpdateHasAlreadyBeenProcessed()
-
-        self._already_processed_object_hashes.append(event_hash)

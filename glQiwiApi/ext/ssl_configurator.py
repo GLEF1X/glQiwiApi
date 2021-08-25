@@ -7,7 +7,7 @@ from datetime import timedelta, datetime
 from io import BytesIO
 from typing import cast, TYPE_CHECKING, Optional, Iterable, Union, Any, List
 
-from glQiwiApi.utils.errors import StateError
+from glQiwiApi.ext.exceptions import StateError
 
 if TYPE_CHECKING:
     try:

@@ -28,7 +28,7 @@ from glQiwiApi.utils.payload import (
     parse_amount,
     check_transactions_payload,
 )
-from glQiwiApi.utils.errors import CantParseUrl, InvalidData
+from glQiwiApi.utils.exceptions import CantParseUrl, InvalidData
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
