@@ -1,4 +1,4 @@
-name: glQiwiApi
+name: tests and linters
 
 on:
   push:
