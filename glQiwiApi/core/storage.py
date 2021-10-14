@@ -1,153 +1,224 @@
+from __future__ import annotations
+
+import abc
+import asyncio
+import http
+import json
 import time
-import typing
+from asyncio import Task
+from dataclasses import dataclass
+from typing import Any, Optional, Dict, Union, Tuple, List
 
-from glQiwiApi.core import BaseStorage
-from glQiwiApi.core.constants import UNCACHED
-from glQiwiApi.types.basics import Cached, Attributes
-from glQiwiApi.utils import exceptions
+UNCACHED = ("https://api.qiwi.com/partner/bill", "/sinap/api/v2/terms/")
+
+INFINITE = float("inf")
+
+ADD_TIME_PLACEHOLDER = "add_time"
+VALUE_PLACEHOLDER = "value"
 
 
-class Storage(BaseStorage):
-    """
-    Deal with cache and data. Easy to use
+class CacheExpired(Exception):
+    pass
 
-    >>> storage = Storage(cache_time=5)
-    >>> storage["hello_world"] = 5
-    >>> print(storage["hello_world"])  # print 5
 
-    """
+class ContainsNonCacheable(Exception):
+    pass
 
-    # Доступные критерии, по которым проходит валидацию кэш
-    _validator_criteria = ("params", "json", "data", "headers")
 
-    __slots__ = ("data", "_cache_time")
+def _embed_cache_time(**kwargs) -> Dict[Any, Any]:
+    return {
+        key: {
+            VALUE_PLACEHOLDER: value,
+            ADD_TIME_PLACEHOLDER: time.monotonic()
+        }
+        for key, value in kwargs.items()
+    }
 
-    def __init__(self, *, cache_time: typing.Union[float, int]) -> None:
-        """
 
-        :param cache_time: cache time in seconds
-        """
+class Payload:
 
-        self.data: typing.Dict[typing.Any, typing.Any] = {}
-        self._cache_time = cache_time
+    def __init__(self, headers: Optional[Dict[Any, Any]] = None,
+                 json: Optional[Dict[Any, Any]] = None,
+                 params: Optional[Dict[Any, Any]] = None,
+                 data: Optional[Dict[Any, Any]] = None, **kwargs):
+        self.headers = headers
+        self.json = json
+        self.params = params
+        self.data = data
 
-    def clear(
-        self, key: typing.Optional[str] = None, *, force: bool = False
-    ) -> typing.Any:
-        """
-        Method to delete element from the cache by key,
-        or if force passed on its clear all data from the cache
-
-        :param key: by this key to delete an element in storage
-        :param force: If this argument is passed as True,
-         the date in the storage will be completely cleared.
-        """
-        if force:
-            return self.data.clear()
-        return self.data.pop(key)
-
-    def __setitem__(self, key, value):  # type: ignore
-        return self.update_data(value, key)
-
-    def __getitem__(self, item: typing.Any) -> typing.Optional[typing.Any]:
-        try:
-            obj = self.data[item]
-            if not self._is_expire(obj["cached_in"], item):
-                return obj["data"]
-            return None
-        except KeyError:
-            return None
-
-    def _is_contain_uncached(self, value: typing.Optional[typing.Any]) -> bool:
-        if self._cache_time < 0.1:
-            return True
-
-        for coincidence in UNCACHED:
-            try:
-                if value.startswith(coincidence) or coincidence in value:  # type: ignore
-                    return True
-            except AttributeError:
-                return False
-        return False
-
-    def convert_to_cache(
-        self, result: typing.Any, kwargs: typing.Dict[typing.Any, typing.Any]
-    ) -> Cached:
-        """
-        Method, which convert response of API to :class:`Cached`
-
-        :param result: response data
-        :param kwargs: key/value of request payload data
-        """
-        value = kwargs.get("url")
-        if not self._is_contain_uncached(value):
-            return Cached(
-                kwargs=Attributes.format(kwargs, self._validator_criteria),
-                response_data=result,
-                method=kwargs.get("method"),
-            )
-        self.clear(value, force=True)
-        raise exceptions.InvalidCachePayload()
-
-    def update_data(self, obj_to_cache: typing.Any, key: typing.Any) -> None:
-        """
-        Метод, который добавляет результат запроса в кэш.
-
-        >>> storage = Storage(cache_time=5)
-        >>> storage.update_data(obj_to_cache="hello world", key="world")
-        >>> storage["world"] = "hello_world"  # This approach is in priority and
-        ...                                   # the same as on the line of code above
-
-        :param obj_to_cache: объект для кэширования
-        :param key: ключ, по которому будет зарезервирован этот кэш
-        """
-        if not self._is_contain_uncached(obj_to_cache):
-            self.data[key] = {
-                "data": obj_to_cache,
-                "cached_in": time.monotonic(),
-            }
-
-    @staticmethod
-    def _check_get_request(
-        cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]
-    ) -> bool:
-        """Method to check cached get requests"""
-        return (
-            cached.method == "GET"
-            and kwargs.get("headers") == cached.kwargs.headers  # noqa: W503
-            and kwargs.get("params") == cached.kwargs.params  # noqa: W503
+    @classmethod
+    def new(cls, kwargs: Dict[Any, Any], args: Tuple[Any, ...]) -> Payload:
+        return cls(
+            **{k: kwargs.get(k) for k in args if isinstance(kwargs.get(k), dict)}
         )
 
-    def _is_expire(self, cached_in: float, key: typing.Any) -> bool:
-        """Method to check live cache time, and if it expired return True"""
-        if time.monotonic() - cached_in > self._cache_time:
-            self.clear(key)
-            return True
+    def __hash__(self) -> int:
+        dump_string = ""
+        if self.headers is not None:
+            dump_string += json.dumps(self.headers)
+        if self.json is not None:
+            dump_string += json.dumps(self.json)
+        if self.params is not None:
+            dump_string += json.dumps(self.params)
+        if self.data is not None:
+            dump_string += json.dumps(self.data)
+        return hash(dump_string)
+
+
+@dataclass(frozen=True)
+class CachedAPIRequest:
+    payload: Payload
+    response: Any
+    method: Union[str, http.HTTPStatus]
+
+    def __hash__(self) -> int:
+        return hash(self.payload) + hash(self.method)
+
+
+class CacheInvalidationStrategy(abc.ABC):
+
+    @abc.abstractmethod
+    def process_update(self, **kwargs: Any):
+        pass
+
+    def process_delete(self):
+        pass
+
+    @abc.abstractmethod
+    def process_retrieve(self, **kwargs: Any):
+        pass
+
+    async def check_is_contains_similar(self, cached_storage: CacheStorage, item: Any) -> bool:
+        raise TypeError
+
+
+class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
+
+    def process_update(self, **kwargs: Any):
+        pass
+
+    def process_retrieve(self, **kwargs: Any):
+        pass
+
+
+class APIResponsesCacheInvalidationStrategy(CacheInvalidationStrategy):
+    _validator_criteria = ("params", "json", "data", "headers")
+
+    def __init__(self, cache_time: Union[float, int] = INFINITE):
+        self._uncached = ("https://api.qiwi.com/partner/bill", "/sinap/api/v2/terms/")
+        self._cache_time = cache_time
+
+    def process_update(self, **kwargs: Any):
+        for key in kwargs.keys():
+            if any(key.startswith(coincidence) for coincidence in self._uncached):
+                raise ContainsNonCacheable()
+
+    def process_retrieve(self, **kwargs: Any):
+        self._have_cache_expired(**kwargs)
+
+    def _have_cache_expired(self, **kwargs: Dict[str, Union[Any, float]]):
+        for key, value in kwargs.items():
+            added_at: float = value[ADD_TIME_PLACEHOLDER]
+            elapsed_time_since_adding = time.monotonic() - added_at
+            if elapsed_time_since_adding >= self._cache_time:
+                raise CacheExpired()
+
+    async def check_is_contains_similar(self, storage: CacheStorage, item: Any) -> bool:
+        values = await storage.retrieve_all()
+        if not isinstance(item, Payload):
+            return item in values
+        for value in values:
+            if not isinstance(value, CachedAPIRequest):
+                continue
+            if (
+                    value.method == "GET"
+                    and value.payload.headers == item.headers  # noqa: W503
+                    and value.payload.params == item.params  # noqa: W503
+            ):
+                return True
+            else:
+                if value.method == "GET":
+                    return False
+                keys = (k for k in self._validator_criteria if k != "headers")
+                return any(getattr(item, key) == getattr(value.payload, key) for key in keys)
         return False
 
-    def _validate_other(
-        self, cached: Cached, kwargs: typing.Dict[typing.Any, typing.Any]
-    ) -> bool:
-        keys = (k for k in self._validator_criteria if k != "headers")
-        return any(getattr(cached.kwargs, key) == kwargs.get(key, "") for key in keys)
 
-    def validate(self, **kwargs: typing.Any) -> bool:
-        """
-        Метод, который по некоторым условиям
-        проверяет актуальность кэша и в некоторых
-        случая его чистит.
+class CacheStorage(abc.ABC):
 
-        :param kwargs:
-        :return: boolean, прошел ли кэшированный запрос валидацию
-        """
-        # Если параметры и ссылка запроса совпадает
-        cached = self[kwargs.get("url")]
-        validation_kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        if isinstance(cached, Cached):
-            # Проверяем запрос методом GET на кэш
-            if self._check_get_request(cached, validation_kwargs):
-                return True
-            elif self._validate_other(cached, validation_kwargs):
-                return True
+    def __init__(self, invalidate_strategy: Optional[CacheInvalidationStrategy] = None):
+        if invalidate_strategy is None:
+            invalidate_strategy = UnrealizedCacheInvalidationStrategy()
+        self._invalidate_strategy: CacheInvalidationStrategy = invalidate_strategy
 
-        return False
+    @abc.abstractmethod
+    def clear(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def update(self, **kwargs: Any) -> None:
+        pass
+
+    @abc.abstractmethod
+    async def retrieve(self, key: str) -> Any:
+        pass
+
+    @abc.abstractmethod
+    def delete(self, key: str) -> None:
+        pass
+
+    @abc.abstractmethod
+    async def retrieve_all(self) -> List[Any]:
+        ...
+
+    def __getitem__(self, item):
+        return self.retrieve(item)
+
+    def __setitem__(self, key, value):
+        self.update(**{key: value})
+
+
+class InMemoryCacheStorage(CacheStorage):
+    __slots__ = ("_data", "_invalidate_strategy")
+
+    def __init__(self, invalidate_strategy: Optional[CacheInvalidationStrategy] = None):
+        CacheStorage.__init__(self, invalidate_strategy)
+        self._data: Dict[Any, Any] = {}
+        self._lock = asyncio.Lock()
+
+    def clear(self) -> None:
+        self._invalidate_strategy.process_delete()
+        self._data.clear()
+
+    async def retrieve_all(self) -> List[Optional[Any]]:
+        tasks: List[Task[Optional[Any]]] = [
+            asyncio.create_task(self.retrieve(key))
+            for key in self._data.keys()
+        ]
+        return await asyncio.gather(*tasks)  # type: ignore
+
+    def update(self, **kwargs) -> None:
+        try:
+            self._invalidate_strategy.process_update(**kwargs)
+        except ContainsNonCacheable:
+            return None
+        embedded_data: Dict[Any, Any] = _embed_cache_time(**kwargs)
+        self._data.update(embedded_data)
+
+    async def retrieve(self, key: str) -> Optional[Any]:
+        async with self._lock:
+            obj = self._data.get(key)
+        if obj is None:
+            return obj
+        try:
+            self._invalidate_strategy.process_retrieve(obj=obj)
+            return obj[VALUE_PLACEHOLDER]
+        except CacheExpired:
+            self.delete(key)
+            return None
+
+    def delete(self, key: str) -> None:
+        del self._data[key]
+
+    async def contains_similar(self, item: Any) -> bool:
+        return await self._invalidate_strategy.check_is_contains_similar(self, item)
