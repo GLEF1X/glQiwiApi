@@ -58,9 +58,9 @@ class SmsNotification(Base):
 class IdentificationInfo(Base):
     """object: IdentificationInfo"""
 
-    bank_alias: str = Field(alias="bankAlias")
-    identification_level: str = Field(alias="identificationLevel")
-    passport_expired: bool = Field(alias="passportExpired")
+    bank_alias: Optional[str] = Field(None, alias="bankAlias")
+    identification_level: Optional[str] = Field(None, alias="identificationLevel")
+    passport_expired: Optional[bool] = Field(None, alias="passportExpired")
 
 
 class NickName(Base):
@@ -96,13 +96,13 @@ class ContractInfo(Base):
 class UserInfo(Base):
     """object: UserInfo"""
 
-    default_pay_currency: CurrencyModel = Field(alias="defaultPayCurrency")
+    default_pay_currency: CurrencyModel = Field(..., alias="defaultPayCurrency")
     default_pay_source: Optional[int] = Field(None, alias="defaultPaySource")
     default_pay_account_alias: Optional[str] = Field(
         None, alias="defaultPayAccountAlias"
     )
     email: Optional[str] = None
-    first_transaction_id: int = Field(alias="firstTxnId")
+    first_transaction_id: Optional[int] = Field(None, alias="firstTxnId")
     language: str
     operator: str
     phone_hash: str = Field(alias="phoneHash")
