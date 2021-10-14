@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 garbage.py
+.vscode
 # C ext
 *.so
 glQiwiApi/test.py

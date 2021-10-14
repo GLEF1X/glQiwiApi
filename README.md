@@ -2,10 +2,10 @@
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/docs/static/logo.png" width="200"></img>
 
 
-[![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Python](https://img.shields.io/badge/Python-3.7+-blue)](https://www.python.org/downloads/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi) ![docs](https://readthedocs.org/projects/pip/badge/?version=latest)
+[![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi) ![docs](https://readthedocs.org/projects/pip/badge/?version=latest)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/GLEF1X/glQiwiApi.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GLEF1X/glQiwiApi/context:python) [![CodeFactor](https://www.codefactor.io/repository/github/glef1x/glqiwiapi/badge)](https://www.codefactor.io/repository/github/glef1x/glqiwiapi)
 ![codecov](https://codecov.io/gh/GLEF1X/glQiwiApi/branch/dev-1.x/graph/badge.svg?token=OD538HKV15)
-![CI](https://github.com/GLEF1X/glQiwiApi/actions/workflows/python-package.yml/badge.svg) ![mypy](https://img.shields.io/badge/%20type_checker-mypy-%231674b1?style=flat)
+![CI](https://github.com/GLEF1X/glQiwiApi/actions/workflows/python-package.yml/badge.svg) ![mypy](https://img.shields.io/badge/%20type_checker-mypy-%231674b1?style=flat) [![Downloads](https://pepy.tech/badge/glqiwiapi/month)](https://pepy.tech/project/glqiwiapi) [![Downloads](https://pepy.tech/badge/glqiwiapi)](https://pepy.tech/project/glqiwiapi)
 
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 </h2>
@@ -101,7 +101,7 @@ async def main():
         is_paid = await w.check_transaction(
             amount=999,
             comment='I like glQiwiApi!',
-            sender_number='+7904832168'
+            sender='+7904832168'
         )
         print(is_paid)
 
@@ -118,22 +118,22 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-  # You can pass on only p2p tokens, if you want to use only p2p api
-  async with QiwiWrapper(
-          secret_p2p="your_secret_p2p"
-  ) as w:
-    # This way you can create P2P bill using QIWI p2p API
-    bill = await w.create_p2p_bill(
-      amount=1,
-      comment='my_comm'
-    )
-    # This way you can check status of transaction(exactly is transaction was paid)
-    if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
-      print('You have successfully paid your invoice')
-    else:
-      print('Invoice was not paid')
-    # Or, you can use method check on the instance of Bill 
-    print(await bill.check())
+    # You can pass on only p2p tokens, if you want to use only p2p api
+    async with QiwiWrapper(
+            secret_p2p="your_secret_p2p"
+    ) as w:
+        # This way you can create P2P bill using QIWI p2p API
+        bill = await w.create_p2p_bill(
+            amount=1,
+            comment='my_comm'
+        )
+        # This way you can check status of transaction(exactly is transaction was paid)
+        if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
+            print('You have successfully paid your invoice')
+        else:
+            print('Invoice was not paid')
+        # Or, you can use method check on the instance of Bill 
+        print(await bill.check())
 
 
 asyncio.run(main())
@@ -152,25 +152,24 @@ from glQiwiApi import QiwiWrapper
 
 
 async def main():
-  async with QiwiWrapper(api_access_token="token") as w:
-    w.phone_number = "+number"
-    # It looks like a transfer to another qiwi wallet
-    # in the example, the transfer will be to the number +7904832168 with the comment "for a chocolate bar" and the amount of 1 ruble
-    trans_id = await w.to_wallet(
-      to_number='+7904832168',
-      comment='for a chocolate bar',
-      amount=1
-    )
-    # In this example, we will save the receipt in the directory where you run the script as my_receipt.pdf
-    await w.get_receipt(
-      transaction_id=trans_id,
-      transaction_type='OUT',
-      file_path='my_receipt'
-    )
+    async with QiwiWrapper(api_access_token="token") as w:
+        w.phone_number = "+number"
+        # It looks like a transfer to another qiwi wallet
+        # in the example, the transfer will be to the number +7904832168 with the comment "for a chocolate bar" and the amount of 1 ruble
+        trans_id = await w.to_wallet(
+            to_number='+7904832168',
+            comment='for a chocolate bar',
+            amount=1
+        )
+        # In this example, we will save the receipt in the directory where you run the script as my_receipt.pdf
+        await w.get_receipt(
+            transaction_id=trans_id,
+            transaction_type='OUT',
+            file_path='my_receipt'
+        )
 
 
 asyncio.run(main())
-
 ```
 
 ## 🌟Webhooks & handlers
@@ -181,26 +180,25 @@ from glQiwiApi import QiwiWrapper, types, BaseFilter
 from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
-  api_access_token='token from https://qiwi.com/api/',
-  secret_p2p='secret token from https://qiwi.com/p2p-admin/'
+    api_access_token='token from https://qiwi.com/api/',
+    secret_p2p='secret token from https://qiwi.com/p2p-admin/'
 )
 
 
 class CustomFilter(BaseFilter):
-  async def check(self, update: types.Transaction) -> bool:
-    # some stuff
-    return True
+    async def check(self, update: types.Transaction) -> bool:
+        # some stuff
+        return True
 
 
-@wallet.transaction_handler(
-  CustomFilter())  # start with 1.0.3b2 you can use class-based filters, but also combine it with lambda statements, if you want
+@wallet.transaction_handler(CustomFilter())  # start with 1.0.3b2 you can use class-based filters, but also combine it with lambda statements, if you want
 async def get_transaction(event: types.WebHook):
-  print(event)
+    print(event)
 
 
 @wallet.bill_handler()
 async def fetch_bill(notification: types.Notification):
-  print(notification)
+    print(notification)
 
 
 executor.start_webhook(wallet, port=80)
@@ -217,19 +215,19 @@ wallet = QiwiWrapper(**payload)
 
 
 class MyFirstFilter(BaseFilter):
-  async def check(self, update: types.Transaction) -> bool:
-    return True
+    async def check(self, update: types.Transaction) -> bool:
+        return True
 
 
 class MySecondFilter(BaseFilter):
 
-  async def check(self, update: types.Transaction) -> bool:
-    return False
+    async def check(self, update: types.Transaction) -> bool:
+        return False
 
 
 @wallet.transaction_handler(MyFirstFilter(), lambda event: event is not None, ~MySecondFilter())
 async def my_handler(event: types.Transaction):
-  ...
+    ...
 
 
 executor.start_polling(wallet)
@@ -277,37 +275,35 @@ from glQiwiApi import QiwiWrapper
 # you need to pass cache_time to the constructor of the QiwiWrapper class
 # or YooMoneyAPI
 wallet = QiwiWrapper(
-  # Qiwi token from https://qiwi.com/api
-  api_access_token='token',
-  # Your phone number startswith "+"
-  phone_number='+phone_number',
-  # Cache time in seconds
-  cache_time=5
+    # Qiwi token from https://qiwi.com/api
+    api_access_token='token',
+    # Your phone number startswith "+"
+    phone_number='+phone_number',
+    # Cache time in seconds
+    cache_time=5
 )
 
 
 async def cache_test():
-  async with wallet:
-    # The result will be cached
-    print(await wallet.transactions(rows=50))
-    # The result will be taken from cache
-    print(await wallet.transactions(rows=50))
+    async with wallet:
+        # The result will be cached
+        print(await wallet.transactions(rows=50))
+        # The result will be taken from cache
+        print(await wallet.transactions(rows=50))
 
-    # The requests below will not be taken from the cache,
-    # the reason for this is the difference in the request parameters
-    # The result is also stored in the cache
-    print(len(await wallet.transactions(rows=30)) == 30)  # True
-    # However, a second request to the api will be executed, because
-    # when trying to retrieve a result from the cache, the validator compares
-    # request parameters, if they do not match, then
-    # cache is ignored
-    # Repeated request to api
-    print(len(await wallet.transactions(rows=10)) == 10)  # True
+        # The requests below will not be taken from the cache,
+        # the reason for this is the difference in the request parameters
+        # The result is also stored in the cache
+        print(len(await wallet.transactions(rows=30)) == 30)  # True
+        # However, a second request to the api will be executed, because
+        # when trying to retrieve a result from the cache, the validator compares
+        # request parameters, if they do not match, then
+        # cache is ignored
+        # Repeated request to api
+        print(len(await wallet.transactions(rows=10)) == 10)  # True
 
 
 asyncio.run(cache_test())
-
-
 ```
 
 ## ⚠️Handling exceptions
@@ -319,13 +315,13 @@ from glQiwiApi import QiwiWrapper, APIError
 
 
 async def main():
-  async with QiwiWrapper(api_access_token='your_token') as w:
-    w.phone_number = '+number'
-    try:
-      await w.to_card(to_card="some_card", trans_sum=2)
-    except APIError as ex:
-      # Its give u full traceback from api if response was bad
-      print(ex.json())
+    async with QiwiWrapper(api_access_token='your_token') as w:
+        w.phone_number = '+number'
+        try:
+            await w.to_card(to_card="some_card", trans_sum=2)
+        except APIError as ex:
+            # Its give u full traceback from api if response was bad
+            print(ex.json())
 
 
 asyncio.run(main())
@@ -458,14 +454,13 @@ TOKEN = 'your_token'
 
 
 async def main():
-  w = YooMoneyAPI(TOKEN)
-  async with w:
-    # This gives you account information as AccountInfo object.
-    get_account_info = await w.retrieve_account_info()
-    print(get_account_info.account_status)
-    print(get_account_info.balance)
+    w = YooMoneyAPI(TOKEN)
+    async with w:
+        # This gives you account information as AccountInfo object.
+        get_account_info = await w.retrieve_account_info()
+        print(get_account_info.account_status)
+        print(get_account_info.balance)
 
 
 asyncio.run(main())
-
 ```

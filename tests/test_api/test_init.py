@@ -2,7 +2,7 @@ import aiohttp
 import pytest
 
 from glQiwiApi import QiwiWrapper, InvalidData
-from glQiwiApi.core import RequestManager
+from glQiwiApi.core import RequestService
 from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter
 
@@ -32,7 +32,7 @@ class TestAiohttpSession:
         assert isinstance(api._requests._session, aiohttp.ClientSession)
 
         assert isinstance(api._router, QiwiRouter)
-        assert isinstance(api._requests, RequestManager)
+        assert isinstance(api._requests, RequestService)
         assert isinstance(api._p2p_router, QiwiKassaRouter)
         assert isinstance(api.dispatcher, Dispatcher)
 
