@@ -20,8 +20,6 @@ from typing import (
     Union,
     Optional,
     Any,
-    Pattern,
-    Match,
     cast,
     Iterable,
     Type,
@@ -81,6 +79,7 @@ from glQiwiApi.utils.payload import (
     parse_limits,
     check_transaction,
 )
+from glQiwiApi.utils.validators import PhoneNumber, String
 
 
 def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
@@ -90,53 +89,17 @@ def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
         return False
 
 
-def _validate_params(
-        api_access_token: Optional[str],
-        phone_number: Optional[str],
-        secret_p2p: Optional[str],
-        cache_time: Union[float, int],
-) -> None:
-    """Validating all parameters by `isinstance` function or `regex`"""
-    import re
-
-    if not isinstance(api_access_token, str):
-        raise InvalidData(
-            "Invalid type of api_access_token parameter, required `string`,"
-            "you have passed %s" % type(api_access_token)
-        )
-    if not isinstance(secret_p2p, str):
-        raise InvalidData(
-            "Invalid type of secret_p2p parameter, required `string`,"
-            "you have passed %s" % type(secret_p2p)
-        )
-    if not isinstance(cache_time, (float, int)):
-        raise InvalidData(
-            "Invalid type of cache_time parameter, required `bool`,"
-            "you have passed %s" % type(cache_time)
-        )
-
-    phone_number_pattern: Pattern[str] = re.compile(
-        r"^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$"
-    )
-    phone_number_match: Optional[Match[Any]] = re.fullmatch(
-        phone_number_pattern, phone_number
-    )
-
-    if not phone_number_match:
-        raise InvalidData(
-            "Failed to verify parameter `phone_number` by regex. "
-            "Please, enter the correct phone number."
-        )
-
-
 class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
+    phone_number = PhoneNumber(optional=True)
+    api_access_token = String(optional=True)
+    secret_p2p = String(optional=True)
+
     def __init__(
             self,
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
             cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
-            validate_params: bool = False,
             session_pool: Optional[AbstractSessionPool[Any]] = None,
     ) -> None:
         """
@@ -147,19 +110,7 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
          the request will not use the cache by default, the maximum time
          caching 60 seconds
         """
-        if validate_params:
-            _validate_params(
-                api_access_token=api_access_token,
-                cache_time=cache_time,
-                secret_p2p=secret_p2p,
-                phone_number=phone_number
-            )
-
-        if isinstance(phone_number, str):
-            self.phone_number = phone_number.replace("+", "")
-            if self.phone_number.startswith("8"):
-                self.phone_number = "7" + self.phone_number[1:]
-
+        self.phone_number = phone_number
         self._router = QiwiRouter()
         self._p2p_router = QiwiKassaRouter()
         self._requests = RequestService(
@@ -195,16 +146,6 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
             )
         return headers
 
-    @property
-    def stripped_number(self) -> str:
-        """returns number, in which the `+` sign is removed"""
-        try:
-            return self.phone_number.replace("+", "")
-        except AttributeError:
-            raise InvalidData(
-                "You should pass on phone number to execute this method"
-            ) from None
-
     def __new__(
             cls: Type[N],
             api_access_token: Optional[str] = None,
@@ -236,17 +177,6 @@ class QiwiWrapper(
     Fast and versatile wrapper.
 
     """
-
-    __slots__ = (
-        "api_access_token",
-        "phone_number",
-        "secret_p2p",
-        "_requests",
-        "_router",
-        "_p2p_router",
-        "_dispatcher",
-        "__context_instance",
-    )
 
     async def _register_webhook(
             self, web_url: Optional[str], txn_type: int = 2
@@ -470,7 +400,7 @@ class QiwiWrapper(
             self._router,
             params=payload_data,
             headers=headers,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
         return parse_iterable_to_list_of_objects(
             cast(Iterable[Any], response.get("data")), Transaction
@@ -614,7 +544,7 @@ class QiwiWrapper(
             self._router,
             headers=headers,
             params=payload,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
         return parse_limits(response)
 
@@ -671,7 +601,7 @@ class QiwiWrapper(
             "POST",
             QiwiApiMethods.AUTHENTICATE,
             self._router,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
             headers=headers,
             data=self._requests.filter_dict(payload),
         )
@@ -767,7 +697,7 @@ class QiwiWrapper(
             self._router,
             params=params,
             headers=headers,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
         return Statistic.parse_obj(response)
 
@@ -784,7 +714,7 @@ class QiwiWrapper(
             QiwiApiMethods.LIST_OF_BALANCES,
             self._router,
             headers=headers,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
         return parse_iterable_to_list_of_objects(
             cast(Iterable[Any], response.get("accounts")), Account
@@ -807,7 +737,7 @@ class QiwiWrapper(
             self._router,
             headers=headers,
             data=payload,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
 
     async def available_balances(self) -> List[Balance]:
@@ -821,7 +751,7 @@ class QiwiWrapper(
             QiwiApiMethods.AVAILABLE_BALANCES,
             self._router,
             headers=headers,
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
         return parse_iterable_to_list_of_objects(iterable=response, model=Balance)
 
@@ -842,7 +772,7 @@ class QiwiWrapper(
             self._router,
             headers=headers,
             json={"defaultAccount": True},
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
             currency_alias=currency_alias,
         )
 
@@ -1000,7 +930,7 @@ class QiwiWrapper(
         You can choose these rights when creating a new api token, to use api QIWI Master
         """
         payload = get_qiwi_master_data(
-            self.stripped_number, self._router.config.QIWI_MASTER
+            self.phone_number, self._router.config.QIWI_MASTER
         )
         response = await self._requests.send_request(
             "POST",
@@ -1021,7 +951,7 @@ class QiwiWrapper(
             self._router,
             headers=self._auth_token(self._router.default_headers),
             json={"cardAlias": card_alias},
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
         )
         return OrderDetails.parse_obj(response)
 
@@ -1035,7 +965,7 @@ class QiwiWrapper(
             QiwiApiMethods.CONFIRM_QIWI_MASTER,
             self._router,
             headers=self._auth_token(self._router.default_headers),
-            stripped_number=self.stripped_number,
+            stripped_number=self.phone_number,
             order_id=details.order_id,
         )
         return OrderDetails.parse_obj(response)
@@ -1070,7 +1000,7 @@ class QiwiWrapper(
         if pre_response.status == "COMPLETED":
             return pre_response
         return await self.__buy_new_qiwi_card(
-            ph_number=self.stripped_number, order_id=pre_response.order_id
+            ph_number=self.phone_number, order_id=pre_response.order_id
         )
 
     async def _cards_qiwi_master(self) -> Dict[Any, Any]:

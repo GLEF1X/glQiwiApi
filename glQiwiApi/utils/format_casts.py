@@ -5,7 +5,7 @@ from typing import Optional
 
 import pytz
 
-from glQiwiApi.core import constants
+DEFAULT_QIWI_TIMEZONE = "Europe/Moscow"
 
 
 def datetime_to_utc(obj: datetime) -> str:
@@ -24,7 +24,7 @@ def datetime_to_iso8601(obj: Optional[datetime]) -> str:
         return ""  # pragma: no cover
     naive_datetime = obj.replace(microsecond=0)
     return (
-        pytz.timezone(constants.DEFAULT_QIWI_TIMEZONE)
+        pytz.timezone(DEFAULT_QIWI_TIMEZONE)
             .localize(naive_datetime)
             .isoformat()
     )
