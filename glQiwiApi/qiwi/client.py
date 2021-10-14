@@ -27,7 +27,7 @@ from typing import (
     Type,
 )
 
-from glQiwiApi.core import RequestManager, constants
+from glQiwiApi.core import RequestService, constants
 from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.core.mixins import (
     ContextInstanceMixin,
@@ -35,6 +35,7 @@ from glQiwiApi.core.mixins import (
     DataMixin,
     HandlerCollectionMixin,
 )
+from glQiwiApi.core.session.pool import AbstractSessionPool
 from glQiwiApi.ext.url_builder import WebhookURL
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
@@ -93,7 +94,6 @@ def _validate_params(
         api_access_token: Optional[str],
         phone_number: Optional[str],
         secret_p2p: Optional[str],
-        without_context: bool,
         cache_time: Union[float, int],
 ) -> None:
     """Validating all parameters by `isinstance` function or `regex`"""
@@ -108,11 +108,6 @@ def _validate_params(
         raise InvalidData(
             "Invalid type of secret_p2p parameter, required `string`,"
             "you have passed %s" % type(secret_p2p)
-        )
-    if not isinstance(without_context, bool):
-        raise InvalidData(
-            "Invalid type of without_context parameter, required `bool`,"
-            "you have passed %s" % type(without_context)
         )
     if not isinstance(cache_time, (float, int)):
         raise InvalidData(
@@ -140,31 +135,24 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
-            without_context: bool = False,
             cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
             validate_params: bool = False,
-            proxy: Any = None,
+            session_pool: Optional[AbstractSessionPool[Any]] = None,
     ) -> None:
         """
         :param api_access_token: QIWI API token received from https://qiwi.com/api
         :param phone_number: your phone number starting with +
         :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
-        :param without_context: bool, indicates whether the object of the class will be
-         a "global" variable or will be used in an async with context
-        :param cache_time:Time of caching requests in seconds,
          default 0, respectively
          the request will not use the cache by default, the maximum time
          caching 60 seconds
-        :param proxy: The proxy that will be used when creating a session may slow down
-            API work
         """
         if validate_params:
             _validate_params(
                 api_access_token=api_access_token,
                 cache_time=cache_time,
                 secret_p2p=secret_p2p,
-                phone_number=phone_number,
-                without_context=without_context,
+                phone_number=phone_number
             )
 
         if isinstance(phone_number, str):
@@ -174,11 +162,10 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
 
         self._router = QiwiRouter()
         self._p2p_router = QiwiKassaRouter()
-        self._requests = RequestManager(
-            without_context=without_context,
+        self._requests = RequestService(
             messages=self._router.config.ERROR_CODE_NUMBERS,
             cache_time=cache_time,
-            proxy=proxy,
+            session_pool=session_pool
         )
         self.api_access_token = api_access_token
         self.secret_p2p = secret_p2p
@@ -186,12 +173,12 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
         self.set_current(self)  # type: ignore
 
     @property
-    def request_manager(self) -> RequestManager:
+    def request_manager(self) -> RequestService:
         return self._requests
 
     @request_manager.setter
-    def request_manager(self, other: RequestManager) -> None:
-        if not isinstance(other, RequestManager):
+    def request_manager(self, other: RequestService) -> None:
+        if not isinstance(other, RequestService):
             raise TypeError(
                 f"Expected `RequestManager` instance, despite got {type(other)}"
             )
@@ -1164,7 +1151,8 @@ class QiwiWrapper(
         """
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
-        life_time = datetime_to_iso8601(life_time or constants.get_default_bill_time())  # type: ignore
+        life_time = datetime_to_iso8601(
+            life_time or constants.get_default_bill_time())  # type: ignore
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._auth_token(data.headers, p2p=True)
         payload = patch_p2p_create_payload(

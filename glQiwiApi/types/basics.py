@@ -54,35 +54,5 @@ class Type(BaseModel):
     title: str
 
 
-@dataclass
-class Attributes:
-    """
-    Аттрибуты кэшированного запроса
 
-    """
-
-    headers: Optional[Dict[Any, Any]] = None
-    json: Optional[Dict[Any, Any]] = None
-    params: Optional[Dict[Any, Any]] = None
-    data: Optional[Dict[Any, Any]] = None
-
-    @classmethod
-    def format(cls, kwargs: Dict[Any, Any], args: Tuple[Any, ...]) -> Attributes:
-        return cls(
-            **{k: kwargs.get(k) for k in args if isinstance(kwargs.get(k), dict)}
-        )
-
-
-@dataclass
-class Cached:
-    """
-    Объект кэшированного запроса
-
-    """
-
-    kwargs: Attributes
-    response_data: Any
-    method: Optional[Any]
-
-
-__all__ = ("Sum", "OptionalSum", "Type", "Cached", "Attributes", "HashableOptionalSum")
+__all__ = ("Sum", "OptionalSum", "Type", "HashableOptionalSum")

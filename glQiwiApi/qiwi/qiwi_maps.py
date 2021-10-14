@@ -1,7 +1,7 @@
 import typing
 
 from glQiwiApi import types
-from glQiwiApi.core import RequestManager
+from glQiwiApi.core import RequestService
 from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
 from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin, DataMixin
 from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects
@@ -20,12 +20,12 @@ class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         cache_time: int = DEFAULT_CACHE_TIME,
         proxy: typing.Optional[typing.Any] = None,
     ) -> None:
-        self._requests = RequestManager(
+        self._requests = RequestService(
             without_context=without_context, cache_time=cache_time, proxy=proxy
         )
 
     @property
-    def request_manager(self) -> RequestManager:
+    def request_manager(self) -> RequestService:
         return self._requests
 
     async def terminals(

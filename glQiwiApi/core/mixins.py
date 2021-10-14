@@ -27,20 +27,20 @@ from glQiwiApi.core.dispatcher.dispatcher import (
 from glQiwiApi.core.dispatcher.filters import BaseFilter
 
 if TYPE_CHECKING:
-    from glQiwiApi.core.aiohttp_custom_api import RequestManager  # pragma: no cover
+    from glQiwiApi.core.request_service import RequestService  # pragma: no cover
 
 
 class ToolsMixin(object):
     """Object: ToolsMixin"""
 
-    _requests: RequestManager
+    _requests: RequestService
 
     async def __aenter__(self) -> ToolsMixin:
-        await self._requests.create_session()
+        await self._requests.warmup_session_pool()
         return self
 
     async def close(self) -> None:
-        await self._requests.close()
+        pass
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore
         await self.close()

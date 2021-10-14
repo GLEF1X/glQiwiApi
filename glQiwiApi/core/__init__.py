@@ -1,6 +1,4 @@
-from .abstracts import AbstractParser, BaseStorage
-from .aiohttp_custom_api import RequestManager
-from .basic_requests_api import HttpXParser
+from .request_service import RequestService
 from .dispatcher.class_based import (
     AbstractBillHandler,
     Handler,
@@ -16,7 +14,6 @@ from .dispatcher.webhooks import (
     server,
 )
 from .mixins import ToolsMixin, ContextInstanceMixin
-from .storage import Storage
 from .synchronous import (
     SyncAdaptedQiwi,
     SyncAdaptedYooMoney,
@@ -25,11 +22,7 @@ from .synchronous import (
 )
 
 __all__ = (
-    "HttpXParser",
-    "Storage",
-    "AbstractParser",
-    "BaseStorage",
-    "RequestManager",
+    "RequestService",
     "ToolsMixin",
     "ContextInstanceMixin",
     "BaseFilter",
