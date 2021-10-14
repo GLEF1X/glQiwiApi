@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import uuid
 import warnings
-from abc import ABC
 from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
@@ -89,7 +88,19 @@ def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
         return False
 
 
-class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
+class QiwiWrapper(
+    ToolsMixin,
+    HandlerCollectionMixin,
+    DataMixin,
+    ContextInstanceMixin["QiwiWrapper"]
+):
+    """
+    Delegates the work of QIWI API, webhooks, polling.
+    Fast and versatile wrapper.
+
+    """
+
+    # declarative validators for fields
     phone_number = PhoneNumber(optional=True)
     api_access_token = String(optional=True)
     secret_p2p = String(optional=True)
@@ -121,7 +132,7 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
         self.api_access_token = api_access_token
         self.secret_p2p = secret_p2p
 
-        self.set_current(self)  # type: ignore
+        self.set_current(self)
 
     @property
     def request_manager(self) -> RequestService:
@@ -164,19 +175,6 @@ class BaseWrapper(ABC, ContextInstanceMixin["QiwiWrapper"]):
             raise RuntimeError("Unable to initialize instance without tokens")
 
         return super().__new__(cls)  # type: ignore
-
-
-class QiwiWrapper(
-    BaseWrapper,
-    ToolsMixin,
-    HandlerCollectionMixin,
-    DataMixin
-):
-    """
-    Delegates the work of QIWI API, webhooks, polling.
-    Fast and versatile wrapper.
-
-    """
 
     async def _register_webhook(
             self, web_url: Optional[str], txn_type: int = 2

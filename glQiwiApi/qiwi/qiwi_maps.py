@@ -20,9 +20,7 @@ class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         cache_time: int = DEFAULT_CACHE_TIME,
         proxy: typing.Optional[typing.Any] = None,
     ) -> None:
-        self._requests = RequestService(
-            without_context=without_context, cache_time=cache_time, proxy=proxy
-        )
+        self._requests = RequestService(cache_time=cache_time)
 
     @property
     def request_manager(self) -> RequestService:

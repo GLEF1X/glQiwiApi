@@ -38,7 +38,7 @@ class AbstractSessionPool(abc.ABC, Generic[_SessionType]):
             return self._session_pool.pop(-1)
         return await self._instantiate_new_session()
 
-    def put(self, session: _SessionType):
+    def put(self, session: _SessionType) -> None:
         self._session_pool.append(session)
 
     def acquire(self) -> AbstractSessionPool[_SessionType]:
@@ -60,7 +60,7 @@ class AbstractSessionPool(abc.ABC, Generic[_SessionType]):
 
     async def __aenter__(self: _SessionHolderType) -> _SessionType:
         self._last_working_session = await self.get()
-        return self._last_working_session
+        return cast(_SessionType, self._last_working_session)
 
     async def __aexit__(
             self: _SessionHolderType,

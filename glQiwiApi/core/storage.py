@@ -25,7 +25,7 @@ class ContainsNonCacheable(Exception):
     pass
 
 
-def _embed_cache_time(**kwargs) -> Dict[Any, Any]:
+def _embed_cache_time(**kwargs: Any) -> Dict[Any, Any]:
     return {
         key: {
             VALUE_PLACEHOLDER: value,
@@ -40,7 +40,7 @@ class Payload:
     def __init__(self, headers: Optional[Dict[Any, Any]] = None,
                  json: Optional[Dict[Any, Any]] = None,
                  params: Optional[Dict[Any, Any]] = None,
-                 data: Optional[Dict[Any, Any]] = None, **kwargs):
+                 data: Optional[Dict[Any, Any]] = None, **kwargs: Any) -> None:
         self.headers = headers
         self.json = json
         self.params = params
@@ -78,14 +78,14 @@ class CachedAPIRequest:
 class CacheInvalidationStrategy(abc.ABC):
 
     @abc.abstractmethod
-    def process_update(self, **kwargs: Any):
+    def process_update(self, **kwargs: Any) -> None:
         pass
 
-    def process_delete(self):
+    def process_delete(self) -> None:
         pass
 
     @abc.abstractmethod
-    def process_retrieve(self, **kwargs: Any):
+    def process_retrieve(self, **kwargs: Any) -> None:
         pass
 
     async def check_is_contains_similar(self, cached_storage: CacheStorage, item: Any) -> bool:
@@ -94,10 +94,10 @@ class CacheInvalidationStrategy(abc.ABC):
 
 class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
 
-    def process_update(self, **kwargs: Any):
+    def process_update(self, **kwargs: Any) -> None:
         pass
 
-    def process_retrieve(self, **kwargs: Any):
+    def process_retrieve(self, **kwargs: Any) -> None:
         pass
 
 
@@ -108,15 +108,15 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationStrategy):
         self._uncached = ("https://api.qiwi.com/partner/bill", "/sinap/api/v2/terms/")
         self._cache_time = cache_time
 
-    def process_update(self, **kwargs: Any):
+    def process_update(self, **kwargs: Any) -> None:
         for key in kwargs.keys():
             if any(key.startswith(coincidence) for coincidence in self._uncached):
                 raise ContainsNonCacheable()
 
-    def process_retrieve(self, **kwargs: Any):
+    def process_retrieve(self, **kwargs: Any) -> None:
         self._have_cache_expired(**kwargs)
 
-    def _have_cache_expired(self, **kwargs: Dict[str, Union[Any, float]]):
+    def _have_cache_expired(self, **kwargs: Dict[str, Union[Any, float]]) -> None:
         for key, value in kwargs.items():
             added_at: float = value[ADD_TIME_PLACEHOLDER]
             elapsed_time_since_adding = time.monotonic() - added_at
@@ -171,10 +171,10 @@ class CacheStorage(abc.ABC):
     async def retrieve_all(self) -> List[Any]:
         ...
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Any) -> Any:
         return self.retrieve(item)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> Any:
         self.update(**{key: value})
 
 
@@ -197,7 +197,7 @@ class InMemoryCacheStorage(CacheStorage):
         ]
         return await asyncio.gather(*tasks)  # type: ignore
 
-    def update(self, **kwargs) -> None:
+    def update(self, **kwargs: Any) -> None:
         try:
             self._invalidate_strategy.process_update(**kwargs)
         except ContainsNonCacheable:

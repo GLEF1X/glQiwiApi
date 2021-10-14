@@ -13,7 +13,7 @@ from glQiwiApi.core.mixins import DataMixin
 from glQiwiApi.core.synchronous.decorator import async_as_sync
 from glQiwiApi.core.synchronous.model_adapter import AdaptedBill, adapt_type
 from glQiwiApi.ext.url_builder import WebhookURL
-from glQiwiApi.qiwi.client import BaseWrapper, QiwiWrapper
+from glQiwiApi.qiwi.client import QiwiWrapper
 from glQiwiApi.types import (
     WebHookConfig,
     Sum,
@@ -70,30 +70,11 @@ class SyncAdapterMeta(ABCMeta):
 
 
 class SyncAdaptedQiwi(
-    BaseWrapper,
     ContextInstanceMixin["SyncAdaptedQiwi"],
     DataMixin,
     metaclass=SyncAdapterMeta,
     adapted_cls=QiwiWrapper,
 ):
-    def __init__(
-        self,
-        api_access_token: Optional[str] = None,
-        phone_number: Optional[str] = None,
-        secret_p2p: Optional[str] = None,
-        cache_time: Union[float, int] = DEFAULT_CACHE_TIME,  # 0 by default
-        validate_params: bool = False,
-        proxy: Any = None,
-    ) -> None:
-        super(SyncAdaptedQiwi, self).__init__(
-            api_access_token,
-            phone_number=phone_number,
-            secret_p2p=secret_p2p,
-            without_context=True,
-            cache_time=cache_time,
-            validate_params=validate_params,
-            proxy=proxy,
-        )
 
     def get_current_webhook(self) -> WebHookConfig:
         """

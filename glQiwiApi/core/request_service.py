@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any, Union
+from typing import Dict, Optional, Any, Union, cast
 
 import aiohttp
 from aiohttp import ClientTimeout, ServerDisconnectedError, \
@@ -55,7 +55,7 @@ class RequestService:
     def reset_cache(self) -> None:
         self._cache.clear()
 
-    async def warmup_session_pool(self):
+    async def warmup_session_pool(self) -> None:
         await self._session_pool.get()
 
     async def send_request(
@@ -99,7 +99,7 @@ class RequestService:
             k: v for k, v in locals().items() if not isinstance(v, type(self))
         }
         if await self._cache_has_similar_cached_response(**request_args):
-            return (await self._cache.retrieve(url)).response
+            return (await self._cache.retrieve(url)).response  # type: ignore
         async with self._session_pool.acquire() as session:
             try:
                 resp = await session.request(
@@ -128,7 +128,7 @@ class RequestService:
                 self._cache_result(response, **request_args)
                 return response
 
-    async def _cache_has_similar_cached_response(self, **request_args):
+    async def _cache_has_similar_cached_response(self, **request_args: Any) -> bool:
         return await self._cache.contains_similar(Payload(**request_args))
 
     def _cache_result(self, response: Any, method: str, **kwargs: Any) -> None:
@@ -191,9 +191,9 @@ class RequestService:
                 url=url,
                 **prepared_payload
             )
-        return resp
+        return cast(str, resp)
 
     async def retrieve_bytes(self, url: str, method: str, **kwargs: Any) -> bytes:
         async with self._session_pool.acquire() as session:
             resp = await session.request(method, url, **kwargs)
-        return await resp.read()
+        return cast(bytes, await resp.read())

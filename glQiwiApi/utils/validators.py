@@ -9,7 +9,9 @@ from typing import (
     Match,
     Callable,
     Generic,
-    TypeVar
+    TypeVar,
+    Type, cast,
+
 )
 
 
@@ -24,15 +26,15 @@ PHONE_NUMBER_PATTERN: Pattern[str] = re.compile(
 _T = TypeVar("_T")
 
 
-class Validator(ABC, Generic[_T]):
+class Field(ABC, Generic[_T]):
 
-    def __set_name__(self, owner, name: str) -> None:
+    def __set_name__(self, owner: Any, name: str) -> None:
         self.private_name = '_' + name
 
-    def __get__(self, obj, objtype=None) -> _T:
-        return getattr(obj, self.private_name)
+    def __get__(self, obj: Any, objtype: Optional[Type[Any]] = None) -> _T:
+        return cast(_T, getattr(obj, self.private_name))
 
-    def __set__(self, obj, value) -> None:
+    def __set__(self, obj: Any, value: Any) -> None:
         try:
             self.validate(value)
         except SkipValidation:
@@ -41,20 +43,20 @@ class Validator(ABC, Generic[_T]):
         setattr(obj, self.private_name, value)
 
     @abstractmethod
-    def validate(self, value: Any) -> None:
+    def validate(self, value: _T) -> None:
         pass
 
 
-class String(Validator[str]):
+class String(Field[Optional[str]]):
 
     def __init__(self, minsize: Optional[int] = None, maxsize: Optional[int] = None,
-                 predicate: Callable[[Any], bool] = None, optional: bool = False):
+                 predicate: Optional[Callable[[Any], bool]] = None, optional: bool = False):
         self.minsize = minsize
         self.maxsize = maxsize
         self.predicate = predicate
         self._optional = optional
 
-    def validate(self, value: Any) -> None:
+    def validate(self, value: _T) -> None:
         if value is None and self._optional:
             raise SkipValidation()
         if not isinstance(value, str):
@@ -74,7 +76,7 @@ class String(Validator[str]):
 
 
 class PhoneNumber(String):
-    def validate(self, value):
+    def validate(self, value: Optional[str]) -> None:  # type: ignore
         String.validate(self, value)
         phone_number_match: Optional[Match[Any]] = re.fullmatch(PHONE_NUMBER_PATTERN, value)
         if not phone_number_match:
@@ -82,19 +84,22 @@ class PhoneNumber(String):
                 "Failed to verify parameter `phone_number` by regex. "
                 "Please, enter the correct phone number."
             )
-        if not value.startswith("+"):
+        if not value.startswith("+"):  # type: ignore
             raise ValueError(
                 f'Expected {value!r} starts with + sign'
             )
 
-    def __set__(self, obj: Any, value: Any) -> None:
+    def __set__(self, obj: Any, value: Optional[str]) -> None:
         try:
             self.validate(value)
         except SkipValidation:
             return None
 
-        phone_number = value.replace("+", "")
+        phone_number = value.replace("+", "")  # type: ignore
         if phone_number.startswith("8"):
             phone_number = "7" + phone_number[1:]
 
         setattr(obj, self.private_name, phone_number)
+
+    def __get__(self, obj: Any, objtype: Optional[Type[Any]] = None) -> str:
+        return cast(str, super().__get__(obj, objtype))

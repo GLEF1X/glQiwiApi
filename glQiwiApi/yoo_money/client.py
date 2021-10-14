@@ -172,7 +172,8 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     def create_pay_form(cls, receiver: str,
                         quick_pay_form: str,
                         targets: str,
-                        payment_type: str, amount,
+                        payment_type: str,
+                        amount: Union[int, float],
                         form_comment: Optional[str] = None,
                         short_dest: Optional[str] = None,
                         label: Optional[str] = None,
@@ -181,7 +182,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
                         need_fio: Optional[bool] = None,
                         need_email: Optional[bool] = None,
                         need_phone: Optional[bool] = None,
-                        need_address: Optional[bool] = None):
+                        need_address: Optional[bool] = None) -> str:
         payload = make_payload(**{
             "receiver": receiver,
             "quickpay-form": quick_pay_form,
