@@ -3,18 +3,12 @@ from __future__ import annotations
 import abc
 import asyncio
 from types import TracebackType
-from typing import Any, Generic, Optional, Protocol, Type, TypeVar, cast, runtime_checkable
+from typing import Any, Generic, Optional, Type, TypeVar, cast
 
 import aiohttp
 
 _SessionType = TypeVar("_SessionType", bound=Any)
 _SessionHolderType = TypeVar("_SessionHolderType", bound="AbstractSessionPool[Any]")
-
-
-@runtime_checkable
-class Closable(Protocol):
-    async def close(self) -> None:
-        ...
 
 
 class AbstractSessionPool(abc.ABC, Generic[_SessionType]):
