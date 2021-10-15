@@ -77,7 +77,7 @@ class QiwiApiMethods:
     CONFIRM_QIWI_MASTER: str = (
         "/cards/v2/persons/{stripped_number}/orders/{order_id}/submit"
     )
-    BUY_QIWI_CARD = "/sinap/test_api/v2/terms/32064/payments"
+    BUY_QIWI_CARD = "/sinap/test_core/v2/terms/32064/payments"
     CARDS_QIWI_MASTER: str = "/cards/v1/cards/?vas-alias=qvc-master"
     PRE_QIWI_REQUEST: str = "/cards/v2/persons/{number}/orders"
     GET_CROSS_RATES: str = "/sinap/crossRates"

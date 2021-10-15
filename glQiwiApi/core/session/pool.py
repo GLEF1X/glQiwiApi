@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import asyncio
 from types import TracebackType
-from typing import Any, Generic, Optional, Protocol, Type, TypeVar, cast, runtime_checkable, List
+from typing import Any, Generic, Optional, Protocol, Type, TypeVar, cast, runtime_checkable
 
 import aiohttp
 
@@ -19,48 +19,44 @@ class Closable(Protocol):
 
 class AbstractSessionPool(abc.ABC, Generic[_SessionType]):
     """
-    Manages the lifecycle of the session (s) and allows spoofing
+    Manages the lifecycle of pool of the session (s) and allows spoofing
     library for requests, for example from aiohttp to httpx without any problem.
     Holder is lazy and allocates in his own state session on first call, not on instantiation.
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        self._session_pool: List[_SessionType] = []
+        self._session_queue: asyncio.Queue[_SessionType] = asyncio.Queue()
         self._session_kwargs = kwargs
-        self._last_working_session: Optional[_SessionType] = None
+        self._working_session: Optional[_SessionType] = None
 
     async def close_all(self) -> None:
         raise NotImplementedError
 
     async def get(self) -> _SessionType:
-        if self._has_prepared_sessions_in_pool():
-            await self._cleanup_rotten_sessions()
-            return self._session_pool.pop(-1)
-        return await self._instantiate_new_session()
+        return self._session_queue.get_nowait()
 
-    def put(self, session: _SessionType) -> None:
-        self._session_pool.append(session)
+    async def put(self, session: _SessionType) -> None:
+        await self._session_queue.put(session)
+
+    async def warm_up(self) -> None:
+        self._working_session = await self.get_new_session()
+        await self.put(self._working_session)
 
     def acquire(self) -> AbstractSessionPool[_SessionType]:
         return self
 
-    @abc.abstractmethod
-    def _has_prepared_sessions_in_pool(self) -> bool:
-        pass
-
-    async def _cleanup_rotten_sessions(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    async def _instantiate_new_session(self) -> _SessionType:
-        pass
+    def is_empty(self) -> bool:
+        return self._session_queue.empty()
 
     def update_session_kwargs(self, **kwargs: Any) -> None:
         self._session_kwargs.update(kwargs)
 
     async def __aenter__(self: _SessionHolderType) -> _SessionType:
-        self._last_working_session = await self.get()
-        return cast(_SessionType, self._last_working_session)
+        try:
+            self._working_session = await self.get()
+        except asyncio.QueueEmpty:
+            self._working_session = await self.get_new_session()
+        return cast(_SessionType, self._working_session)
 
     async def __aexit__(
             self: _SessionHolderType,
@@ -68,35 +64,36 @@ class AbstractSessionPool(abc.ABC, Generic[_SessionType]):
             exc_value: Optional[BaseException],
             traceback: Optional[TracebackType],
     ) -> None:
-        self.put(self._last_working_session)
+        if self._working_session is not None:
+            await self.put(self._working_session)
+
+    def __del__(self) -> None:
+        if self._session_queue.empty() is False:
+            del self._session_queue
+        if self._working_session is not None:
+            del self._working_session
+
+    async def _cleanup_rotten_sessions(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    async def get_new_session(self) -> _SessionType:
+        pass
 
 
 class AiohttpSessionPool(AbstractSessionPool[aiohttp.ClientSession]):
 
     async def close_all(self) -> None:
-        tasks = [
-            asyncio.create_task(session.close())
-            for session in self._session_pool
-        ]
-        await asyncio.gather(*tasks)
+        try:
+            session = self._session_queue.get_nowait()
+        except asyncio.QueueEmpty:
+            return None
+        else:
+            await asyncio.gather(session.close(), self.close_all())
 
-    def _has_prepared_sessions_in_pool(self) -> bool:
-        for session in self._session_pool:
-            if session.closed is False:
-                return True
-        return False
-
-    async def _cleanup_rotten_sessions(self) -> None:
-        for session in self._session_pool:
-            if not session.closed:
-                continue
-            await session.close()
-            del session
-
-    async def _instantiate_new_session(self) -> _SessionType:
+    async def get_new_session(self) -> _SessionType:
         session = cast(
             _SessionType,
             aiohttp.ClientSession(**self._session_kwargs)
         )
-        self.put(session)
         return session

@@ -22,7 +22,7 @@ def test_async_as_sync():
     @async_as_sync()
     async def my_async_func():
         nonlocal result
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
         result += 1
 
     my_async_func()
@@ -45,7 +45,7 @@ def test_async_as_sync_with_callback(maps_client: QiwiMaps):
 @pytest.mark.asyncio
 async def test_measure_time(caplog):
     async def func():
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
 
     with caplog.at_level(logging.INFO):
         await measure_time(LOGGER).__call__(func)()

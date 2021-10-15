@@ -101,7 +101,7 @@ class QiwiWrapper(
     """
 
     # declarative validators for fields
-    phone_number = PhoneNumber(optional=True)
+    phone_number = PhoneNumber(optional=True, maxsize=15, minsize=11)
     api_access_token = String(optional=True)
     secret_p2p = String(optional=True)
 

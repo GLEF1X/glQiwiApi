@@ -56,7 +56,7 @@ class RequestService:
         self._cache.clear()
 
     async def warmup_session_pool(self) -> None:
-        await self._session_pool.get()
+        await self._session_pool.warm_up()
 
     async def send_request(
             self,

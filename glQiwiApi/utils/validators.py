@@ -23,16 +23,16 @@ PHONE_NUMBER_PATTERN: Pattern[str] = re.compile(
     r"^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$"
 )
 
-_T = TypeVar("_T")
+_FieldType = TypeVar("_FieldType", bound=Any)
 
 
-class Field(ABC, Generic[_T]):
+class Field(ABC, Generic[_FieldType]):
 
-    def __set_name__(self, owner: Any, name: str) -> None:
+    def __set_name__(self, owner: Type[Any], name: str) -> None:
         self.private_name = '_' + name
 
-    def __get__(self, obj: Any, objtype: Optional[Type[Any]] = None) -> _T:
-        return cast(_T, getattr(obj, self.private_name))
+    def __get__(self, obj: Any, objtype: Optional[Type[Any]] = None) -> _FieldType:
+        return cast(_FieldType, getattr(obj, self.private_name))
 
     def __set__(self, obj: Any, value: Any) -> None:
         try:
@@ -43,7 +43,7 @@ class Field(ABC, Generic[_T]):
         setattr(obj, self.private_name, value)
 
     @abstractmethod
-    def validate(self, value: _T) -> None:
+    def validate(self, value: _FieldType) -> None:
         pass
 
 
@@ -56,7 +56,7 @@ class String(Field[Optional[str]]):
         self.predicate = predicate
         self._optional = optional
 
-    def validate(self, value: _T) -> None:
+    def validate(self, value: _FieldType) -> None:
         if value is None and self._optional:
             raise SkipValidation()
         if not isinstance(value, str):
