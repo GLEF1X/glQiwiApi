@@ -2,15 +2,18 @@
 Provides effortless work with YooMoney API using asynchronous requests.
 
 """
+from __future__ import annotations
+
 import asyncio
 import warnings
 from datetime import datetime
-from typing import List, Dict, Any, Union, Optional, Tuple, cast
+from types import TracebackType
+from typing import List, Dict, Any, Union, Optional, Tuple, cast, Type
 
-from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
-from glQiwiApi.core.mixins import DataMixin, ContextInstanceMixin, ToolsMixin
+from glQiwiApi.core.constants import NO_CACHING
+from glQiwiApi.core.mixins import DataMixin, ContextInstanceMixin, AsyncContextMixin
 from glQiwiApi.core.request_service import RequestService
-from glQiwiApi.core.session.pool import AbstractSessionPool
+from glQiwiApi.core.session.pool import SessionPool
 from glQiwiApi.types import (
     AccountInfo,
     OperationType,
@@ -28,15 +31,16 @@ from glQiwiApi.utils.payload import (
     parse_iterable_to_list_of_objects,
     check_params,
     parse_amount,
-    check_transactions_payload, make_payload,
+    check_transactions_payload,
+    make_payload,
 )
 from glQiwiApi.utils.validators import String
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
-class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
+class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     """
-    A class that implements processing requests to YooMoney
+    That class implements processing requests to YooMoney
     It is convenient in that it does not just give json such objects,
     and all this converts into pydantic models.
     To work with this class, you need to register a token,
@@ -49,8 +53,8 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     def __init__(
             self,
             api_access_token: str,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
-            session_pool: Optional[AbstractSessionPool[Any]] = None,
+            cache_time: Union[float, int] = NO_CACHING,
+            session_pool: Optional[SessionPool[Any]] = None,
     ) -> None:
         """
         The constructor accepts a token obtained from the method class get_access_token
@@ -64,7 +68,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         """
         self.api_access_token = api_access_token
         self._router = YooMoneyRouter()
-        self._requests = RequestService(self._router.config.ERROR_CODE_NUMBERS,
+        self._request_service = RequestService(self._router.config.ERROR_CODE_NUMBERS,
                                         cache_time, session_pool=session_pool)
 
         self.set_current(self)
@@ -146,7 +150,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
             headers=headers,
             data=params,
         )
-        return cast(str, response.get("access_token"))
+        return cast(str, response["access_token"])
 
     async def revoke_api_token(self) -> Optional[Dict[str, bool]]:
         """
@@ -193,9 +197,9 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         Detail docs: https://yoomoney.ru/docs/payment-buttons/using-api/forms?lang=en
 
         Possible values for quick_pay_form:
-        * shop - for a multi purpose form;
-        * small - for a button;
-        * donate - for a charity form.
+           * shop - for a multi purpose form;
+           * small - for a button;
+           * donate - for a charity form.
 
         @param receiver: Number of the YooMoney wallet which money from senders is credited to.
         @param quick_pay_form:

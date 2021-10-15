@@ -3,9 +3,9 @@ from __future__ import annotations
 import contextvars
 import copy
 import logging
+from types import TracebackType
 from typing import (
     Any,
-    TYPE_CHECKING,
     TypeVar,
     Optional,
     cast,
@@ -13,7 +13,7 @@ from typing import (
     ClassVar,
     Dict,
     Type,
-    Union,
+    Union, TYPE_CHECKING,
 )
 
 from glQiwiApi.core.dispatcher.dispatcher import (
@@ -27,23 +27,30 @@ from glQiwiApi.core.dispatcher.dispatcher import (
 from glQiwiApi.core.dispatcher.filters import BaseFilter
 
 if TYPE_CHECKING:
-    from glQiwiApi.core.request_service import RequestService  # pragma: no cover
+    from glQiwiApi.core.request_service import RequestService
+
+_T = TypeVar("_T", bound="AsyncContextMixin")
 
 
-class ToolsMixin(object):
+class AsyncContextMixin:
     """Object: ToolsMixin"""
+    _request_service: RequestService
 
-    _requests: RequestService
-
-    async def __aenter__(self) -> ToolsMixin:
-        await self._requests.warmup_session_pool()
+    async def __aenter__(self):
+        await self._request_service.warmup()
         return self
 
-    async def close(self) -> None:
+    async def __aexit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
+    ) -> None:
         pass
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore
         await self.close()
+
+    async def close(self) -> None:
+        await self._request_service.shutdown()
 
     def _get(self, item: Any) -> Any:  # pragma: no cover
         try:
@@ -51,7 +58,7 @@ class ToolsMixin(object):
         except AttributeError:
             return None
 
-    def __deepcopy__(self, memo: Any) -> ToolsMixin:  # pragma: no cover
+    def __deepcopy__(self, memo: Any) -> AsyncContextMixin:  # pragma: no cover
         cls = self.__class__
         kw = {"__copy_signal__": True}
         result = cls.__new__(cls, **kw)  # type: ignore  # pragma: no cover
@@ -67,7 +74,7 @@ class ToolsMixin(object):
             elif k == "dispatcher":
                 value._loop = None
             setattr(result, k, copy.deepcopy(value, memo))  # NOQA
-        return cast(ToolsMixin, result)
+        return cast(AsyncContextMixin, result)
 
 
 class DataMixin:
@@ -107,7 +114,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
 
     @classmethod  # noqa: F811
     def get_current(  # noqa: F811
-        cls, no_error: bool = True
+            cls, no_error: bool = True
     ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
         """Get current instance from context"""
         # on mypy 0.770 I catch that contextvars.ContextVar always contextvars.ContextVar[Any]
@@ -180,20 +187,20 @@ class HandlerCollectionMixin:
         return self.dispatcher.bill_handler
 
     def register_transaction_handler(
-        self, event_handler: TxnRawHandler, *filters: TxnFilters
+            self, event_handler: TxnRawHandler, *filters: TxnFilters
     ) -> None:
         return self.dispatcher.register_transaction_handler(event_handler, *filters)
 
     def register_bill_handler(
-        self, event_handler: BillRawHandler, *filters: BillFilters
+            self, event_handler: BillRawHandler, *filters: BillFilters
     ) -> None:
         return self.dispatcher.register_bill_handler(event_handler, *filters)
 
     def register_error_handler(
-        self,
-        event_handler: ErrorRawHandler,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
+            self,
+            event_handler: ErrorRawHandler,
+            exception: Optional[Union[Type[Exception], Exception]] = None,
+            *filters: BaseFilter[Exception],
     ) -> None:
         return self.dispatcher.register_error_handler(
             event_handler, exception, *filters

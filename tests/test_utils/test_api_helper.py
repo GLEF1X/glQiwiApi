@@ -36,7 +36,8 @@ def test_async_as_sync_with_callback(maps_client: QiwiMaps):
 
     @async_as_sync(async_shutdown_callback=callback)
     async def my_async_func():
-        partners = await maps_client.partners()
+        async with maps_client:
+            partners = await maps_client.partners()
         assert all(isinstance(p, types.Partner) for p in partners)
 
     my_async_func()

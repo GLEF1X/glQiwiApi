@@ -5,8 +5,6 @@ from .core import (
     AbstractBillHandler,
     AbstractTransactionHandler,
     AbstractWebHookHandler,
-    SyncAdaptedQiwi,
-    SyncAdaptedYooMoney,
     async_as_sync,
     execute_async_as_sync,
 )
@@ -54,9 +52,6 @@ __all__ = (
     "InvalidCachePayload",
     "BadCallback",
     "WebhookSignatureUnverified",
-    # Sync adapted
-    "SyncAdaptedQiwi",
-    "SyncAdaptedYooMoney",
     # other
     "__version__",
 )

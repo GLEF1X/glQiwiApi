@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 
 DEFAULT_TIMEOUT = 20
 
-DEFAULT_CACHE_TIME = 0
+NO_CACHING = 0
 
 TIMEOUT_IF_EXCEPTION = 40
 

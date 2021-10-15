@@ -1,7 +1,5 @@
 import datetime
-import pathlib
 import uuid
-from typing import Union, List
 
 import pytest
 

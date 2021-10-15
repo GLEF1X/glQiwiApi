@@ -13,17 +13,15 @@ from .dispatcher.webhooks import (
     BaseWebHookView,
     server,
 )
-from .mixins import ToolsMixin, ContextInstanceMixin
+from .mixins import AsyncContextMixin, ContextInstanceMixin
 from .synchronous import (
-    SyncAdaptedQiwi,
-    SyncAdaptedYooMoney,
     async_as_sync,
     execute_async_as_sync,
 )
 
 __all__ = (
     "RequestService",
-    "ToolsMixin",
+    "AsyncContextMixin",
     "ContextInstanceMixin",
     "BaseFilter",
     "LambdaBasedFilter",
@@ -34,8 +32,6 @@ __all__ = (
     "AbstractWebHookHandler",
     "ErrorHandler",
     # synchronous adapters and utils
-    "SyncAdaptedQiwi",
-    "SyncAdaptedYooMoney",
     "async_as_sync",
     "execute_async_as_sync",
     # webhooks

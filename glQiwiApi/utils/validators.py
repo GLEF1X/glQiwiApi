@@ -47,7 +47,7 @@ class Field(ABC, Generic[_FieldType]):
         pass
 
 
-class String(Field[Optional[str]]):
+class String(Field[str]):
 
     def __init__(self, minsize: Optional[int] = None, maxsize: Optional[int] = None,
                  predicate: Optional[Callable[[Any], bool]] = None, optional: bool = False):

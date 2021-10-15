@@ -57,7 +57,7 @@ async def _on_startup_callback(api: QiwiWrapper):
 
 class TestPolling:
     @pytest.mark.asyncio
-    @timeout_decorator.timeout(5)
+    @timeout_decorator.timeout(2)
     def _start_polling(self, api: QiwiWrapper):
         from glQiwiApi.utils import executor
 

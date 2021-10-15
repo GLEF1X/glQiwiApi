@@ -1,42 +1,39 @@
+from __future__ import annotations
+
 import typing
 
 from glQiwiApi import types
 from glQiwiApi.core import RequestService
-from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
-from glQiwiApi.core.mixins import ContextInstanceMixin, ToolsMixin, DataMixin
+from glQiwiApi.core.constants import NO_CACHING
+from glQiwiApi.core.mixins import ContextInstanceMixin, AsyncContextMixin, DataMixin
 from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects
 
 
-class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
+class QiwiMaps(AsyncContextMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
     """
     QIWI Terminal Maps API allows you to locate
     QIWI terminals on the territory of the Russian Federation
 
     """
 
-    def __init__(
-        self,
-        without_context: bool = False,
-        cache_time: int = DEFAULT_CACHE_TIME,
-        proxy: typing.Optional[typing.Any] = None,
-    ) -> None:
-        self._requests = RequestService(cache_time=cache_time)
+    def __init__(self, cache_time: int = NO_CACHING) -> None:
+        self._request_service = RequestService(cache_time=cache_time)
 
     @property
     def request_manager(self) -> RequestService:
-        return self._requests
+        return self._request_service
 
     async def terminals(
-        self,
-        polygon: types.Polygon,
-        zoom: typing.Optional[int] = None,
-        pop_if_inactive_x_mins: int = 30,
-        include_partners: typing.Optional[bool] = None,
-        partners_ids: typing.Optional[typing.List[typing.Any]] = None,
-        cache_terminals: typing.Optional[bool] = None,
-        card_terminals: typing.Optional[bool] = None,
-        identification_types: typing.Optional[int] = None,
-        terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
+            self,
+            polygon: types.Polygon,
+            zoom: typing.Optional[int] = None,
+            pop_if_inactive_x_mins: int = 30,
+            include_partners: typing.Optional[bool] = None,
+            partners_ids: typing.Optional[typing.List[typing.Any]] = None,
+            cache_terminals: typing.Optional[bool] = None,
+            card_terminals: typing.Optional[bool] = None,
+            identification_types: typing.Optional[int] = None,
+            terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
     ) -> typing.List[types.Terminal]:
         """
         Get map of terminals sent for passed polygon with additional params
@@ -57,7 +54,7 @@ class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = self._requests.filter_dict(
+        params = self._request_service.filter_dict(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -71,7 +68,7 @@ class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
             }
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        response = await self._requests.make_request(url, "GET", params=params)
+        response = await self._request_service._send_request(url, "GET", params=params)
         return parse_iterable_to_list_of_objects(
             typing.cast(typing.List[typing.Any], response), types.Terminal
         )
@@ -82,7 +79,7 @@ class QiwiMaps(ToolsMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         :return: list of TTPGroups
         """
         url = "http://edge.qiwi.com/locator/v3/ttp-groups"
-        response = await self._requests.make_request(
+        response = await self._request_service._send_request(
             url, "GET", headers={"Content-type": "text/json"}
         )
         return parse_iterable_to_list_of_objects(

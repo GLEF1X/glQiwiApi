@@ -6,8 +6,8 @@ from aiohttp import ClientTimeout, ServerDisconnectedError, \
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.abstracts import AbstractRouter
-from glQiwiApi.core.constants import DEFAULT_CACHE_TIME
-from glQiwiApi.core.session.pool import AbstractSessionPool, AiohttpSessionPool
+from glQiwiApi.core.constants import NO_CACHING
+from glQiwiApi.core.session.pool import SessionPool, AiohttpSessionPool
 from glQiwiApi.core.storage import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
     CachedAPIRequest, Payload
 from glQiwiApi.utils.exceptions import APIError
@@ -34,29 +34,31 @@ class RequestService:
     def __init__(
             self,
             messages: Optional[Dict[int, str]] = None,
-            cache_time: Union[float, int] = DEFAULT_CACHE_TIME,
-            session_pool: Optional[AbstractSessionPool[Any]] = None,
+            cache_time: Union[float, int] = NO_CACHING,
+            session_pool: Optional[SessionPool[Any]] = None,
     ) -> None:
         self._base_headers = {
             "User-Agent": "glQiwiApi/stable",
             "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
         }
         self.messages = messages or EmptyMessages()
-        self._timeout = ClientTimeout(
-            total=5, connect=None, sock_connect=5, sock_read=None
-        )
         if session_pool is None:
-            session_pool = AiohttpSessionPool()
+            session_pool = AiohttpSessionPool(
+                timeout=ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None)
+            )
         self._cache = InMemoryCacheStorage(
             invalidate_strategy=APIResponsesCacheInvalidationStrategy(cache_time=cache_time)
         )
-        self._session_pool: AbstractSessionPool[Any] = session_pool
+        self._session_pool: SessionPool[Any] = session_pool
 
     def reset_cache(self) -> None:
         self._cache.clear()
 
-    async def warmup_session_pool(self) -> None:
-        await self._session_pool.warm_up()
+    async def warmup(self) -> None:
+        await self._session_pool
+
+    async def shutdown(self) -> None:
+        await self._session_pool.close()
 
     async def send_request(
             self,
@@ -72,7 +74,7 @@ class RequestService:
             **kwargs: Any
     ) -> Dict[Any, Any]:
         url = router.build_url(api_method, **kwargs)
-        return await self.make_request(
+        return await self._send_request(
             url,
             http_method,
             set_timeout=set_timeout,
@@ -83,7 +85,7 @@ class RequestService:
             cookies=cookies,
         )
 
-    async def make_request(
+    async def _send_request(
             self,
             url: str,
             method: str,
@@ -95,11 +97,10 @@ class RequestService:
             params: Optional[Any] = None,
             **kwargs: Any
     ) -> Dict[Any, Any]:
-        request_args = {
-            k: v for k, v in locals().items() if not isinstance(v, type(self))
-        }
-        if await self._cache_has_similar_cached_response(**request_args):
+        request_args = {k: v for k, v in locals().items() if not isinstance(v, type(self))}
+        if await self._storage_has_similar_cached_response(**request_args):
             return (await self._cache.retrieve(url)).response  # type: ignore
+        await self._session_pool._initialize()  # noqa
         async with self._session_pool.acquire() as session:
             try:
                 resp = await session.request(
@@ -123,12 +124,12 @@ class RequestService:
                     ServerDisconnectedError,
                     ClientConnectionError,
             ):
-                raise self.make_exception(status_code=500)
+                raise self.api_exception(status_code=500)
             else:
                 self._cache_result(response, **request_args)
                 return response
 
-    async def _cache_has_similar_cached_response(self, **request_args: Any) -> bool:
+    async def _storage_has_similar_cached_response(self, **request_args: Any) -> bool:
         return await self._cache.contains_similar(Payload(**request_args))
 
     def _cache_result(self, response: Any, method: str, **kwargs: Any) -> None:
@@ -142,7 +143,7 @@ class RequestService:
             }
         )
 
-    def make_exception(
+    def api_exception(
             self,
             status_code: int,
             traceback_info: Optional[
