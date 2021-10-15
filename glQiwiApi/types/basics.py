@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Union, Any, Optional, Tuple, Dict
+from typing import Union, Any
 
 from pydantic import BaseModel, validator
 
@@ -52,7 +51,6 @@ class Type(BaseModel):
 
     id: str
     title: str
-
 
 
 __all__ = ("Sum", "OptionalSum", "Type", "HashableOptionalSum")
