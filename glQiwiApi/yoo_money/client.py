@@ -30,6 +30,7 @@ from glQiwiApi.utils.payload import (
     parse_amount,
     check_transactions_payload, make_payload,
 )
+from glQiwiApi.utils.validators import String
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
@@ -42,8 +43,8 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     using the guide on the official github of the project
 
     """
-
-    __slots__ = ("api_access_token", "_requests", "_router", "__context_instance")
+    __slots__ = ("_requests", "_router", "__context_instance")
+    api_access_token = String()
 
     def __init__(
             self,
@@ -183,6 +184,40 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
                         need_email: Optional[bool] = None,
                         need_phone: Optional[bool] = None,
                         need_address: Optional[bool] = None) -> str:
+        """
+        The YooMoney form is a set of fields with information about a transfer.
+        You can embed payment form into your interface (for instance, a website or blog).
+        When the sender pushes the button, the details from the form are sent to YooMoney
+        and an order for a transfer to your wallet is initiated.
+
+        Detail docs: https://yoomoney.ru/docs/payment-buttons/using-api/forms?lang=en
+
+        Possible values for quick_pay_form:
+        * shop - for a multi purpose form;
+        * small - for a button;
+        * donate - for a charity form.
+
+        @param receiver: Number of the YooMoney wallet which money from senders is credited to.
+        @param quick_pay_form:
+        @param targets: Payment purpose.
+        @param payment_type: Payment method. Possible values: PC, AC, MC
+        @param amount: 	Transfer amount (the amount debited from the sender).
+        @param form_comment: Name of the transfer in sender’s history
+                (for transfers from a wallet or linked bank card). Displayed in sender’s wallet.
+                The simplest way to create it is to combine the names of the store and product.
+                For instance:  My Store: white valenki boots
+        @param short_dest: Name of the transfer on the confirmation page.
+               We recommend using the same name as formcomment
+        @param label: The label that a site or app assigns to a certain transfer.
+                      For instance, a code or order identifier may be used for this label.
+        @param comment: The field in which you can send sender’s comments.
+        @param success_url: URL where the user is redirected after the transfer.
+        @param need_fio: Sender’s full name required.
+        @param need_email: Sender’s email address required.
+        @param need_phone: Sender’s phone number required.
+        @param need_address: Sender’s address required.
+        @return: link to payment form
+        """
         payload = make_payload(**{
             "receiver": receiver,
             "quickpay-form": quick_pay_form,
@@ -201,9 +236,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         })
         router = YooMoneyRouter()
         base_url = router.build_url(YooMoneyMethods.QUICK_PAY_FORM)
-        params = "".join(
-            f"&{key}={value}" for key, value in payload.items()
-        )
+        params = "".join(f"&{key}={value}" for key, value in payload.items())
         return base_url + params
 
     async def retrieve_account_info(self) -> AccountInfo:
@@ -234,7 +267,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
             label: Optional[Union[str, int]] = None,
     ) -> List[Operation]:
         """
-        Подробная документация:
+        More details:
         https://yoomoney.ru/docs/wallet/user-account/operation-history\n
         The method allows you to view the history of transactions (in whole or in part) in page mode.
         History records are displayed in reverse chronological order from most recent to earlier.
@@ -537,11 +570,7 @@ class YooMoneyAPI(ToolsMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
         :param comment: comment by which the transaction will be verified
         :return: bool, is there such a transaction in the payment history
         """
-        types = [
-            OperationType.DEPOSITION
-            if operation_type == "in"
-            else OperationType.PAYMENT
-        ]
+        types = [OperationType.from_input(operation_type)]
         transactions = await self.transactions(operation_types=types, records=rows)
         tasks = [self.transaction_info(txn.id) for txn in transactions]
         for detail in await asyncio.gather(*tasks):

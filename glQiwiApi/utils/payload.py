@@ -226,7 +226,7 @@ def get_new_card_data(
 def parse_amount(
     txn_type: str, txn: types.OperationDetails
 ) -> Tuple[Union[int, float], str]:
-    transaction_type_in_lower = types.TransactionType.IN.value.lower()  # type: str
+    transaction_type_in_lower = types.OperationType.IN.value.lower()  # type: str
     if txn_type == transaction_type_in_lower:
         return txn.amount, txn.comment  # type: ignore
     else:

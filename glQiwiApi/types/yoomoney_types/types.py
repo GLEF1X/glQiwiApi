@@ -100,6 +100,15 @@ class OperationType(Enum):
     TRANSFERS = "incoming-transfers-unaccepted"
     """непринятые входящие P2P-переводы любого типа."""
 
+    @classmethod
+    def from_input(cls, op_type: str):
+        if op_type.lower() == "in":
+            return cls.DEPOSITION
+        elif op_type.lower() == "out":
+            return cls.PAYMENT
+        else:
+            return cls.TRANSFERS
+
 
 class DigitalGoods(BaseModel):
     """
