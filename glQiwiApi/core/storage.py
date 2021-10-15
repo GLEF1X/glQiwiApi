@@ -195,7 +195,7 @@ class InMemoryCacheStorage(CacheStorage):
             asyncio.create_task(self.retrieve(key))
             for key in self._data.keys()
         ]
-        return await asyncio.gather(*tasks)
+        return await asyncio.gather(*tasks)  # type: ignore  # noqa
 
     def update(self, **kwargs: Any) -> None:
         try:

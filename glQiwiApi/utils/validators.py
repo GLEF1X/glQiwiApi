@@ -76,7 +76,7 @@ class String(Field[Optional[str]]):
 
 
 class PhoneNumber(String):
-    def validate(self, value: Optional[str]) -> None:  # type: ignore
+    def validate(self, value: Optional[str]) -> None:
         String.validate(self, value)
         phone_number_match: Optional[Match[Any]] = re.fullmatch(PHONE_NUMBER_PATTERN, value)
         if not phone_number_match:
