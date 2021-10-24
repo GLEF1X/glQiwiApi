@@ -1,34 +1,10 @@
 from __future__ import annotations
 
-from types import TracebackType
-from typing import Any, AsyncContextManager, NoReturn, Optional, Type
+from typing import Any, AsyncContextManager
 
 
 class ModuleNotInstalledException(Exception):
     pass
-
-
-class CompatAsyncContextManager:
-
-    def __init__(self, not_installed_module_name: str) -> None:
-        self._not_installed_module_name = not_installed_module_name
-
-    async def __aenter__(self) -> NoReturn:
-        raise ModuleNotInstalledException(
-            f"Module {self._not_installed_module_name} not installed and you can't use it's "
-            f"functionality till you install this module"
-        )
-
-    async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
-    ) -> None:
-        raise ModuleNotInstalledException(
-            f"Module {self._not_installed_module_name} not installed and you can't use it's "
-            f"functionality till you install this module"
-        )
 
 
 class EmptyCls(object):
@@ -58,3 +34,8 @@ try:
 except (ModuleNotFoundError, ImportError):
     Dispatcher = EmptyCls
     InputFile = EmptyCls
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
