@@ -25,7 +25,7 @@ class ClientMixin(Generic[T]):
 
     @property
     def client_data(self) -> Dict[Any, Any]:
-        return self.client.data
+        return self.client.config_data
 
 
 class Handler(abc.ABC, BaseHandlerMixin[T]):

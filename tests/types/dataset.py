@@ -10,10 +10,8 @@ API_DATA = {
 YOO_MONEY_DATA = {"api_access_token": os.getenv("YOO_API_TOKEN")}
 
 WRONG_API_DATA = {
-    "api_access_token": dict(),
+    "api_access_token": "sdfsdfs",
     "secret_p2p": "5454",
-    "phone_number": "12121",
-    "validate_params": True,
 }
 
 EMPTY_DATA: Dict[Any, Any] = {}

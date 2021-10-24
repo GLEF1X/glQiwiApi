@@ -3,14 +3,14 @@ from typing import List
 from pydantic import Field
 
 from glQiwiApi.types.base import ExtraBase
-from glQiwiApi.types.basics import Sum
+from glQiwiApi.types.basics import CurrencyAmount
 
 
 class Statistic(ExtraBase):
     """object: Statistic"""
 
-    incoming: List[Sum] = Field(alias="incomingTotal")
-    out: List[Sum] = Field(alias="outgoingTotal")
+    incoming: List[CurrencyAmount] = Field(alias="incomingTotal")
+    out: List[CurrencyAmount] = Field(alias="outgoingTotal")
 
 
 __all__ = ["Statistic"]

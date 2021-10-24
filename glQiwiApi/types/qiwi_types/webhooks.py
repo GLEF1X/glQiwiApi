@@ -11,7 +11,7 @@ from glQiwiApi.types.basics import HashableSum
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 
 
-def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[Any]) -> Any:
+def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> Any:
     """
     Recursively iter for nested_keys_list and get nested element.
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Union, Dict, List, Any
@@ -101,7 +103,7 @@ class OperationType(Enum):
     """непринятые входящие P2P-переводы любого типа."""
 
     @classmethod
-    def from_input(cls, op_type: str):
+    def from_input(cls, op_type: str) -> OperationType:
         if op_type.lower() == "in":
             return cls.DEPOSITION
         elif op_type.lower() == "out":

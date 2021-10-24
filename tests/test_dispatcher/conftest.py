@@ -5,7 +5,7 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient
 from aiohttp.test_utils import TestServer, BaseTestServer
 
-from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.types import Notification, WebHook
 from tests.types.dataset import BASE64_WEBHOOK_KEY

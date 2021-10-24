@@ -6,8 +6,8 @@ from copy import deepcopy
 from functools import lru_cache
 from typing import Any, Dict
 
-from glQiwiApi.core.abstracts import AbstractRouter
-from glQiwiApi.types import WrapperData
+from glQiwiApi.core.abc.router import AbstractRouter
+from glQiwiApi.types import WrappedRequestPayload
 
 __all__ = ("get_config", "QiwiRouter", "QiwiKassaRouter", "QiwiApiMethods")
 
@@ -33,8 +33,7 @@ class QiwiRouter(AbstractRouter):
     def setup_config(self) -> QiwiConfig:
         return get_config()
 
-    @property
-    def default_headers(self) -> Dict[Any, Any]:
+    def generate_default_headers(self) -> Dict[Any, Any]:
         return deepcopy(self.config.DEFAULT_QIWI_HEADERS)
 
 
@@ -112,16 +111,16 @@ class QiwiConfig:
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
-        self.ERROR_CODE_NUMBERS = {
+        self.ERROR_CODE_MESSAGES = {
             400: "Insufficient funds for the operation",
             401: "Invalid token or API token was expired",
             403: "No permission for this request(API token has insufficient permissions)",
             404: "Object was not found or there are no objects with the specified characteristics",
             423: "Too many requests, the service is temporarily unavailable",
             422: "The domain / subnet / host is incorrectly specified"
-            "webhook (in the new_url parameter for the webhook URL),"
-            "the hook type or transaction type is incorrectly specified,"
-            "an attempt to create a hook if there is one already created",
+                 "webhook (in the new_url parameter for the webhook URL),"
+                 "the hook type or transaction type is incorrectly specified,"
+                 "an attempt to create a hook if there is one already created",
             405: "Error related to the type of API request, contact the developer or open an issue",
             500: "Internal service error",
             0: "An error related to using a proxy or library problems",
@@ -133,7 +132,7 @@ class QiwiConfig:
             "comment": "test",
             "fields": {"account": "", "vas_alias": "qvc-master"},
         }
-        self.QIWI_TO_CARD: WrapperData = WrapperData(
+        self.QIWI_TO_CARD: WrappedRequestPayload = WrappedRequestPayload(
             json={
                 "id": str(int(time.time() * 1000)),
                 "sum": {"amount": "", "currency": "643"},
@@ -143,7 +142,7 @@ class QiwiConfig:
             headers=self.DEFAULT_QIWI_HEADERS,
         )
 
-        self.P2P_DATA: WrapperData = WrapperData(
+        self.P2P_DATA: WrappedRequestPayload = WrappedRequestPayload(
             json={
                 "amount": {"currency": "RUB", "value": "{amount}"},
                 "expirationDateTime": "",
@@ -156,7 +155,7 @@ class QiwiConfig:
             headers=self.P2P_QIWI_HEADERS,
         )
 
-        self.QIWI_TO_WALLET: WrapperData = WrapperData(
+        self.QIWI_TO_WALLET: WrappedRequestPayload = WrappedRequestPayload(
             json={
                 "id": str(int(time.time() * 1000)),
                 "sum": {"amount": "", "currency": ""},
@@ -166,7 +165,7 @@ class QiwiConfig:
             },
             headers=self.DEFAULT_QIWI_HEADERS,
         )
-        self.COMMISSION_DATA: WrapperData = WrapperData(
+        self.COMMISSION_DATA: WrappedRequestPayload = WrappedRequestPayload(
             json={
                 "account": "",
                 "paymentMethod": {"type": "Account", "accountId": "643"},

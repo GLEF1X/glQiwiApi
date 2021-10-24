@@ -5,11 +5,6 @@ import concurrent.futures as futures
 import functools as ft
 from contextvars import ContextVar
 
-try:
-    import orjson  # type: ignore
-except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
-    import json as orjson  # type: ignore
-
 
 def run_forever_safe(loop, callback=None) -> None:
     """run a loop for ever and clean up after being stopped"""

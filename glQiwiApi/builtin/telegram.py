@@ -9,11 +9,7 @@ from ssl import SSLContext
 from aiohttp import web
 
 if typing.TYPE_CHECKING:
-    try:  # pragma: no cover
-        from aiogram import Dispatcher  # NOQA  # pragma: no cover
-        from aiogram.types import InputFile  # NOQA  # pragma: no cover
-    except (ModuleNotFoundError, ImportError):  # NOQA  # pragma: no cover
-        pass  # pragma: no cover
+    from glQiwiApi.utils.compat import Dispatcher
 
 __all__ = ["TelegramWebhookProxy", "TelegramPollingProxy", "BaseProxy"]
 
@@ -40,7 +36,7 @@ def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes) -> None:
 
 class BaseProxy(abc.ABC):
     def __init__(
-        self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
+            self, dispatcher: Dispatcher, *, loop: typing.Optional[AbstractEventLoop] = None
     ) -> None:
         self.bot = dispatcher.bot
         self.dispatcher = dispatcher
@@ -71,13 +67,13 @@ class TelegramWebhookProxy(BaseProxy):
     """ You can override the prefix for the application """
 
     def __init__(
-        self,
-        dispatcher: Dispatcher,
-        ssl_certificate: SSLContext,
-        webhook_domain: str,
-        route_name: str = "webhook_handler",
-        sub_apps: typing.Optional[SubApps] = None,
-        loop: typing.Optional[AbstractEventLoop] = None,
+            self,
+            dispatcher: Dispatcher,
+            ssl_certificate: SSLContext,
+            webhook_domain: str,
+            route_name: str = "webhook_handler",
+            sub_apps: typing.Optional[SubApps] = None,
+            loop: typing.Optional[AbstractEventLoop] = None,
     ) -> None:
         """
 
@@ -144,16 +140,16 @@ class TelegramPollingProxy(BaseProxy):
     """
 
     def __init__(
-        self,
-        dispatcher: Dispatcher,
-        loop: typing.Optional[AbstractEventLoop] = None,
-        timeout: int = 20,
-        relax: float = 0.1,
-        limit: typing.Optional[typing.Any] = None,
-        reset_webhook: typing.Optional[typing.Any] = None,
-        fast: typing.Optional[bool] = True,
-        error_sleep: int = 5,
-        allowed_updates: typing.Optional[typing.List[str]] = None,
+            self,
+            dispatcher: Dispatcher,
+            loop: typing.Optional[AbstractEventLoop] = None,
+            timeout: int = 20,
+            relax: float = 0.1,
+            limit: typing.Optional[typing.Any] = None,
+            reset_webhook: typing.Optional[typing.Any] = None,
+            fast: typing.Optional[bool] = True,
+            error_sleep: int = 5,
+            allowed_updates: typing.Optional[typing.List[str]] = None,
     ) -> None:
         super(TelegramPollingProxy, self).__init__(dispatcher, loop=loop)
         self._allowed_updates = allowed_updates

@@ -251,7 +251,7 @@ async def main():
         )
         print(trans_id)
         # This is how you can pre-calculate the transaction fee.
-        calc_commission = await w.calc_commission(
+        calc_commission = await w.predict_commission(
             to_account='4890494756089082',
             pay_sum=1
         )

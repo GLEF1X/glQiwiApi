@@ -23,3 +23,14 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(
             level, record.getMessage()
         )
+
+
+def setup_logger() -> logging.Logger:
+    logger = logging.getLogger("glQiwiApi")
+    aiohttp_logger = logging.getLogger("aiohttp.access")
+    logger.setLevel(level=logging.DEBUG)
+    aiohttp_logger.setLevel(level=logging.DEBUG)
+    if not logger.handlers:
+        logger.addHandler(InterceptHandler())
+        aiohttp_logger.addHandler(InterceptHandler())
+    return logger

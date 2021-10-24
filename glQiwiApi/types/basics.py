@@ -7,7 +7,7 @@ from pydantic import BaseModel, validator
 from glQiwiApi.types.base import HashableBase
 
 
-class Sum(BaseModel):
+class CurrencyAmount(BaseModel):
     """
     Сумма платежа
 
@@ -28,7 +28,7 @@ class Sum(BaseModel):
         return Currency.get(str(v))
 
 
-class HashableSum(HashableBase, Sum):
+class HashableSum(HashableBase, CurrencyAmount):
     ...
 
 
@@ -53,4 +53,4 @@ class Type(BaseModel):
     title: str
 
 
-__all__ = ("Sum", "OptionalSum", "Type", "HashableOptionalSum")
+__all__ = ("CurrencyAmount", "OptionalSum", "Type", "HashableOptionalSum", "HashableSum")

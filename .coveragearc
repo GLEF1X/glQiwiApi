@@ -11,9 +11,14 @@ exclude_lines =
     def __repr__
     def __str__
     class .*\bProtocol\):
+    pass
 omit =
     glQiwiApi/ext/*
     glQiwiApi/yoo_money/*
     */site-packages/*
     */tests/*
     */.eggs/*
+    glQiwiApi/utils/mypy_hacks.py
+    glQiwiApi/utils/compat.py
+    glQiwiApi/core/dispatcher/webhooks/base.py
+    glQiwiApi/utils/payload.py

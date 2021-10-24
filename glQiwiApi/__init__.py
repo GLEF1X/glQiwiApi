@@ -11,7 +11,7 @@ from .core import (
 from .qiwi import QiwiWrapper, QiwiMaps
 from .types.exceptions import WebhookSignatureUnverified
 from .utils.exceptions import (
-    InvalidData,
+    InvalidPayload,
     CantParseUrl,
     NetworkError,
     APIError,
@@ -44,7 +44,7 @@ __all__ = (
     "AbstractWebHookHandler",
     "Handler",
     # Exceptions
-    "InvalidData",
+    "InvalidPayload",
     "CantParseUrl",
     "APIError",
     "NoUpdatesToExecute",

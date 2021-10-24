@@ -6,9 +6,9 @@ from typing import Optional, Generic, TypeVar, TYPE_CHECKING, Tuple, cast, Any, 
 from aiohttp import web
 from pydantic import ValidationError
 
-from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.collision_detectors import HashBasedCollisionDetector, \
-    CollisionError
+    UnexpectedCollision
 
 if TYPE_CHECKING:  # pragma: no cover
     from glQiwiApi.types.base import HashableBase  # pragma: no cover  # noqa
@@ -115,7 +115,7 @@ class BaseWebHookView(web.View, Generic[Event]):
 
         try:
             self.collision_detector.remember_processed_object(event)
-        except CollisionError:
+        except UnexpectedCollision:
             self.dispatcher.logger.debug("Detect collision on event")
             return self.ok_response()
 

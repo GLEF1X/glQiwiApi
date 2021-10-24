@@ -9,13 +9,6 @@ if TYPE_CHECKING:
 
 
 class Base(BaseModel):
-    if TYPE_CHECKING:  # pragma: no cover
-        from glQiwiApi.core.synchronous.adapter import (
-            SyncAdaptedQiwi,
-        )  # pragma: no cover
-
-        sync_client: SyncAdaptedQiwi  # only for synchronous adapter  # pragma: no cover
-
     @property
     def client(self) -> "QiwiWrapper":
         """Returning an instance of :class:`QiwiWrapper`"""

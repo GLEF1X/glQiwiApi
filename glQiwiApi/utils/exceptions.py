@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import json
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, TYPE_CHECKING
 
 from aiohttp import RequestInfo
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from glQiwiApi.types.errors import QiwiErrorAnswer
 
 
 class CantParseUrl(Exception):
@@ -13,7 +18,7 @@ class NetworkError(Exception):
     pass
 
 
-class InvalidData(TypeError):
+class InvalidPayload(TypeError):
     pass
 
 
@@ -36,6 +41,11 @@ class ExceptionTraceback(BaseModel):
     msg: Optional[str] = None
     additional_info: Optional[str] = None
     request_info: Optional[RequestInfoModel] = None
+
+
+class ChequeIsNotAvailable(Exception):
+    def __init__(self, err_model: QiwiErrorAnswer):
+        self.error_model = err_model
 
 
 class APIError(Exception):
@@ -103,7 +113,7 @@ class BadCallback(Exception):
 
 
 __all__ = (
-    "InvalidData",
+    "InvalidPayload",
     "CantParseUrl",
     "APIError",
     "NoUpdatesToExecute",

@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import Field, validator
 
 from glQiwiApi.types.base import Base
-from glQiwiApi.types.basics import Sum, Type
+from glQiwiApi.types.basics import CurrencyAmount, Type
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
@@ -16,7 +16,7 @@ class Account(Base):
     fs_alias: str = Field(alias="fsAlias")
     bank_alias: str = Field(alias="bankAlias")
     has_balance: bool = Field(alias="hasBalance")
-    balance: Optional[Sum] = None
+    balance: Optional[CurrencyAmount] = None
     currency: CurrencyModel
     account_type: Optional[Type] = Field(None, alias="type")
     is_default_account: bool = Field(alias="defaultAccount")

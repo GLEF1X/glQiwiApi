@@ -3,7 +3,6 @@ from __future__ import annotations
 import abc
 import asyncio
 import http
-import json
 import time
 from asyncio import Task
 from dataclasses import dataclass
@@ -52,27 +51,12 @@ class Payload:
             **{k: kwargs.get(k) for k in args if isinstance(kwargs.get(k), dict)}
         )
 
-    def __hash__(self) -> int:
-        dump_string = ""
-        if self.headers is not None:
-            dump_string += json.dumps(self.headers)
-        if self.json is not None:
-            dump_string += json.dumps(self.json)
-        if self.params is not None:
-            dump_string += json.dumps(self.params)
-        if self.data is not None:
-            dump_string += json.dumps(self.data)
-        return hash(dump_string)
-
 
 @dataclass(frozen=True)
 class CachedAPIRequest:
     payload: Payload
     response: Any
     method: Union[str, http.HTTPStatus]
-
-    def __hash__(self) -> int:
-        return hash(self.payload) + hash(self.method)
 
 
 class CacheInvalidationStrategy(abc.ABC):

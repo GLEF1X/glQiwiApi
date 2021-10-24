@@ -18,9 +18,7 @@ async def api_fixture(yoo_credentials: Dict[str, str]):
 
 
 async def test_get_balance(api: YooMoneyAPI):
-    async with api:
-        balance = await api.get_balance()
-
+    balance = await api.get_balance()
     assert isinstance(balance, float)
 
 
@@ -45,26 +43,22 @@ async def test_get_balance(api: YooMoneyAPI):
     ],
 )
 async def test_get_transactions(api: YooMoneyAPI, payload: dict):
-    async with api:
-        transactions = await api.transactions(**payload)
-
+    transactions = await api.transactions(**payload)
     assert all(isinstance(txn, types.Operation) for txn in transactions)
 
 
 async def test_account_info(api: YooMoneyAPI):
-    async with api:
-        info = await api.retrieve_account_info()
-
+    info = await api.retrieve_account_info()
     assert isinstance(info, types.AccountInfo)
 
 
 @pytest.mark.parametrize("operation_id", ["672180330623679897", "671568515431002412"])
 async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
-    async with api:
-        transaction = await api.transaction_info(operation_id)
+    transaction = await api.transaction_info(operation_id)
     assert isinstance(transaction, types.OperationDetails)
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     "payload",
     [
@@ -80,16 +74,13 @@ async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
     ],
 )
 async def test_check_transaction(api: YooMoneyAPI, payload: dict):
-    async with api:
-        result = await api.check_transaction(**payload)
-
+    result = await api.check_transaction(**payload)
     assert isinstance(result, bool)
 
 
 @pytest.mark.skip("")
 async def test_send_and_check_txn(api: YooMoneyAPI):
-    async with api:
-        payload = {"amount": 2, "comment": "unit_test"}
-        await api.send(to_account="4100116633099701", **payload)
-        answer = await api.check_transaction(**payload, operation_type="out")
+    payload = {"amount": 2, "comment": "unit_test"}
+    await api.send(to_account="4100116633099701", **payload)
+    answer = await api.check_transaction(**payload, operation_type="out")
     assert answer is True

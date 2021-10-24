@@ -1,11 +1,11 @@
 import ipaddress
 from datetime import datetime
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
 
 from pydantic import Field, validator
 
 from glQiwiApi.types.base import Base, ExtraBase
-from glQiwiApi.types.basics import Sum
+from glQiwiApi.types.basics import CurrencyAmount
 from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
@@ -49,7 +49,7 @@ class AuthInfo(Base):
 class SmsNotification(Base):
     """object: SmsNotification"""
 
-    price: Sum
+    price: CurrencyAmount
     enabled: bool
     active: bool
     end_date: Optional[datetime] = Field(None, alias="endDate")
@@ -102,7 +102,7 @@ class UserInfo(Base):
         None, alias="defaultPayAccountAlias"
     )
     email: Optional[str] = None
-    first_transaction_id: Optional[int] = Field(None, alias="firstTxnId")
+    first_transaction_id: Union[str, int, None] = Field(None, alias="firstTxnId")
     language: str
     operator: str
     phone_hash: str = Field(alias="phoneHash")

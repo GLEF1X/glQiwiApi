@@ -6,7 +6,7 @@ from typing import TypeVar, List, Generic
 T = TypeVar("T")
 
 
-class CollisionError(Exception):
+class UnexpectedCollision(Exception):
     pass
 
 
@@ -22,7 +22,7 @@ class BaseCollisionDetector(abc.ABC, Generic[T]):
 
     def remember_processed_object(self, obj: T) -> None:
         if self.has_collision(obj):
-            raise CollisionError()
+            raise UnexpectedCollision()
         self.add_already_processed_event(obj)
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from glQiwiApi.core.dispatcher.webhooks.collision_detectors import HashBasedCollisionDetector, CollisionError
+from glQiwiApi.core.dispatcher.webhooks.collision_detectors import HashBasedCollisionDetector, UnexpectedCollision
 from glQiwiApi.types import WebHook
 
 
@@ -18,5 +18,5 @@ def test_add_processed_event(test_webhook: WebHook, detector: HashBasedCollision
 
 def test_collision_error_raise(test_webhook: WebHook, detector: HashBasedCollisionDetector):
     detector.remember_processed_object(test_webhook)
-    with pytest.raises(CollisionError):
+    with pytest.raises(UnexpectedCollision):
         detector.remember_processed_object(test_webhook)

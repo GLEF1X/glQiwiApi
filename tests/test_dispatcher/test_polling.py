@@ -7,7 +7,7 @@ import timeout_decorator
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types
-from glQiwiApi.types import Transaction, Sum
+from glQiwiApi.types import Transaction, CurrencyAmount
 from glQiwiApi.types.qiwi_types.transaction import Provider
 from tests.types.dataset import WRONG_API_DATA
 
@@ -19,25 +19,26 @@ txn = Transaction(
     statusText="hello",
     trmTxnId="world",
     account="+38908234234",
-    sum=Sum(amount=999, currency=643),
-    total=Sum(amount=999, currency=643),
+    sum=CurrencyAmount(amount=999, currency=643),
+    total=CurrencyAmount(amount=999, currency=643),
     provider=Provider(),
-    commission=Sum(amount=999, currency=643),
+    commission=CurrencyAmount(amount=999, currency=643),
     currencyRate=643,
     type=types.TransactionType.OUT,
 )
 
 
 class StubQiwiWrapper(QiwiWrapper):
+
     def __new__(cls, *args, **kwargs):
         return object().__new__(cls)
 
     async def transactions(
-        self,
-        rows: int = 50,
-        operation: str = "ALL",
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+            self,
+            rows: int = 50,
+            operation: str = "ALL",
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         return [txn]
 
@@ -45,7 +46,7 @@ class StubQiwiWrapper(QiwiWrapper):
 @pytest.fixture(name="api")
 async def api_fixture():
     """Api fixture"""
-    _wrapper = StubQiwiWrapper(WRONG_API_DATA)
+    _wrapper = StubQiwiWrapper(**WRONG_API_DATA)
     yield _wrapper
     await _wrapper.close()
 

@@ -32,21 +32,32 @@ except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
 from glQiwiApi.utils import exceptions
 
 Model = TypeVar("Model", bound=BaseModel)
+DEFAULT_EXCLUDE = ("cls", "self", "__class__")
+
+
+def filter_none(dictionary: Dict[Any, Any]) -> Dict[Any, Any]:
+    """
+    Pop NoneType values and convert everything to str, designed?for=params
+
+    :param dictionary: source dict
+    :return: filtered dict
+    """
+    return {k: str(v) for k, v in dictionary.items() if v is not None}
 
 
 def make_payload(**kwargs: Any) -> Dict[Any, Any]:
     return {
         key: value
         for key, value in kwargs.items()
-        if key not in ["cls", "self", "__class__"] and value is not None
+        if key not in DEFAULT_EXCLUDE and value is not None
     }
 
 
 def check_result(
-    error_messages: Dict[int, str],
-    status_code: int,
-    request_info: RequestInfo,
-    body: str,
+        error_messages: Dict[int, str],
+        status_code: int,
+        request_info: RequestInfo,
+        body: str,
 ) -> Dict[Any, Any]:
     """
     Checks whether `result` is a valid API response.
@@ -70,7 +81,7 @@ def check_result(
         return result_json
 
     raise exceptions.APIError(
-        message=error_messages[status_code],
+        message=error_messages.get(status_code),
         status_code=status_code,
         traceback_info=request_info,
     )
@@ -89,10 +100,10 @@ def parse_auth_link(response_data: str) -> str:
     return cast(str, re.findall(regexp, str(response_data))[0])  # pragma: no cover
 
 
-def check_dates(
-    start_date: Optional[datetime],
-    end_date: Optional[datetime],
-    payload_data: Dict[Any, Any],
+def format_dates(
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+        payload_data: Dict[Any, Any],
 ) -> Dict[Any, Any]:
     """Check correctness of transferred dates and add it to request"""
     if isinstance(start_date, datetime) and isinstance(end_date, datetime):
@@ -104,16 +115,16 @@ def check_dates(
                 }
             )
         else:
-            raise ValueError("end_date не может быть больше чем start_date")
+            raise ValueError("end_date cannot be bigger than start_date")
     return payload_data
 
 
 def parse_commission_request_payload(
-    default_data: types.WrapperData,
-    auth_maker: types.FuncT,
-    pay_sum: Union[int, float],
-    to_account: str,
-) -> Tuple[types.WrapperData, Union[str, None]]:
+        default_data: types.WrappedRequestPayload,
+        auth_maker: types.FuncT,
+        pay_sum: Union[int, float],
+        to_account: str,
+) -> Tuple[types.WrappedRequestPayload, Union[str, None]]:
     """Set calc_commission payload"""
     payload = deepcopy(default_data)
     payload.headers = auth_maker(payload.headers)
@@ -123,11 +134,11 @@ def parse_commission_request_payload(
 
 
 def retrieve_card_data(
-    default_data: types.WrapperData,
-    trans_sum: Union[int, float, str],
-    to_card: str,
-    auth_maker: types.FuncT,
-) -> types.WrapperData:
+        default_data: types.WrappedRequestPayload,
+        trans_sum: Union[int, float, str],
+        to_card: str,
+        auth_maker: types.FuncT,
+) -> types.WrappedRequestPayload:
     """Set card data payload"""
     data = deepcopy(default_data)
     data.json["sum"]["amount"] = trans_sum
@@ -137,11 +148,8 @@ def retrieve_card_data(
 
 
 def retrieve_base_headers_for_yoomoney(
-    content_json: bool = False, auth: bool = False
+        content_json: bool = False, auth: bool = False
 ) -> Dict[Any, Any]:
-    """
-    Функция для добавления некоторых заголовков в запрос
-    """
     headers = {
         "Host": "yoomoney.ru",
         "Content-Type": "application/x-www-form-urlencoded",
@@ -154,12 +162,12 @@ def retrieve_base_headers_for_yoomoney(
 
 
 def set_data_to_wallet(
-    data: types.WrapperData,
-    to_number: str,
-    trans_sum: Union[str, int, float],
-    comment: Optional[str] = None,
-    currency: str = "643",
-) -> types.WrapperData:
+        data: types.WrappedRequestPayload,
+        to_number: str,
+        trans_sum: Union[str, int, float],
+        comment: Optional[str] = None,
+        currency: str = "643",
+) -> types.WrappedRequestPayload:
     data.json["sum"]["amount"] = str(trans_sum)
     data.json["sum"]["currency"] = currency
     data.json["fields"]["account"] = to_number
@@ -170,12 +178,12 @@ def set_data_to_wallet(
 
 
 def patch_p2p_create_payload(
-    wrapped_data: types.WrapperData,
-    amount: Union[str, int, float],
-    life_time: str,
-    comment: Optional[str] = None,
-    theme_code: Optional[str] = None,
-    pay_source_filter: Optional[List[str]] = None,
+        wrapped_data: types.WrappedRequestPayload,
+        amount: Union[str, int, float],
+        life_time: str,
+        comment: Optional[str] = None,
+        theme_code: Optional[str] = None,
+        pay_source_filter: Optional[List[str]] = None,
 ) -> Dict[MutableMapping[Any, Any], Any]:
     """Setting data for p2p form creation transfer"""
     wrapped_data.json["amount"]["value"] = str(amount)
@@ -196,7 +204,7 @@ def patch_p2p_create_payload(
 
 
 def parse_iterable_to_list_of_objects(
-    iterable: Iterable[Any], model: Type[Model]
+        iterable: Iterable[Any], model: Type[Model]
 ) -> List[Model]:
     """
     Parse simple objects, which cant raise ValidationError
@@ -214,7 +222,7 @@ def get_qiwi_master_data(ph_number: str, data: Dict[Any, Any]) -> Dict[Any, Any]
 
 
 def get_new_card_data(
-    ph_number: str, order_id: str, data: Dict[Any, Any]
+        ph_number: str, order_id: str, data: Dict[Any, Any]
 ) -> Dict[Any, Any]:
     payload = deepcopy(data)
     payload["fields"].pop("vas_alias")
@@ -224,9 +232,9 @@ def get_new_card_data(
 
 
 def parse_amount(
-    txn_type: str, txn: types.OperationDetails
+        txn_type: str, txn: types.OperationDetails
 ) -> Tuple[Union[int, float], str]:
-    transaction_type_in_lower = types.OperationType.IN.value.lower()  # type: str
+    transaction_type_in_lower = types.OperationType.DEPOSITION.value.lower()  # type: str
     if txn_type == transaction_type_in_lower:
         return txn.amount, txn.comment  # type: ignore
     else:
@@ -234,22 +242,20 @@ def parse_amount(
 
 
 def check_params(
-    amount_: Union[int, float],
-    amount: Union[int, float],
-    txn: types.OperationDetails,
-    transaction_type: str,
+        amount_: Union[int, float],
+        amount: Union[int, float],
+        txn: types.OperationDetails,
+        transaction_type: str,
 ) -> bool:
-    return (
-        amount is not None and amount <= amount_ and txn.direction == transaction_type
-    )
+    return amount is not None and amount <= amount_ and txn.direction == transaction_type
 
 
 def check_transaction(
-    transactions: List[types.Transaction],
-    amount: Union[int, float],
-    transaction_type: types.TransactionType = types.TransactionType.IN,
-    sender: Optional[str] = None,
-    comment: Optional[str] = None,
+        transactions: List[types.Transaction],
+        amount: Union[int, float],
+        transaction_type: types.TransactionType = types.TransactionType.IN,
+        sender: Optional[str] = None,
+        comment: Optional[str] = None,
 ) -> bool:
     for txn in transactions:
         if float(txn.sum.amount) >= amount and txn.type.value == transaction_type.value:
@@ -283,43 +289,43 @@ def check_api_method(api_method: str) -> None:
 
 
 def check_transactions_payload(
-    data: Dict[Any, Any],
-    records: int,
-    operation_types: Optional[
-        Union[List[types.OperationType], Tuple[types.OperationType, ...]]
-    ] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    start_record: Optional[int] = None,
+        data: Dict[Any, Any],
+        records: int,
+        operation_types: Optional[
+            Union[List[types.OperationType], Tuple[types.OperationType, ...]]
+        ] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        start_record: Optional[int] = None,
 ) -> Dict[Any, Any]:
-    from glQiwiApi import InvalidData
+    from glQiwiApi import InvalidPayload
 
     if records <= 0 or records > 100:
-        raise InvalidData(
+        raise InvalidPayload(
             "Invalid number of records."
             "The number of records that can be requested,"
             "be in the range from 1 to 100 inclusive"
         )
     if operation_types and all(
-        isinstance(operation_type, types.OperationType)
-        for operation_type in operation_types
+            isinstance(operation_type, types.OperationType)
+            for operation_type in operation_types
     ):
         op_types = [operation_type.value for operation_type in operation_types]
         data.update({"type": " ".join(op_types)})
 
     if isinstance(start_record, int):
         if start_record < 0:
-            raise InvalidData("start_record must be positive")
+            raise InvalidPayload("start_record must be positive")
         data.update({"start_record": start_record})
 
     if start_date:
         if not isinstance(start_date, datetime):
-            raise InvalidData("start_date must be datetime instance")
+            raise InvalidPayload("start_date must be datetime instance")
         data.update({"from": datetime_to_utc(start_date)})
 
     if end_date:
         if not isinstance(end_date, datetime):
-            raise InvalidData("end_date must be datetime instance")
+            raise InvalidPayload("end_date must be datetime instance")
         data.update({"till": datetime_to_utc(end_date)})
     return data
 

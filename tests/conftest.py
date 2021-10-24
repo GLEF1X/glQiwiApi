@@ -5,7 +5,7 @@ from glQiwiApi.types import WebHook
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(name="credentials")
+@pytest.fixture(name="credentials", scope="module")
 def credentials():
     from .types.dataset import API_DATA
 

@@ -4,16 +4,14 @@ import logging
 import pytest
 
 from glQiwiApi import QiwiMaps, types, async_as_sync
-from glQiwiApi.utils.decorators import measure_time
+from glQiwiApi.utils.helper import measure_time
 
 LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture(name="maps_client", scope="function")
-@pytest.mark.asyncio
-async def maps_client():
-    maps = QiwiMaps()
-    yield maps
+def maps_client():
+    return QiwiMaps()
 
 
 def test_async_as_sync():
@@ -36,8 +34,7 @@ def test_async_as_sync_with_callback(maps_client: QiwiMaps):
 
     @async_as_sync(async_shutdown_callback=callback)
     async def my_async_func():
-        async with maps_client:
-            partners = await maps_client.partners()
+        partners = await maps_client.partners()
         assert all(isinstance(p, types.Partner) for p in partners)
 
     my_async_func()

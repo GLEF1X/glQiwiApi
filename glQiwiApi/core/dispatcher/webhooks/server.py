@@ -3,7 +3,7 @@ import typing
 from aiohttp import web
 
 from glQiwiApi.builtin import BaseProxy
-from glQiwiApi.core.dispatcher.dispatcher import Dispatcher
+from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
     DEFAULT_QIWI_ROUTER_NAME,

@@ -25,7 +25,6 @@ from typing import (
 from glQiwiApi.builtin import (
     TransactionFilter,
     BillFilter,
-    InterceptHandler,
     ErrorFilter,
 )  # NOQA
 from .class_based import (
@@ -35,6 +34,7 @@ from .class_based import (
     ErrorHandler,
 )
 from .filters import BaseFilter, LambdaBasedFilter
+from ...builtin.logger import setup_logger
 
 if TYPE_CHECKING:
     from glQiwiApi.types import Notification, WebHook, Transaction  # pragma: no cover
@@ -68,17 +68,6 @@ class CancelHandler(Exception):
     pass
 
 
-def _setup_logger() -> logging.Logger:
-    logger = logging.getLogger(__name__)
-    aiohttp_logger = logging.getLogger("aiohttp.access")
-    logger.setLevel(level=logging.DEBUG)
-    aiohttp_logger.setLevel(level=logging.DEBUG)
-    if not logger.handlers:
-        logger.addHandler(InterceptHandler())
-        aiohttp_logger.addHandler(InterceptHandler())
-    return logger
-
-
 class EventHandler(Generic[Event]):
     """
     Event handler, which executing and working with handlers
@@ -97,8 +86,8 @@ class EventHandler(Generic[Event]):
 
     async def check_then_execute(self, event: Event, *args: Any) -> Optional[Any]:
         """Check event, apply all filters and then pass on to handler"""
-        for filter_ in self._filters:
-            if not await filter_.check(event):
+        for f in self._filters:
+            if not await f.check(event):
                 break
         else:
             return await self._handler(event, *args)
@@ -150,7 +139,7 @@ class Dispatcher:
         ] = HandlerCollection()
         self.bill_handlers: HandlerCollection["Notification"] = HandlerCollection()
         self.error_handlers: HandlerCollection[Exception] = HandlerCollection()
-        self._logger = _setup_logger()
+        self._logger = setup_logger()
 
     @no_type_check
     def _wrap_callback_for_error_handling(self, callback):

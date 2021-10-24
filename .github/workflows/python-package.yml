@@ -56,7 +56,7 @@ jobs:
       - name: Mypy check
         run: |
           poetry run mypy --install-types --non-interactive glQiwiApi/
-          poetry run mypy --strict glQiwiApi
+          poetry run mypy --strict --implicit-reexport glQiwiApi
 
       - name: Test with pytest
         run: |

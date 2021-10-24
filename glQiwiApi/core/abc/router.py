@@ -21,8 +21,6 @@ class SingletonABCMeta(abc.ABCMeta):
 
 
 class AbstractRouter(metaclass=SingletonABCMeta):
-    """Abstract class-router for building urls"""
-
     def __init__(self) -> None:
         self.config = self.setup_config()
         self.routes = self.setup_routes()

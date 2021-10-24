@@ -13,7 +13,8 @@ from .dispatcher.webhooks import (
     BaseWebHookView,
     server,
 )
-from .mixins import AsyncContextMixin, ContextInstanceMixin
+from .mixins import ContextInstanceMixin
+from .abc.wrapper import Wrapper
 from .synchronous import (
     async_as_sync,
     execute_async_as_sync,
@@ -21,7 +22,6 @@ from .synchronous import (
 
 __all__ = (
     "RequestService",
-    "AsyncContextMixin",
     "ContextInstanceMixin",
     "BaseFilter",
     "LambdaBasedFilter",

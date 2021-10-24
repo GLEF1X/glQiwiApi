@@ -9,13 +9,13 @@ import inspect
 import logging
 import types
 from datetime import datetime, timedelta
+from functools import wraps
 from ssl import SSLContext
 from typing import (
     Union,
     Optional,
     List,
     Callable,
-    Awaitable,
     TypeVar,
     TYPE_CHECKING,
     Any,
@@ -23,8 +23,9 @@ from typing import (
 )
 
 from aiohttp import web
+from mypy_extensions import KwArg, VarArg
 
-from glQiwiApi.builtin import BaseProxy, TelegramWebhookProxy
+from glQiwiApi.builtin import BaseProxy
 from glQiwiApi.builtin import logger
 from glQiwiApi.core.constants import (
     DEFAULT_TIMEOUT,
@@ -33,7 +34,7 @@ from glQiwiApi.core.constants import (
 )
 from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.core.dispatcher.webhooks.config import Path
-from glQiwiApi.core.synchronous.decorator import run_forever_safe
+from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.types import Transaction
 from glQiwiApi.utils.exceptions import NoUpdatesToExecute, BadCallback
 
@@ -44,6 +45,8 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+_CallbackType = Callable[["QiwiWrapper", VarArg(), KwArg()], T]
+
 
 def _parse_timeout(timeout: Union[float, int]) -> float:
     if isinstance(timeout, float):
@@ -51,9 +54,7 @@ def _parse_timeout(timeout: Union[float, int]) -> float:
     elif isinstance(timeout, int):
         return float(timeout)
     else:
-        raise TypeError(
-            "Timeout must be float or int. You have " f"passed on {type(timeout)}"
-        )
+        raise TypeError(f"Timeout must be float or int. You have passed on {type(timeout)}")
 
 
 async def _inspect_and_execute_callback(
@@ -65,17 +66,28 @@ async def _inspect_and_execute_callback(
         callback(client)  # pragma: no cover
 
 
-def _check_callback(callback: Callable[[QiwiWrapper], Any]) -> None:
+def _warn_on_long_close(log: logging.Logger) -> None:
+    log.warning('Callback is taking over 60 seconds to complete. '
+                'Check if you have any unreleased connections left. '
+                'Use asyncio.wait_for() to set a timeout for callback')
+
+
+def _patch_callback(callback: _CallbackType[T], loop: asyncio.AbstractEventLoop) -> _CallbackType[T]:
     if not isinstance(callback, types.FunctionType):
-        raise BadCallback(
-            "Callback passed to on_startup / on_shutdown is not a function"
-        )
+        raise BadCallback("Callback passed to on_startup / on_shutdown is not a function")
+
+    @wraps(callback)
+    async def patched_callback(c: QiwiWrapper, *args, **kwargs) -> Any:
+        loop.call_later(60, _warn_on_long_close, c.dispatcher.logger)
+        return await callback(c, *args, **kwargs)
+
+    return patched_callback
 
 
 def _setup_callbacks(
         executor: BaseExecutor,
-        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_startup: Optional[_CallbackType[Any]] = None,
+        on_shutdown: Optional[_CallbackType[Any]] = None,
 ) -> None:
     """
     Function, which setup callbacks and set it to dispatcher object
@@ -96,9 +108,9 @@ def start_webhook(
         host: str = "localhost",
         port: int = 8080,
         path: Optional[Path] = None,
-        on_startup: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-        on_shutdown: Optional[Callable[[QiwiWrapper], Awaitable[None]]] = None,
-        tg_app: Optional[TelegramWebhookProxy] = None,
+        on_startup: Optional[_CallbackType[Any]] = None,
+        on_shutdown: Optional[_CallbackType[Any]] = None,
+        tg_app: Optional[BaseProxy] = None,
         app: Optional["web.Application"] = None,
         ssl_context: Optional[SSLContext] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -114,7 +126,8 @@ def start_webhook(
     :param on_startup: coroutine,which will be executed on startup
     :param on_shutdown: coroutine, which will be executed on shutdown
     :param tg_app: builtin TelegramWebhookProxy or other
-          or class, that inherits from BaseProxy and deal with aiogram updates
+          or class, that inherits from BaseProxy
+          and deal with foreign framework/application in the background
     :param ssl_context:
     :param loop:
     """
@@ -130,8 +143,8 @@ def start_polling(
         *,
         skip_updates: bool = False,
         timeout: Union[float, int] = 5,
-        on_startup: Optional[Callable[[QiwiWrapper], Any]] = None,
-        on_shutdown: Optional[Callable[[QiwiWrapper], Any]] = None,
+        on_startup: Optional[_CallbackType[Any]] = None,
+        on_shutdown: Optional[_CallbackType[Any]] = None,
         tg_app: Optional[BaseProxy] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
@@ -147,7 +160,8 @@ def start_polling(
     :param on_shutdown: function or coroutine,
          which will be executed on shutdown
     :param tg_app: builtin TelegramPollingProxy or other
-         class, that inherits from BaseProxy, deal with aiogram updates
+         class, that inherits from BaseProxy, deal with foreign framework/application
+         in the background
     :param loop:
     """
     executor = PollingExecutor(
@@ -173,8 +187,8 @@ class BaseExecutor(abc.ABC):
         }
         self._tg_app = tg_app
         self.client = client
-        self._on_startup_calls: List[Callable[..., Any]] = []
-        self._on_shutdown_calls: List[Callable[..., Any]] = []
+        self._on_startup_calls: List[_CallbackType[Any]] = []
+        self._on_shutdown_calls: List[_CallbackType[Any]] = []
 
         self._dispatcher = client.dispatcher
 
@@ -211,13 +225,11 @@ class BaseExecutor(abc.ABC):
         self._create_new_loop_if_closed()
         return self._loop
 
-    def add_shutdown_callback(self, callback: Callable[[QiwiWrapper], Any]) -> None:
-        _check_callback(callback)
-        self._on_shutdown_calls.append(callback)
+    def add_shutdown_callback(self, callback: _CallbackType[Any]) -> None:
+        self._on_shutdown_calls.append(_patch_callback(callback, self.loop))
 
-    def add_startup_callback(self, callback: Callable[[QiwiWrapper], Any]) -> None:
-        _check_callback(callback)
-        self._on_startup_calls.append(callback)
+    def add_startup_callback(self, callback: _CallbackType[Any]) -> None:
+        self._on_startup_calls.append(_patch_callback(callback, self.loop))
 
     def _on_shutdown(self) -> None:
         """
@@ -265,7 +277,7 @@ class PollingExecutor(BaseExecutor):
             loop.create_task(self._start_polling())
             if isinstance(self._tg_app, BaseProxy):
                 self._tg_app.setup(loop=loop)
-            run_forever_safe(loop=loop)
+            adapter.run_forever_safe(loop=loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # Allow to graceful shutdown
             pass  # pragma: no cover
@@ -276,9 +288,9 @@ class PollingExecutor(BaseExecutor):
         while True:
             try:
                 await self._pool_process()
-                self._set_default_timeout()
+                self._set_timeout(DEFAULT_TIMEOUT)
             except Exception as ex:
-                self._set_exception_timeout()
+                self._set_timeout(TIMEOUT_IF_EXCEPTION)
                 self._dispatcher.logger.error(
                     "Handle `%s`. Sleeping %s seconds", repr(ex), self._timeout
                 )
@@ -313,24 +325,17 @@ class PollingExecutor(BaseExecutor):
         return history
 
     async def process_events(self, history: List[Transaction]) -> None:
-        """Processing events and send callbacks to handlers"""
-        tasks = []
-        for event in history:
-            if cast(int, self.offset) < event.id:
-                tasks.append(self._dispatcher.process_event(event))
-                self.offset = event.id
-
+        tasks: List[asyncio.Task[None]] = [
+            asyncio.create_task(self._dispatcher.process_event(event))
+            for event in history
+            if cast(int, self.offset) < event.id
+        ]
+        if history:
+            self.offset = history[-1].id
         await asyncio.gather(*tasks)
 
-    def _set_exception_timeout(
-            self, exception_timeout: Union[int, float] = TIMEOUT_IF_EXCEPTION
-    ) -> None:
+    def _set_timeout(self, exception_timeout: Union[int, float]) -> None:
         self._timeout = exception_timeout
-
-    def _set_default_timeout(
-            self, default_timeout: Union[int, float] = DEFAULT_TIMEOUT
-    ) -> None:
-        self._timeout = default_timeout
 
 
 class WebhookExecutor(BaseExecutor):
@@ -341,9 +346,6 @@ class WebhookExecutor(BaseExecutor):
                  loop: Optional[asyncio.AbstractEventLoop] = None):
         super().__init__(client, tg_app, loop)
         self._application = web.Application()
-
-    def _add_application_into_client_data(self) -> None:
-        self.client[DEFAULT_APPLICATION_KEY] = self._application
 
     def start_webhook(
             self,
@@ -373,6 +375,9 @@ class WebhookExecutor(BaseExecutor):
             pass
         finally:
             self._on_shutdown()
+
+    def _add_application_into_client_data(self) -> None:
+        self.client[DEFAULT_APPLICATION_KEY] = self._application
 
     async def welcome(self) -> None:
         """

@@ -7,13 +7,13 @@ from __future__ import annotations
 import asyncio
 import warnings
 from datetime import datetime
-from types import TracebackType
-from typing import List, Dict, Any, Union, Optional, Tuple, cast, Type
+from typing import List, Dict, Any, Union, Optional, Tuple, cast
 
+from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.constants import NO_CACHING
-from glQiwiApi.core.mixins import DataMixin, ContextInstanceMixin, AsyncContextMixin
+from glQiwiApi.core.mixins import DataMixin, ContextInstanceMixin
 from glQiwiApi.core.request_service import RequestService
-from glQiwiApi.core.session.pool import SessionPool
+from glQiwiApi.core.session.holder import AbstractSessionHolder
 from glQiwiApi.types import (
     AccountInfo,
     OperationType,
@@ -24,7 +24,7 @@ from glQiwiApi.types import (
     IncomingTransaction,
 )
 from glQiwiApi.types.yoomoney_types.types import Card
-from glQiwiApi.utils.exceptions import CantParseUrl, InvalidData
+from glQiwiApi.utils.exceptions import CantParseUrl, InvalidPayload
 from glQiwiApi.utils.payload import (
     parse_auth_link,
     retrieve_base_headers_for_yoomoney,
@@ -32,13 +32,13 @@ from glQiwiApi.utils.payload import (
     check_params,
     parse_amount,
     check_transactions_payload,
-    make_payload,
+    make_payload, filter_none,
 )
 from glQiwiApi.utils.validators import String
 from glQiwiApi.yoo_money.settings import YooMoneyRouter, YooMoneyMethods
 
 
-class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
+class YooMoneyAPI(Wrapper, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     """
     That class implements processing requests to YooMoney
     It is convenient in that it does not just give json such objects,
@@ -47,14 +47,13 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
     using the guide on the official github of the project
 
     """
-    __slots__ = ("_requests", "_router", "__context_instance")
-    api_access_token = String()
+    api_access_token = String(optional=False)
 
     def __init__(
             self,
             api_access_token: str,
             cache_time: Union[float, int] = NO_CACHING,
-            session_pool: Optional[SessionPool[Any]] = None,
+            session_holder: Optional[AbstractSessionHolder[Any]] = None,
     ) -> None:
         """
         The constructor accepts a token obtained from the method class get_access_token
@@ -62,19 +61,22 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
 
         :param api_access_token: api token for requests
         :param cache_time: Time to cache requests in seconds,
-         default 0, respectively
-         the request will not use the cache by default, the maximum time
-         caching 60 seconds
+         default 0, respectively the request will not use the cache by default
+        :param session_holder: obtains session and helps to manage session lifecycle. You can pass
+                               your own session holder, for example using httpx lib and use it
         """
         self.api_access_token = api_access_token
         self._router = YooMoneyRouter()
-        self._request_service = RequestService(self._router.config.ERROR_CODE_NUMBERS,
-                                        cache_time, session_pool=session_pool)
+        self._request_service = RequestService(self._router.config.ERROR_CODE_MESSAGES,
+                                               cache_time, session_holder=session_holder)
 
         self.set_current(self)
 
+    def get_request_service(self) -> RequestService:
+        return self._request_service
+
     def _auth_token(self, headers: Dict[Any, Any]) -> Dict[Any, Any]:
-        headers["Authorization"] = headers["Authorization"].new(
+        headers["Authorization"] = headers["Authorization"].format(
             token=self.api_access_token
         )
         return headers
@@ -103,15 +105,17 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
             "scope": " ".join(scope),
         }
         url = router.build_url(YooMoneyMethods.BUILD_URL_FOR_AUTH)
-        response = await RequestService(
-            messages=router.config.ERROR_CODE_NUMBERS
-        ).text_content(url, "POST", headers=headers, data=params)
+        rs = RequestService(error_messages=router.config.ERROR_CODE_MESSAGES)
+        response = await rs.text_content(url, "POST", headers=headers, data=params)
         try:
             return parse_auth_link(response)
         except IndexError:
             raise CantParseUrl(
-                "Could not find the authorization link in the response from the api, check the client_id value"
+                "Could not find the authorization link in the response from "
+                "the api, check the client_id value"
             )
+        finally:
+            await rs.shutdown()
 
     @classmethod
     async def get_access_token(
@@ -141,15 +145,17 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
             "redirect_uri": redirect_uri,
             "client_secret": client_secret,
         }
-        response = await RequestService(
-            messages=router.config.ERROR_CODE_NUMBERS
-        ).send_request(
-            "POST",
-            YooMoneyMethods.GET_ACCESS_TOKEN,
-            router,
-            headers=headers,
-            data=params,
-        )
+        rs = RequestService(error_messages=router.config.ERROR_CODE_MESSAGES)
+        try:
+            response = await rs.api_request(
+                "POST",
+                YooMoneyMethods.GET_ACCESS_TOKEN,
+                router,
+                headers=headers,
+                data=params,
+            )
+        finally:
+            await rs.shutdown()
         return cast(str, response["access_token"])
 
     async def revoke_api_token(self) -> Optional[Dict[str, bool]]:
@@ -159,7 +165,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
         https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
         """
         headers = self._auth_token(retrieve_base_headers_for_yoomoney(auth=True))
-        return await self._requests.send_request(
+        return await self._request_service.api_request(
             "POST", YooMoneyMethods.REVOKE_API_TOKEN, self._router, headers=headers
         )
 
@@ -254,7 +260,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
         headers = self._auth_token(
             retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
         )
-        response = await self._requests.send_request(
+        response = await self._request_service.api_request(
             "POST", YooMoneyMethods.ACCOUNT_INFO, self._router, headers=headers
         )
         return AccountInfo.parse_obj(response)
@@ -305,12 +311,12 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
         payload = check_transactions_payload(
             data, records, operation_types, start_date, end_date, start_record
         )
-        response = await self._requests.send_request(
+        response = await self._request_service.api_request(
             "POST",
             YooMoneyMethods.TRANSACTIONS,
             self._router,
             headers=headers,
-            data=self._requests.filter_dict(payload),
+            data=filter_none(payload),
         )
         return parse_iterable_to_list_of_objects(
             iterable=cast(List[Any], response.get("operations")), model=Operation
@@ -328,7 +334,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
         headers = self._auth_token(
             retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
         )
-        response = await self._requests.send_request(
+        response = await self._request_service.api_request(
             "POST",
             YooMoneyMethods.TRANSACTION_INFO,
             self._router,
@@ -387,7 +393,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
             "expire_period": expire_period,
             "codepro": protect,
         }
-        response = await self._requests.send_request(
+        response = await self._request_service.api_request(
             "POST",
             YooMoneyMethods.PRE_PROCESS_PAYMENT,
             self._router,
@@ -449,7 +455,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
 
         """
         if amount < 2:
-            raise InvalidData(
+            raise InvalidPayload(
                 "Enter the amount that is more than the minimum (2 or more)"
             )
         pre_payment = await self._pre_process_payment(
@@ -485,7 +491,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
                                 "csc": cvv2_code,
                             },
                         )
-        response = await self._requests.send_request(
+        response = await self._request_service.api_request(
             "POST",
             YooMoneyMethods.PROCESS_PAYMENT,
             self._router,
@@ -520,7 +526,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
             retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
         )
         payload = {"operation_id": operation_id, "protection_code": protection_code}
-        response = await self._requests.send_request(
+        response = await self._request_service.api_request(
             "POST",
             YooMoneyMethods.ACCEPT_INCOMING_TRANSFER,
             self._router,
@@ -545,7 +551,7 @@ class YooMoneyAPI(AsyncContextMixin, DataMixin, ContextInstanceMixin["YooMoneyAP
         headers = self._auth_token(
             retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
         )
-        return await self._requests.send_request(
+        return await self._request_service.api_request(
             "POST",
             YooMoneyMethods.INCOMING_TRANSFER_REJECT,
             self._router,

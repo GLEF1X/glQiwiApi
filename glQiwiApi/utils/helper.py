@@ -3,6 +3,10 @@ from __future__ import annotations
 import functools as ft
 import inspect
 import time
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from glQiwiApi import QiwiWrapper
 
 
 class measure_time(object):  # NOQA
@@ -88,3 +92,26 @@ class override_error_messages:  # NOQA
                 raise ex from None
 
         return wrapper
+
+
+class require:
+
+    def __init__(self, *params):
+        self._required_attrs = params
+
+    def __call__(self, func):
+        @ft.wraps(func)
+        async def wrapper(c: QiwiWrapper, *args, **kwargs):
+            self.check_is_object_contains_required_attrs(c, func)
+            return await func(c, *args, **kwargs)
+
+        return wrapper
+
+    def check_is_object_contains_required_attrs(self, c, func):
+        from glQiwiApi import InvalidPayload
+
+        for required_attr_name in self._required_attrs:
+            if getattr(c, required_attr_name, None) is None:
+                raise InvalidPayload(
+                    f"Method {func.__name__} requires {required_attr_name} not to be empty"
+                )

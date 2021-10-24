@@ -34,7 +34,9 @@ class QiwiWebHookWebView(BaseWebHookView[types.WebHook]):
         try:
             update.verify_signature(base64_key)
         except WebhookSignatureUnverified:
-            self.dispatcher.logger.warning("Blocking request due to invalid signature of json request payload.")
+            self.dispatcher.logger.warning(
+                "Request has being blocked due to invalid signature of json request payload."
+            )
             raise web.HTTPBadRequest()
 
     def ok_response(self) -> web.Response:

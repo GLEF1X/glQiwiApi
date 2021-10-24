@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 from typing import Any
 
-from glQiwiApi.core.abstracts import AbstractRouter
+from glQiwiApi.core.abc.router import AbstractRouter
 
 __all__ = ("YooMoneyRouter", "YooMoneyMethods")
 
@@ -29,7 +29,7 @@ class YooMoneyConfig:
             "Host": "yoomoney.ru",
             "Content-Type": "application/x-www-form-urlencoded",
         }
-        self.ERROR_CODE_NUMBERS = {
+        self.ERROR_CODE_MESSAGES = {
             400: "An error related to the type of request to the api,"
                  "you may have passed an invalid API token",
             401: "A non-existent, expired, or revoked token is specified",

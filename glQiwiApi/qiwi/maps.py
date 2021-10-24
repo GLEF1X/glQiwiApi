@@ -4,23 +4,25 @@ import typing
 
 from glQiwiApi import types
 from glQiwiApi.core import RequestService
+from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.constants import NO_CACHING
-from glQiwiApi.core.mixins import ContextInstanceMixin, AsyncContextMixin, DataMixin
-from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects
+from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin
+from glQiwiApi.core.session.holder import AbstractSessionHolder
+from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects, filter_none
 
 
-class QiwiMaps(AsyncContextMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
+class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
     """
     QIWI Terminal Maps API allows you to locate
     QIWI terminals on the territory of the Russian Federation
 
     """
 
-    def __init__(self, cache_time: int = NO_CACHING) -> None:
-        self._request_service = RequestService(cache_time=cache_time)
+    def __init__(self, cache_time: int = NO_CACHING,
+                 session_holder: typing.Optional[AbstractSessionHolder[typing.Any]] = None) -> None:
+        self._request_service = RequestService(cache_time=cache_time, session_holder=session_holder)
 
-    @property
-    def request_manager(self) -> RequestService:
+    def get_request_service(self) -> RequestService:
         return self._request_service
 
     async def terminals(
@@ -54,7 +56,7 @@ class QiwiMaps(AsyncContextMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = self._request_service.filter_dict(
+        params = filter_none(
             {
                 **polygon.dict,
                 "zoom": zoom,
@@ -68,7 +70,7 @@ class QiwiMaps(AsyncContextMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
             }
         )
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        response = await self._request_service._send_request(url, "GET", params=params)
+        response = await self._request_service.raw_request(url, "GET", params=params)
         return parse_iterable_to_list_of_objects(
             typing.cast(typing.List[typing.Any], response), types.Terminal
         )
@@ -79,7 +81,7 @@ class QiwiMaps(AsyncContextMixin, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         :return: list of TTPGroups
         """
         url = "http://edge.qiwi.com/locator/v3/ttp-groups"
-        response = await self._request_service._send_request(
+        response = await self._request_service.raw_request(
             url, "GET", headers={"Content-type": "text/json"}
         )
         return parse_iterable_to_list_of_objects(

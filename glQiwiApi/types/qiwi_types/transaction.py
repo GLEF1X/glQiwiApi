@@ -5,7 +5,7 @@ from typing import Optional, Union, Dict, Any, List
 from pydantic import Field
 
 from glQiwiApi.types.base import Base, ExtraBase
-from glQiwiApi.types.basics import Sum
+from glQiwiApi.types.basics import CurrencyAmount
 
 
 class TransactionType(enum.Enum):
@@ -91,13 +91,13 @@ class Transaction(ExtraBase):
     терминала или название агента пополнения кошелька
     """
 
-    sum: Sum
+    sum: CurrencyAmount
     """Данные о сумме платежа или пополнения."""
 
-    commission: Sum
+    commission: CurrencyAmount
     """Данные о комиссии"""
 
-    total: Sum
+    total: CurrencyAmount
     """Общие данные о платеже в формате объекта Sum"""
 
     provider: Provider
