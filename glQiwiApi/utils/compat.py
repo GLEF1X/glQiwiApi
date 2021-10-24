@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import Any, AsyncContextManager
 
 
@@ -35,7 +36,7 @@ except (ModuleNotFoundError, ImportError):
     Dispatcher = EmptyCls
     InputFile = EmptyCls
 
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal  # type: ignore
+if sys.version_info >= (3, 8):
+    from typing import Literal as Literal
+else:
+    from typing_extensions import Literal

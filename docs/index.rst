@@ -34,7 +34,8 @@ Welcome to the glQiwiApi documentation!
     2. Evidently, It's asynchronous
     3. Supports most of `qiwi <https://qiwi.com>`_ apis: `qiwi-maps <https://github.com/QIWI-API/qiwi-map>`_, `bills <https://developer.qiwi.com/en/bill-payments/>`_, `wallet <https://developer.qiwi.com/en/qiwi-wallet-personal/>`_ and, also, `yoomoney <https://yoomoney.ru/docs/wallet>`_
     4. Provides support of polling and webhooks for QIWI as well as possible
-    5. Furnishes many utils and extensions such a currency parser, `pydantic <https://pydantic-docs.helpmanual.io/>`_  support and code coverage not less than 80% "out of the box"
+    5. Furnish many utils and extensions such a currency parser, `pydantic <https://pydantic-docs.helpmanual.io/>`_  support and code coverage not less than 80% "out of the box"
+    6. Full compatibility with `mypy`
 
 
 ===========
@@ -48,7 +49,7 @@ Simple usage
 
     import asyncio
 
-    from glQiwiApi import QiwiWrapper
+    from glQiwiApi import QiwiWrapper, APIError
 
 
     async def print_balance(qiwi_token: str, phone_number: str) -> None:
@@ -56,11 +57,17 @@ Simple usage
         This function allows you to get balance of your wallet using glQiwiApi library
         """
         async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as w:
-            balance = await w.get_balance()
+            try:
+                balance = await w.get_balance()
+            # handle exception if wrong credentials or really API return error
+            except APIError as err:
+                print(err.json())
+                raise
         print(f"Your current balance is {balance.amount} {balance.currency.name}")
 
 
     asyncio.run(print_balance(qiwi_token="qiwi api token", phone_number="+phone_number"))
+
 
 
 
