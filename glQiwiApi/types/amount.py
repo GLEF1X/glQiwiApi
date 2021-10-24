@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-from typing import Union, Any
+from typing import Union, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 from glQiwiApi.types.base import HashableBase
 
 
 class CurrencyAmount(BaseModel):
-    """
-    Сумма платежа
-
-    """
-
-    amount: Union[int, float, str]
-    currency: Any
+    amount: float
+    currency: CurrencyModel
 
     @validator("currency", pre=True)
     def humanize_pay_currency(cls, v):  # type: ignore
@@ -32,25 +27,26 @@ class HashableSum(HashableBase, CurrencyAmount):
     ...
 
 
-class OptionalSum(BaseModel):
-    """object: OptionalSum"""
-
-    value: Union[int, float]
+class PlainAmount(BaseModel):
+    value: float
     currency: str
 
 
-class HashableOptionalSum(HashableBase, OptionalSum):
+class HashableOptionalSum(HashableBase, PlainAmount):
     ...
 
 
 class Type(BaseModel):
-    """
-    Базовая модель типа данных
-
-    """
-
     id: str
     title: str
 
 
-__all__ = ("CurrencyAmount", "OptionalSum", "Type", "HashableOptionalSum", "HashableSum")
+class CurrencyModel(HashableBase):
+    code: str
+    decimal_digits: int
+    name: str
+    name_plural: str
+    rounding: Union[int, float]
+    symbol: str
+    symbol_native: str
+    iso_format: Optional[str] = Field(..., alias="isoformat")
