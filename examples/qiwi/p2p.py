@@ -13,7 +13,7 @@ async def p2p_usage():
         # This is how you can check the status for paid
         status_1 = (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == "PAID"
         # Or you can (it looks more concise in my opinion)
-        status_2 = await bill.paid
+        status_2 = await bill.check()
         print(status_1 == status_2)
         # This will throw an error as api_access_token and phone_number are not passed
         # You can reassign a token or number at any time

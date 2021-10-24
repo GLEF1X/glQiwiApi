@@ -9,8 +9,7 @@ WALLET = "+phone_number"
 # but pass on "without_context" as True
 wallet = QiwiWrapper(
     api_access_token=TOKEN,
-    phone_number=WALLET,
-    without_context=True,  # add this param to use sync connector soon
+    phone_number=WALLET
 )
 
 

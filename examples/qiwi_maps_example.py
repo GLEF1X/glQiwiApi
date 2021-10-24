@@ -1,13 +1,14 @@
 import asyncio
 
+# pip install geopy
 from geopy.distance import distance
 
 from glQiwiApi import QiwiMaps
 from glQiwiApi.types import Polygon
-from glQiwiApi.utils.basics import measure_time
+from glQiwiApi.utils.helper import measure_time
 
 
-@measure_time
+@measure_time()
 async def qiwi_maps():
     my_lat_lon = (55.719384, 37.781102)
     polygon = Polygon((55.690881, 37.386282), (55.580184, 37.826078))

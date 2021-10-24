@@ -2,13 +2,10 @@ import asyncio
 
 from glQiwiApi import QiwiWrapper
 
-# Create a wallet object and be sure to pass without_context = True,
-# otherwise there will be problems with aiohttp.ClientSession
 wallet = QiwiWrapper(
     api_access_token="token",
     phone_number="+number",
-    secret_p2p="your secret p2p",
-    without_context=True,
+    secret_p2p="your secret p2p"
 )
 
 
@@ -19,6 +16,7 @@ async def main():
     # old version(0.x)
     old_status = (await wallet.check_p2p_bill_status(bill.bill_id)) == "PAID"
     assert new_status == old_status
+    await wallet.close()
 
 
 asyncio.run(main())
