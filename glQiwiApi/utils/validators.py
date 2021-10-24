@@ -14,10 +14,11 @@ from typing import (
     Type,
     cast,
     overload,
-    Literal,
     Union,
 
 )
+
+from glQiwiApi.utils.compat import Literal
 
 
 class ValidationError(Exception):

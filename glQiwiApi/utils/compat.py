@@ -21,6 +21,8 @@ except ImportError:
                 "Module aiofiles not installed and you can't use it's "
                 "functionality till you install this module."
             )
+
+
     aiofiles = aiofiles_compat()  # type: ignore
 
 try:
@@ -38,4 +40,4 @@ except (ModuleNotFoundError, ImportError):
 try:
     from typing import Literal
 except ImportError:
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # type: ignore

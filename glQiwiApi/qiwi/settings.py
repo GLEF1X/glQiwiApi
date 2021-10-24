@@ -25,8 +25,8 @@ class QiwiRouter(AbstractRouter):
         return QiwiApiMethods()
 
     @lru_cache(typed=True)
-    def build_url(self, tail: str, **kwargs: Any) -> str:
-        pre_build_url = self.__head__ + tail
+    def build_url(self, api_method: str, **kwargs: Any) -> str:
+        pre_build_url = self.__head__ + api_method
         return super()._format_url_kwargs(pre_build_url, **kwargs)
 
     def setup_config(self) -> QiwiConfig:
