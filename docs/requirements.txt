@@ -9,3 +9,4 @@ sphinx-autobuild
 sphinx-intl
 furo
 sphinxemoji
+sphinx-prompt
