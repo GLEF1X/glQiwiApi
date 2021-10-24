@@ -21,8 +21,6 @@ except ImportError:
                 "Module aiofiles not installed and you can't use it's "
                 "functionality till you install this module."
             )
-
-
     aiofiles = aiofiles_compat()  # type: ignore
 
 try:
