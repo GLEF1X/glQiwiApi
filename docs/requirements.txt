@@ -1,3 +1,11 @@
 sphinx-intl
 typing-extensions
 Sphinx-Substitution-Extensions
+markdown-include
+pygments
+towncrier
+sphinx-copybutton
+sphinx-autobuild
+sphinx-intl
+furo
+sphinxemoji

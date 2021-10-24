@@ -3,10 +3,12 @@
 
 import datetime
 
+import glQiwiApi
+
 project = "glQiwiApi"
 author = "GLEF1X"
 copyright = f"{datetime.date.today().year}, {author}"
-release = "1.1.0"
+release = glQiwiApi.__version__
 
 templates_path = ["_templates"]
 html_theme = "furo"
