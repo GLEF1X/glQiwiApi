@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath("../."))
 
 import datetime
 
-import glQiwiApi
-
 project = "glQiwiApi"
-author = "GLEF1X and Marple"
+author = "GLEF1X"
 copyright = f"{datetime.date.today().year}, {author}"
-release = glQiwiApi.__version__
+release = "1.1.0"
 
 templates_path = ["_templates"]
 html_theme = "furo"
