@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from os import PathLike
+import pathlib
 from typing import Final, Any, BinaryIO, Union
 
 from glQiwiApi.types.arbitrary.inputs import AbstractInput
@@ -12,7 +12,7 @@ from glQiwiApi.utils.compat import aiofiles
 CHUNK_SIZE: Final[int] = 65536
 logger = logging.getLogger(__name__)
 
-StrOrBytesPath = Union[str, bytes, PathLike[str], PathLike[bytes]]  # stable
+StrOrBytesPath = Union[str, bytes, pathlib.Path]  # stable
 AnyPath = StrOrBytesPath  # obsolete, will be removed soon
 
 _OpenFile = Union[StrOrBytesPath, int]
