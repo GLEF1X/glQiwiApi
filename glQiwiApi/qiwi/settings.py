@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import functools
 import time
 from copy import deepcopy
-from functools import lru_cache
 from typing import Any, Dict
 
 from glQiwiApi.core.abc.router import AbstractRouter
 from glQiwiApi.types import WrappedRequestPayload
+from glQiwiApi.utils.mypy_hacks import lru_cache
 
 __all__ = ("get_config", "QiwiRouter", "QiwiKassaRouter", "QiwiApiMethods")
 
@@ -25,7 +24,7 @@ class QiwiRouter(AbstractRouter):
     def setup_routes(self) -> Any:
         return QiwiApiMethods()
 
-    @functools.lru_cache(typed=True)
+    @lru_cache(typed=True)
     def build_url(self, tail: str, **kwargs: Any) -> str:
         pre_build_url = self.__head__ + tail
         return super()._format_url_kwargs(pre_build_url, **kwargs)

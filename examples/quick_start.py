@@ -5,7 +5,6 @@ from glQiwiApi import QiwiWrapper
 
 async def main():
     # If you want to use types wrapper without async context just
-    # pass on "without_context=True"
     wallet = QiwiWrapper(api_access_token="your_token", phone_number="+number")
     print((await wallet.get_balance()).amount)
     await wallet.close()

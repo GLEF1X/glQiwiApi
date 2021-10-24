@@ -8,11 +8,6 @@ from glQiwiApi import types
 from glQiwiApi.core.dispatcher.webhooks.base import BaseWebHookView
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 
-try:
-    import orjson as json
-except ImportError:
-    import json  # type: ignore
-
 
 class QiwiBillWebView(BaseWebHookView[types.Notification]):
     """View, which processes p2p notifications"""

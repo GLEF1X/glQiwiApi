@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import abc
-import asyncio
 import typing
-from asyncio import AbstractEventLoop
+from asyncio import AbstractEventLoop, get_event_loop
 from ssl import SSLContext
 
 from aiohttp import web
@@ -43,7 +42,7 @@ class BaseProxy(abc.ABC):
         if loop is not None:
             self._loop = loop
         else:
-            self._loop = asyncio.get_event_loop()
+            self._loop = get_event_loop()
 
     @abc.abstractmethod
     def setup(self, **kwargs: typing.Any) -> typing.Any:
