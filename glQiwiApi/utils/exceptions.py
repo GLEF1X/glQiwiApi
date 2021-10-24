@@ -120,4 +120,5 @@ __all__ = (
     "NetworkError",
     "InvalidCachePayload",
     "BadCallback",
+    "ChequeIsNotAvailable"
 )

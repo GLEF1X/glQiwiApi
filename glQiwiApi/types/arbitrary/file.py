@@ -4,12 +4,12 @@ import asyncio
 import inspect
 import logging
 import pathlib
-from typing import Final, Any, BinaryIO, Union
+from typing import Any, BinaryIO, Union
 
 from glQiwiApi.types.arbitrary.inputs import AbstractInput
 from glQiwiApi.utils.compat import aiofiles
 
-CHUNK_SIZE: Final[int] = 65536
+CHUNK_SIZE = 65536
 logger = logging.getLogger(__name__)
 
 StrOrBytesPath = Union[str, bytes, pathlib.Path]  # stable

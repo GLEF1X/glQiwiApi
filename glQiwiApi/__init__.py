@@ -18,6 +18,7 @@ from .utils.exceptions import (
     NoUpdatesToExecute,
     InvalidCachePayload,
     BadCallback,
+    ChequeIsNotAvailable
 )
 from .yoo_money import YooMoneyAPI
 
@@ -28,7 +29,7 @@ try:
 except ImportError:
     pass  # pragma: no cover
 
-__version__ = "1.0.4"
+__version__ = "1.1.0"
 
 __all__ = (
     "QiwiWrapper",
@@ -52,6 +53,7 @@ __all__ = (
     "InvalidCachePayload",
     "BadCallback",
     "WebhookSignatureUnverified",
+    "ChequeIsNotAvailable",
     # other
     "__version__",
 )
