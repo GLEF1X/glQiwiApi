@@ -3,20 +3,13 @@ import asyncio
 from glQiwiApi import QiwiWrapper
 
 
-async def main():
-    # If you want to use types wrapper without async context just
-    wallet = QiwiWrapper(api_access_token="your_token", phone_number="+number")
-    print((await wallet.get_balance()).amount)
-    await wallet.close()
+async def print_balance(qiwi_token: str, phone_number: str) -> None:
+    """
+    This function allows you to get balance of your wallet using glQiwiApi library
+    """
+    async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as w:
+        balance = await w.get_balance()
+    print(f"Your current balance is {balance.amount} {balance.currency.name}")
 
 
-async def main_boost():
-    # OR(x3 performance boost with async context,
-    # because it use only 1 aiohttp session to get response for all requests
-    # in async with context manager)
-    async with QiwiWrapper(api_access_token="your_token") as w:
-        w.phone_number = "+number"
-        print((await w.get_balance()).amount)
-
-
-asyncio.run(main_boost())
+asyncio.run(print_balance(qiwi_token="qiwi api token", phone_number="+phone_number"))

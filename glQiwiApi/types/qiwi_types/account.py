@@ -3,8 +3,7 @@ from typing import Optional
 from pydantic import Field, validator
 
 from glQiwiApi.types.base import Base
-from glQiwiApi.types.basics import CurrencyAmount, Type
-from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+from glQiwiApi.types.amount import CurrencyAmount, Type, CurrencyModel
 from glQiwiApi.utils.currency_util import Currency
 
 

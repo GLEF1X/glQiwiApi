@@ -13,7 +13,7 @@ def currency_fixture():
 
 
 async def test_currency_parser(_: Currency):
-    from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+    from glQiwiApi.types.amount import CurrencyModel
 
     condition = all(
         isinstance(_.get(key), CurrencyModel) for key in cur.described.keys()

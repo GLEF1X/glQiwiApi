@@ -28,7 +28,7 @@ async def api_fixture(credentials: dict):
 
 
 async def test_get_balance(api: QiwiWrapper):
-    from glQiwiApi.types.qiwi_types.currency_parsed import CurrencyModel
+    from glQiwiApi.types.amount import CurrencyModel
     result = await api.get_balance()
     assert isinstance(result, types.CurrencyAmount)
     assert isinstance(result.currency, CurrencyModel)

@@ -3,13 +3,9 @@ from __future__ import annotations
 import abc
 import copy
 from types import TracebackType
-from typing import Union, Optional, Type, Any, Dict, cast, Protocol, TypeVar, TYPE_CHECKING
+from typing import Union, Optional, Type, Any, Dict, cast, TypeVar, TYPE_CHECKING
 
-from aiohttp.typedefs import LooseCookies
-
-from glQiwiApi.core.abc.router import AbstractRouter
 from glQiwiApi.core.constants import NO_CACHING
-from glQiwiApi.types.arbitrary.file import File
 
 if TYPE_CHECKING:
     from glQiwiApi.core.request_service import RequestService
@@ -33,7 +29,7 @@ class Wrapper(abc.ABC):
         if old_cache_time == NO_CACHING:
             setattr(invalidate_strategy, "_cache_time", cache_time)
 
-    async def __aenter__(self: Wrapper) -> Wrapper:
+    async def __aenter__(self):  # type: ignore
         await self.get_request_service().warmup()
         return self
 

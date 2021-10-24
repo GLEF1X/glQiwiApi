@@ -5,7 +5,7 @@ from typing import Optional, Union, Dict, Any, List
 from pydantic import Field
 
 from glQiwiApi.types.base import Base, ExtraBase
-from glQiwiApi.types.basics import CurrencyAmount
+from glQiwiApi.types.amount import CurrencyAmount
 
 
 class TransactionType(enum.Enum):

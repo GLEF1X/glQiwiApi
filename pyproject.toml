@@ -48,6 +48,20 @@ pytest-lazy-fixture = "^0.6.3"
 pytest-aiohttp = "^0.3.0"
 timeout-decorator = "^0.5.0"
 
+# Docs
+Sphinx = { version = "^4.2.0" }
+sphinx-intl = { version = "^2.0.1"}
+sphinx-autobuild = { version = "^2021.3.14"}
+sphinx-copybutton = { version = "^0.4.0"}
+furo = { version = "^2021.9.8"}
+sphinx-prompt = { version = "^1.5.0"}
+Sphinx-Substitution-Extensions = { version = "^2020.9.30"}
+towncrier = { version = "^21.3.0"}
+pygments = { version = "^2.4"}
+pymdown-extensions = { version = "^9.0"}
+markdown-include = { version = "^0.6"}
+sphinxemoji = "^0.2.0"
+
 # development
 black = { version = "^21.9b0", python = ">=3.6" }
 mypy = "^0.910"
@@ -59,6 +73,7 @@ async-timeout = "^3.0.1"
 aiogram = "^2.15"
 aiofiles = "^0.7.0"
 types-aiofiles = "^0.7.0"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

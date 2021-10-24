@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any, List, cast
 from pydantic import Field, root_validator
 
 from glQiwiApi.types.base import Base, HashableBase
-from glQiwiApi.types.basics import HashableSum
+from glQiwiApi.types.amount import HashableSum
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 
 

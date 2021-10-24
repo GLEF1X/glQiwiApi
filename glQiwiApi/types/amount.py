@@ -7,6 +7,17 @@ from pydantic import BaseModel, validator, Field
 from glQiwiApi.types.base import HashableBase
 
 
+class CurrencyModel(HashableBase):
+    code: str
+    decimal_digits: int
+    name: str
+    name_plural: str
+    rounding: Union[int, float]
+    symbol: str
+    symbol_native: str
+    iso_format: Optional[str] = Field(..., alias="isoformat")
+
+
 class CurrencyAmount(BaseModel):
     amount: float
     currency: CurrencyModel
@@ -39,14 +50,3 @@ class HashableOptionalSum(HashableBase, PlainAmount):
 class Type(BaseModel):
     id: str
     title: str
-
-
-class CurrencyModel(HashableBase):
-    code: str
-    decimal_digits: int
-    name: str
-    name_plural: str
-    rounding: Union[int, float]
-    symbol: str
-    symbol_native: str
-    iso_format: Optional[str] = Field(..., alias="isoformat")

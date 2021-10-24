@@ -9,7 +9,7 @@ from pydantic import Field, Extra
 
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 from glQiwiApi.types.base import Base, HashableBase
-from glQiwiApi.types.basics import OptionalSum, HashableOptionalSum
+from glQiwiApi.types.amount import PlainAmount, HashableOptionalSum
 
 
 class Customer(HashableBase):
@@ -81,7 +81,7 @@ class Bill(HashableBase):
 class RefundBill(Base):
     """object: RefundBill"""
 
-    amount: OptionalSum
+    amount: PlainAmount
     datetime: datetime
     refund_id: str = Field(..., alias="refundId")
     status: str

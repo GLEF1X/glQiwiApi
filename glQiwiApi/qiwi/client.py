@@ -55,7 +55,7 @@ from glQiwiApi.types import (
     PaymentInfo,
     OrderDetails,
     Bill,
-    OptionalSum,
+    PlainAmount,
     P2PKeys,
     RefundBill,
     WebHookConfig,
@@ -1159,7 +1159,7 @@ class QiwiWrapper(
             self,
             bill_id: Union[str, int],
             refund_id: Union[str, int],
-            json_bill_data: Union[OptionalSum, Dict[str, Union[str, int]]],
+            json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
     ) -> RefundBill:
         """
         The method allows you to make a refund on a paid invoice.
