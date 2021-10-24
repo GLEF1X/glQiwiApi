@@ -1078,8 +1078,8 @@ class QiwiWrapper(
         """
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
-        life_time = datetime_to_iso8601(
-            life_time or constants.get_default_bill_time())  # type: ignore
+        life_time = datetime_to_iso8601(  # type: ignore
+            life_time or constants.get_default_bill_time())
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._add_authorization_header(data.headers, p2p=True)
         payload = patch_p2p_create_payload(
