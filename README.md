@@ -10,7 +10,7 @@
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/master/demo.gif"/>
 </h2>
 
-## 🌎Official api resources:
+# 🌎Official api resources:
 
 * 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
 * 🖱️ __Developer
