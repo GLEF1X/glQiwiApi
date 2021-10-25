@@ -20,7 +20,7 @@ class CurrencyModel(HashableBase):
 
 class CurrencyAmount(BaseModel):
     amount: float
-    currency: CurrencyModel
+    currency: Union[CurrencyModel, str]  # string if currency util couldn't parse it
 
     @validator("currency", pre=True)
     def humanize_pay_currency(cls, v):  # type: ignore

@@ -1,6 +1,6 @@
-============
-API examples
-============
+========
+Examples
+========
 
 .. toctree::
     qiwi/index

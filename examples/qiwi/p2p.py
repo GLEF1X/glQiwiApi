@@ -1,30 +1,25 @@
 import asyncio
 
-from glQiwiApi import QiwiWrapper, APIError
-
-SECRET_KEY = "P2P SECRET_KEY"
+from glQiwiApi import QiwiWrapper
 
 
-async def p2p_usage():
-    async with QiwiWrapper(secret_p2p=SECRET_KEY) as w:
-        # bill id will be generated as str (uuid.uuid4 ()) if not passed
-        bill = await w.create_p2p_bill(amount=1, comment="Im using glQiwiApi")
-        print(bill)
-        # This is how you can check the status for paid
-        status_1 = (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == "PAID"
-        # Or you can (it looks more concise in my opinion)
-        status_2 = await bill.check()
-        print(status_1 == status_2)
-        # This will throw an error as api_access_token and phone_number are not passed
-        # You can reassign a token or number at any time
-        try:
-            await w.retrieve_bills(rows=50)
-        except APIError as ex:
-            print(ex)
-        # Reassign tokens and no longer observe errors
-        w.api_access_token = "TOKEN from https://qiwi.api"
-        w.phone_number = "+NUMBER"
-        print(await w.retrieve_bills(rows=20))
+async def main():
+    # You can pass on only p2p tokens, if you want to use only p2p api
+    async with QiwiWrapper(
+            secret_p2p="your_secret_p2p"
+    ) as w:
+        # This way you can create P2P bill using QIWI p2p API
+        bill = await w.create_p2p_bill(
+            amount=1,
+            comment='my_comm'
+        )
+        # This way you can check status of transaction(exactly is transaction was paid)
+        if (await w.check_p2p_bill_status(bill_id=bill.bill_id)) == 'PAID':
+            print('You have successfully paid your invoice')
+        else:
+            print('Invoice was not paid')
+        # Or, you can use method check on the instance of Bill
+        print(await bill.check())
 
 
-asyncio.run(p2p_usage())
+asyncio.run(main())

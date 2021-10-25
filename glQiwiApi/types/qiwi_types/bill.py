@@ -7,9 +7,9 @@ from typing import Optional, Union, Dict, Any
 
 from pydantic import Field, Extra
 
-from glQiwiApi.types.exceptions import WebhookSignatureUnverified
-from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.types.amount import PlainAmount, HashableOptionalSum
+from glQiwiApi.types.base import Base, HashableBase
+from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 
 
 class Customer(HashableBase):
@@ -76,6 +76,9 @@ class Bill(HashableBase):
     async def check(self) -> bool:
         """Checking p2p payment status"""
         return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
+
+    async def reject(self) -> None:
+        await self.client.reject_p2p_bill(bill_id=self.bill_id)
 
 
 class RefundBill(Base):

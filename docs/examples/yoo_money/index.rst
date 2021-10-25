@@ -1,6 +1,7 @@
-==============
-YooMoney usage
-==============
+========
+YooMoney
+========
 
 .. toctree::
-    basic_usage
+    token_registration
+    HowTO
