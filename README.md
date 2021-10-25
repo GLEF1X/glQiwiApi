@@ -25,5 +25,3 @@
 |uvloop   | Optional(can boost API), but work only on Linux        |
 |pydantic | Json data validator. Very fast instead of custom       |
 |loguru   | library which aims to bring enjoyable logging in Python|
-
----
