@@ -12,7 +12,7 @@
 
 ## 🌎Official api resources:
 
-* 🎓 __Docs: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
+* 🎓 __Documentation: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
@@ -25,5 +25,3 @@
 |uvloop   | Optional(can boost API), but work only on Linux        |
 |pydantic | Json data validator. Very fast instead of custom       |
 |loguru   | library which aims to bring enjoyable logging in Python|
-
----
