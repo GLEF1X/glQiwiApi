@@ -7,9 +7,7 @@ import abc
 import asyncio
 import inspect
 import logging
-import types
 from datetime import datetime, timedelta
-from functools import wraps
 from ssl import SSLContext
 from typing import (
     Union,
@@ -36,7 +34,7 @@ from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.core.dispatcher.webhooks.config import Path
 from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.types import Transaction
-from glQiwiApi.utils.exceptions import NoUpdatesToExecute, BadCallback
+from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 
 __all__ = ["start_webhook", "start_polling"]
 
@@ -64,24 +62,6 @@ async def _inspect_and_execute_callback(
         await callback(client)
     else:
         callback(client)  # pragma: no cover
-
-
-def _warn_on_long_close(log: logging.Logger) -> None:
-    log.warning('Callback is taking over 60 seconds to complete. '
-                'Check if you have any unreleased connections left. '
-                'Use asyncio.wait_for() to set a timeout for callback')
-
-
-def _patch_callback(callback: _CallbackType[T], loop: asyncio.AbstractEventLoop) -> _CallbackType[T]:
-    if not isinstance(callback, types.FunctionType):
-        raise BadCallback("Callback passed to on_startup / on_shutdown is not a function")
-
-    @wraps(callback)
-    async def patched_callback(c: QiwiWrapper, *args, **kwargs) -> Any:
-        loop.call_later(60, _warn_on_long_close, c.dispatcher.logger)
-        return await callback(c, *args, **kwargs)
-
-    return patched_callback
 
 
 def _setup_callbacks(
@@ -226,10 +206,10 @@ class BaseExecutor(abc.ABC):
         return self._loop
 
     def add_shutdown_callback(self, callback: _CallbackType[Any]) -> None:
-        self._on_shutdown_calls.append(_patch_callback(callback, self.loop))
+        self._on_shutdown_calls.append(callback)
 
     def add_startup_callback(self, callback: _CallbackType[Any]) -> None:
-        self._on_startup_calls.append(_patch_callback(callback, self.loop))
+        self._on_startup_calls.append(callback)
 
     def _on_shutdown(self) -> None:
         """
