@@ -155,9 +155,9 @@ def retrieve_base_headers_for_yoomoney(
         "Content-Type": "application/x-www-form-urlencoded",
     }
     if content_json:
-        headers.update({"Accept": "application/json"})
+        headers["Accept"] = "application/json"
     if auth:
-        headers.update({"Authorization": "Bearer {token}"})
+        headers["Authorization"] = "Bearer {token}"
     return headers
 
 
@@ -311,22 +311,19 @@ def format_transactions_payload(
             for operation_type in operation_types
     ):
         op_types = [operation_type.value for operation_type in operation_types]
-        data.update({"type": " ".join(op_types)})
-
+        data["type"] = " ".join(op_types)
     if isinstance(start_record, int):
         if start_record < 0:
             raise InvalidPayload("start_record must be positive")
-        data.update({"start_record": start_record})
-
+        data["start_record"] = start_record
     if start_date:
         if not isinstance(start_date, datetime):
             raise InvalidPayload("start_date must be datetime instance")
-        data.update({"from": datetime_to_utc(start_date)})
-
+        data["from"] = datetime_to_utc(start_date)
     if end_date:
         if not isinstance(end_date, datetime):
             raise InvalidPayload("end_date must be datetime instance")
-        data.update({"till": datetime_to_utc(end_date)})
+        data["till"] = datetime_to_utc(end_date)
     return data
 
 

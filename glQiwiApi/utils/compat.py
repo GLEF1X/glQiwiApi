@@ -26,7 +26,7 @@ except ImportError:
 
 try:
     import orjson as json
-except (ImportError, ModuleNotFoundError):
+except ImportError:
     import json  # type: ignore
 
 try:
