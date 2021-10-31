@@ -38,5 +38,6 @@ except (ModuleNotFoundError, ImportError):
 
 if sys.version_info >= (3, 8):
     from typing import Literal as Literal
+    from typing import Final as Final
 else:
-    from typing_extensions import Literal
+    from typing_extensions import Literal, Final

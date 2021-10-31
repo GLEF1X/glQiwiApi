@@ -13,7 +13,7 @@ from .qiwi_master import OrderDetails, Card
 from .restriction import Restriction
 from .stats import Statistic
 from .terminal import Terminal
-from .transaction import Transaction, TransactionType
+from .transaction import Transaction, TransactionType, TransactionStatus, Source
 from .webhooks import WebHookConfig, WebHook
 
 __all__ = (

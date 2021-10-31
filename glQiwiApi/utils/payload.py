@@ -22,7 +22,7 @@ from aiohttp import RequestInfo
 from pydantic import BaseModel
 
 from glQiwiApi import types
-from glQiwiApi.utils.format_casts import datetime_to_iso8601, datetime_to_utc
+from glQiwiApi.utils.dates_conversion import datetime_to_iso8601_with_moscow_timezone, datetime_to_utc
 
 try:
     import orjson
@@ -110,8 +110,8 @@ def format_dates(
         if (end_date - start_date).total_seconds() > 0:
             payload_data.update(
                 {
-                    "startDate": datetime_to_iso8601(start_date),
-                    "endDate": datetime_to_iso8601(end_date),
+                    "startDate": datetime_to_iso8601_with_moscow_timezone(start_date),
+                    "endDate": datetime_to_iso8601_with_moscow_timezone(end_date),
                 }
             )
         else:
@@ -288,7 +288,7 @@ def check_api_method(api_method: str) -> None:
         )
 
 
-def check_transactions_payload(
+def format_transactions_payload(
         data: Dict[Any, Any],
         records: int,
         operation_types: Optional[

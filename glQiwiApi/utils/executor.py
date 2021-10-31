@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import abc
 import asyncio
+import dataclasses
 import inspect
 import logging
 from datetime import datetime, timedelta
@@ -18,10 +19,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     cast,
+    Set,
 )
 
 from aiohttp import web
-from mypy_extensions import KwArg, VarArg
 
 from glQiwiApi.builtin import BaseProxy
 from glQiwiApi.builtin import logger
@@ -33,7 +34,7 @@ from glQiwiApi.core.constants import (
 from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.core.dispatcher.webhooks.config import Path
 from glQiwiApi.core.synchronous import adapter
-from glQiwiApi.types import Transaction
+from glQiwiApi.types import Transaction, TransactionStatus, TransactionType
 from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 
 __all__ = ["start_webhook", "start_polling"]
@@ -43,7 +44,23 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
-_CallbackType = Callable[["QiwiWrapper", VarArg(), KwArg()], T]
+_CallbackType = Callable[..., Any]
+
+
+@dataclasses.dataclass()
+class WaitingTransaction:
+    id: int
+    type: str
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, WaitingTransaction):
+            return False
+        if other.id == self.id and other.type == self.type:
+            return True
+        return False
+
+    def __hash__(self) -> int:
+        return hash(self.id)
 
 
 def _parse_timeout(timeout: Union[float, int]) -> float:
@@ -55,9 +72,7 @@ def _parse_timeout(timeout: Union[float, int]) -> float:
         raise TypeError(f"Timeout must be float or int. You have passed on {type(timeout)}")
 
 
-async def _inspect_and_execute_callback(
-        client: "QiwiWrapper", callback: Callable[[QiwiWrapper], Any]
-) -> None:
+async def _inspect_and_execute_callback(client: "QiwiWrapper", callback: _CallbackType) -> None:
     if inspect.iscoroutinefunction(callback):
         await callback(client)
     else:
@@ -66,8 +81,8 @@ async def _inspect_and_execute_callback(
 
 def _setup_callbacks(
         executor: BaseExecutor,
-        on_startup: Optional[_CallbackType[Any]] = None,
-        on_shutdown: Optional[_CallbackType[Any]] = None,
+        on_startup: Optional[_CallbackType] = None,
+        on_shutdown: Optional[_CallbackType] = None,
 ) -> None:
     """
     Function, which setup callbacks and set it to dispatcher object
@@ -88,8 +103,8 @@ def start_webhook(
         host: str = "localhost",
         port: int = 8080,
         path: Optional[Path] = None,
-        on_startup: Optional[_CallbackType[Any]] = None,
-        on_shutdown: Optional[_CallbackType[Any]] = None,
+        on_startup: Optional[_CallbackType] = None,
+        on_shutdown: Optional[_CallbackType] = None,
         tg_app: Optional[BaseProxy] = None,
         app: Optional["web.Application"] = None,
         ssl_context: Optional[SSLContext] = None,
@@ -122,11 +137,11 @@ def start_polling(
         client: QiwiWrapper,
         *,
         skip_updates: bool = False,
-        timeout: Union[float, int] = 5,
-        on_startup: Optional[_CallbackType[Any]] = None,
-        on_shutdown: Optional[_CallbackType[Any]] = None,
+        timeout: float = DEFAULT_TIMEOUT,
+        on_startup: Optional[_CallbackType] = None,
+        on_shutdown: Optional[_CallbackType] = None,
         tg_app: Optional[BaseProxy] = None,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None
 ) -> None:
     """
     Setup for long-polling mode. Support only `glQiwiApi.types.Transaction` as event.
@@ -167,8 +182,8 @@ class BaseExecutor(abc.ABC):
         }
         self._tg_app = tg_app
         self.client = client
-        self._on_startup_calls: List[_CallbackType[Any]] = []
-        self._on_shutdown_calls: List[_CallbackType[Any]] = []
+        self._on_startup_calls: List[_CallbackType] = []
+        self._on_shutdown_calls: List[_CallbackType] = []
 
         self._dispatcher = client.dispatcher
 
@@ -205,10 +220,10 @@ class BaseExecutor(abc.ABC):
         self._create_new_loop_if_closed()
         return self._loop
 
-    def add_shutdown_callback(self, callback: _CallbackType[Any]) -> None:
+    def add_shutdown_callback(self, callback: _CallbackType) -> None:
         self._on_shutdown_calls.append(callback)
 
-    def add_startup_callback(self, callback: _CallbackType[Any]) -> None:
+    def add_startup_callback(self, callback: _CallbackType) -> None:
         self._on_startup_calls.append(callback)
 
     def _on_shutdown(self) -> None:
@@ -249,6 +264,7 @@ class PollingExecutor(BaseExecutor):
         self.get_updates_from: Optional[datetime] = None
         self._timeout: Union[int, float] = _parse_timeout(timeout)
         self.skip_updates = skip_updates
+        self._waiting_transactions: Set[WaitingTransaction] = set()
 
     def start_polling(self) -> None:
         loop: asyncio.AbstractEventLoop = self.loop
@@ -265,10 +281,11 @@ class PollingExecutor(BaseExecutor):
             self._on_shutdown()
 
     async def _start_polling(self) -> None:
+        default_timeout = self._timeout
         while True:
             try:
                 await self._pool_process()
-                self._set_timeout(DEFAULT_TIMEOUT)
+                self._set_timeout(default_timeout)
             except Exception as ex:
                 self._set_timeout(TIMEOUT_IF_EXCEPTION)
                 self._dispatcher.logger.error(
@@ -279,14 +296,13 @@ class PollingExecutor(BaseExecutor):
     async def _pool_process(self) -> None:
         await self._prepare_date_boundaries()
         try:
-            history_from_last_to_first: List[Transaction] = await self._fetch_updates()
+            updates = await self._fetch_updates()
         except NoUpdatesToExecute:
             return
-        history_from_first_to_last: List[Transaction] = history_from_last_to_first[::-1]
         if self.offset is None:
-            first_payment: Transaction = history_from_first_to_last[0]
-            self.offset = first_payment.id - 1
-        await self.process_events(history_from_first_to_last)
+            first_update = updates[0]
+            self.offset = first_update.id - 1
+        await self.process_updates(updates)
 
     async def _prepare_date_boundaries(self) -> None:
         current_time = datetime.now()
@@ -294,24 +310,55 @@ class PollingExecutor(BaseExecutor):
         self.get_updates_until = current_time
 
     async def _fetch_updates(self) -> List[Transaction]:
-        history = await self.client.transactions(
+        history_from_last_to_first = await self.client.transactions(
             end_date=self.get_updates_until, start_date=self.get_updates_from
         )
+        history_from_first_to_last = list(reversed(history_from_last_to_first))
+        await self._collect_waiting_transactions(history_from_first_to_last)
+        became_success = await self._get_transactions_that_became_success()
+        events = [*became_success, *history_from_first_to_last]
         if self.skip_updates:
             self.skip_updates = False
             raise NoUpdatesToExecute()
-        elif not history:
+        elif not events:
             raise NoUpdatesToExecute()
-        return history
+        return events
 
-    async def process_events(self, history: List[Transaction]) -> None:
+    async def _get_transactions_that_became_success(self) -> List[Transaction]:
+        tasks: List[asyncio.Task[Any]] = []
+        for waiting_transaction in self._waiting_transactions:
+            get_waiting_transaction_info_task = asyncio.create_task(
+                self.client.transaction_info(
+                    waiting_transaction.id,
+                    TransactionType(waiting_transaction.type)
+                )
+            )
+            tasks.append(get_waiting_transaction_info_task)
+        checked_transactions = await asyncio.gather(*tasks)
+        success_transactions: List[Transaction] = []
+        for txn in checked_transactions:
+            if txn.status != TransactionStatus.SUCCESS.value:
+                continue
+            success_transactions.append(txn)
+            self._waiting_transactions.remove(WaitingTransaction(id=txn.id, type=txn.type))
+        return success_transactions
+
+    async def _collect_waiting_transactions(self, history: List[Transaction]):
+        for index, transaction in enumerate(history):
+            if transaction.status == TransactionStatus.WAITING.value:
+                self._waiting_transactions.add(
+                    WaitingTransaction(id=transaction.id, type=cast(str, transaction.type))
+                )
+
+    async def process_updates(self, history: List[Transaction]) -> None:
         tasks: List[asyncio.Task[None]] = [
             asyncio.create_task(self._dispatcher.process_event(event))
             for event in history
             if cast(int, self.offset) < event.id
         ]
         if history:
-            self.offset = history[-1].id
+            sorted_history = sorted(history, key=lambda txn: txn.id)
+            self.offset = sorted_history[-1].id
         await asyncio.gather(*tasks)
 
     def _set_timeout(self, exception_timeout: Union[int, float]) -> None:

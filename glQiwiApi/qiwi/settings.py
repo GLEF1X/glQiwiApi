@@ -111,7 +111,8 @@ class QiwiConfig:
             "Content-Type": "application/json",
         }
         self.ERROR_CODE_MESSAGES = {
-            400: "Insufficient funds for the operation",
+            400: "Query syntax error (invalid data format). Can be related to wrong arguments,"
+                 " that you have passed to method",
             401: "Invalid token or API token was expired",
             403: "No permission for this request(API token has insufficient permissions)",
             404: "Object was not found or there are no objects with the specified characteristics",

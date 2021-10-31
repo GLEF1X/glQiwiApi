@@ -148,7 +148,8 @@ class Dispatcher:
             try:
                 return await callback(*args, **kwargs)
             except (SkipHandler, CancelHandler) as ex:
-                # reraise exception to handle it on HandlerCollection object and skip or break processing current event
+                # reraise exception to handle it on HandlerCollection object
+                # and skip or break processing current event
                 raise ex
             except Exception as e:
                 if not self.error_handlers.is_empty:

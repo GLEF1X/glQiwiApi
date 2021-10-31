@@ -4,7 +4,7 @@ import abc
 from typing import Optional
 
 from glQiwiApi.types import WebHook
-from glQiwiApi.types.qiwi_types.webhooks import WebhookPayment
+from glQiwiApi.types.qiwi.webhooks import WebhookPayment
 from .base import Handler, ClientMixin
 
 

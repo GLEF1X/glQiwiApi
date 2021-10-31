@@ -3,7 +3,7 @@ from typing import Union, TypeVar, Optional, Callable, Any
 
 from .amount import Type, CurrencyAmount, PlainAmount
 from .particular import Response, WrappedRequestPayload
-from .qiwi_types import (
+from .qiwi import (
     Bill,
     BillError,
     Statistic,
@@ -32,8 +32,10 @@ from .qiwi_types import (
     InvoiceStatus,
     TransactionType,
     QiwiPayment,
+    Source,
+    TransactionStatus,
 )
-from .yoomoney_types import (
+from .yoomoney import (
     OperationType,
     OperationDetails,
     PreProcessPaymentResponse,
@@ -135,4 +137,6 @@ __all__ = (
     "Restriction",
     "TransactionType",
     "QiwiPayment",
+    "Source",
+    "TransactionStatus"
 )
