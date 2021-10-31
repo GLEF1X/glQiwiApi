@@ -7,29 +7,28 @@ import timeout_decorator
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types
-from glQiwiApi.types import Transaction, CurrencyAmount
-from glQiwiApi.types.qiwi.transaction import Provider, Source, TransactionType, \
-    TransactionStatus
+from glQiwiApi.core.dispatcher.implementation import Dispatcher, Event
+from glQiwiApi.types import Transaction
+from glQiwiApi.types.qiwi.transaction import Source, TransactionType
 from tests.types.dataset import WRONG_API_DATA
 
-txn = Transaction(
-    txnId=50,
-    personId=3254235,
-    date=datetime.now(),
-    status=TransactionStatus.SUCCESS,
-    statusText="hello",
-    trmTxnId="world",
-    account="+38908234234",
-    sum=CurrencyAmount(amount=999, currency=643),
-    total=CurrencyAmount(amount=999, currency=643),
-    provider=Provider(),
-    commission=CurrencyAmount(amount=999, currency=643),
-    currencyRate=643,
-    type=types.TransactionType.OUT,
-)
+
+class StubDispatcher(Dispatcher):
+
+    def __init__(self, fake_event: Event) -> None:
+        super().__init__()
+        self._fake_event = fake_event
+
+    async def process_event(self, **kwargs) -> None:
+        return await super().process_event(self._fake_event)
 
 
 class StubQiwiWrapper(QiwiWrapper):
+
+    def __init__(self, fake_event: Transaction, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._fake_transaction = fake_event
+        self._dispatcher = StubDispatcher(fake_event)
 
     def __new__(cls, *args, **kwargs):
         return object().__new__(cls)
@@ -42,20 +41,20 @@ class StubQiwiWrapper(QiwiWrapper):
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
-        return [txn]
+        return [self._fake_transaction]
 
 
 @pytest.fixture(name="api")
-async def api_fixture():
+async def api_fixture(transaction: Transaction):
     """Api fixture"""
-    _wrapper = StubQiwiWrapper(**WRONG_API_DATA)
+    _wrapper = StubQiwiWrapper(fake_event=transaction, **WRONG_API_DATA)
     yield _wrapper
     await _wrapper.close()
 
 
 async def _on_startup_callback(api: QiwiWrapper):
     await asyncio.sleep(1)
-    await api.dispatcher.process_event(txn)
+    await api.dispatcher.process_event()  # type: ignore  # noqa
 
 
 class TestPolling:

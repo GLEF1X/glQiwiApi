@@ -258,17 +258,21 @@ def check_transaction(
         comment: Optional[str] = None,
 ) -> bool:
     for txn in transactions:
-        if float(txn.sum.amount) >= amount and txn.type.value == transaction_type.value:
-            if txn.comment == comment and txn.to_account == sender:
-                return True
-            elif comment and sender:
-                continue
-            elif txn.to_account == sender:
-                return True
-            elif sender:
-                continue
-            elif txn.comment == comment:
-                return True
+        if txn.sum.amount < amount or txn.type != transaction_type.value:  # type: ignore
+            continue
+        if txn.comment == comment and txn.to_account == sender:
+            return True
+        elif comment and sender:
+            continue
+        elif txn.to_account == sender:
+            return True
+        elif sender:
+            continue
+        elif txn.comment == comment:
+            return True
+        elif comment:
+            continue
+        return True
     return False
 
 

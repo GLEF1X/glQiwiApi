@@ -68,7 +68,6 @@ async def test_identification(api: QiwiWrapper):
     assert isinstance(result, types.Identification)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize(
     "payload",
     [
@@ -81,8 +80,7 @@ async def test_identification(api: QiwiWrapper):
         {
             "transaction_type": TransactionType.OUT,
             "amount": 1,
-            "sender": "+380985272064",
-            "comment": "+comment+",
+            "sender": "+380985272064"
         },
     ],
 )
