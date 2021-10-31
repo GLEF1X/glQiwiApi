@@ -23,6 +23,7 @@ from typing import (
     Iterable,
     Type,
 )
+from glQiwiApi.utils.compat import Final
 
 from pydantic import ValidationError
 
@@ -66,8 +67,9 @@ from glQiwiApi.types import (
 from glQiwiApi.types.arbitrary.file import File
 from glQiwiApi.types.arbitrary.inputs import BinaryIOInput
 from glQiwiApi.types.errors import QiwiErrorAnswer
+from glQiwiApi.types.qiwi.transaction import Source
 from glQiwiApi.utils.exceptions import APIError, InvalidPayload, ChequeIsNotAvailable
-from glQiwiApi.utils.format_casts import datetime_to_iso8601
+from glQiwiApi.utils.dates_conversion import datetime_to_iso8601_with_moscow_timezone
 from glQiwiApi.utils.helper import allow_response_code, override_error_messages, require
 from glQiwiApi.utils.payload import (
     make_payload,
@@ -86,7 +88,7 @@ from glQiwiApi.utils.payload import (
 )
 from glQiwiApi.utils.validators import PhoneNumber, String
 
-MAX_HISTORY_TRANSACTION_LIMIT = 50
+MAX_HISTORY_TRANSACTION_LIMIT: Final[int] = 50
 
 
 def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
@@ -125,9 +127,6 @@ class QiwiWrapper(
         :param api_access_token: QIWI API token received from https://qiwi.com/api
         :param phone_number: your phone number starting with +
         :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
-         default 0, respectively
-         the request will not use the cache by default, the maximum time
-         caching 60 seconds
         :param cache_time: Time to cache requests in seconds,
                            default 0, respectively the request will not use the cache by default
         :param session_holder: obtains session and helps to manage session lifecycle. You can pass
@@ -367,6 +366,7 @@ class QiwiWrapper(
             self,
             rows: int = MAX_HISTORY_TRANSACTION_LIMIT,
             operation: TransactionType = TransactionType.ALL,
+            sources: Optional[List[Source]] = None,
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
@@ -375,14 +375,9 @@ class QiwiWrapper(
         More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#payments_list
 
-        Possible values for the operation parameter:
-         - 'ALL'
-         - 'IN'
-         - 'OUT'
-         - 'QIWI_CARD'
-
         :param rows: number of transactions you want to receive
         :param operation: The type of operations in the report for selection.
+        :param sources: List of payment sources, for filter
         :param start_date: The starting date for searching for payments.
                             Used only in conjunction with end_date.
         :param end_date: the end date of the search for payments.
@@ -394,8 +389,14 @@ class QiwiWrapper(
         payload_data = format_dates(
             start_date=start_date,
             end_date=end_date,
-            payload_data={"rows": rows, "operation": operation.value},
+            payload_data={
+                "rows": rows,
+                "operation": operation.value
+            },
         )
+        if sources is not None:
+            for index, source in enumerate(sources, start=1):
+                payload_data.update({f"source[{index}]": source.value})
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.TRANSACTIONS,
@@ -690,8 +691,8 @@ class QiwiWrapper(
         headers = self._add_authorization_header(self._router.generate_default_headers())
         check_dates_for_statistic_request(start_date=start_date, end_date=end_date)
         params = {
-            "startDate": datetime_to_iso8601(start_date),
-            "endDate": datetime_to_iso8601(end_date),
+            "startDate": datetime_to_iso8601_with_moscow_timezone(start_date),
+            "endDate": datetime_to_iso8601_with_moscow_timezone(end_date),
             "operation": operation.value,
         }
         if sources:
@@ -1078,7 +1079,7 @@ class QiwiWrapper(
         """
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
-        life_time = datetime_to_iso8601(  # type: ignore
+        life_time = datetime_to_iso8601_with_moscow_timezone(  # type: ignore
             life_time or constants.get_default_bill_time())
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._add_authorization_header(data.headers, p2p=True)

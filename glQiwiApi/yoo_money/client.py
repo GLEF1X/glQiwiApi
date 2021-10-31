@@ -23,7 +23,7 @@ from glQiwiApi.types import (
     Payment,
     IncomingTransaction,
 )
-from glQiwiApi.types.yoomoney_types.types import Card
+from glQiwiApi.types.yoomoney.types import Card
 from glQiwiApi.utils.exceptions import CantParseUrl, InvalidPayload
 from glQiwiApi.utils.payload import (
     parse_auth_link,
@@ -31,7 +31,7 @@ from glQiwiApi.utils.payload import (
     parse_iterable_to_list_of_objects,
     check_params,
     parse_amount,
-    check_transactions_payload,
+    format_transactions_payload,
     make_payload, filter_none,
 )
 from glQiwiApi.utils.validators import String
@@ -308,7 +308,7 @@ class YooMoneyAPI(Wrapper, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
             retrieve_base_headers_for_yoomoney(**self._router.config.content_and_auth)
         )
         data = {"records": records, "label": label}
-        payload = check_transactions_payload(
+        payload = format_transactions_payload(
             data, records, operation_types, start_date, end_date, start_record
         )
         response = await self._request_service.api_request(

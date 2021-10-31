@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+from glQiwiApi.utils.compat import Final
 
 import pytz
 
-DEFAULT_QIWI_TIMEZONE = "Europe/Moscow"
+DEFAULT_QIWI_TIMEZONE: Final[str] = "Europe/Moscow"
 
 
 def datetime_to_utc(obj: datetime) -> str:
@@ -13,7 +14,7 @@ def datetime_to_utc(obj: datetime) -> str:
     return iso_format_date.replace(" ", "T") + "Z"
 
 
-def datetime_to_iso8601(obj: Optional[datetime]) -> str:
+def datetime_to_iso8601_with_moscow_timezone(obj: Optional[datetime]) -> str:
     """
     Converts a date to a standard format for API's
 
@@ -22,9 +23,4 @@ def datetime_to_iso8601(obj: Optional[datetime]) -> str:
     """
     if not isinstance(obj, datetime):
         return ""  # pragma: no cover
-    naive_datetime = obj.replace(microsecond=0)
-    return (
-        pytz.timezone(DEFAULT_QIWI_TIMEZONE)
-            .localize(naive_datetime)
-            .isoformat()
-    )
+    return obj.astimezone(pytz.timezone(DEFAULT_QIWI_TIMEZONE)).isoformat(timespec='seconds')

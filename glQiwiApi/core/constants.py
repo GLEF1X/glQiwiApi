@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime
 
-DEFAULT_TIMEOUT = 20
+DEFAULT_TIMEOUT = 5
 
 NO_CACHING = 0
 

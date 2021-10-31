@@ -8,14 +8,15 @@ import timeout_decorator
 from glQiwiApi import QiwiWrapper
 from glQiwiApi import types
 from glQiwiApi.types import Transaction, CurrencyAmount
-from glQiwiApi.types.qiwi_types.transaction import Provider
+from glQiwiApi.types.qiwi.transaction import Provider, Source, TransactionType, \
+    TransactionStatus
 from tests.types.dataset import WRONG_API_DATA
 
 txn = Transaction(
     txnId=50,
     personId=3254235,
     date=datetime.now(),
-    status="OUT",
+    status=TransactionStatus.SUCCESS,
     statusText="hello",
     trmTxnId="world",
     account="+38908234234",
@@ -36,7 +37,8 @@ class StubQiwiWrapper(QiwiWrapper):
     async def transactions(
             self,
             rows: int = 50,
-            operation: str = "ALL",
+            operation: TransactionType = TransactionType.ALL,
+            sources: Optional[List[Source]] = None,
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None,
     ) -> List[Transaction]:

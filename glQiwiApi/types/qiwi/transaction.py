@@ -4,8 +4,8 @@ from typing import Optional, Union, Dict, Any, List
 
 from pydantic import Field
 
-from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.types.amount import CurrencyAmount
+from glQiwiApi.types.base import Base, ExtraBase
 
 
 class TransactionType(enum.Enum):
@@ -13,6 +13,20 @@ class TransactionType(enum.Enum):
     OUT = "OUT"
     ALL = "ALL"
     QIWI_CARD = "QIWI_CARD"
+
+
+class TransactionStatus(enum.Enum):
+    WAITING = "WAITING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+
+
+class Source(enum.Enum):
+    RUB = "QW_RUB"
+    USD = "QW_USD"
+    EUR = "QW_EUR"
+    CARD = "CARD"
+    MK = "MK"
 
 
 class Provider(Base):
@@ -62,7 +76,7 @@ class Transaction(ExtraBase):
     error: Optional[str] = None
     """Описание ошибки"""
 
-    status: str
+    status: TransactionStatus
     """
     Статус платежа. Возможные значения:
     WAITING - платеж проводится,
