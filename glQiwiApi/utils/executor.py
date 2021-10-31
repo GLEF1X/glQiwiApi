@@ -52,7 +52,7 @@ class WaitingTransaction:
     id: int
     type: str
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, WaitingTransaction):
             return False
         if other.id == self.id and other.type == self.type:
@@ -343,9 +343,9 @@ class PollingExecutor(BaseExecutor):
             self._waiting_transactions.remove(WaitingTransaction(id=txn.id, type=txn.type))
         return success_transactions
 
-    async def _collect_waiting_transactions(self, history: List[Transaction]):
+    async def _collect_waiting_transactions(self, history: List[Transaction]) -> None:
         for index, transaction in enumerate(history):
-            if transaction.status == TransactionStatus.WAITING.value:
+            if transaction.status == TransactionStatus.WAITING.value:  # type: ignore
                 self._waiting_transactions.add(
                     WaitingTransaction(id=transaction.id, type=cast(str, transaction.type))
                 )
