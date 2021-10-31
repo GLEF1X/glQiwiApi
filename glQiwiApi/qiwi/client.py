@@ -153,10 +153,7 @@ class QiwiWrapper(
         auth = headers.get("Authorization")
         if auth is None:
             auth = "Bearer {token}"
-        if p2p:
-            token = self.secret_p2p
-        else:
-            token = self.api_access_token
+        token = self.secret_p2p if p2p else self.api_access_token
         headers["Authorization"] = auth.format(token=token)
         return headers
 
@@ -696,7 +693,7 @@ class QiwiWrapper(
             "operation": operation.value,
         }
         if sources:
-            params.update({"sources": " ".join(sources)})
+            params["sources"] = " ".join(sources)
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.FETCH_STATISTICS,
