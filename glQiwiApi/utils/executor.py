@@ -8,7 +8,7 @@ import asyncio
 import dataclasses
 import inspect
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from ssl import SSLContext
 from typing import (
     Union,
@@ -34,13 +34,12 @@ from glQiwiApi.core.constants import (
 from glQiwiApi.core.dispatcher.webhooks import server
 from glQiwiApi.core.dispatcher.webhooks.config import Path
 from glQiwiApi.core.synchronous import adapter
-from glQiwiApi.types import Transaction, TransactionStatus, TransactionType
+from glQiwiApi.types import Transaction
 from glQiwiApi.utils.exceptions import NoUpdatesToExecute
 
-__all__ = ["start_webhook", "start_polling"]
+from glQiwiApi.qiwi.client import QiwiWrapper, MAX_HISTORY_TRANSACTION_LIMIT  # pragma: no cover
 
-if TYPE_CHECKING:
-    from glQiwiApi.qiwi.client import QiwiWrapper  # pragma: no cover
+__all__ = ["start_webhook", "start_polling"]
 
 T = TypeVar("T")
 
@@ -260,8 +259,7 @@ class PollingExecutor(BaseExecutor):
         """
         super(PollingExecutor, self).__init__(client, tg_app, loop)
         self.offset: Optional[int] = None
-        self.get_updates_until: Optional[datetime] = None
-        self.get_updates_from: Optional[datetime] = None
+        self.get_updates_from = datetime.now()
         self._timeout: Union[int, float] = _parse_timeout(timeout)
         self.skip_updates = skip_updates
         self._waiting_transactions: Set[WaitingTransaction] = set()
@@ -294,7 +292,6 @@ class PollingExecutor(BaseExecutor):
             await asyncio.sleep(self._timeout)
 
     async def _pool_process(self) -> None:
-        await self._prepare_date_boundaries()
         try:
             updates = await self._fetch_updates()
         except NoUpdatesToExecute:
@@ -304,51 +301,21 @@ class PollingExecutor(BaseExecutor):
             self.offset = first_update.id - 1
         await self.process_updates(updates)
 
-    async def _prepare_date_boundaries(self) -> None:
-        current_time = datetime.now()
-        self.get_updates_from = current_time - timedelta(seconds=self._timeout)
-        self.get_updates_until = current_time
-
     async def _fetch_updates(self) -> List[Transaction]:
         history_from_last_to_first = await self.client.transactions(
-            end_date=self.get_updates_until, start_date=self.get_updates_from
+            start_date=self.get_updates_from,
+            end_date=datetime.now()
         )
         history_from_first_to_last = list(reversed(history_from_last_to_first))
-        await self._collect_waiting_transactions(history_from_first_to_last)
-        became_success = await self._get_transactions_that_became_success()
-        events = [*became_success, *history_from_first_to_last]
+        if len(history_from_last_to_first) == MAX_HISTORY_TRANSACTION_LIMIT:
+            first_txn_by_date = history_from_last_to_first[-1]
+            self.get_updates_from = first_txn_by_date.date
         if self.skip_updates:
             self.skip_updates = False
             raise NoUpdatesToExecute()
-        elif not events:
+        elif not history_from_first_to_last:
             raise NoUpdatesToExecute()
-        return events
-
-    async def _get_transactions_that_became_success(self) -> List[Transaction]:
-        tasks: List[asyncio.Task[Any]] = []
-        for waiting_transaction in self._waiting_transactions:
-            get_waiting_transaction_info_task = asyncio.create_task(
-                self.client.transaction_info(
-                    waiting_transaction.id,
-                    TransactionType(waiting_transaction.type)
-                )
-            )
-            tasks.append(get_waiting_transaction_info_task)
-        checked_transactions = await asyncio.gather(*tasks)
-        success_transactions: List[Transaction] = []
-        for txn in checked_transactions:
-            if txn.status != TransactionStatus.SUCCESS.value:
-                continue
-            success_transactions.append(txn)
-            self._waiting_transactions.remove(WaitingTransaction(id=txn.id, type=txn.type))
-        return success_transactions
-
-    async def _collect_waiting_transactions(self, history: List[Transaction]) -> None:
-        for index, transaction in enumerate(history):
-            if transaction.status == TransactionStatus.WAITING.value:  # type: ignore
-                self._waiting_transactions.add(
-                    WaitingTransaction(id=transaction.id, type=cast(str, transaction.type))
-                )
+        return history_from_first_to_last
 
     async def process_updates(self, history: List[Transaction]) -> None:
         tasks: List[asyncio.Task[None]] = [

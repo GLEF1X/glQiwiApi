@@ -1,5 +1,5 @@
 pytz==2021.3
-aiohttp==3.7.4post0
+aiohttp==3.7.8
 pydantic==1.8.2
 wheel==0.36.2
 loguru==0.5.3
