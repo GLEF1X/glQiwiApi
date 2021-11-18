@@ -2,5 +2,5 @@
 Qiwi types
 ==========
 
-.. automodule:: glQiwiApi.types.qiwi_types
+.. automodule:: glQiwiApi.types.qiwi
    :members:

@@ -2,7 +2,7 @@
 YooMoney types
 ==============
 
-.. automodule:: glQiwiApi.types.yoomoney_types
+.. automodule:: glQiwiApi.types.yoomoney
    :members:
 
 

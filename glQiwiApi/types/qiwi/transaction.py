@@ -8,20 +8,20 @@ from glQiwiApi.types.amount import CurrencyAmount
 from glQiwiApi.types.base import Base, ExtraBase
 
 
-class TransactionType(enum.Enum):
+class TransactionType(str, enum.Enum):
     IN = "IN"
     OUT = "OUT"
     ALL = "ALL"
     QIWI_CARD = "QIWI_CARD"
 
 
-class TransactionStatus(enum.Enum):
+class TransactionStatus(str, enum.Enum):
     WAITING = "WAITING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
 
 
-class Source(enum.Enum):
+class Source(str, enum.Enum):
     RUB = "QW_RUB"
     USD = "QW_USD"
     EUR = "QW_EUR"
