@@ -77,7 +77,7 @@ class TelegramWebhookPlugin(TelegramPlugin):
 
         :param ctx: keyword arguments, which contains application and host
         """
-        main_app: web.Application = ctx.get("app")
+        main_app = t.cast(web.Application, ctx.get("app"))
         main_app.add_subapp(self.prefix, self._app)
         for prefix, sub_app, handlers in self.sub_apps:
             sub_app["bot"] = self.bot

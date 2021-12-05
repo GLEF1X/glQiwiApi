@@ -258,7 +258,7 @@ def check_transaction(
         comment: Optional[str] = None,
 ) -> bool:
     for txn in transactions:
-        if txn.sum.amount < amount or txn.type != transaction_type.value:  # type: ignore
+        if txn.sum.amount < amount or txn.type != transaction_type.value:
             continue
         if txn.comment == comment and txn.to_account == sender:
             return True

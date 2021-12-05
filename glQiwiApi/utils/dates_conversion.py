@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
-from glQiwiApi.utils.compat import Final
+from typing import Optional, cast
 
 import pytz
+
+from glQiwiApi.utils.compat import Final
 
 DEFAULT_QIWI_TIMEZONE: Final[str] = "Europe/Moscow"
 

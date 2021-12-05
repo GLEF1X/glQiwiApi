@@ -155,7 +155,7 @@ class BaseExecutor(abc.ABC):
     def add_startup_callback(self, callback: _CallbackType) -> None:
         self._on_startup_calls.append(callback)
 
-    async def _incline_plugins(self, ctx: Dict[Any, Any]):
+    async def _incline_plugins(self, ctx: Dict[Any, Any]) -> None:
         incline_tasks = [plugin.incline(ctx) for plugin in self._plugins]
         await asyncio.gather(*incline_tasks)
 
