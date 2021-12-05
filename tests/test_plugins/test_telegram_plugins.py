@@ -19,7 +19,7 @@ class EventLoopStub:
 
 @pytest.fixture(name="tg_webhook_proxy")
 async def tg_webhook_proxy_fixture(mocker: MockerFixture):
-    bot_mock = mocker.Mock(spec=Bot)
+    bot_mock = mocker.AsyncMock(spec=Bot)
     tg_proxy = TelegramWebhookPlugin(
         Dispatcher(bot_mock),
         webhook_domain="",
