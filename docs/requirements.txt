@@ -10,3 +10,5 @@ sphinx-intl
 furo
 sphinxemoji
 sphinx-prompt
+sphinx-notfound-page
+sphinxcontrib-mermaid
