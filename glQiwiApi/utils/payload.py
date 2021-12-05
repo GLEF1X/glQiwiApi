@@ -53,7 +53,7 @@ def make_payload(**kwargs: Any) -> Dict[Any, Any]:
     }
 
 
-def check_result(
+def get_decoded_result(
         error_messages: Dict[int, str],
         status_code: int,
         request_info: RequestInfo,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from aiohttp import web
@@ -7,6 +8,8 @@ from aiohttp import web
 from glQiwiApi import types
 from glQiwiApi.core.dispatcher.webhooks.base import BaseWebHookView
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
+
+logger = logging.getLogger("glQiwiApi.webhooks.p2p")
 
 
 class QiwiBillWebView(BaseWebHookView[types.Notification]):
@@ -20,9 +23,7 @@ class QiwiBillWebView(BaseWebHookView[types.Notification]):
         try:
             update.verify_signature(sha256_signature, webhook_base64)
         except WebhookSignatureUnverified:
-            self.dispatcher.logger.warning(
-                "Blocking request due to invalid signature of payload."
-            )
+            logger.debug("Blocking request due to invalid signature of payload.")
             raise web.HTTPBadRequest()
 
     def ok_response(self) -> web.Response:

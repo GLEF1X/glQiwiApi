@@ -16,12 +16,10 @@
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
-## 🐦Dependencies  
+## 🐦Dependencies
 
-| Library | Description                                            |
-|:-------:|:----------------------------------------------:        |
-|aiohttp  | Asynchronous HTTP Client/Server for asyncio and Python.|
-|aiofiles | saving receipts in pdf                                 |
-|uvloop   | Optional(can boost API), but work only on Linux        |
-|pydantic | Json data validator. Very fast instead of custom       |
-|loguru   | library which aims to bring enjoyable logging in Python|
+| Library |                       Description                       |
+|:-------:|:-------------------------------------------------------:|
+|aiohttp  | Asynchronous HTTP Client/Server for asyncio and Python. |
+|aiofiles |            saving receipts in pdf(Optional)             |
+|pydantic |    Json data validator. Very fast instead of custom     |

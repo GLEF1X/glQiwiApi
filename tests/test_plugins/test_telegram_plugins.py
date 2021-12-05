@@ -7,7 +7,7 @@ from aiogram import Dispatcher, Bot
 from aiohttp import web
 from pytest_mock import MockerFixture
 
-from glQiwiApi.builtin import TelegramWebhookProxy
+from glQiwiApi.plugins.telegram.webhook import TelegramWebhookPlugin
 
 pytestmark = pytest.mark.asyncio
 
@@ -20,15 +20,14 @@ class EventLoopStub:
 @pytest.fixture(name="tg_webhook_proxy")
 async def tg_webhook_proxy_fixture(mocker: MockerFixture):
     bot_mock = mocker.Mock(spec=Bot)
-    tg_proxy = TelegramWebhookProxy(
+    tg_proxy = TelegramWebhookPlugin(
         Dispatcher(bot_mock),
         webhook_domain="",
         ssl_certificate=SSLContext(),
-        loop=EventLoopStub(),
     )  # noqa
     yield tg_proxy
 
 
-async def test_telegram_webhook_proxy(tg_webhook_proxy: TelegramWebhookProxy):
+async def test_telegram_webhook_proxy(tg_webhook_proxy: TelegramWebhookPlugin):
     web_app = tg_webhook_proxy.setup(app=web.Application())
     assert isinstance(web_app, web.Application)

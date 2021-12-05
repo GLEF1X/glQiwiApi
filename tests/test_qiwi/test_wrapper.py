@@ -302,12 +302,3 @@ class TestFail:
         with pytest.raises(ValueError):
             await api.fetch_statistics(start_date=start_date, end_date=end_date)
 
-
-class TestDeprecated:
-    async def test_identification_async_property_warns_deprecated(self, api: QiwiWrapper):
-        with pytest.deprecated_call():
-            await api.identification
-
-    async def test_get_bills_warns_deprecated(self, api: QiwiWrapper):
-        with pytest.deprecated_call():
-            await api.get_bills(rows_num=50)

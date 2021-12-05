@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import warnings
+import logging
 from typing import cast, Optional
 
 from aiohttp import web
@@ -8,6 +8,8 @@ from aiohttp import web
 from glQiwiApi import types
 from glQiwiApi.core.dispatcher.webhooks.base import BaseWebHookView
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
+
+logger = logging.getLogger("logging.webhooks.default")
 
 
 class QiwiWebHookWebView(BaseWebHookView[types.WebHook]):
@@ -24,7 +26,7 @@ class QiwiWebHookWebView(BaseWebHookView[types.WebHook]):
             return None
 
         if not base64_key:
-            warnings.warn(
+            logger.warning(
                 "Validation was skipped because there is no base64 key to compare hash",
                 UserWarning,
                 stacklevel=2,
@@ -34,7 +36,7 @@ class QiwiWebHookWebView(BaseWebHookView[types.WebHook]):
         try:
             update.verify_signature(base64_key)
         except WebhookSignatureUnverified:
-            self.dispatcher.logger.warning(
+            logger.debug(
                 "Request has being blocked due to invalid signature of json request payload."
             )
             raise web.HTTPBadRequest()

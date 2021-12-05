@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Bot
 
 from glQiwiApi import QiwiWrapper, types
@@ -11,17 +13,19 @@ wallet = QiwiWrapper(api_access_token=TOKEN, secret_p2p=QIWI_SECRET)
 
 bot = Bot(token="BOT_TOKEN")
 
+logger = logging.getLogger(__name__)
+
 
 # There is a lambda expression for "cutting off" test payments
 @wallet.transaction_handler(lambda event: event.payment is not None)
 async def main(event: types.WebHook):
-    event.client.dispatcher.logger.info("New transaction: {}", event)
+    logger.info("New transaction: {}", event)
     await bot.send_message(chat_id="1219185039", text=event.hook_id)
 
 
 @wallet.bill_handler()
 async def main2(event: types.Notification):
-    event.client.dispatcher.logger.info("P2P EVENT {}", event)
+    logger.info("P2P EVENT {}", event)
 
 
 # Also, you can specify a path for webhook

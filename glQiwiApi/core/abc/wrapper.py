@@ -6,6 +6,7 @@ from types import TracebackType
 from typing import Union, Optional, Type, Any, Dict, cast, TypeVar, TYPE_CHECKING
 
 from glQiwiApi.core.constants import NO_CACHING
+from glQiwiApi.core.storage import UnrealizedCacheInvalidationStrategy
 
 if TYPE_CHECKING:
     from glQiwiApi.core.request_service import RequestService
@@ -20,14 +21,20 @@ class Wrapper(abc.ABC):
     def get_request_service(self) -> RequestService:
         pass
 
-    def enable_caching(self, *, cache_time: Union[int, float]) -> None:
+    def enable_caching(self, *, cache_time_in_seconds: Union[int, float]) -> Wrapper:
         request_service = self.get_request_service()
         invalidate_strategy = request_service._cache._invalidate_strategy  # noqa
         old_cache_time: Optional[Union[int, float]] = getattr(
             invalidate_strategy, "_cache_time", None
         )
         if old_cache_time == NO_CACHING:
-            setattr(invalidate_strategy, "_cache_time", cache_time)
+            setattr(invalidate_strategy, "_cache_time", cache_time_in_seconds)
+        return self
+
+    def disable_caching(self) -> Wrapper:
+        request_service = self.get_request_service()
+        request_service._cache._invalidate_strategy = UnrealizedCacheInvalidationStrategy()
+        return self
 
     async def __aenter__(self):  # type: ignore
         await self.get_request_service().warmup()

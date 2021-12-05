@@ -4,8 +4,6 @@ import ipaddress
 import typing
 from dataclasses import dataclass
 
-from glQiwiApi.builtin import TransactionFilter, BillFilter, InterceptHandler  # NOQA
-
 DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/"
 DEFAULT_QIWI_ROUTER_NAME = "QIWI"
 

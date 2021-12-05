@@ -1,7 +1,7 @@
 import pytest
 
 from glQiwiApi import types
-from glQiwiApi.builtin import TransactionFilter, BillFilter
+from glQiwiApi.core.dispatcher._builtin_filters import BillFilter, TransactionFilter
 from tests.types.dataset import NOTIFICATION_RAW_DATA, WEBHOOK_RAW_DATA, TXN_RAW_DATA
 
 

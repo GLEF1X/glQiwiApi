@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import uuid
 from typing import Dict, Optional, Any, Union, cast
 
 from aiohttp import ClientTimeout, ServerDisconnectedError, \
@@ -12,7 +14,9 @@ from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionH
 from glQiwiApi.core.storage import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
     CachedAPIRequest, Payload
 from glQiwiApi.utils.exceptions import APIError
-from glQiwiApi.utils.payload import make_payload, check_result
+from glQiwiApi.utils.payload import make_payload, get_decoded_result
+
+logger = logging.getLogger("glQiwiApi.RequestService")
 
 
 class EmptyMessages(Dict[Any, Any]):
@@ -43,23 +47,10 @@ class RequestService:
                 timeout=ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None)
             )
         self.error_messages = error_messages or EmptyMessages()
-        self._base_headers = {
-            "User-Agent": "glQiwiApi/stable",
-            "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-        }
         self._cache = InMemoryCacheStorage(
-            invalidate_strategy=APIResponsesCacheInvalidationStrategy(cache_time=cache_time)
+            invalidate_strategy=APIResponsesCacheInvalidationStrategy(cache_time=cache_time),
         )
         self._session_holder: AbstractSessionHolder[Any] = session_holder
-
-    def reset_cache(self) -> None:
-        self._cache.clear()
-
-    async def warmup(self) -> Any:
-        return await self._session_holder.get_session()
-
-    async def shutdown(self) -> None:
-        await self._session_holder.close()
 
     async def api_request(
             self,
@@ -102,8 +93,13 @@ class RequestService:
         if await self._storage_has_similar_cached_response(**request_args):
             return (await self._cache.retrieve(url)).response  # type: ignore
         session = await self._session_holder.get_session()
+        _request_id = uuid.uuid4().hex
         try:
-            resp = await session.request(
+            logger.debug(
+                "Send request %s to %s body = %s params = %s headers = %s json = %s",
+                _request_id, url, data, params, headers, json
+            )
+            http_response = await session.request(
                 method=method,
                 url=url,
                 data=data,
@@ -113,11 +109,11 @@ class RequestService:
                 params=params,
                 **kwargs,
             )
-            response = check_result(
+            decoded_response = get_decoded_result(
                 self.error_messages,
-                resp.status,
-                resp.request_info,
-                await resp.text(),
+                http_response.status,
+                http_response.request_info,
+                await http_response.text(),
             )
         except (
                 ClientProxyConnectionError,
@@ -126,13 +122,42 @@ class RequestService:
         ):
             raise self.api_exception(status_code=500)
         else:
-            self._cache_result(response, **request_args)
-            return response
+            logger.debug(
+                "Request %s is successful status = %d decoded response = %s",
+                _request_id,
+                http_response.status,
+                decoded_response
+            )
+            self._cache_result(decoded_response, **request_args)
+            return decoded_response
+
+    async def text_content(
+            self,
+            url: str,
+            method: str,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[Any] = None,
+            data: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            params: Optional[Any] = None,
+    ) -> str:
+        logger.debug("Get text content from %s method = %s json = %s body = %d headers = %s params = %s ",
+                     url, method, json, data, headers, params)
+        prepared_payload = make_payload(**locals())
+        session: ClientSession = await self._session_holder.get_session()
+        resp = await session.request(**prepared_payload)
+        return cast(str, resp)
+
+    async def retrieve_bytes(self, url: str, method: str, **kwargs: Any) -> bytes:
+        session = await self._session_holder.get_session()
+        resp = await session.request(method, url, **kwargs)
+        return cast(bytes, await resp.read())
 
     async def _storage_has_similar_cached_response(self, **request_args: Any) -> bool:
         return await self._cache.contains_similar(Payload(**request_args))
 
     def _cache_result(self, response: Any, method: str, **kwargs: Any) -> None:
+        logger.debug("Cache response %s kwargs = %s", response, kwargs)
         self._cache.update(
             **{
                 kwargs["url"]: CachedAPIRequest(
@@ -161,22 +186,11 @@ class RequestService:
             traceback_info=traceback_info,
         )
 
-    async def text_content(
-            self,
-            url: str,
-            method: str,
-            cookies: Optional[LooseCookies] = None,
-            json: Optional[Any] = None,
-            data: Optional[Any] = None,
-            headers: Optional[Any] = None,
-            params: Optional[Any] = None,
-    ) -> str:
-        prepared_payload = make_payload(**locals())
-        session: ClientSession = await self._session_holder.get_session()
-        resp = await session.request(**prepared_payload)
-        return cast(str, resp)
+    def reset_cache(self) -> None:
+        self._cache.clear()
 
-    async def retrieve_bytes(self, url: str, method: str, **kwargs: Any) -> bytes:
-        session = await self._session_holder.get_session()
-        resp = await session.request(method, url, **kwargs)
-        return cast(bytes, await resp.read())
+    async def warmup(self) -> Any:
+        return await self._session_holder.get_session()
+
+    async def shutdown(self) -> None:
+        await self._session_holder.close()

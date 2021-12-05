@@ -45,11 +45,6 @@ As you may have guessed, this function will be executed at the beginning of the 
 .. literalinclude:: ./../../../examples/qiwi/polling.py
     :language: python
 
-😻 If you did everything correctly, you will get something like this
-
-.. code-block:: bash
-
-    2021-06-05 17:21:07.423 | DEBUG    | glQiwiApi.utils.executor:welcome:373 - Start polling!
 
 Aiogram + glQiwiApi = friends🤩
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +56,6 @@ In the example below, we catch all text messages and return the same "Hello" res
 .. literalinclude:: ./../../../examples/qiwi/aiogram_integration.py
     :caption: polling together with aiogram
     :language: python
-    :emphasize-lines: 12-13,38,18-20,1-2,5
 
 Error handling
 ~~~~~~~~~~~~~~

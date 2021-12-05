@@ -2,7 +2,7 @@ import concurrent.futures as futures
 from typing import Union, TypeVar, Optional, Callable, Any
 
 from .amount import Type, CurrencyAmount, PlainAmount
-from .particular import Response, WrappedRequestPayload
+from .particular import WrappedRequestPayload
 from .qiwi import (
     Bill,
     BillError,
@@ -111,7 +111,6 @@ __all__ = (
     "PreProcessPaymentResponse",
     "Payment",
     "IncomingTransaction",
-    "Response",
     "WrappedRequestPayload",
     "CurrencyAmount",
     "Type",

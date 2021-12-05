@@ -1,15 +1,18 @@
+import logging
 from typing import cast
 
 from aiogram import Bot, Dispatcher
 from aiogram import types
 
 from glQiwiApi import QiwiWrapper
-from glQiwiApi.builtin import TelegramPollingProxy
+from glQiwiApi.plugins.telegram.polling import TelegramPollingPlugin
 from glQiwiApi.types import Transaction
 from glQiwiApi.utils import executor
 
 api_access_token = "your token"
 phone_number = "+your number"
+
+logger = logging.getLogger(__name__)
 
 
 def run_application() -> None:
@@ -20,7 +23,7 @@ def run_application() -> None:
     # set dispatcher to wallet instance for register aiogram handlers
     wallet["dispatcher"] = dp
 
-    executor.start_polling(wallet, on_startup=on_startup, tg_app=TelegramPollingProxy(dp), skip_updates=True)
+    executor.start_polling(wallet, TelegramPollingPlugin(dp), on_startup=on_startup, skip_updates=True)
 
 
 def register_handlers(wrapper: QiwiWrapper):
@@ -39,7 +42,7 @@ async def qiwi_transaction_handler(update: Transaction):
 
 
 def on_startup(wrapper: QiwiWrapper) -> None:
-    wrapper.dispatcher.logger.info("This message logged on startup")
+    logger.info("This message logged on startup")
     register_handlers(wrapper)
 
 

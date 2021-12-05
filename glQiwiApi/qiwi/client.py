@@ -8,7 +8,6 @@ Easy to integrate to Telegram bot, which was written on aiogram or another async
 from __future__ import annotations
 
 import uuid
-import warnings
 from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
@@ -23,7 +22,6 @@ from typing import (
     Iterable,
     Type,
 )
-from glQiwiApi.utils.compat import Final
 
 from pydantic import ValidationError
 
@@ -36,7 +34,7 @@ from glQiwiApi.core.mixins import (
     HandlerCollectionMixin,
 )
 from glQiwiApi.core.session.holder import AbstractSessionHolder
-from glQiwiApi.ext.url_builder import WebhookURL
+from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.settings import QiwiRouter, QiwiKassaRouter, QiwiApiMethods
 from glQiwiApi.types import (
     QiwiAccountInfo,
@@ -68,9 +66,13 @@ from glQiwiApi.types.arbitrary.file import File
 from glQiwiApi.types.arbitrary.inputs import BinaryIOInput
 from glQiwiApi.types.errors import QiwiErrorAnswer
 from glQiwiApi.types.qiwi.transaction import Source
-from glQiwiApi.utils.exceptions import APIError, InvalidPayload, ChequeIsNotAvailable
-from glQiwiApi.utils.dates_conversion import datetime_to_iso8601_with_moscow_timezone
-from glQiwiApi.utils.helper import allow_response_code, override_error_messages, require
+from glQiwiApi.utils.compat import Final
+from glQiwiApi.utils.dates_conversion import \
+    datetime_to_iso8601_with_moscow_timezone
+from glQiwiApi.utils.exceptions import APIError, InvalidPayload, \
+    ChequeIsNotAvailable
+from glQiwiApi.utils.helper import allow_response_code, \
+    override_error_messages, require
 from glQiwiApi.utils.payload import (
     make_payload,
     format_dates,
@@ -89,6 +91,7 @@ from glQiwiApi.utils.payload import (
 from glQiwiApi.utils.validators import PhoneNumber, String
 
 MAX_HISTORY_TRANSACTION_LIMIT: Final[int] = 50
+AmountType = Union[int, float]
 
 
 def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
@@ -120,14 +123,14 @@ class QiwiWrapper(
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
-            cache_time: Union[float, int] = NO_CACHING,  # 0 by default
+            cache_time_in_seconds: Union[float, int] = NO_CACHING,  # zero by default
             session_holder: Optional[AbstractSessionHolder[Any]] = None,
     ) -> None:
         """
         :param api_access_token: QIWI API token received from https://qiwi.com/api
         :param phone_number: your phone number starting with +
         :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
-        :param cache_time: Time to cache requests in seconds,
+        :param cache_time_in_seconds: Time to cache requests in seconds,
                            default 0, respectively the request will not use the cache by default
         :param session_holder: obtains session and helps to manage session lifecycle. You can pass
                                your own session holder, for example using httpx lib and use it
@@ -137,7 +140,7 @@ class QiwiWrapper(
         self._p2p_router = QiwiKassaRouter()
         self._request_service = RequestService(
             error_messages=self._router.config.ERROR_CODE_MESSAGES,
-            cache_time=cache_time,
+            cache_time=cache_time_in_seconds,
             session_holder=session_holder
         )
         self.api_access_token = api_access_token
@@ -193,7 +196,9 @@ class QiwiWrapper(
             "PUT",
             QiwiApiMethods.REG_WEBHOOK,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()
+            ),
             params={"hookType": 1, "param": web_url, "txnType": txn_type},
         )
         return WebHookConfig.parse_obj(response)
@@ -207,7 +212,9 @@ class QiwiWrapper(
             "GET",
             QiwiApiMethods.GET_CURRENT_WEBHOOK,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()
+            ),
         )
         return WebHookConfig.parse_obj(response)
 
@@ -220,7 +227,9 @@ class QiwiWrapper(
             "GET",
             QiwiApiMethods.SEND_TEST_NOTIFICATION,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()
+            ),
         )
 
     async def get_webhook_secret_key(self, hook_id: str) -> str:
@@ -235,7 +244,8 @@ class QiwiWrapper(
             "GET",
             QiwiApiMethods.GET_WEBHOOK_SECRET,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()),
             hook_id=hook_id,
         )
         return cast(str, resp["key"])
@@ -254,7 +264,9 @@ class QiwiWrapper(
             "DELETE",
             QiwiApiMethods.DELETE_CURRENT_WEBHOOK,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()
+            ),
             hook_id=hook.hook_id,
         )
 
@@ -269,7 +281,9 @@ class QiwiWrapper(
             "POST",
             QiwiApiMethods.CHANGE_WEBHOOK_SECRET,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()
+            ),
             hook_id=hook_id,
         )
         return cast(str, response["key"])
@@ -352,7 +366,8 @@ class QiwiWrapper(
         return cast(str, response["message"])
 
     async def get_balance(self, *, account_number: int = 1) -> CurrencyAmount:
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.GET_BALANCE,
@@ -360,7 +375,9 @@ class QiwiWrapper(
             headers=headers,
             phone_number=self.phone_number,
         )
-        return CurrencyAmount.parse_obj(response["accounts"][account_number - 1]["balance"])
+        return CurrencyAmount.parse_obj(
+            response["accounts"][account_number - 1]["balance"]
+        )
 
     async def transactions(
             self,
@@ -385,7 +402,8 @@ class QiwiWrapper(
         """
         if rows > 50 or rows <= 0:
             raise InvalidPayload("You can check no more than 50 transactions")
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         payload_data = format_dates(
             start_date=start_date,
             end_date=end_date,
@@ -410,7 +428,8 @@ class QiwiWrapper(
         )
 
     async def transaction_info(
-            self, transaction_id: Union[str, int], transaction_type: TransactionType
+            self, transaction_id: Union[str, int],
+            transaction_type: TransactionType
     ) -> Transaction:
         """
         Method for obtaining complete information about a transaction
@@ -422,7 +441,8 @@ class QiwiWrapper(
         :param transaction_type: only IN or OUT
         :return: Transaction object
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         payload_data = {"type": transaction_type.value}
         response = await self._request_service.api_request(
             "GET",
@@ -443,7 +463,8 @@ class QiwiWrapper(
         :return: List where the dictionary is located with restrictions,
          if there are no restrictions, it returns an empty list
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.CHECK_RESTRICTION,
@@ -451,17 +472,8 @@ class QiwiWrapper(
             headers=headers,
             phone_number=self.phone_number,
         )
-        return parse_iterable_to_list_of_objects(iterable=response, model=Restriction)
-
-    @property
-    async def identification(self) -> Identification:
-        warnings.warn(
-            "`QiwiWrapper.identification` async property has beign deprecated, and will be removed in next versions, "
-            "use `QiwiWrapper.get_identification(...)` instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return await self.get_identification()
+        return parse_iterable_to_list_of_objects(iterable=response,
+                                                 model=Restriction)
 
     async def get_identification(self) -> Identification:
         """
@@ -469,7 +481,8 @@ class QiwiWrapper(
         More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#ident
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.GET_IDENTIFICATION,
@@ -481,7 +494,7 @@ class QiwiWrapper(
 
     async def check_transaction(
             self,
-            amount: Union[int, float],
+            amount: AmountType,
             transaction_type: TransactionType = TransactionType.IN,
             sender: Optional[str] = None,
             rows_num: int = 50,
@@ -530,7 +543,9 @@ class QiwiWrapper(
 
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers()
+        )
         limit_types = limit_types or self._router.config.DEFAULT_LIMIT_TYPES
         # payload of limit types must be dict in format like array of strings {
         #    "types[0]": "Some type",
@@ -552,9 +567,11 @@ class QiwiWrapper(
         return parse_limits(response)
 
     async def get_list_of_cards(self) -> List[Card]:
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
-            "GET", QiwiApiMethods.GET_LIST_OF_CARDS, self._router, headers=headers
+            "GET", QiwiApiMethods.GET_LIST_OF_CARDS, self._router,
+            headers=headers
         )
         return parse_iterable_to_list_of_objects(iterable=response, model=Card)
 
@@ -599,7 +616,8 @@ class QiwiWrapper(
             "passport": passport,
             "snils": snils,
         }
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         return await self._request_service.api_request(
             "POST",
             QiwiApiMethods.AUTHENTICATE,
@@ -635,9 +653,11 @@ class QiwiWrapper(
         :param transaction_type: type of transaction: 'IN', 'OUT', 'QIWI_CARD'
         :param file_format: format of file
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         data = {"type": transaction_type.value, "format": file_format}
-        url = self._router.build_url(QiwiApiMethods.GET_RECEIPT, transaction_id=transaction_id)
+        url = self._router.build_url(QiwiApiMethods.GET_RECEIPT,
+                                     transaction_id=transaction_id)
         byte_response = await self._request_service.retrieve_bytes(
             url, "GET", params=data, headers=headers
         )
@@ -652,7 +672,8 @@ class QiwiWrapper(
         Метод для получения информации об аккаунте
 
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET", QiwiApiMethods.ACCOUNT_INFO, self._router, headers=headers
         )
@@ -688,8 +709,10 @@ class QiwiWrapper(
             MK - счет мобильного оператора. Если не указан,
             учитываются все источники платежа.
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
-        check_dates_for_statistic_request(start_date=start_date, end_date=end_date)
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
+        check_dates_for_statistic_request(start_date=start_date,
+                                          end_date=end_date)
         params = {
             "startDate": datetime_to_iso8601_with_moscow_timezone(start_date),
             "endDate": datetime_to_iso8601_with_moscow_timezone(end_date),
@@ -714,7 +737,8 @@ class QiwiWrapper(
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#balances_list
 
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.LIST_OF_BALANCES,
@@ -733,7 +757,8 @@ class QiwiWrapper(
 
         :param currency_alias: New account alias
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         payload = {"alias": currency_alias}
         return await self._request_service.api_request(
             "POST",
@@ -749,7 +774,8 @@ class QiwiWrapper(
         The request displays account aliases, available for creation in your QIWI Wallet
 
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.AVAILABLE_BALANCES,
@@ -757,7 +783,8 @@ class QiwiWrapper(
             headers=headers,
             stripped_number=self.phone_number,
         )
-        return parse_iterable_to_list_of_objects(iterable=response, model=Balance)
+        return parse_iterable_to_list_of_objects(iterable=response,
+                                                 model=Balance)
 
     @allow_response_code(status_code=204)
     async def set_default_balance(self, currency_alias: str) -> Dict[Any, Any]:
@@ -769,7 +796,8 @@ class QiwiWrapper(
 
         :param currency_alias:
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         return await self._request_service.api_request(
             "PATCH",
             QiwiApiMethods.SET_DEFAULT_BALANCE,
@@ -783,7 +811,7 @@ class QiwiWrapper(
     async def to_wallet(
             self,
             to_number: str,
-            amount: Union[str, float, int],
+            amount: Union[AmountType, str],
             currency: str = "643",
             comment: Optional[str] = None,
     ) -> PaymentInfo:
@@ -814,7 +842,8 @@ class QiwiWrapper(
         )
         return PaymentInfo.parse_obj(response)
 
-    async def to_card(self, trans_sum: Union[float, int], to_card: str) -> PaymentInfo:
+    async def to_card(self, trans_sum: Union[float, int],
+                      to_card: str) -> PaymentInfo:
         """
         Method for sending funds to the card.
         More detailed documentation:
@@ -853,7 +882,8 @@ class QiwiWrapper(
         )
         return cast(str, response["message"])
 
-    async def predict_commission(self, to_account: str, pay_sum: Union[int, float]) -> Commission:
+    async def predict_commission(self, to_account: str,
+                                 pay_sum: AmountType) -> Commission:
         """
         Full calc_commission of QIWI Wallet is refunded for payment in favor of the specified provider
         taking into account all tariffs for a given set of payment details.
@@ -887,7 +917,8 @@ class QiwiWrapper(
         response = await self._request_service.api_request(
             "GET", QiwiApiMethods.GET_CROSS_RATES, self._router
         )
-        return parse_iterable_to_list_of_objects(iterable=response["result"], model=CrossRate)
+        return parse_iterable_to_list_of_objects(iterable=response["result"],
+                                                 model=CrossRate)
 
     async def payment_by_payment_details(
             self,
@@ -905,7 +936,8 @@ class QiwiWrapper(
         :param fields: payment details
         """
         payload = {
-            "id": payment_id if isinstance(payment_id, str) else str(uuid.uuid4()),
+            "id": payment_id if isinstance(payment_id, str) else str(
+                uuid.uuid4()),
             "sum": payment_sum.dict(),
             "paymentMethod": payment_method.dict(),
             "fields": fields.dict(),
@@ -937,37 +969,42 @@ class QiwiWrapper(
             "POST",
             QiwiApiMethods.BUY_QIWI_MASTER,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()),
             json=payload,
         )
         return PaymentInfo.parse_obj(response)
 
-    async def __pre_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
+    async def _pre_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
         """Method for Issuing QIWI Master Virtual Card"""
         response = await self._request_service.api_request(
             "POST",
             QiwiApiMethods.PRE_QIWI_REQUEST,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()
+            ),
             json={"cardAlias": card_alias},
             stripped_number=self.phone_number,
         )
         return OrderDetails.parse_obj(response)
 
-    async def _confirm_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
+    async def _confirm_qiwi_master_request(self,
+                                           card_alias: str = "qvc-cpa") -> OrderDetails:
         """Confirmation of the card issue order"""
-        details = await self.__pre_qiwi_master_request(card_alias)
+        details = await self._pre_qiwi_master_request(card_alias)
         response = await self._request_service.api_request(
             "PUT",
             QiwiApiMethods.CONFIRM_QIWI_MASTER,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()),
             stripped_number=self.phone_number,
             order_id=details.order_id,
         )
         return OrderDetails.parse_obj(response)
 
-    async def __buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
+    async def _buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
         kwargs.update(data=self._router.config.QIWI_MASTER)
         payload = get_new_card_data(**kwargs)
         response = await self._request_service.api_request(
@@ -975,7 +1012,8 @@ class QiwiWrapper(
             QiwiApiMethods.BUY_QIWI_CARD,
             self._router,
             json=payload,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()),
         )
         return OrderDetails.parse_obj(response)
 
@@ -985,10 +1023,11 @@ class QiwiWrapper(
         """
         Issuing a new card using the Qiwi Master API
 
-        When issuing a card, 3, and possibly 3 requests are made, namely, according to the following scheme:
-            - __pre_qiwi_master_request - this method creates a request
+        When issuing a card, 3, and possibly 3 requests are made, namely,
+        according to the following scheme:
+            - _pre_qiwi_master_request - this method creates a request
             - _confirm_qiwi_master_request - confirms the issue of the card
-            - __buy_new_qiwi_card - buys a new card,
+            - _buy_new_qiwi_card - buys a new card,
               if such a card is not free
         Detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/#qiwi-master-issue-card
@@ -996,7 +1035,7 @@ class QiwiWrapper(
         pre_response = await self._confirm_qiwi_master_request(card_alias)
         if pre_response.status == "COMPLETED":
             return pre_response
-        return await self.__buy_new_qiwi_card(
+        return await self._buy_new_qiwi_card(
             ph_number=self.phone_number, order_id=pre_response.order_id
         )
 
@@ -1005,7 +1044,8 @@ class QiwiWrapper(
             "GET",
             QiwiApiMethods.CARDS_QIWI_MASTER,
             self._router,
-            headers=self._add_authorization_header(self._router.generate_default_headers()),
+            headers=self._add_authorization_header(
+                self._router.generate_default_headers()),
         )
 
     @require("secret_p2p")
@@ -1051,7 +1091,7 @@ class QiwiWrapper(
     @require("secret_p2p")
     async def create_p2p_bill(
             self,
-            amount: Union[int, float],
+            amount: AmountType,
             bill_id: Optional[str] = None,
             comment: Optional[str] = None,
             life_time: Optional[datetime] = None,
@@ -1084,7 +1124,8 @@ class QiwiWrapper(
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._add_authorization_header(data.headers, p2p=True)
         payload = patch_p2p_create_payload(
-            data, amount, str(life_time), comment, theme_code, pay_source_filter
+            data, amount, str(life_time), comment, theme_code,
+            pay_source_filter
         )
         response = await self._request_service.api_request(
             "PUT",
@@ -1095,17 +1136,6 @@ class QiwiWrapper(
             bill_id=bill_id,
         )
         return Bill.parse_obj(response)
-
-    async def get_bills(
-            self, rows_num: int, bill_statuses: str = "READY_FOR_PAY"
-    ) -> List[Bill]:
-        warnings.warn(
-            "`QiwiWrapper.get_bills` is deprecated, and will be removed in next versions, "
-            "use `QiwiWrapper.retrieve_bills(...)` instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return await self.retrieve_bills(rows=rows_num, statuses=bill_statuses)
 
     async def retrieve_bills(
             self, rows: int, statuses: str = constants.DEFAULT_BILL_STATUSES
@@ -1122,7 +1152,8 @@ class QiwiWrapper(
         the initial account identifier.
         """
         params = make_payload(**locals())
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         if rows > 50 or rows <= 0:
             raise InvalidPayload("You can get no more than 50 invoices")
         response = await self._request_service.api_request(
@@ -1134,7 +1165,8 @@ class QiwiWrapper(
         )
         return parse_iterable_to_list_of_objects(response["bills"], Bill)
 
-    async def pay_the_invoice(self, invoice_uid: str, currency: str) -> InvoiceStatus:
+    async def pay_the_invoice(self, invoice_uid: str,
+                              currency: str) -> InvoiceStatus:
         """
         Execution of unconditional payment of the invoice without SMS-confirmation.
 
@@ -1146,7 +1178,8 @@ class QiwiWrapper(
         :param currency:
         """
         payload = make_payload(**locals())
-        headers = self._add_authorization_header(self._router.generate_default_headers())
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "POST",
             QiwiApiMethods.GET_BILLS,
@@ -1180,7 +1213,9 @@ class QiwiWrapper(
         :param json_bill_data:
         :return: RefundBill object
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers(), p2p=True)
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers(), p2p=True
+        )
         json = (
             json_bill_data
             if isinstance(json_bill_data, dict)
@@ -1198,7 +1233,8 @@ class QiwiWrapper(
         return RefundBill.parse_obj(response)
 
     async def create_p2p_keys(
-            self, key_pair_name: str, server_notification_url: Optional[str] = None
+            self, key_pair_name: str,
+            server_notification_url: Optional[str] = None
     ) -> P2PKeys:
         """
         Creates new pair of P2P keys to interact with P2P QIWI API
@@ -1206,7 +1242,9 @@ class QiwiWrapper(
         :param key_pair_name: P2P token pair name
         :param server_notification_url: url for webhooks
         """
-        headers = self._add_authorization_header(self._router.generate_default_headers(), p2p=True)
+        headers = self._add_authorization_header(
+            self._router.generate_default_headers(), p2p=True
+        )
         data = {
             "keysPairName": key_pair_name,
             "serverNotificationsUrl": server_notification_url,

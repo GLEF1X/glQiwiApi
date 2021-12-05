@@ -10,12 +10,27 @@ author = "GLEF1X"
 copyright = f"{datetime.date.today().year}, {author}"
 release = glQiwiApi.__version__
 
+# Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+
+
 html_theme = "furo"
-html_logo = "static/logo.png"
-html_static_path = ["static"]
+html_logo = "_static/logo.png"
+html_static_path = ["_static"]
 todo_include_todos = True
-pygments_style = "sphinx"
+
+
+extensions = [
+    "notfound.extension",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autodoc.typehints",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
+    "sphinxcontrib.mermaid",
+    'sphinxemoji.sphinxemoji'
+]
+
 htmlhelp_basename = project
 html_theme_options = {}
 html_css_files = [
@@ -23,17 +38,6 @@ html_css_files = [
 ]
 highlight_language = 'python3'
 
-extensions = [
-    "sphinx.ext.todo",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.intersphinx",
-    "sphinx-prompt",
-    "sphinx_substitution_extensions",
-    "sphinx_copybutton",
-    'sphinxemoji.sphinxemoji'
-]
 
 rst_prolog = f"""
 .. role:: pycode(code)
@@ -47,10 +51,15 @@ exclude_patterns = []
 source_suffix = ".rst"
 master_doc = "index"
 
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = True
+
 latex_documents = [
     (master_doc, f"{project}.tex", f"{project} Documentation", author, "manual"),
 ]
+
 man_pages = [(master_doc, project, f"{project} Documentation", [author], 1)]
+
 texinfo_documents = [
     (
         master_doc,

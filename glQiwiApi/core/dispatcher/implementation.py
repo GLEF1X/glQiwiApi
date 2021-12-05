@@ -22,11 +22,7 @@ from typing import (
     no_type_check,
 )
 
-from glQiwiApi.builtin import (
-    TransactionFilter,
-    BillFilter,
-    ErrorFilter,
-)  # NOQA
+from glQiwiApi.core.dispatcher._builtin_filters import TransactionFilter, BillFilter, ErrorFilter
 from .class_based import (
     AbstractTransactionHandler,
     AbstractBillHandler,
@@ -34,7 +30,6 @@ from .class_based import (
     ErrorHandler,
 )
 from .filters import BaseFilter, LambdaBasedFilter
-from ...builtin.logger import setup_logger
 
 if TYPE_CHECKING:
     from glQiwiApi.types import Notification, WebHook, Transaction  # pragma: no cover
@@ -59,6 +54,8 @@ TxnRawHandler = Union[Type[AbstractTransactionHandler], Callable[..., Awaitable[
 BillRawHandler = Union[Type[AbstractBillHandler], Callable[..., Awaitable[Any]]]
 ErrorRawHandler = Union[Type[ErrorHandler], Callable[..., Awaitable[Any]]]
 
+logger = logging.getLogger("glQiwiApi.dispatcher")
+
 
 class SkipHandler(Exception):
     pass
@@ -75,9 +72,9 @@ class EventHandler(Generic[Event]):
     """
 
     def __init__(
-        self,
-        handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        *filters: BaseFilter[Event],
+            self,
+            handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            *filters: BaseFilter[Event],
     ) -> None:
         self._handler = handler
         self._filters = list(
@@ -139,7 +136,6 @@ class Dispatcher:
         ] = HandlerCollection()
         self.bill_handlers: HandlerCollection["Notification"] = HandlerCollection()
         self.error_handlers: HandlerCollection[Exception] = HandlerCollection()
-        self._logger = setup_logger()
 
     @no_type_check
     def _wrap_callback_for_error_handling(self, callback):
@@ -159,7 +155,7 @@ class Dispatcher:
         return wrapper
 
     def register_transaction_handler(
-        self, event_handler: TxnRawHandler, *filters: TxnFilters
+            self, event_handler: TxnRawHandler, *filters: TxnFilters
     ) -> None:
         self.transaction_handlers.subscribe(
             cast(  # type: ignore
@@ -173,7 +169,7 @@ class Dispatcher:
         )
 
     def register_bill_handler(
-        self, event_handler: BillRawHandler, *filters: BillFilters
+            self, event_handler: BillRawHandler, *filters: BillFilters
     ) -> None:
         self.bill_handlers.subscribe(
             self.wrap_handler(
@@ -184,10 +180,10 @@ class Dispatcher:
         )
 
     def register_error_handler(
-        self,
-        event_handler: ErrorRawHandler,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
+            self,
+            event_handler: ErrorRawHandler,
+            exception: Optional[Union[Type[Exception], Exception]] = None,
+            *filters: BaseFilter[Exception],
     ) -> None:
         self.error_handlers.subscribe(
             self.wrap_handler(
@@ -197,26 +193,16 @@ class Dispatcher:
 
     @property
     def __all_handlers__(self):  # type: ignore
-        """Return all registered handlers, except error handlers"""
+        """Return all registered handlers except error handlers"""
         return self.bill_handlers, self.transaction_handlers
-
-    @property
-    def logger(self) -> logging.Logger:
-        return self._logger
-
-    @logger.setter
-    def logger(self, logger: logging.Logger) -> None:
-        if not isinstance(logger, logging.Logger):
-            raise TypeError(f"Expected Logger instance, instead got {logger}.")
-        self._logger = logger
 
     @staticmethod
     def wrap_handler(
-        event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        filters: Optional[
-            Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...]
-        ] = None,
-        default_filter: Optional[BaseFilter[Event]] = None,
+            event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            filters: Optional[
+                Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...]
+            ] = None,
+            default_filter: Optional[BaseFilter[Event]] = None,
     ) -> EventHandler[Event]:
         """
         Add new event handler.
@@ -245,7 +231,7 @@ class Dispatcher:
         return EventHandler(event_handler, *generated_filters)
 
     def transaction_handler(
-        self, *filters: TxnFilters
+            self, *filters: TxnFilters
     ) -> Callable[[TxnRawHandler], TxnRawHandler]:
         def decorator(callback: TxnRawHandler) -> TxnRawHandler:
             self.register_transaction_handler(callback, *filters)
@@ -254,7 +240,7 @@ class Dispatcher:
         return decorator
 
     def bill_handler(
-        self, *filters: BillFilters
+            self, *filters: BillFilters
     ) -> Callable[[BillRawHandler], BillRawHandler]:
         def decorator(callback: BillRawHandler) -> BillRawHandler:
             self.register_bill_handler(callback, *filters)
@@ -263,9 +249,9 @@ class Dispatcher:
         return decorator
 
     def error_handler(
-        self,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
+            self,
+            exception: Optional[Union[Type[Exception], Exception]] = None,
+            *filters: BaseFilter[Exception],
     ) -> Callable[[ErrorRawHandler], ErrorRawHandler]:
         def decorator(callback: ErrorRawHandler) -> ErrorRawHandler:
             self.register_error_handler(callback, exception, *filters)

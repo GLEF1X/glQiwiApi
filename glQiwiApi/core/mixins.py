@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextvars
-import logging
 from typing import (
     Any,
     TypeVar,
@@ -152,7 +151,3 @@ class HandlerCollectionMixin:
         return self.dispatcher.register_error_handler(
             event_handler, exception, *filters
         )
-
-    @property
-    def logger(self) -> logging.Logger:
-        return self.dispatcher.logger

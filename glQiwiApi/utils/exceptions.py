@@ -63,7 +63,7 @@ class APIError(Exception):
         self.traceback_info = traceback_info
 
     def __str__(self) -> str:
-        resp = "code={sc} doc(for specific cases can be deceiving)={msg}, additional_info={info}" ""
+        resp = "code={sc} doc(for specific cases may be deceiving)={msg}, additional_info={info}" ""
         return resp.format(
             sc=self.status_code, msg=self.message, info=self.additional_info
         )

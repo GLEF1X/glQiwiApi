@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+import logging
 from typing import Optional, Generic, TypeVar, TYPE_CHECKING, Tuple, cast, Any, Type
 
 from aiohttp import web
@@ -13,7 +14,14 @@ from glQiwiApi.core.dispatcher.webhooks.collision_detectors import HashBasedColl
 if TYPE_CHECKING:  # pragma: no cover
     from glQiwiApi.types.base import HashableBase  # pragma: no cover  # noqa
 
+try:
+    import orjson as json
+except ImportError:
+    import json  # type: ignore
+
 Event = TypeVar("Event", bound="HashableBase")
+
+logger = logging.getLogger("glQiwiApi.webhooks.base")
 
 
 class BaseWebHookView(web.View, Generic[Event]):
@@ -37,7 +45,7 @@ class BaseWebHookView(web.View, Generic[Event]):
     """
 
     _event_type: Type[Event]
-    """Need to be overriden"""
+    """Has to be redefined"""
 
     async def parse_update(self) -> Event:
         """Parse raw update and return pydantic model"""
@@ -53,11 +61,6 @@ class BaseWebHookView(web.View, Generic[Event]):
             raise web.HTTPBadRequest()
 
     async def _json_body(self) -> Any:
-        try:
-            import orjson as json
-        except ImportError:
-            import json  # type: ignore
-
         text = await self.request.text()
         return json.loads(text)
 
@@ -96,9 +99,7 @@ class BaseWebHookView(web.View, Generic[Event]):
         if self.request.app.get(self.app_key_check_ip, False):  # type: ignore
             ip_address, accept = self.check_ip()
             if not accept:
-                self.dispatcher.logger.warning(
-                    f"Blocking request from an unauthorized IP: {ip_address}"
-                )
+                logger.debug(f"Blocking request from an unauthorized IP: {ip_address}")
                 raise web.HTTPUnauthorized()
         return None  # hint for mypy
 
@@ -116,7 +117,7 @@ class BaseWebHookView(web.View, Generic[Event]):
         try:
             self.collision_detector.remember_processed_object(event)
         except UnexpectedCollision:
-            self.dispatcher.logger.debug("Detect collision on event")
+            logger.debug("Detect collision on event %s", event)
             return self.ok_response()
 
         self._validate_event_signature(event)

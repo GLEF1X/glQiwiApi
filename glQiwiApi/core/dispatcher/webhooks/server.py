@@ -2,7 +2,6 @@ import typing
 
 from aiohttp import web
 
-from glQiwiApi.builtin import BaseProxy
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.config import (
     DEFAULT_QIWI_WEBHOOK_PATH,
@@ -56,8 +55,7 @@ def configure_app(
         dispatcher: Dispatcher,
         app: web.Application,
         path: typing.Optional[Path] = None,
-        secret_key: typing.Optional[str] = None,
-        tg_app: typing.Optional[BaseProxy] = None,
+        secret_key: typing.Optional[str] = None
 ) -> web.Application:
     """
     Entirely configures the web app for webhooks
@@ -66,26 +64,8 @@ def configure_app(
     :param app: aiohttp.web.Application
     :param path: Path obj, contains two paths
     :param secret_key: secret p2p key
-    :param tg_app:
     """
 
     configure_bill_view(app, secret_key, dispatcher, path)
     configure_transaction_view(app, dispatcher, path)
-    _setup_tg_proxy(tg_app, app)
     return app
-
-
-def _setup_tg_proxy(tg_app: typing.Optional[BaseProxy], app: web.Application) -> None:
-    """
-    Function, which setup tg proxy application to main webapp
-
-    :param tg_app: BaseTelegramProxy subclass or builtin
-    :param app: main application
-    """
-    if tg_app is not None:
-        if not isinstance(tg_app, BaseProxy):
-            raise TypeError(
-                "Invalid telegram proxy. Expected"
-                f"class that inherit from the parent `BaseProxy`, got {type(tg_app)}"
-            )
-        tg_app.setup(app=app)

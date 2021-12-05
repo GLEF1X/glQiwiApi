@@ -13,7 +13,7 @@ wallet = QiwiWrapper(
     # phone number startswith "+"
     phone_number="+phone_number",
     # Cache time in seconds
-    cache_time=5,
+    cache_time_in_seconds=5,
 )
 
 

@@ -10,7 +10,6 @@ from glQiwiApi.types.arbitrary.inputs import AbstractInput
 from glQiwiApi.utils.compat import aiofiles
 
 CHUNK_SIZE = 65536
-logger = logging.getLogger(__name__)
 
 StrOrBytesPath = Union[str, bytes, pathlib.Path]  # stable
 AnyPath = StrOrBytesPath  # obsolete, will be removed soon

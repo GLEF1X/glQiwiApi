@@ -42,9 +42,6 @@ Welcome to the glQiwiApi documentation!
 Quick start
 ===========
 
-Simple usage
----------------
-
 .. code-block:: python
 
     import asyncio

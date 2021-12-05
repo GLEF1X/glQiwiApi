@@ -1,8 +1,10 @@
+import logging
+
 from aiogram import Bot, Dispatcher
 from aiogram import types
 
 from glQiwiApi import QiwiWrapper
-from glQiwiApi.builtin import TelegramPollingProxy
+from glQiwiApi.plugins.telegram.polling import TelegramPollingPlugin
 from glQiwiApi.types import Transaction
 from glQiwiApi.utils import executor
 
@@ -13,6 +15,8 @@ bot = Bot("token from BotFather")
 dp = Dispatcher(bot)
 
 wallet = QiwiWrapper(api_access_token=api_access_token, phone_number=phone_number)
+
+logger = logging.getLogger(__name__)
 
 
 @dp.message_handler()
@@ -26,7 +30,7 @@ async def my_first_handler(update: Transaction):
 
 
 def on_startup(wrapper: QiwiWrapper):
-    wrapper.dispatcher.logger.info("This message logged on startup")
+    logger.info("This message logged on startup")
 
 
-executor.start_polling(wallet, on_startup=on_startup, tg_app=TelegramPollingProxy(dp))
+executor.start_polling(wallet, TelegramPollingPlugin(dp), on_startup=on_startup)
