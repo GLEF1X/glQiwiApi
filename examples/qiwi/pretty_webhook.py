@@ -8,12 +8,12 @@ wallet = QiwiWrapper(
 
 
 @wallet.transaction_handler(lambda event: ...)
-async def get_transaction(event: types.WebHook):
+async def get_transaction(event: types.TransactionWebhook):
     print(event)
 
 
 @wallet.bill_handler()
-async def fetch_bill(notification: types.Notification):
+async def fetch_bill(notification: types.BillWebhook):
     print(notification)
 
 

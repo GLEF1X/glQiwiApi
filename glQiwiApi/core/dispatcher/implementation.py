@@ -32,7 +32,7 @@ from .class_based import (
 from .filters import BaseFilter, LambdaBasedFilter
 
 if TYPE_CHECKING:
-    from glQiwiApi.types import Notification, WebHook, Transaction  # pragma: no cover
+    from glQiwiApi.types import BillWebhook, TransactionWebhook, Transaction  # pragma: no cover
     from glQiwiApi.types.base import HashableBase, Base  # noqa  # pragma: no cover
 
 Event = TypeVar("Event", bound=Union["HashableBase", Exception, "Base"])
@@ -40,12 +40,12 @@ _T = TypeVar("_T")
 EventFilter = Callable[[Event], bool]
 TxnFilters = Union[
     BaseFilter["Transaction"],
-    BaseFilter["WebHook"],
-    Callable[["WebHook"], bool],
+    BaseFilter["TransactionWebhook"],
+    Callable[["TransactionWebhook"], bool],
     Callable[["Transaction"], bool],
 ]
 
-BillFilters = Union[Callable[["Notification"], bool], BaseFilter["Notification"]]
+BillFilters = Union[Callable[["BillWebhook"], bool], BaseFilter["BillWebhook"]]
 
 HandlerType = TypeVar("HandlerType", bound="EventHandler[Any]")
 
@@ -91,7 +91,7 @@ class EventHandler(Generic[Event]):
         return None  # hint for mypy
 
 
-TxnWrappedHandler = Union[EventHandler["Transaction"], EventHandler["WebHook"]]
+TxnWrappedHandler = Union[EventHandler["Transaction"], EventHandler["BillWebhook"]]
 
 
 class HandlerCollection(Generic[Event]):
@@ -132,9 +132,9 @@ class Dispatcher:
 
     def __init__(self) -> None:
         self.transaction_handlers: HandlerCollection[
-            Union["Transaction", "WebHook"]
+            Union["Transaction", "TransactionWebhook"]
         ] = HandlerCollection()
-        self.bill_handlers: HandlerCollection["Notification"] = HandlerCollection()
+        self.bill_handlers: HandlerCollection["BillWebhook"] = HandlerCollection()
         self.error_handlers: HandlerCollection[Exception] = HandlerCollection()
 
     @no_type_check

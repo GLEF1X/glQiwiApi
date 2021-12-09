@@ -1,5 +1,5 @@
-from . import server  # noqa
-from .base import BaseWebHookView
-from .views import QiwiBillWebView, QiwiWebHookWebView
+from . import app  # noqa
+from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
+from .views import QiwiBillWebhookView, QiwiTransactionWebhookView
 
-__all__ = ("QiwiBillWebView", "QiwiWebHookWebView", "BaseWebHookView", "server")
+__all__ = ("QiwiBillWebhookView", "QiwiTransactionWebhookView", "BaseWebhookView", "app.py")

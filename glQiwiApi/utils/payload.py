@@ -15,7 +15,7 @@ from typing import (
     Tuple,
     Iterable,
     cast,
-    TypeVar,
+    TypeVar, Callable,
 )
 
 from aiohttp import RequestInfo
@@ -119,9 +119,12 @@ def format_dates(
     return payload_data
 
 
+FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+
+
 def parse_commission_request_payload(
         default_data: types.WrappedRequestPayload,
-        auth_maker: types.FuncT,
+        auth_maker: FuncT,
         pay_sum: Union[int, float],
         to_account: str,
 ) -> Tuple[types.WrappedRequestPayload, Union[str, None]]:
@@ -137,7 +140,7 @@ def retrieve_card_data(
         default_data: types.WrappedRequestPayload,
         trans_sum: Union[int, float, str],
         to_card: str,
-        auth_maker: types.FuncT,
+        auth_maker: FuncT,
 ) -> types.WrappedRequestPayload:
     """Set card data payload"""
     data = deepcopy(default_data)

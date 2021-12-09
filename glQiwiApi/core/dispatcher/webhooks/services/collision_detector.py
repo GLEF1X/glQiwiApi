@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TypeVar, List, Generic
+from typing import TypeVar, List, Generic, Any
 
 T = TypeVar("T")
 
@@ -10,7 +10,23 @@ class UnexpectedCollision(Exception):
     pass
 
 
-class BaseCollisionDetector(abc.ABC, Generic[T]):
+class UnhashableObjectError(TypeError):
+    pass
+
+
+def _is_object_unhashable(obj: Any) -> bool:
+    try:
+        hash(obj)
+        return False
+    except TypeError:
+        return True
+
+
+class AbstractCollisionDetector(abc.ABC, Generic[T]):
+    """
+    QIWI API can send the same update twice or more, so we need to avoid this problem anyway.
+    Also, you can override it with redis usage or more advanced hashing.
+    """
 
     @abc.abstractmethod
     def has_collision(self, obj: T) -> bool:
@@ -26,15 +42,19 @@ class BaseCollisionDetector(abc.ABC, Generic[T]):
         self.add_already_processed_event(obj)
 
 
-class HashBasedCollisionDetector(BaseCollisionDetector[T]):
+class HashBasedCollisionDetector(AbstractCollisionDetector[T]):
 
     def __init__(self) -> None:
         self.already_processed_object_hashes: List[int] = []
 
     def add_already_processed_event(self, obj: T) -> None:
+        if _is_object_unhashable(obj):
+            raise UnhashableObjectError(f"Object {obj!r} is unhashable")
         self.already_processed_object_hashes.append(hash(obj))
 
     def has_collision(self, obj: T) -> bool:
+        if _is_object_unhashable(obj):
+            raise UnhashableObjectError(f"Object {obj!r} is unhashable")
         return any(
             hash(obj) == processed_hash
             for processed_hash in self.already_processed_object_hashes

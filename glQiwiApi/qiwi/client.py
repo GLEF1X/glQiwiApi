@@ -11,6 +11,7 @@ import uuid
 from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
+from datetime import timedelta
 from typing import (
     List,
     Tuple,
@@ -20,14 +21,13 @@ from typing import (
     Any,
     cast,
     Iterable,
-    Type,
+    Type, TypeVar,
 )
 
 from pydantic import ValidationError
 
-from glQiwiApi.core import RequestService, constants
+from glQiwiApi.core import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
-from glQiwiApi.core.constants import NO_CACHING
 from glQiwiApi.core.mixins import (
     ContextInstanceMixin,
     DataMixin,
@@ -58,7 +58,6 @@ from glQiwiApi.types import (
     P2PKeys,
     RefundBill,
     WebHookConfig,
-    N,
     TransactionType,
     InvoiceStatus,
 )
@@ -92,6 +91,17 @@ from glQiwiApi.utils.validators import PhoneNumber, String
 
 MAX_HISTORY_TRANSACTION_LIMIT: Final[int] = 50
 AmountType = Union[int, float]
+
+NO_CACHING = 0
+
+DEFAULT_BILL_STATUSES = "READY_FOR_PAY"
+
+
+def get_default_bill_time() -> datetime:
+    return datetime.now() + timedelta(days=2)
+
+
+_T = TypeVar("_T")
 
 
 def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
@@ -164,7 +174,7 @@ class QiwiWrapper(
         return headers
 
     def __new__(
-            cls: Type[N],
+            cls: Type[_T],
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
@@ -172,7 +182,7 @@ class QiwiWrapper(
             cache_time: Union[float, int] = NO_CACHING,
             *args: Any,
             **kwargs: Any,
-    ) -> N:
+    ) -> _T:
         if (
                 not isinstance(api_access_token, str)
                 and not isinstance(secret_p2p, str)  # noqa: W503
@@ -1120,7 +1130,7 @@ class QiwiWrapper(
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
         life_time = datetime_to_iso8601_with_moscow_timezone(  # type: ignore
-            life_time or constants.get_default_bill_time())
+            life_time or get_default_bill_time())
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._add_authorization_header(data.headers, p2p=True)
         payload = patch_p2p_create_payload(
@@ -1138,7 +1148,7 @@ class QiwiWrapper(
         return Bill.parse_obj(response)
 
     async def retrieve_bills(
-            self, rows: int, statuses: str = constants.DEFAULT_BILL_STATUSES
+            self, rows: int, statuses: str = DEFAULT_BILL_STATUSES
     ) -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
@@ -1237,7 +1247,7 @@ class QiwiWrapper(
             server_notification_url: Optional[str] = None
     ) -> P2PKeys:
         """
-        Creates new pair of P2P keys to interact with P2P QIWI API
+        Creates a new pair of P2P keys to interact with P2P QIWI API
 
         :param key_pair_name: P2P token pair name
         :param server_notification_url: url for webhooks

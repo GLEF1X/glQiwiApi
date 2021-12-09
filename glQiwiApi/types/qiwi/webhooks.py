@@ -6,9 +6,79 @@ from typing import Optional, Dict, Any, List, cast
 
 from pydantic import Field, root_validator
 
-from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.types.amount import HashableSum
+from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
+
+
+class WebhookPayment(HashableBase):
+    """Scheme of webhook payment object"""
+
+    account: str = Field(..., alias="account")
+    comment: str = Field(..., alias="comment")
+    date: datetime = Field(..., alias="date")
+    error_code: str = Field(..., alias="errorCode")
+    person_id: int = Field(..., alias="personId")
+    provider: int = Field(..., alias="provider")
+    sign_fields: str = Field(..., alias="signFields")
+    status: str = Field(..., alias="status")
+    txn_id: str = Field(..., alias="txnId")
+    type: str = Field(..., alias="type")
+    commission: Optional[HashableSum] = Field(default=None, alias="calc_commission")
+    sum: HashableSum = Field(..., alias="sum")
+    total: HashableSum = Field(..., alias="total")
+
+
+class TransactionWebhook(HashableBase):
+    """Object: TransactionWebhook"""
+
+    hash: Optional[str] = Field(default=None, alias="hash")
+    hook_id: str = Field(..., alias="hookId")
+    message_id: Optional[str] = Field(default=None, alias="messageId")
+    is_experimental: bool = Field(..., alias="test")
+    version: str = Field(..., alias="version")
+    payment: Optional[WebhookPayment] = Field(default=None, alias="payment")
+
+    signature: str
+    """
+    NOT API field, it's generating by method `_webhook_signature_collector`
+    Don't rely on it, if you want to use signature, generate new one using the same logic as in validator
+    """
+
+    def verify_signature(self, webhook_base64_key: str) -> None:
+        webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
+        generated_hash = hmac.new(
+            webhook_key, self.signature.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
+        if generated_hash != self.hash:
+            raise WebhookSignatureUnverified()
+
+    @root_validator(pre=True)
+    def _webhook_signature_collector(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:
+        """
+        Get webhook signature to confirm it with hash by base64 encoded key.
+        payment.signFields is string. e.g. "sum.currency,sum.amount,type,account,txnId".
+        So, this string disassembled piece by piece recursively, because each of signField part, that separated by comma
+        can be nested by "."
+
+        @param values:
+        @return:
+        """
+        payment = cast(Optional[Dict[Any, Any]], values.get("payment"))
+        if payment is None:
+            return values
+
+        sign_fields = payment.get("signFields")
+        if sign_fields is None:
+            raise ValueError("Cannot generate signature, sign fields is empty")
+
+        sign_fields_list = cast(str, sign_fields).split(",")
+        webhook_signature = "|".join(
+            str(_get_sign_field(payment, sign_field.split(".")))
+            for sign_field in sign_fields_list
+        )
+        values.update(signature=webhook_signature)
+        return values
 
 
 def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> Any:
@@ -33,73 +103,6 @@ def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> 
         return current
 
 
-class WebhookPayment(HashableBase):
-    """Scheme of webhook payment object"""
-
-    account: str = Field(..., alias="account")
-    comment: str = Field(..., alias="comment")
-    date: datetime = Field(..., alias="date")
-    error_code: str = Field(..., alias="errorCode")
-    person_id: int = Field(..., alias="personId")
-    provider: int = Field(..., alias="provider")
-    sign_fields: str = Field(..., alias="signFields")
-    status: str = Field(..., alias="status")
-    txn_id: str = Field(..., alias="txnId")
-    type: str = Field(..., alias="type")
-    commission: Optional[HashableSum] = Field(default=None, alias="calc_commission")
-    sum: HashableSum = Field(..., alias="sum")
-    total: HashableSum = Field(..., alias="total")
-
-
-class WebHook(HashableBase):
-    """Object: WebHook"""
-
-    hash: Optional[str] = Field(default=None, alias="hash")
-    hook_id: str = Field(..., alias="hookId")
-    message_id: Optional[str] = Field(default=None, alias="messageId")
-    test: bool = Field(..., alias="test")
-    version: str = Field(..., alias="version")
-    payment: Optional[WebhookPayment] = Field(default=None, alias="payment")
-
-    signature: str
-    """NOT API field, this signature is generating in `webhook_signature_collector`"""
-
-    @property
-    def is_testable(self) -> bool:
-        return self.test and not self.payment
-
-    @root_validator(pre=True)
-    def webhook_signature_collector(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:
-        """
-        Get webhook signature to confirm it with hash by base64 encoded key.
-        payment.signFields is string. e.g. "sum.currency,sum.amount,type,account,txnId".
-        So, this string disassembled piece by piece recursively, because each of signField part, that separated by comma
-        can be nested by "."
-
-        @param values:
-        @return:
-        """
-        payment = cast(Optional[Dict[Any, Any]], values.get("payment"))
-        if payment is None:
-            return values
-
-        sign_fields_list = cast(str, payment.get("signFields")).split(",")
-        webhook_signature = "|".join(
-            str(_get_sign_field(payment, sign_field.split(".")))
-            for sign_field in sign_fields_list
-        )
-        values.update(signature=webhook_signature)
-        return values
-
-    def verify_signature(self, webhook_base64_key: str) -> None:
-        webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
-        generated_hash = hmac.new(
-            webhook_key, self.signature.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
-        if generated_hash != self.hash:
-            raise WebhookSignatureUnverified()
-
-
 class HookParameters(Base):
     """hookParameters object"""
 
@@ -115,4 +118,4 @@ class WebHookConfig(Base):
     hook_parameters: HookParameters = Field(..., alias="hookParameters")
 
 
-__all__ = ("WebHookConfig", "WebHook", "WebhookPayment")
+__all__ = ("WebHookConfig", "TransactionWebhook", "WebhookPayment")

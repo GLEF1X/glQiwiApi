@@ -5,7 +5,6 @@ import typing
 from glQiwiApi import types
 from glQiwiApi.core import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
-from glQiwiApi.core.constants import NO_CACHING
 from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin
 from glQiwiApi.core.session.holder import AbstractSessionHolder
 from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects, filter_none
@@ -18,7 +17,7 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
 
     """
 
-    def __init__(self, cache_time: int = NO_CACHING,
+    def __init__(self, cache_time: int = 0,
                  session_holder: typing.Optional[AbstractSessionHolder[typing.Any]] = None) -> None:
         self._request_service = RequestService(cache_time=cache_time, session_holder=session_holder)
 

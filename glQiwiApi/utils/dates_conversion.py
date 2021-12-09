@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, cast
+from typing import Optional
 
 import pytz
 
@@ -12,7 +12,7 @@ DEFAULT_QIWI_TIMEZONE: Final[str] = "Europe/Moscow"
 
 def datetime_to_utc(obj: datetime) -> str:
     iso_format_date = pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ")
-    return iso_format_date.replace(" ", "T") + "Z"
+    return f'{iso_format_date.replace(" ", "T")}Z'
 
 
 def datetime_to_iso8601_with_moscow_timezone(obj: Optional[datetime]) -> str:

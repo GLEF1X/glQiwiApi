@@ -10,7 +10,10 @@ from glQiwiApi import types
 from glQiwiApi.core.dispatcher.implementation import Dispatcher, Event
 from glQiwiApi.types import Transaction
 from glQiwiApi.types.qiwi.transaction import Source, TransactionType
+from glQiwiApi.utils import executor
 from tests.types.dataset import WRONG_API_DATA
+
+pytestmark = pytest.mark.asyncio
 
 
 class StubDispatcher(Dispatcher):
@@ -19,8 +22,8 @@ class StubDispatcher(Dispatcher):
         super().__init__()
         self._fake_event = fake_event
 
-    async def process_event(self, **kwargs) -> None:
-        return await super().process_event(self._fake_event)
+    async def process_event(self, event: Event = None) -> None:
+        await super().process_event(self._fake_event)
 
 
 class StubQiwiWrapper(QiwiWrapper):
@@ -58,10 +61,8 @@ async def _on_startup_callback(api: QiwiWrapper):
 
 
 class TestPolling:
-    @pytest.mark.asyncio
     @timeout_decorator.timeout(2)
     def _start_polling(self, api: QiwiWrapper):
-        from glQiwiApi.utils import executor
 
         self._handled_first = asyncio.Event()
         self._handled_second = asyncio.Event()
@@ -82,7 +83,7 @@ class TestPolling:
         executor.start_polling(api, on_startup=_on_startup_callback)
 
     @pytest.mark.skipif("sys.platform in ['cygwin', 'msys', 'win32']")
-    def test_polling(self, api: QiwiWrapper):
+    def test_as_if_used_by_a_user(self, api: QiwiWrapper):
         try:
             self._start_polling(api)
         except timeout_decorator.TimeoutError:

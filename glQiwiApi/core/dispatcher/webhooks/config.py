@@ -1,37 +1,41 @@
 from __future__ import annotations
 
-import ipaddress
-import typing
+import ssl
 from dataclasses import dataclass
+from typing import Optional
+
+from aiohttp import web
 
 DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/"
-DEFAULT_QIWI_ROUTER_NAME = "QIWI"
+DEFAULT_QIWI_ROUTE_NAME = "QIWI"
 
 DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
-DEFAULT_QIWI_BILLS_ROUTER_NAME = "QIWI_BILLS"
-
-RESPONSE_TIMEOUT = 55
-
-ALLOWED_IPS = {
-    ipaddress.IPv4Network("79.142.16.0/20"),
-    ipaddress.IPv4Network("195.189.100.0/22"),
-    ipaddress.IPv4Network("91.232.230.0/23"),
-    ipaddress.IPv4Network("91.213.51.0/24"),
-}
+DEFAULT_QIWI_BILLS_ROUTE_NAME = "QIWI_BILLS"
 
 
-@dataclass(frozen=True)
-class Path:
-    bill_path: typing.Optional[str] = None
-    transaction_path: typing.Optional[str] = None
+@dataclass()
+class ApplicationConfig:
+    base_app: Optional[web.Application] = None
+
+    host: str = "localhost"
+    "server host"
+
+    port: int = 8080
+    "server port that open for tcp/ip trans."
+
+    ssl_context: ssl.SSLContext = ssl.SSLContext()
 
 
-__all__ = (
-    "DEFAULT_QIWI_WEBHOOK_PATH",
-    "DEFAULT_QIWI_ROUTER_NAME",
-    "DEFAULT_QIWI_BILLS_WEBHOOK_PATH",
-    "DEFAULT_QIWI_BILLS_ROUTER_NAME",
-    "RESPONSE_TIMEOUT",
-    "ALLOWED_IPS",
-    "Path",
-)
+@dataclass()
+class RoutesConfig:
+    p2p_path: str = DEFAULT_QIWI_WEBHOOK_PATH
+    standard_qiwi_hook_path: str = DEFAULT_QIWI_BILLS_WEBHOOK_PATH
+
+    p2p_view_route_name: str = DEFAULT_QIWI_BILLS_ROUTE_NAME
+    standard_qiwi_route_name: str = DEFAULT_QIWI_ROUTE_NAME
+
+
+@dataclass
+class WebhookConfig:
+    app_cfg: ApplicationConfig = ApplicationConfig()
+    routes: RoutesConfig = RoutesConfig()

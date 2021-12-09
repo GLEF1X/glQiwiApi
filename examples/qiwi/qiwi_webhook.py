@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 
 # There is a lambda expression for "cutting off" test payments
 @wallet.transaction_handler(lambda event: event.payment is not None)
-async def main(event: types.WebHook):
+async def main(event: types.TransactionWebhook):
     logger.info("New transaction: {}", event)
     await bot.send_message(chat_id="1219185039", text=event.hook_id)
 
 
 @wallet.bill_handler()
-async def main2(event: types.Notification):
+async def main2(event: types.BillWebhook):
     logger.info("P2P EVENT {}", event)
 
 

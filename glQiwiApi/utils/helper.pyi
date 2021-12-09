@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Union, Any, Dict, Collection, Callable
 
+import glQiwiApi.core.synchronous.adapter
 from glQiwiApi import types, QiwiWrapper
 
 
@@ -11,7 +12,7 @@ class measure_time(object):  # NOQA
 
     def __init__(self, logger: Union[logging.Logger, None] = None) -> None: ...
 
-    def __call__(self, func: types.N) -> types.N: ...
+    def __call__(self, func: glQiwiApi.core.synchronous.adapter.N) -> glQiwiApi.core.synchronous.adapter.N: ...
 
     def _log(self, msg: str, *args: Any) -> None: ...
 
@@ -21,7 +22,7 @@ class allow_response_code:  # NOQA
 
     def __init__(self, status_code: int) -> None: ...
 
-    def __call__(self, func: types.N) -> types.N: ...
+    def __call__(self, func: glQiwiApi.core.synchronous.adapter.N) -> glQiwiApi.core.synchronous.adapter.N: ...
 
 
 class override_error_messages:  # NOQA
@@ -29,7 +30,7 @@ class override_error_messages:  # NOQA
 
     def __init__(self, status_codes: Dict[int, Dict[str, str]]): ...
 
-    def __call__(self, func: types.N) -> types.N: ...
+    def __call__(self, func: glQiwiApi.core.synchronous.adapter.N) -> glQiwiApi.core.synchronous.adapter.N: ...
 
 
 class require:  # NOQA
@@ -37,7 +38,7 @@ class require:  # NOQA
 
     def __init__(self, *params: str): ...
 
-    def __call__(self, func: types.N) -> types.N: ...
+    def __call__(self, func: glQiwiApi.core.synchronous.adapter.N) -> glQiwiApi.core.synchronous.adapter.N: ...
 
     def check_is_object_contains_required_attrs(
             self,

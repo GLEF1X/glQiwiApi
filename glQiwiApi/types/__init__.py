@@ -1,6 +1,3 @@
-import concurrent.futures as futures
-from typing import Union, TypeVar, Optional, Callable, Any
-
 from .amount import Type, CurrencyAmount, PlainAmount
 from .particular import WrappedRequestPayload
 from .qiwi import (
@@ -20,8 +17,8 @@ from .qiwi import (
     Terminal,
     Partner,
     WebHookConfig,
-    WebHook,
-    Notification,
+    TransactionWebhook,
+    BillWebhook,
     P2PKeys,
     CrossRate,
     FreePaymentDetailsFields,
@@ -44,53 +41,6 @@ from .yoomoney import (
     IncomingTransaction,
     AccountInfo,
 )
-
-ALL_TYPES = Union[
-    QiwiAccountInfo,
-    Transaction,
-    Bill,
-    BillError,
-    P2PKeys,
-    Statistic,
-    Limit,
-    Account,
-    Identification,
-    Balance,
-    AccountInfo,
-    Operation,
-    OperationDetails,
-    PreProcessPaymentResponse,
-    Payment,
-    IncomingTransaction,
-    Commission,
-    PaymentInfo,
-    OrderDetails,
-    RefundBill,
-    Polygon,
-    Terminal,
-    Partner,
-    WebHookConfig,
-    WebHook,
-    Notification,
-    CrossRate,
-    FreePaymentDetailsFields,
-    PaymentMethod,
-    Card,
-    Restriction,
-    InvoiceStatus,
-    QiwiPayment,
-]
-
-AnyExecutor = TypeVar(
-    "AnyExecutor",
-    futures.ThreadPoolExecutor,
-    futures.ProcessPoolExecutor,
-    Optional[None],
-)
-
-FuncT = TypeVar("FuncT", bound=Callable[..., Any])
-
-N = TypeVar("N")
 
 __all__ = (
     "QiwiAccountInfo",
@@ -116,7 +66,6 @@ __all__ = (
     "Type",
     "PlainAmount",
     "Commission",
-    "ALL_TYPES",
     "PaymentInfo",
     "OrderDetails",
     "RefundBill",
@@ -124,11 +73,8 @@ __all__ = (
     "Terminal",
     "Partner",
     "WebHookConfig",
-    "WebHook",
-    "Notification",
-    "AnyExecutor",
-    "FuncT",
-    "N",
+    "TransactionWebhook",
+    "BillWebhook",
     "CrossRate",
     "FreePaymentDetailsFields",
     "PaymentMethod",

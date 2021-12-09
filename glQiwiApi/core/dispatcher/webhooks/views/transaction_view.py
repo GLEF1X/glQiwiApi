@@ -1,48 +1,30 @@
-from __future__ import annotations
-
 import logging
-from typing import cast, Optional
 
 from aiohttp import web
 
 from glQiwiApi import types
-from glQiwiApi.core.dispatcher.webhooks.base import BaseWebHookView
+from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
+from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
 from glQiwiApi.types.exceptions import WebhookSignatureUnverified
 
-logger = logging.getLogger("logging.webhooks.default")
+logger = logging.getLogger("glQiwiApi.webhooks.transaction")
 
 
-class QiwiWebHookWebView(BaseWebHookView[types.WebHook]):
-    """
-    View, which processes transactions
-
-    """
-    _event_type = types.WebHook
-
-    def _validate_event_signature(self, update: types.WebHook) -> None:
-        base64_key = cast(Optional[str], self.request.app.get("_base64_key"))
-
-        if update.is_testable:
-            return None
-
-        if not base64_key:
-            logger.warning(
-                "Validation was skipped because there is no base64 key to compare hash",
-                UserWarning,
-                stacklevel=2,
-            )
+class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
+    def _validate_event_signature(self, update: types.TransactionWebhook) -> None:
+        if update.is_experimental:  # pragma: no cover
             return None
 
         try:
-            update.verify_signature(base64_key)
+            update.verify_signature(self._secret_key)
         except WebhookSignatureUnverified:
             logger.debug(
                 "Request has being blocked due to invalid signature of json request payload."
             )
-            raise web.HTTPBadRequest()
+            raise web.HTTPBadRequest(
+                body=WebhookAPIError(status="Invalid hash of transaction.").json(),
+                content_type="application/json"
+            )
 
-    def ok_response(self) -> web.Response:
+    async def ok_response(self) -> web.Response:
         return web.Response(text="ok")
-
-    app_key_check_ip = "_qiwi_wallet_check_ip"
-    app_key_dispatcher = "_qiwi_wallet_dispatcher"

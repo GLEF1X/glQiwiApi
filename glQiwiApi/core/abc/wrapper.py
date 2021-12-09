@@ -5,7 +5,7 @@ import copy
 from types import TracebackType
 from typing import Union, Optional, Type, Any, Dict, cast, TypeVar, TYPE_CHECKING
 
-from glQiwiApi.core.constants import NO_CACHING
+
 from glQiwiApi.core.storage import UnrealizedCacheInvalidationStrategy
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class Wrapper(abc.ABC):
         old_cache_time: Optional[Union[int, float]] = getattr(
             invalidate_strategy, "_cache_time", None
         )
-        if old_cache_time == NO_CACHING:
+        if old_cache_time == 0:
             setattr(invalidate_strategy, "_cache_time", cache_time_in_seconds)
         return self
 

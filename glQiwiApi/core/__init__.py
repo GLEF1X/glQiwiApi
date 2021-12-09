@@ -8,10 +8,10 @@ from .dispatcher.class_based import (
 )
 from .dispatcher.filters import LambdaBasedFilter, BaseFilter
 from .dispatcher.webhooks import (
-    QiwiBillWebView,
-    QiwiWebHookWebView,
-    BaseWebHookView,
-    server,
+    QiwiBillWebhookView,
+    QiwiTransactionWebhookView,
+    BaseWebhookView,
+    app,
 )
 from .mixins import ContextInstanceMixin
 from .abc.wrapper import Wrapper
@@ -35,8 +35,8 @@ __all__ = (
     "async_as_sync",
     "execute_async_as_sync",
     # webhooks
-    "server",
-    "QiwiBillWebView",
-    "QiwiWebHookWebView",
-    "BaseWebHookView",
+    "app.py",
+    "QiwiBillWebhookView",
+    "QiwiTransactionWebhookView",
+    "BaseWebhookView",
 )

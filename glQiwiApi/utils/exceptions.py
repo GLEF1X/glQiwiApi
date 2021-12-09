@@ -36,6 +36,10 @@ class RequestInfoModel(BaseModel):
     real_url: str
 
 
+class SecretP2PTokenIsEmpty(Exception):
+    pass
+
+
 class ExceptionTraceback(BaseModel):
     status_code: int
     msg: Optional[str] = None

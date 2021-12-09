@@ -9,7 +9,6 @@ from aiohttp import ClientTimeout, ServerDisconnectedError, \
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.abc.router import AbstractRouter
-from glQiwiApi.core.constants import NO_CACHING
 from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
 from glQiwiApi.core.storage import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
     CachedAPIRequest, Payload
@@ -39,7 +38,7 @@ class RequestService:
     def __init__(
             self,
             error_messages: Optional[Dict[int, str]] = None,
-            cache_time: Union[float, int] = NO_CACHING,
+            cache_time: Union[float, int] = 0,
             session_holder: Optional[AbstractSessionHolder[Any]] = None,
     ) -> None:
         if session_holder is None:

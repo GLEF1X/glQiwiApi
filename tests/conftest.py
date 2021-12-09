@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from glQiwiApi.types import WebHook, Transaction, TransactionStatus, CurrencyAmount
+from glQiwiApi.types import TransactionWebhook, Transaction, TransactionStatus, CurrencyAmount
 from glQiwiApi.types.qiwi.transaction import Provider, TransactionType
 
 pytestmark = pytest.mark.asyncio
@@ -45,7 +45,7 @@ def transaction() -> Transaction:
 
 @pytest.fixture(name="test_webhook")
 def test_webhook_fixture():
-    return WebHook.parse_obj(
+    return TransactionWebhook.parse_obj(
         {'messageId': 'dc32ba01-1a83-4dc5-82b5-1148f7744ace',
          'hookId': '87995a67-749f-4a23-9629-95dc8fea696f',
          'payment': {'txnId': '22994210671', 'date': '2021-08-24T22:48:03+03:00', 'type': 'OUT',

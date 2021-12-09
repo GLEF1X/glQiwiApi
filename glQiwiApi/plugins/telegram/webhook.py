@@ -15,22 +15,6 @@ ListOfRoutes = t.List[web.ResourceRoute]
 SubApps = t.List[t.Tuple[str, web.Application, ListOfRoutes]]
 
 
-def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes) -> None:
-    """
-    Initialize sub application handlers
-
-    :param app:
-    :param routes: list of AbstractRoute subclasses
-    """
-    for route in routes:  # pragma: no cover
-        app.router.add_route(
-            handler=route.handler,
-            method=route.method,
-            name=route.name,
-            path=route.url_for().path,
-        )
-
-
 class TelegramWebhookPlugin(TelegramPlugin):
     """
     Managing loading webhooks of aiogram together with QiwiWrapper
@@ -103,3 +87,19 @@ class TelegramWebhookPlugin(TelegramPlugin):
         await self.dispatcher.storage.close()
         await self.dispatcher.storage.wait_closed()
         await self.dispatcher.bot.session.close()
+
+
+def _init_sub_apps_handlers(app: web.Application, routes: ListOfRoutes) -> None:
+    """
+    Initialize sub application handlers
+
+    :param app:
+    :param routes: list of AbstractRoute subclasses
+    """
+    for route in routes:  # pragma: no cover
+        app.router.add_route(
+            handler=route.handler,
+            method=route.method,
+            name=route.name,
+            path=route.url_for().path,
+        )

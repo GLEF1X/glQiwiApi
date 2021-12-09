@@ -1,2 +1,2 @@
-from .bill_view import QiwiBillWebView
-from .transaction_view import QiwiWebHookWebView
+from .bill_view import QiwiBillWebhookView
+from .transaction_view import QiwiTransactionWebhookView

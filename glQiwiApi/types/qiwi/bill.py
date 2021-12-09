@@ -86,8 +86,8 @@ class RefundBill(Base):
         return self.amount.value
 
 
-class Notification(HashableBase):
-    """Object: Notification"""
+class BillWebhook(HashableBase):
+    """Object: BillWebhook"""
 
     version: str = Field(..., alias="version")
     bill: Bill = Field(..., alias="bill")
@@ -123,7 +123,7 @@ __all__ = (
     "Bill",
     "BillError",
     "RefundBill",
-    "Notification",
+    "BillWebhook",
     "P2PKeys",
     "InvoiceStatus",
     "BillStatus",

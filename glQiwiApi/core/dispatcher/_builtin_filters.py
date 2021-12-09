@@ -1,17 +1,17 @@
 from typing import Union, Optional, Type, Any
 
 from glQiwiApi.core.dispatcher.filters import BaseFilter
-from glQiwiApi.types import Transaction, WebHook, Notification
+from glQiwiApi.types import Transaction, TransactionWebhook, BillWebhook
 
 
 class TransactionFilter(BaseFilter[Transaction]):
-    async def check(self, update: Union[Transaction, WebHook]) -> bool:
-        return isinstance(update, (WebHook, Transaction))
+    async def check(self, update: Union[Transaction, TransactionWebhook]) -> bool:
+        return isinstance(update, (TransactionWebhook, Transaction))
 
 
-class BillFilter(BaseFilter[Notification]):
-    async def check(self, update: Notification) -> bool:
-        return isinstance(update, Notification)
+class BillFilter(BaseFilter[BillWebhook]):
+    async def check(self, update: BillWebhook) -> bool:
+        return isinstance(update, BillWebhook)
 
 
 class ErrorFilter(BaseFilter[Exception]):

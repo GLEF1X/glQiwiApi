@@ -8,7 +8,6 @@ import asyncio
 import inspect
 import logging
 from datetime import datetime
-from ssl import SSLContext
 from typing import (
     Union,
     Optional,
@@ -22,18 +21,13 @@ from typing import (
 
 from aiohttp import web
 
-from glQiwiApi.core.constants import (
-    DEFAULT_TIMEOUT,
-    TIMEOUT_IF_EXCEPTION,
-    DEFAULT_APPLICATION_KEY,
-)
-from glQiwiApi.core.dispatcher.webhooks import server
-from glQiwiApi.core.dispatcher.webhooks.config import Path
+from glQiwiApi.core.dispatcher.webhooks.app import configure_app
+from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
 from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.plugins.abc import Pluggable
-from glQiwiApi.qiwi.client import QiwiWrapper, MAX_HISTORY_TRANSACTION_LIMIT  # pragma: no cover
+from glQiwiApi.qiwi.client import QiwiWrapper, MAX_HISTORY_TRANSACTION_LIMIT
 from glQiwiApi.types import Transaction
-from glQiwiApi.utils.exceptions import NoUpdatesToExecute
+from glQiwiApi.utils.exceptions import NoUpdatesToExecute, SecretP2PTokenIsEmpty
 
 __all__ = ["start_webhook", "start_polling"]
 
@@ -43,39 +37,34 @@ _CallbackType = Callable[..., Any]
 
 logger = logging.getLogger("glQiwiApi.executor")
 
+TIMEOUT_IF_EXCEPTION = 40
+DEFAULT_TIMEOUT = 5
+
+DEFAULT_APPLICATION_KEY = "__aiohttp_web_application__"
+
 
 def start_webhook(
         client: QiwiWrapper,
         *plugins: Pluggable,
-        host: str = "localhost",
-        port: int = 8080,
-        path: Optional[Path] = None,
+        webhook_config: WebhookConfig = WebhookConfig(),
         on_startup: Optional[_CallbackType] = None,
         on_shutdown: Optional[_CallbackType] = None,
-        app: Optional["web.Application"] = None,
-        ssl_context: Optional[SSLContext] = None
 ) -> None:
     """
     Blocking function that listens for webhooks
 
     :param client: instance of QiwiWrapper
-    :param host: server host
-    :param port: server port that open for tcp/ip trans.
-    :param path: path for qiwi that will send requests
-    :param app: pass web.Application
     :param on_startup: coroutine,which will be executed on startup
     :param on_shutdown: coroutine, which will be executed on shutdown
+    :param webhook_config:
     :param plugins: List of plugins, that will be executed together with polling.
          For example  builtin TelegramPollingProxy or other
          class, that inherits from BaseProxy, deal with foreign framework/application
          in the background
-    :param ssl_context:
     """
     executor = WebhookExecutor(client, *plugins)
     _setup_callbacks(executor, on_startup, on_shutdown)
-    executor.start_webhook(
-        host=host, port=port, path=path, app=app, ssl_context=ssl_context
-    )
+    asyncio.run(executor.start_webhook(webhook_config))
 
 
 def start_polling(
@@ -106,7 +95,7 @@ def start_polling(
         client, *plugins, timeout=timeout, skip_updates=skip_updates
     )
     _setup_callbacks(executor, on_startup, on_shutdown)
-    executor.start_polling()
+    asyncio.run(executor.start_polling())
 
 
 class BaseExecutor(abc.ABC):
@@ -159,13 +148,13 @@ class BaseExecutor(abc.ABC):
         incline_tasks = [plugin.incline(ctx) for plugin in self._plugins]
         await asyncio.gather(*incline_tasks)
 
-    def _on_shutdown(self) -> None:
+    async def _on_shutdown(self) -> None:
         """
         On shutdown, executor gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
         """
         callbacks = [self.goodbye(), self.client.close(), self._shutdown_plugins()]
-        self._loop.run_until_complete(asyncio.shield(asyncio.gather(*callbacks)))
+        await asyncio.shield(asyncio.gather(*callbacks))
 
     async def _shutdown_plugins(self) -> None:
         logger.debug("Shutting down plugins")
@@ -193,17 +182,16 @@ class PollingExecutor(BaseExecutor):
         self._timeout: Union[int, float] = _parse_timeout(timeout)
         self.skip_updates = skip_updates
 
-    def start_polling(self) -> None:
-        loop: asyncio.AbstractEventLoop = self.loop
+    async def start_polling(self) -> None:
         try:
-            loop.run_until_complete(self.welcome())
-            loop.create_task(self._start_polling())
-            adapter.run_forever_safe(loop=loop)
+            await self.welcome()
+            await self._start_polling()
+            adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # Allow to graceful shutdown
             pass  # pragma: no cover
         finally:
-            self._on_shutdown()
+            await self._on_shutdown()
 
     async def _start_polling(self) -> None:
         default_timeout = self._timeout
@@ -275,35 +263,41 @@ class WebhookExecutor(BaseExecutor):
     def __init__(self, client: QiwiWrapper, *plugins: Pluggable):
         super().__init__(client, *plugins)
         self._application = web.Application()
+        self._app_runner = web.AppRunner(self._application)
 
-    def start_webhook(
-            self,
-            *,
-            host: str = "localhost",
-            port: int = 8080,
-            path: Optional[Path] = None,
-            app: Optional[web.Application] = None,
-            ssl_context: Optional[SSLContext] = None,
-    ) -> None:
-        loop: asyncio.AbstractEventLoop = self.loop
-        if app is not None:
-            self._application = app
-        self._application = server.configure_app(
+    async def start_webhook(self, config: WebhookConfig) -> None:
+        if config.app_cfg.base_app is not None:
+            self._application = config.app_cfg.base_app
+
+        if self.client.secret_p2p is None:
+            raise SecretP2PTokenIsEmpty(
+                "Secret p2p token is empty, cannot setup webhook without it. "
+                "Please, provide token to work with webhooks."
+            )
+
+        self._application = configure_app(
             dispatcher=self._dispatcher,
             app=self._application,
-            path=path,
+            routes_cfg=config.routes,
             secret_key=self.client.secret_p2p
         )
         self._add_application_into_client_data()
+
+        asyncio.create_task(self._incline_plugins(ctx={"app": self._application}))
+
         try:
-            self._incline_plugins(ctx={"app": self._application})
-            loop.run_until_complete(self.welcome())
-            web.run_app(self._application, host=host, port=port, ssl_context=ssl_context)
-        except (KeyboardInterrupt, SystemExit):
-            # Allow to graceful shutdown
+            await self.welcome()
+            await self._start_web_application(host=config.app_cfg.host, port=config.app_cfg.port,
+                                              ssl_context=config.app_cfg.ssl_context)
+        except (KeyboardInterrupt, SystemExit):  # graceful shutdown
             pass
         finally:
-            self._on_shutdown()
+            await self._on_shutdown()
+
+    async def _start_web_application(self, **kwargs: Any) -> None:
+        await self._app_runner.setup()
+        site = web.TCPSite(self._app_runner, **kwargs)
+        await site.start()
 
     def _add_application_into_client_data(self) -> None:
         self.client[DEFAULT_APPLICATION_KEY] = self._application

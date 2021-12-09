@@ -10,7 +10,6 @@ from datetime import datetime
 from typing import List, Dict, Any, Union, Optional, Tuple, cast
 
 from glQiwiApi.core.abc.wrapper import Wrapper
-from glQiwiApi.core.constants import NO_CACHING
 from glQiwiApi.core.mixins import DataMixin, ContextInstanceMixin
 from glQiwiApi.core.request_service import RequestService
 from glQiwiApi.core.session.holder import AbstractSessionHolder
@@ -52,7 +51,7 @@ class YooMoneyAPI(Wrapper, DataMixin, ContextInstanceMixin["YooMoneyAPI"]):
     def __init__(
             self,
             api_access_token: str,
-            cache_time: Union[float, int] = NO_CACHING,
+            cache_time: Union[float, int] = 0,
             session_holder: Optional[AbstractSessionHolder[Any]] = None,
     ) -> None:
         """
