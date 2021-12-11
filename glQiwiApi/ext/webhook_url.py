@@ -77,9 +77,6 @@ class WebhookURL(
             )
         return cast(str, v)
 
-    def _doesnt_contains_slash(self) -> bool:
-        return not (self.host.endswith("/") and self.webhook_path.startswith("/"))  # type: ignore
-
     def render(self) -> str:
         host = self.host
         if self.webhook_path is None:
@@ -91,3 +88,6 @@ class WebhookURL(
         if self._doesnt_contains_slash():
             host += "/"
         return f"{host}{self.webhook_path}"
+
+    def _doesnt_contains_slash(self) -> bool:
+        return not (self.host.endswith("/") and self.webhook_path.startswith("/"))  # type: ignore

@@ -10,7 +10,7 @@ from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.abc.router import AbstractRouter
 from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
-from glQiwiApi.core.storage import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
+from glQiwiApi.core.cache import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
     CachedAPIRequest, Payload
 from glQiwiApi.utils.exceptions import APIError
 from glQiwiApi.utils.payload import make_payload, get_decoded_result
@@ -45,7 +45,7 @@ class RequestService:
             session_holder = AiohttpSessionHolder(
                 timeout=ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None)
             )
-        self.error_messages = error_messages or EmptyMessages()
+        self._error_messages = error_messages or EmptyMessages()
         self._cache = InMemoryCacheStorage(
             invalidate_strategy=APIResponsesCacheInvalidationStrategy(cache_time=cache_time),
         )
@@ -109,7 +109,7 @@ class RequestService:
                 **kwargs,
             )
             decoded_response = get_decoded_result(
-                self.error_messages,
+                self._error_messages,
                 http_response.status,
                 http_response.request_info,
                 await http_response.text(),
@@ -156,7 +156,7 @@ class RequestService:
         return await self._cache.contains_similar(Payload(**request_args))
 
     def _cache_result(self, response: Any, method: str, **kwargs: Any) -> None:
-        logger.debug("Cache response %s kwargs = %s", response, kwargs)
+        logger.debug("Put response in cache %s kwargs = %s", response, kwargs)
         self._cache.update(
             **{
                 kwargs["url"]: CachedAPIRequest(
@@ -176,13 +176,13 @@ class RequestService:
         """Raise :class:`APIError` exception with pretty explanation"""
         from glQiwiApi import __version__
 
-        if not isinstance(message, str) and isinstance(self.error_messages, dict):
-            message = self.error_messages.get(status_code, "Unknown")
+        if not isinstance(message, str) and isinstance(self._error_messages, dict):
+            message = self._error_messages.get(status_code, "Unknown")
         return APIError(
             message,
             status_code,
             additional_info=f"{__version__} API version",
-            traceback_info=traceback_info,
+            request_data=traceback_info,
         )
 
     def reset_cache(self) -> None:

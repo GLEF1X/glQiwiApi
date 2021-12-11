@@ -60,7 +60,7 @@ class allow_response_code:  # NOQA
                 await func(*args, **kwargs)
             except APIError as error:
                 if error.status_code == str(status_code):
-                    info = error.traceback_info
+                    info = error.request_data
                     return {"success": True} if not info else info
                 return {"success": False}
 
@@ -86,7 +86,7 @@ class override_error_messages:  # NOQA
                     ex = APIError(
                         message=error.get("message"),
                         status_code=ex.status_code,
-                        traceback_info=error.get("json_info"),
+                        request_data=error.get("json_info"),
                         additional_info=ex.additional_info,
                     )
                 raise ex from None

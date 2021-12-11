@@ -5,8 +5,7 @@ import copy
 from types import TracebackType
 from typing import Union, Optional, Type, Any, Dict, cast, TypeVar, TYPE_CHECKING
 
-
-from glQiwiApi.core.storage import UnrealizedCacheInvalidationStrategy
+from glQiwiApi.core.cache import UnrealizedCacheInvalidationStrategy
 
 if TYPE_CHECKING:
     from glQiwiApi.core.request_service import RequestService
@@ -16,10 +15,6 @@ _T = TypeVar("_T", bound="Wrapper")
 
 class Wrapper(abc.ABC):
     __slots__ = ()
-
-    @abc.abstractmethod
-    def get_request_service(self) -> RequestService:
-        pass
 
     def enable_caching(self, *, cache_time_in_seconds: Union[int, float]) -> Wrapper:
         request_service = self.get_request_service()
@@ -51,6 +46,10 @@ class Wrapper(abc.ABC):
 
     async def close(self) -> None:
         await self.get_request_service().shutdown()
+
+    @abc.abstractmethod
+    def get_request_service(self) -> RequestService:
+        pass
 
     def _get(self, item: Any) -> Any:  # pragma: no cover
         try:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 import asyncio
 import http
+import logging
 import time
 from asyncio import Task
 from dataclasses import dataclass
@@ -15,12 +16,14 @@ INFINITE = float("inf")
 ADD_TIME_PLACEHOLDER = "add_time"
 VALUE_PLACEHOLDER = "value"
 
+logger = logging.getLogger("glQiwiApi.cache")
 
-class CacheExpired(Exception):
+
+class CacheExpiredError(Exception):
     pass
 
 
-class ContainsNonCacheable(Exception):
+class CacheValidationError(Exception):
     pass
 
 
@@ -75,6 +78,10 @@ class CacheInvalidationStrategy(abc.ABC):
     async def check_is_contains_similar(self, cached_storage: CacheStorage, item: Any) -> bool:
         raise TypeError
 
+    @property
+    def is_cache_disabled(self) -> bool:
+        return False
+
 
 class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
 
@@ -93,9 +100,11 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationStrategy):
         self._cache_time = cache_time
 
     def process_update(self, **kwargs: Any) -> None:
+        if self.is_cache_disabled:
+            raise CacheValidationError()
         for key in kwargs.keys():
             if any(key.startswith(coincidence) for coincidence in self._uncached):
-                raise ContainsNonCacheable()
+                raise CacheValidationError()
 
     def process_retrieve(self, **kwargs: Any) -> None:
         self._have_cache_expired(**kwargs)
@@ -105,7 +114,11 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationStrategy):
             added_at: float = value[ADD_TIME_PLACEHOLDER]
             elapsed_time_since_adding = time.monotonic() - added_at
             if elapsed_time_since_adding >= self._cache_time:
-                raise CacheExpired()
+                raise CacheExpiredError()
+
+    @property
+    def is_cache_disabled(self) -> bool:
+        return self._cache_time == 0
 
     async def check_is_contains_similar(self, storage: CacheStorage, item: Any) -> bool:
         values = await storage.retrieve_all()
@@ -184,7 +197,7 @@ class InMemoryCacheStorage(CacheStorage):
     def update(self, **kwargs: Any) -> None:
         try:
             self._invalidate_strategy.process_update(**kwargs)
-        except ContainsNonCacheable:
+        except CacheValidationError:
             return None
         embedded_data: Dict[Any, Any] = _embed_cache_time(**kwargs)
         self._data.update(embedded_data)
@@ -197,7 +210,7 @@ class InMemoryCacheStorage(CacheStorage):
         try:
             self._invalidate_strategy.process_retrieve(obj=obj)
             return obj[VALUE_PLACEHOLDER]
-        except CacheExpired:
+        except CacheExpiredError:
             self.delete(key)
             return None
 

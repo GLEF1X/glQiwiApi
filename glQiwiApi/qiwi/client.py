@@ -31,7 +31,7 @@ from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.mixins import (
     ContextInstanceMixin,
     DataMixin,
-    HandlerCollectionMixin,
+    DispatcherShortcutsMixin,
 )
 from glQiwiApi.core.session.holder import AbstractSessionHolder
 from glQiwiApi.ext.webhook_url import WebhookURL
@@ -57,7 +57,7 @@ from glQiwiApi.types import (
     PlainAmount,
     P2PKeys,
     RefundBill,
-    WebHookConfig,
+    WebhookInfo,
     TransactionType,
     InvoiceStatus,
 )
@@ -92,8 +92,6 @@ from glQiwiApi.utils.validators import PhoneNumber, String
 MAX_HISTORY_TRANSACTION_LIMIT: Final[int] = 50
 AmountType = Union[int, float]
 
-NO_CACHING = 0
-
 DEFAULT_BILL_STATUSES = "READY_FOR_PAY"
 
 
@@ -113,7 +111,7 @@ def _is_copy_signal(kwargs: Dict[Any, bool]) -> bool:
 
 class QiwiWrapper(
     Wrapper,
-    HandlerCollectionMixin,
+    DispatcherShortcutsMixin,
     DataMixin,
     ContextInstanceMixin["QiwiWrapper"]
 ):
@@ -124,16 +122,16 @@ class QiwiWrapper(
     """
 
     # declarative validators for fields
-    phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)
-    api_access_token = String(optional=True)
-    secret_p2p = String(optional=True)
+    _phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)
+    _api_access_token = String(optional=True)
+    _secret_p2p = String(optional=True)
 
     def __init__(
             self,
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
-            cache_time_in_seconds: Union[float, int] = NO_CACHING,  # zero by default
+            cache_time_in_seconds: Union[float, int] = 0,
             session_holder: Optional[AbstractSessionHolder[Any]] = None,
     ) -> None:
         """
@@ -145,7 +143,7 @@ class QiwiWrapper(
         :param session_holder: obtains session and helps to manage session lifecycle. You can pass
                                your own session holder, for example using httpx lib and use it
         """
-        self.phone_number = phone_number
+        self._phone_number = phone_number
         self._router = QiwiRouter()
         self._p2p_router = QiwiKassaRouter()
         self._request_service = RequestService(
@@ -153,8 +151,8 @@ class QiwiWrapper(
             cache_time=cache_time_in_seconds,
             session_holder=session_holder
         )
-        self.api_access_token = api_access_token
-        self.secret_p2p = secret_p2p
+        self._api_access_token = api_access_token
+        self._secret_p2p = secret_p2p
 
         self.set_current(self)
 
@@ -167,9 +165,9 @@ class QiwiWrapper(
         if auth is None:
             auth = "Bearer {token}"
         if p2p:
-            token = self.secret_p2p
+            token = self._secret_p2p
         else:
-            token = self.api_access_token
+            token = self._api_access_token
         headers["Authorization"] = auth.format(token=token)
         return headers
 
@@ -179,7 +177,7 @@ class QiwiWrapper(
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
             without_context: bool = False,
-            cache_time: Union[float, int] = NO_CACHING,
+            cache_time_in_seconds: Union[float, int] = 0,
             *args: Any,
             **kwargs: Any,
     ) -> _T:
@@ -192,13 +190,11 @@ class QiwiWrapper(
 
         return super().__new__(cls)  # type: ignore
 
-    async def _register_webhook(
-            self, web_url: Optional[str], txn_type: int = 2
-    ) -> WebHookConfig:
+    async def register_webhook(self, url: str, txn_type: int = 2) -> WebhookInfo:
         """
         This method register a new webhook
 
-        :param web_url: service url
+        :param url: service url
         :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
         :return: Active Hooks
         """
@@ -209,11 +205,11 @@ class QiwiWrapper(
             headers=self._add_authorization_header(
                 self._router.generate_default_headers()
             ),
-            params={"hookType": 1, "param": web_url, "txnType": txn_type},
+            params={"hookType": 1, "param": url, "txnType": txn_type},
         )
-        return WebHookConfig.parse_obj(response)
+        return WebhookInfo.parse_obj(response)
 
-    async def get_current_webhook(self) -> WebHookConfig:
+    async def get_current_webhook(self) -> WebhookInfo:
         """
         List of active (active) notification handlers, associated with your wallet can be obtained with this request.
         Since now only one type of hook is used - webhook, then the response contains only one data object
@@ -226,9 +222,9 @@ class QiwiWrapper(
                 self._router.generate_default_headers()
             ),
         )
-        return WebHookConfig.parse_obj(response)
+        return WebhookInfo.parse_obj(response)
 
-    async def _send_test_notification(self) -> Dict[Any, Any]:
+    async def send_test_notification(self) -> Dict[Any, Any]:
         """
         Use this request to test your webhooks handler.
         Test notification is sent to the address specified during the call register_webhook
@@ -268,7 +264,7 @@ class QiwiWrapper(
             raise APIError(
                 message=" You didn't register any webhook to delete ",
                 status_code="422",
-                traceback_info=ex.traceback_info,
+                request_data=ex.request_data,
             ) from None
         return await self._request_service.api_request(
             "DELETE",
@@ -277,7 +273,7 @@ class QiwiWrapper(
             headers=self._add_authorization_header(
                 self._router.generate_default_headers()
             ),
-            hook_id=hook.hook_id,
+            hook_id=hook.id,
         )
 
     async def change_webhook_secret(self, hook_id: str) -> str:
@@ -300,12 +296,12 @@ class QiwiWrapper(
 
     async def bind_webhook(
             self,
-            url: Optional[Union[str, WebhookURL]] = None,
+            url: Union[str, WebhookURL],
             transactions_type: int = 2,
             *,
             send_test_notification: bool = False,
             delete_old: bool = False,
-    ) -> Tuple[Optional[WebHookConfig], str]:
+    ) -> Tuple[WebhookInfo, str]:
         """
         [NON-API] EXCLUSIVE method to register new webhook or get old
 
@@ -317,7 +313,6 @@ class QiwiWrapper(
 
         :return: Tuple of Hook and Base64-encoded key
         """
-        key: Optional[str] = None
         if isinstance(url, WebhookURL):
             url = url.render()
 
@@ -325,29 +320,11 @@ class QiwiWrapper(
             with suppress(APIError):
                 await self.delete_current_webhook()
 
-        try:
-            # Try to register new webhook
-            webhook = await self._register_webhook(url, transactions_type)
-        except (APIError, TypeError):
-            # Catching exceptions, if webhook already was registered or TypeError because missing url to bind
-            try:
-                webhook = await self.get_current_webhook()
-            except APIError as ex:
-                raise APIError(
-                    message="An error occurred while getting the current webhook config. Most likely you did not call "
-                            "method `QiwiWrapper.bind_webhook(...)` to register webhook"
-                            " or did not pass on url to register it",
-                    status_code=ex.status_code,
-                    traceback_info=ex.traceback_info,
-                ) from None
-            key = await self.get_webhook_secret_key(webhook.hook_id)
-            return webhook, key
+        webhook = await self.register_webhook(url, transactions_type)
+        key = await self.get_webhook_secret_key(webhook.id)
 
         if send_test_notification:
-            await self._send_test_notification()
-
-        if not isinstance(key, str):
-            key = await self.get_webhook_secret_key(webhook.hook_id)
+            await self.send_test_notification()
 
         return webhook, key
 
@@ -383,7 +360,7 @@ class QiwiWrapper(
             QiwiApiMethods.GET_BALANCE,
             self._router,
             headers=headers,
-            phone_number=self.phone_number,
+            phone_number=self._phone_number,
         )
         return CurrencyAmount.parse_obj(
             response["accounts"][account_number - 1]["balance"]
@@ -431,7 +408,7 @@ class QiwiWrapper(
             self._router,
             params=payload_data,
             headers=headers,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
         return parse_iterable_to_list_of_objects(
             cast(Iterable[Any], response.get("data")), Transaction
@@ -480,7 +457,7 @@ class QiwiWrapper(
             QiwiApiMethods.CHECK_RESTRICTION,
             self._router,
             headers=headers,
-            phone_number=self.phone_number,
+            phone_number=self._phone_number,
         )
         return parse_iterable_to_list_of_objects(iterable=response,
                                                  model=Restriction)
@@ -498,7 +475,7 @@ class QiwiWrapper(
             QiwiApiMethods.GET_IDENTIFICATION,
             self._router,
             headers=headers,
-            phone_number=self.phone_number,
+            phone_number=self._phone_number,
         )
         return Identification.parse_obj(response)
 
@@ -572,7 +549,7 @@ class QiwiWrapper(
             self._router,
             headers=headers,
             params=payload,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
         return parse_limits(response)
 
@@ -632,7 +609,7 @@ class QiwiWrapper(
             "POST",
             QiwiApiMethods.AUTHENTICATE,
             self._router,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
             headers=headers,
             data=filter_none(payload),
         )
@@ -736,7 +713,7 @@ class QiwiWrapper(
             self._router,
             params=params,
             headers=headers,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
         return Statistic.parse_obj(response)
 
@@ -754,7 +731,7 @@ class QiwiWrapper(
             QiwiApiMethods.LIST_OF_BALANCES,
             self._router,
             headers=headers,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
         return parse_iterable_to_list_of_objects(
             cast(Iterable[Any], response.get("accounts")), Account
@@ -776,7 +753,7 @@ class QiwiWrapper(
             self._router,
             headers=headers,
             data=payload,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
 
     async def available_balances(self) -> List[Balance]:
@@ -791,7 +768,7 @@ class QiwiWrapper(
             QiwiApiMethods.AVAILABLE_BALANCES,
             self._router,
             headers=headers,
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
         return parse_iterable_to_list_of_objects(iterable=response,
                                                  model=Balance)
@@ -814,7 +791,7 @@ class QiwiWrapper(
             self._router,
             headers=headers,
             json={"defaultAccount": True},
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
             currency_alias=currency_alias,
         )
 
@@ -972,7 +949,7 @@ class QiwiWrapper(
         You can choose these rights when creating a new api token, to use api QIWI Master
         """
         payload = get_qiwi_master_data(
-            cast(str, self.phone_number),
+            cast(str, self._phone_number),
             self._router.config.QIWI_MASTER
         )
         response = await self._request_service.api_request(
@@ -995,7 +972,7 @@ class QiwiWrapper(
                 self._router.generate_default_headers()
             ),
             json={"cardAlias": card_alias},
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
         )
         return OrderDetails.parse_obj(response)
 
@@ -1009,7 +986,7 @@ class QiwiWrapper(
             self._router,
             headers=self._add_authorization_header(
                 self._router.generate_default_headers()),
-            stripped_number=self.phone_number,
+            stripped_number=self._phone_number,
             order_id=details.order_id,
         )
         return OrderDetails.parse_obj(response)
@@ -1046,7 +1023,7 @@ class QiwiWrapper(
         if pre_response.status == "COMPLETED":
             return pre_response
         return await self._buy_new_qiwi_card(
-            ph_number=self.phone_number, order_id=pre_response.order_id
+            ph_number=self._phone_number, order_id=pre_response.order_id
         )
 
     async def _cards_qiwi_master(self) -> Dict[Any, Any]:

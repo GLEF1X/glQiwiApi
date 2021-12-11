@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from glQiwiApi.core.storage import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
+from glQiwiApi.core.cache import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
 
 pytestmark = pytest.mark.asyncio
 

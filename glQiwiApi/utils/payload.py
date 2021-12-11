@@ -83,7 +83,7 @@ def get_decoded_result(
     raise exceptions.APIError(
         message=error_messages.get(status_code),
         status_code=status_code,
-        traceback_info=request_info,
+        request_data=request_info,
     )
 
 

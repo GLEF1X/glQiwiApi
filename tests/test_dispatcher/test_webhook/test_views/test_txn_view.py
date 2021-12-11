@@ -78,7 +78,7 @@ class TestTxnWebhookView:
 
                     }
                 },
-                "hookId": txn.hook_id,
+                "hookId": txn.id,
                 "test": txn.is_experimental
             },
             deep=True

@@ -103,7 +103,7 @@ class QiwiConfig:
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": "Bearer {token}",
-            "Host": "edge.test_qiwi.com",
+            "Host": "edge.qiwi.com",
         }
         self.P2P_QIWI_HEADERS = {
             "Authorization": "Bearer {token}",

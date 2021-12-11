@@ -1,4 +1,5 @@
 import base64
+import enum
 import hashlib
 import hmac
 from datetime import datetime
@@ -33,7 +34,7 @@ class TransactionWebhook(HashableBase):
     """Object: TransactionWebhook"""
 
     hash: Optional[str] = Field(default=None, alias="hash")
-    hook_id: str = Field(..., alias="hookId")
+    id: str = Field(..., alias="hookId")
     message_id: Optional[str] = Field(default=None, alias="messageId")
     is_experimental: bool = Field(..., alias="test")
     version: str = Field(..., alias="version")
@@ -104,18 +105,20 @@ def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> 
 
 
 class HookParameters(Base):
-    """hookParameters object"""
-
     url: str = Field(..., alias="url")
 
 
-class WebHookConfig(Base):
-    """WebHookConfig object"""
+class WebhookTransactionType(str, enum.Enum):
+    IN = 'IN'
+    OUT = 'OUT'
+    BOTH = 'BOTH'
 
-    hook_id: str = Field(..., alias="hookId")
-    hook_type: str = Field(..., alias="hookType")
-    txn_type: str = Field(..., alias="txnType")
+
+class WebhookInfo(Base):
+    id: str = Field(..., alias="hookId")
+    type: str = Field(..., alias="hookType")
+    txn_type: WebhookTransactionType = Field(..., alias="txnType")
     hook_parameters: HookParameters = Field(..., alias="hookParameters")
 
 
-__all__ = ("WebHookConfig", "TransactionWebhook", "WebhookPayment")
+__all__ = ("WebhookInfo", "TransactionWebhook", "WebhookPayment")

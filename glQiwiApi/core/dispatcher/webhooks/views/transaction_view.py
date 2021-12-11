@@ -16,7 +16,7 @@ class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
             return None
 
         try:
-            update.verify_signature(self._secret_key)
+            update.verify_signature(self._encryption_key)
         except WebhookSignatureUnverified:
             logger.debug(
                 "Request has being blocked due to invalid signature of json request payload."

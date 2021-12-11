@@ -3,8 +3,8 @@ from .dispatcher.class_based import (
     AbstractBillHandler,
     Handler,
     AbstractTransactionHandler,
-    AbstractWebHookHandler,
-    ErrorHandler,
+    AbstractTransactionWebhookHandler,
+    ExceptionHandler,
 )
 from .dispatcher.filters import LambdaBasedFilter, BaseFilter
 from .dispatcher.webhooks import (
@@ -29,8 +29,8 @@ __all__ = (
     "Handler",
     "AbstractBillHandler",
     "AbstractTransactionHandler",
-    "AbstractWebHookHandler",
-    "ErrorHandler",
+    "AbstractTransactionWebhookHandler",
+    "ExceptionHandler",
     # synchronous adapters and utils
     "async_as_sync",
     "execute_async_as_sync",

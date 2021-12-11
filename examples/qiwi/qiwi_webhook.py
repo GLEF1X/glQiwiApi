@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @wallet.transaction_handler(lambda event: event.payment is not None)
 async def main(event: types.TransactionWebhook):
     logger.info("New transaction: {}", event)
-    await bot.send_message(chat_id="1219185039", text=event.hook_id)
+    await bot.send_message(chat_id="1219185039", text=event.id)
 
 
 @wallet.bill_handler()

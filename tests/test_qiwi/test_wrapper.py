@@ -243,7 +243,7 @@ async def test_register_webhook(api: QiwiWrapper):
         url="https://45.147.178.166:80//", delete_old=True
     )
 
-    assert isinstance(config, types.WebHookConfig)
+    assert isinstance(config, types.WebhookInfo)
     assert isinstance(key, str)
 
 

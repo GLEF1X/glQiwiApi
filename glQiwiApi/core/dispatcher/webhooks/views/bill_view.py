@@ -17,7 +17,7 @@ class QiwiBillWebhookView(BaseWebhookView[types.BillWebhook]):
         sha256_signature = cast(str, self.request.headers.get("X-Api-Signature-SHA256"))
 
         try:
-            update.verify_signature(sha256_signature, self._secret_key)
+            update.verify_signature(sha256_signature, self._encryption_key)
         except WebhookSignatureUnverified:
             logger.debug("Blocking request due to invalid signature of payload.")
             raise web.HTTPBadRequest()

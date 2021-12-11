@@ -91,7 +91,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
         cls.__context_instance.reset(token)
 
 
-class HandlerCollectionMixin:
+class DispatcherShortcutsMixin:
     _dispatcher: Optional[Dispatcher]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:

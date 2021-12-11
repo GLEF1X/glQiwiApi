@@ -27,7 +27,7 @@ from .class_based import (
     AbstractTransactionHandler,
     AbstractBillHandler,
     Handler,
-    ErrorHandler,
+    ExceptionHandler,
 )
 from .filters import BaseFilter, LambdaBasedFilter
 
@@ -52,7 +52,7 @@ HandlerType = TypeVar("HandlerType", bound="EventHandler[Any]")
 # handlers
 TxnRawHandler = Union[Type[AbstractTransactionHandler], Callable[..., Awaitable[Any]]]
 BillRawHandler = Union[Type[AbstractBillHandler], Callable[..., Awaitable[Any]]]
-ErrorRawHandler = Union[Type[ErrorHandler], Callable[..., Awaitable[Any]]]
+ErrorRawHandler = Union[Type[ExceptionHandler], Callable[..., Awaitable[Any]]]
 
 logger = logging.getLogger("glQiwiApi.dispatcher")
 

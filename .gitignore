@@ -11,6 +11,8 @@ ssl_load_s.py
 setup.py
 .coverage
 htmlcov
+
+glQiwiApi/t.py
 *.pem
 # Distribution / packaging
 .Python

@@ -14,19 +14,7 @@ class CantParseUrl(Exception):
     pass
 
 
-class NetworkError(Exception):
-    pass
-
-
 class InvalidPayload(TypeError):
-    pass
-
-
-class NoUpdatesToExecute(Exception):
-    pass
-
-
-class InvalidCachePayload(Exception):
     pass
 
 
@@ -58,13 +46,13 @@ class APIError(Exception):
             message: Optional[str],
             status_code: Union[str, int],
             additional_info: Optional[str] = None,
-            traceback_info: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
+            request_data: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(APIError, self).__init__()
         self.message = message
         self.status_code = status_code
         self.additional_info = additional_info
-        self.traceback_info = traceback_info
+        self.request_data = request_data
 
     def __str__(self) -> str:
         resp = "code={sc} doc(for specific cases may be deceiving)={msg}, additional_info={info}" ""
@@ -74,7 +62,7 @@ class APIError(Exception):
 
     def to_model(self) -> ExceptionTraceback:
         """Convert exception to :class:`ExceptionTraceback`"""
-        if not isinstance(self.traceback_info, RequestInfo):
+        if not isinstance(self.request_data, RequestInfo):
             raise TypeError(
                 "Cannot convert exception to `ExceptionTraceback`, because "
                 "this method require `RequestInfo` object"
@@ -84,19 +72,11 @@ class APIError(Exception):
             msg=self.message,
             additional_info=self.additional_info,
             request_info=RequestInfoModel(
-                method=self.traceback_info.method,
-                url=self.traceback_info.url.__str__(),
-                real_url=self.traceback_info.real_url.__str__(),
+                method=self.request_data.method,
+                url=self.request_data.url.__str__(),
+                real_url=self.request_data.real_url.__str__(),
             ),
         )
-
-    def _make_dict(self) -> Dict[str, Any]:
-        return {
-            "code": self.status_code,
-            "msg": self.message,
-            "additional_info": self.additional_info,
-            "traceback_info": self.traceback_info,
-        }
 
     def json(self, indent: int = 4, **dump_kw: Any) -> str:
         """
@@ -105,24 +85,25 @@ class APIError(Exception):
         :param indent:
         :param dump_kw:
         """
-        if isinstance(self.traceback_info, RequestInfo):
+        if isinstance(self.request_data, RequestInfo):
             info = self.to_model().dict(exclude_none=True)
         else:
             info = self._make_dict()
         return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
 
-
-class BadCallback(Exception):
-    ...
+    def _make_dict(self) -> Dict[str, Any]:
+        return {
+            "code": self.status_code,
+            "msg": self.message,
+            "additional_info": self.additional_info,
+            "traceback_info": self.request_data,
+        }
 
 
 __all__ = (
     "InvalidPayload",
     "CantParseUrl",
     "APIError",
-    "NoUpdatesToExecute",
-    "NetworkError",
-    "InvalidCachePayload",
-    "BadCallback",
-    "ChequeIsNotAvailable"
+    "ChequeIsNotAvailable",
+    "SecretP2PTokenIsEmpty"
 )

@@ -8,10 +8,10 @@ from glQiwiApi.types.qiwi.webhooks import WebhookPayment
 from .base import Handler, ClientMixin
 
 
-class AbstractWebHookHandler(Handler[TransactionWebhook], ClientMixin[TransactionWebhook], abc.ABC):
+class AbstractTransactionWebhookHandler(Handler[TransactionWebhook], ClientMixin[TransactionWebhook], abc.ABC):
     @property
     def hook_id(self) -> str:
-        return self.event.hook_id
+        return self.event.id
 
     @property
     def payment(self) -> Optional[WebhookPayment]:

@@ -14,7 +14,7 @@ from .restriction import Restriction
 from .stats import Statistic
 from .terminal import Terminal
 from .transaction import Transaction, TransactionType, TransactionStatus, Source
-from .webhooks import WebHookConfig, TransactionWebhook
+from .webhooks import WebhookInfo, TransactionWebhook
 
 __all__ = (
     "QiwiAccountInfo",
@@ -33,7 +33,7 @@ __all__ = (
     "Terminal",
     "Partner",
     "TransactionWebhook",
-    "WebHookConfig",
+    "WebhookInfo",
     "BillWebhook",
     "P2PKeys",
     "CrossRate",

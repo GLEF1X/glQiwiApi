@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import ssl
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
 
 from aiohttp import web
+
+from glQiwiApi.utils.certificates import SSLCertificate
 
 DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/"
 DEFAULT_QIWI_ROUTE_NAME = "QIWI"
@@ -23,7 +25,9 @@ class ApplicationConfig:
     port: int = 8080
     "server port that open for tcp/ip trans."
 
-    ssl_context: ssl.SSLContext = ssl.SSLContext()
+    ssl_certificate: Optional[SSLCertificate] = None
+
+    kwargs: Dict[Any, Any] = field(default_factory=dict)
 
 
 @dataclass()
@@ -35,7 +39,14 @@ class RoutesConfig:
     standard_qiwi_route_name: str = DEFAULT_QIWI_ROUTE_NAME
 
 
+@dataclass()
+class EncryptionConfig:
+    secret_p2p_key: Optional[str] = None  # taken from QiwiWrapper instance by default
+    base64_encryption_key: Optional[str] = None  # taken from QIWI API using QiwiWrapper instance by default
+
+
 @dataclass
 class WebhookConfig:
-    app_cfg: ApplicationConfig = ApplicationConfig()
+    app: ApplicationConfig = ApplicationConfig()
     routes: RoutesConfig = RoutesConfig()
+    encryption: EncryptionConfig = EncryptionConfig()

@@ -26,9 +26,8 @@ logger = logging.getLogger("glQiwiApi.webhooks.base")
 
 class BaseWebhookView(web.View, Generic[Event]):
     """
-    Base webhook view for processing events
-    You can make own view and than use it in code,
-    just inheriting this base class
+    Generic webhook view for processing events
+    You can make your own view and than use it in code, just inheriting this base class
 
     """
 
@@ -38,13 +37,13 @@ class BaseWebhookView(web.View, Generic[Event]):
             dispatcher: Dispatcher,
             collision_detector: AbstractCollisionDetector[Any],
             event_cls: Type[Event],
-            secret_key: str
+            encryption_key: str
     ) -> None:
         super().__init__(request)
         self._dispatcher = dispatcher
         self._collision_detector = collision_detector
         self._event_cls = event_cls
-        self._secret_key = secret_key
+        self._encryption_key = encryption_key
 
     @abc.abstractmethod
     async def ok_response(self) -> web.Response:
@@ -68,19 +67,22 @@ class BaseWebhookView(web.View, Generic[Event]):
 
     async def parse_raw_request(self) -> Event:
         """Parse raw update and return pydantic model"""
-        data = await self.request.json(loads=json.loads)
         try:
+            data = await self.request.json(loads=json.loads)
             if isinstance(data, str):
                 return self._event_cls.parse_raw(data)
             elif isinstance(data, dict):  # pragma: no cover
                 return self._event_cls.parse_obj(data)
             else:
                 raise ValidationError  # pragma: no cover
-        except ValidationError as ex:
+        except (ValidationError, json.JSONDecodeError) as ex:
+            body = WebhookAPIError(status="Validation error")
+            if isinstance(body, ValidationError):
+                body.detail = ex.json(indent=4)  # type: ignore
+            else:
+                body.detail = "Json format invalid"
             raise web.HTTPBadRequest(
-                body=WebhookAPIError(
-                    status="Validation error", detail=ex.json(indent=4)
-                ).json(),
+                body=body.json(indent=4),
                 content_type="application/json"
             )
 

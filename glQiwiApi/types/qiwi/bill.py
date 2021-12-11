@@ -95,8 +95,8 @@ class BillWebhook(HashableBase):
     def __repr__(self) -> str:
         return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
 
-    def verify_signature(self, sha256_signature: str, webhook_base64_key: str) -> None:
-        webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
+    def verify_signature(self, sha256_signature: str, secret_p2p_key: str) -> None:
+        webhook_key = base64.b64decode(bytes(secret_p2p_key, "utf-8"))
         bill = self.bill
 
         invoice_params = f"{bill.amount.currency}|{bill.amount.value}|{bill.bill_id}|{bill.site_id}|{bill.status.value}"
