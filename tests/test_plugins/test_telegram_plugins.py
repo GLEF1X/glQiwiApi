@@ -29,5 +29,5 @@ async def tg_webhook_proxy_fixture(mocker: MockerFixture):
 
 
 async def test_telegram_webhook_proxy(tg_webhook_proxy: TelegramWebhookPlugin):
-    web_app = await tg_webhook_proxy.incline(ctx=dict(app=web.Application()))
+    web_app = await tg_webhook_proxy.install(ctx=dict(app=web.Application()))
     assert isinstance(web_app, web.Application)

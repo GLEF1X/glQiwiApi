@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ssl
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 

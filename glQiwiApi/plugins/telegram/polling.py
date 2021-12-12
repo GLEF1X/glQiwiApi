@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import typing as t
 
-from glQiwiApi.plugins.telegram.base import TelegramPlugin
+from glQiwiApi.plugins import Pluggable
 
 if t.TYPE_CHECKING:
     from glQiwiApi.utils.compat import Dispatcher
 
 
-class TelegramPollingPlugin(TelegramPlugin):
+class TelegramPollingPlugin(Pluggable):
     """
     Builtin telegram proxy.
     Allows you to use Telegram and QIWI webhooks together
@@ -26,7 +26,6 @@ class TelegramPollingPlugin(TelegramPlugin):
             error_sleep: int = 5,
             allowed_updates: t.Optional[t.List[str]] = None,
     ) -> None:
-        super(TelegramPollingPlugin, self).__init__(dispatcher)
         self._allowed_updates = allowed_updates
         self._error_sleep = error_sleep
         self._fast = fast
@@ -34,14 +33,15 @@ class TelegramPollingPlugin(TelegramPlugin):
         self._timeout = timeout
         self._relax = relax
         self._limit = limit
+        self._dispatcher = dispatcher
 
-    async def incline(self, ctx: t.Dict[t.Any, t.Any]) -> t.Any:
+    async def install(self, ctx: t.Dict[t.Any, t.Any]) -> None:
         """
         Set up polling to run polling qiwi updates concurrently with aiogram
 
         :param ctx: you can pass on loop as key/value parameter
         """
-        await self.dispatcher.start_polling(
+        await self._dispatcher.start_polling(
             timeout=self._timeout,
             reset_webhook=self._reset_webhook,
             relax=self._relax,
@@ -52,4 +52,4 @@ class TelegramPollingPlugin(TelegramPlugin):
         )
 
     async def shutdown(self) -> None:
-        self.dispatcher.stop_polling()
+        self._dispatcher.stop_polling()

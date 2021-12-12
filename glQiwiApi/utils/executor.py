@@ -7,6 +7,7 @@ import abc
 import asyncio
 import inspect
 import logging
+import ssl
 from datetime import datetime
 from typing import (
     Union,
@@ -20,6 +21,7 @@ from typing import (
 )
 
 from aiohttp import web
+from aiohttp.web import _run_app
 
 from glQiwiApi.core.dispatcher.webhooks.app import configure_app
 from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
@@ -160,8 +162,22 @@ class BaseExecutor(abc.ABC):
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
-        self._loop = cast(asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop()))
+        self._loop = cast(
+            asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop())
+        )
+        # There is a issue, connected with aiohttp.web application, because glQiwiApi wants to have the same interface
+        # for polling and webhooks on_startup & on_shutdown callbacks,
+        # so we don't use app.on_shutdown.append(...), on the contrary we use self-written
+        # system of callbacks, and so aiohttp.web.Application close event loop on shutdown, that's why we need to
+        # create new event loop to gracefully execute shutdown callback.
+        # It is highly undesirable to delete this line because you will always catch RuntimeWarning and RuntimeError.
+        self._create_new_loop_if_closed()
         return self._loop
+
+    def _create_new_loop_if_closed(self) -> None:
+        if self._loop.is_closed():
+            self._loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self._loop)
 
     async def welcome(self) -> None:
         logger.info("Executor has started work!")
@@ -171,8 +187,10 @@ class BaseExecutor(abc.ABC):
         logger.info("Goodbye!")
         await self._on_shutdown.fire()
 
-    async def _incline_plugins(self, ctx: Dict[Any, Any]) -> None:
-        incline_tasks = [plugin.incline(ctx) for plugin in self._plugins]
+    async def _install_plugins(self, ctx: Optional[Dict[Any, Any]] = None) -> None:
+        if ctx is None:
+            ctx = {}
+        incline_tasks = [plugin.install(ctx) for plugin in self._plugins]
         await asyncio.shield(asyncio.gather(*incline_tasks))
 
     async def _shutdown(self) -> None:
@@ -215,6 +233,7 @@ class PollingExecutor(BaseExecutor):
     def start_polling(self) -> None:
         try:
             self.loop.run_until_complete(self.welcome())
+            self.loop.create_task(self._install_plugins())
             self.loop.create_task(self._run_infinite_polling())
             adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
@@ -316,26 +335,27 @@ class WebhookExecutor(BaseExecutor):
             app=self._application,
             webhook_config=config
         )
+
+        cert = config.app.ssl_certificate
+        ssl_context: Optional[ssl.SSLContext] = None
+        if cert is not None:
+            ssl_context = cert.as_ssl_context()
+
         self._add_application_into_client_data()
 
-        self.loop.create_task(
-            self._incline_plugins(
-                ctx={
-                    "app": self._application,
-                    "certificate": config.app.ssl_certificate
-                }
-            )
-        )
+        self.loop.create_task(self._install_plugins())
         try:
             self.loop.run_until_complete(self.welcome())
-            web.run_app(
-                app=self._application,
-                host=config.app.host,
-                port=config.app.port,
-                ssl_context=config.app.ssl_certificate.as_ssl_context(),
-                loop=self.loop,
-                **config.app.kwargs
+            self.loop.create_task(
+                _run_app(
+                    app=self._application,
+                    host=config.app.host,
+                    port=config.app.port,
+                    ssl_context=ssl_context,
+                    **config.app.kwargs
+                )
             )
+            adapter.run_forever_safe(self.loop)
         finally:
             self.loop.run_until_complete(self.goodbye())
 

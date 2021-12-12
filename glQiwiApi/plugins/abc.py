@@ -6,7 +6,7 @@ class Pluggable(abc.ABC):
     """Something pluggable into library"""
 
     @abc.abstractmethod
-    async def incline(self, ctx: Dict[Any, Any]) -> Any:
+    async def install(self, ctx: Dict[Any, Any]) -> None:
         ...
 
     @abc.abstractmethod
