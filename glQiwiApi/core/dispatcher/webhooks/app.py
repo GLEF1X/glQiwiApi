@@ -4,7 +4,9 @@ from aiohttp import web
 
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
+from glQiwiApi.core.dispatcher.webhooks.middlewares.ip import ip_filter_middleware
 from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import HashBasedCollisionDetector
+from glQiwiApi.core.dispatcher.webhooks.services.security.ip import IPFilter
 from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
 from glQiwiApi.core.dispatcher.webhooks.views.bill_view import QiwiBillWebhookView
 from glQiwiApi.core.dispatcher.webhooks.views.transaction_view import QiwiTransactionWebhookView
@@ -48,5 +50,8 @@ def configure_app(
         name=webhook_config.routes.standard_qiwi_route_name,
         path=webhook_config.routes.standard_qiwi_hook_path,
     )
+
+    if webhook_config.security.check_ip:
+        app.middlewares.append(ip_filter_middleware(IPFilter.default()))
 
     return app

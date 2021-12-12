@@ -325,6 +325,8 @@ class WebhookExecutor(BaseExecutor):
                     "Secret p2p token is empty, cannot setup webhook without it. "
                     "Please, provide token to work with webhooks."
                 )
+            config.encryption.secret_p2p_key = self._client._secret_p2p
+
         if config.encryption.base64_encryption_key is None:
             config.encryption.base64_encryption_key = self.loop.run_until_complete(
                 self._get_webhook_encryption_key()

@@ -44,8 +44,14 @@ class EncryptionConfig:
     base64_encryption_key: Optional[str] = None  # taken from QIWI API using QiwiWrapper instance by default
 
 
+@dataclass()
+class SecurityConfig:
+    check_ip: bool = True
+
+
 @dataclass
 class WebhookConfig:
     app: ApplicationConfig = ApplicationConfig()
     routes: RoutesConfig = RoutesConfig()
     encryption: EncryptionConfig = EncryptionConfig()
+    security: SecurityConfig = SecurityConfig()

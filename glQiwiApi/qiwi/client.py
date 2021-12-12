@@ -1035,7 +1035,7 @@ class QiwiWrapper(
                 self._router.generate_default_headers()),
         )
 
-    @require("secret_p2p")
+    @require("_secret_p2p")
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
         """Use this method to cancel unpaid invoice."""
         data = deepcopy(self._p2p_router.config.P2P_DATA)
@@ -1049,7 +1049,7 @@ class QiwiWrapper(
         )
         return Bill.parse_obj(response)
 
-    @require("secret_p2p")
+    @require("_secret_p2p")
     async def check_p2p_bill_status(self, bill_id: str) -> str:
         """
         Method for checking the status of a p2p transaction.\n
@@ -1075,7 +1075,7 @@ class QiwiWrapper(
         )
         return Bill.parse_obj(response).status.value
 
-    @require("secret_p2p")
+    @require("_secret_p2p")
     async def create_p2p_bill(
             self,
             amount: AmountType,

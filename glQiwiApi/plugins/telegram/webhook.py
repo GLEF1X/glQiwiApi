@@ -61,7 +61,6 @@ class TelegramWebhookPlugin(Pluggable):
 
         :param ctx: keyword arguments, which contains application and host
         """
-        print(list(self._app.router.routes()))
         await self._set_telegram_webhook(ctx)
         await _run_app(self._app, host=self._app_config.host, port=self._app_config.port,
                        ssl_context=self._app_config.ssl_certificate.as_ssl_context())
