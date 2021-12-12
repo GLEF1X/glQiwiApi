@@ -25,6 +25,7 @@ from aiohttp.web import _run_app
 from glQiwiApi.core.dispatcher.webhooks.app import configure_app
 from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
 from glQiwiApi.core.synchronous import adapter
+from glQiwiApi.core.synchronous.adapter import run_forever_safe
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
 from glQiwiApi.qiwi.client import QiwiWrapper, MAX_HISTORY_TRANSACTION_LIMIT
@@ -308,49 +309,24 @@ class PollingExecutor(BaseExecutor):
 
 class WebhookExecutor(BaseExecutor):
 
-    def __init__(self, client: QiwiWrapper, *plugins: Pluggable,
-                 on_startup: Optional[Callable[..., Any]] = None,
-                 on_shutdown: Optional[Callable[..., Any]] = None,
-                 loop: Optional[asyncio.AbstractEventLoop] = None):
+    def __init__(
+            self,
+            client: QiwiWrapper,
+            *plugins: Pluggable,
+            on_startup: Optional[Callable[..., Any]] = None,
+            on_shutdown: Optional[Callable[..., Any]] = None,
+            loop: Optional[asyncio.AbstractEventLoop] = None
+    ):
         super().__init__(client, *plugins, on_startup=on_startup, on_shutdown=on_shutdown, loop=loop)
         self._application = web.Application(loop=self.loop)
 
     def start_webhook(self, config: WebhookConfig) -> None:
-        if config.app.base_app is not None:
-            self._application = config.app.base_app
-
-        if self._client._secret_p2p is None:
-            if config.encryption.secret_p2p_key is None:
-                raise SecretP2PTokenIsEmpty(
-                    "Secret p2p token is empty, cannot setup webhook without it. "
-                    "Please, provide token to work with webhooks."
-                )
-            config.encryption.secret_p2p_key = self._client._secret_p2p
-
-        if config.encryption.base64_encryption_key is None:
-            if config.hook_registration.host_or_ip_address is None:
-                raise ValueError(
-                    "You have transmit neither base64 "
-                    "encryption key to WebhookConfig nor host or ip address to bind new webhook."
-                    "To fix it, pass on WebhookConfig.hook_registration.host_or_ip_address or "
-                    "WebhookConfig.encryption.base64_encryption_key to executor.start_webhook(...)"
-                )
-            _, base64_encryption_key = self.loop.run_until_complete(
-                self._client.bind_webhook(
-                    url=WebhookURL.create(
-                        host=config.hook_registration.host_or_ip_address,
-                        port=config.app.port,
-                        webhook_path=config.routes.standard_qiwi_hook_path
-                    ),
-                    delete_old=True
-                )
-            )
-            config.encryption.base64_encryption_key = base64_encryption_key
+        supplemented_configuration = self.loop.run_until_complete(self._supplement_configuration(config))
 
         self._application = configure_app(
             dispatcher=self._dispatcher,
             app=self._application,
-            webhook_config=config
+            webhook_config=supplemented_configuration
         )
 
         self.loop.create_task(self._install_plugins())
@@ -359,15 +335,52 @@ class WebhookExecutor(BaseExecutor):
             self.loop.create_task(
                 _run_app(
                     app=self._application,
-                    host=config.app.host,
-                    port=config.app.port,
-                    ssl_context=config.app.ssl_context,
-                    **config.app.kwargs
+                    host=supplemented_configuration.app.host,
+                    port=supplemented_configuration.app.port,
+                    ssl_context=supplemented_configuration.app.ssl_context,
+                    **supplemented_configuration.app.kwargs
                 )
             )
-            adapter.run_forever_safe(self.loop)
+            run_forever_safe(self.loop)
         finally:
             self.loop.run_until_complete(self.goodbye())
+
+    async def _supplement_configuration(self, config: WebhookConfig) -> WebhookConfig:
+        config = config.clone(deep=True)
+        if config.app.base_app is not None:
+            self._application = config.app.base_app
+        self._set_secret_p2p_for_config(config)
+        await self._set_base64_encryption_key_for_config(config)
+        return config
+
+    def _set_secret_p2p_for_config(self, config: WebhookConfig) -> None:
+        if self._client._secret_p2p is None:
+            if config.encryption.secret_p2p_key is None:
+                raise SecretP2PTokenIsEmpty(
+                    "Secret p2p token is empty, cannot setup webhook without it. "
+                    "Please, provide token to work with webhooks."
+                )
+            config.encryption.secret_p2p_key = self._client._secret_p2p
+
+    async def _set_base64_encryption_key_for_config(self, config: WebhookConfig) -> None:
+        if config.encryption.base64_encryption_key is None:
+            if config.hook_registration.host_or_ip_address is None:
+                raise ValueError(
+                    "You have transmit neither base64 "
+                    "encryption key to WebhookConfig nor host or ip address to bind new webhook."
+                    "To fix it, pass on WebhookConfig.hook_registration.host_or_ip_address or "
+                    "WebhookConfig.encryption.base64_encryption_key to executor.start_webhook(...)"
+                )
+            _, base64_encryption_key = await self._client.bind_webhook(
+                url=WebhookURL.create(
+                    host=config.hook_registration.host_or_ip_address,
+                    port=config.app.port,
+                    webhook_path=config.routes.standard_qiwi_hook_path[1:],
+                    https=config.app.ssl_context is not None
+                ),
+                delete_old=True
+            )
+            config.encryption.base64_encryption_key = base64_encryption_key
 
 
 def _parse_timeout(timeout: Union[float, int]) -> float:

@@ -62,8 +62,12 @@ class TelegramWebhookPlugin(Pluggable):
         :param ctx: keyword arguments, which contains application and host
         """
         await self._set_telegram_webhook(ctx)
-        await _run_app(self._app, host=self._app_config.host, port=self._app_config.port,
-                       ssl_context=self._app_config.ssl_certificate.as_ssl_context())
+        await _run_app(
+            self._app,
+            host=self._app_config.host,
+            port=self._app_config.port,
+            ssl_context=self._app_config.ssl_certificate.as_ssl_context()
+        )
 
     async def _set_telegram_webhook(self, ctx: t.Dict[t.Any, t.Any]) -> None:
         """
@@ -74,7 +78,6 @@ class TelegramWebhookPlugin(Pluggable):
         url = self._host + self._prefix + self._path
         await self._dispatcher.bot.set_webhook(
             url=url,
-            # TODO check if `ssl_certificate` is None
             certificate=self._app_config.ssl_certificate.as_input_file(),
             **self._set_webhook_kwargs
         )

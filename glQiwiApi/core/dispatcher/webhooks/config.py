@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ssl
+from copy import copy, deepcopy
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
@@ -68,3 +69,8 @@ class WebhookConfig:
     routes: RoutesConfig = RoutesConfig()
     encryption: EncryptionConfig = EncryptionConfig()
     security: SecurityConfig = SecurityConfig()
+
+    def clone(self, deep: bool = False) -> "WebhookConfig":
+        if deep:
+            return deepcopy(self)
+        return copy(self)

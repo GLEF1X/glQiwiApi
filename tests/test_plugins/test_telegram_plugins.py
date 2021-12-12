@@ -3,7 +3,7 @@ from __future__ import annotations
 from ssl import SSLContext
 
 import pytest
-from aiogram import Dispatcher
+from aiogram import Dispatcher, Bot
 from aiohttp import web
 from pytest_mock import MockerFixture
 
@@ -19,11 +19,10 @@ class EventLoopStub:
 
 @pytest.fixture(name="tg_webhook_proxy")
 async def tg_webhook_proxy_fixture(mocker: MockerFixture):
-    mocker.MagicMock()
     tg_proxy = TelegramWebhookPlugin(
-            Dispatcher(bot_mock),
-            webhook_domain="",
-            ssl_certificate=SSLContext(),
+        Dispatcher(mocker.AsyncMock(spec=Bot)),
+        webhook_domain="",
+        ssl_certificate=SSLContext(),
     )  # noqa
     yield tg_proxy
 

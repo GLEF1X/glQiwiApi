@@ -22,12 +22,13 @@ HOST_REGEX: Pattern[str] = re.compile(
 class WebhookURL(
     namedtuple(
         "WebhookURL",
-        ["host", "webhook_path", "port"],
+        ["host", "webhook_path", "port", "https"],
     )
 ):
     host: str
     webhook_path: Optional[str]
     port: Optional[int]
+    https: bool = False
 
     @classmethod
     def create(
@@ -35,6 +36,7 @@ class WebhookURL(
             host: str,
             port: Optional[int] = None,
             webhook_path: Optional[str] = None,
+            https: bool = False
     ) -> _URL:
         return cls(
             host=cls._assert_host(host, param_name="host"),
@@ -43,6 +45,7 @@ class WebhookURL(
                 param_name="webhook_path"
             ),
             port=cls._assert_int(port, param_name="port"),
+            https=https
         )
 
     @classmethod
@@ -87,7 +90,11 @@ class WebhookURL(
             host += f":{self.port}"
         if self._doesnt_contains_slash():
             host += "/"
-        return f"{host}{self.webhook_path}"
+        if self.https:
+            scheme = "https://"
+        else:
+            scheme = "http://"
+        return f"{scheme}{host}{self.webhook_path}"
 
     def _doesnt_contains_slash(self) -> bool:
         return not (self.host.endswith("/") and self.webhook_path.startswith("/"))  # type: ignore
