@@ -37,7 +37,7 @@ async def test_and_chain_filters(mocker: MockerFixture):
 async def test_not_filter(mocker: MockerFixture):
     mock = mocker.Mock(spec=Transaction)
     not_filter = filters.NotFilter(FirstCustomFilter())
-    assert await not_filter.check(mock) is False
+    assert await not_filter.check(mock) is True
 
 
 @pytest.mark.xfail(

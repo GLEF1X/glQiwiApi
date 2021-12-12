@@ -22,7 +22,7 @@ pytestmark = pytest.mark.asyncio
 @pytest.fixture()
 async def application(test_data: WebhookTestData, loop: AbstractEventLoop):
     dp = Dispatcher()
-    app = Application(loop=loop)
+    app = Application()
     handler_event = asyncio.Event()
 
     app["handler_event"] = handler_event
@@ -35,7 +35,7 @@ async def application(test_data: WebhookTestData, loop: AbstractEventLoop):
         handler=inject_dependencies(QiwiTransactionWebhookView, {
             "event_cls": types.TransactionWebhook,
             "dispatcher": dp,
-            "secret_key": test_data.base64_key_to_compare_hash,
+            "encryption_key": test_data.base64_key_to_compare_hash,
             "collision_detector": HashBasedCollisionDetector(),
         }),
         path="/webhook",
@@ -47,10 +47,10 @@ async def application(test_data: WebhookTestData, loop: AbstractEventLoop):
 class TestTxnWebhookView:
 
     async def test_with_right_payload(self, aiohttp_client: AiohttpClient,
-                                      test_data: WebhookTestData, application: Application):
+                                      test_data: WebhookTestData, application: Application,
+                                      caplog: LogCaptureFixture):
         client: TestClient = await aiohttp_client(application)
         response = await client.post("/webhook", json=test_data.transaction_webhook_json)
-
         assert response.status == 200
         assert await response.text() == "ok"
         assert application["handler_event"].is_set() is True

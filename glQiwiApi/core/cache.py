@@ -91,6 +91,10 @@ class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
     def process_retrieve(self, **kwargs: Any) -> None:
         pass
 
+    @property
+    def is_cache_disabled(self) -> bool:
+        return True
+
 
 class APIResponsesCacheInvalidationStrategy(CacheInvalidationStrategy):
     _validator_criteria = ("params", "json", "data", "headers")

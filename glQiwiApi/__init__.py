@@ -19,11 +19,11 @@ from .utils.exceptions import (
 from .yoo_money import YooMoneyAPI
 
 try:
-    import uvloop  # pragma: no cover  # NOQA
+    import uvloop
 
-    uvloop.install()
+    uvloop.install()  # pragma: no cover
 except ImportError:
-    pass  # pragma: no cover
+    pass
 
 __version__ = "1.2.0"
 

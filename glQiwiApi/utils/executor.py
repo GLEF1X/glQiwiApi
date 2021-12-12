@@ -69,17 +69,6 @@ class ExecutorEvent:
     def __len__(self) -> int:
         return len(self._handlers)
 
-    def __call__(self, *args: Any) -> Any:
-        if args:
-            self.__iadd__(args[0])
-            return args[0]
-
-        def decorator(fn):
-            self.__iadd__(fn)
-            return fn
-
-        return decorator
-
     async def fire(self, *args: Any, **kwargs: Any) -> None:
         for handler, awaitable in self._handlers:
             if awaitable:
@@ -98,7 +87,8 @@ def start_webhook(
         loop: Optional[asyncio.AbstractEventLoop] = None
 ) -> None:
     """
-    Blocking function that listens for webhooks
+    Blocking function that listens for webhooks.
+    Supports only `glQiwiApi.types.BillWebhook` or `glQiwiApi.types.TransactionWebhook`
 
     :param client: instance of QiwiWrapper
     :param on_startup: coroutine,which will be executed on startup
@@ -106,7 +96,7 @@ def start_webhook(
     :param webhook_config:
     :param plugins: List of plugins, that will be executed together with polling.
          For example  builtin TelegramWebhookPlugin or other
-         class, that inherits from BaseProxy, deal with foreign framework/application
+         class, that implement Pluggable abc interface, deal with foreign framework/application
          in the background
     :param loop:
     """
@@ -137,7 +127,7 @@ def start_polling(
          which will be executed on shutdown
     :param plugins: List of plugins, that will be executed together with polling.
          For example  builtin TelegramPollingPlugin or other
-         class, that inherits from BaseProxy, deal with foreign framework/application
+         class, that implement Pluggable abc interface, deal with foreign framework/application
          in the background
     :param loop:
     """
@@ -234,8 +224,12 @@ class PollingExecutor(BaseExecutor):
     def start_polling(self) -> None:
         try:
             self.loop.run_until_complete(self.welcome())
-            self.loop.create_task(self._install_plugins())
-            self.loop.create_task(self._run_infinite_polling())
+            asyncio.ensure_future(
+                asyncio.gather(
+                    self._install_plugins(),
+                    self._run_infinite_polling()
+                )
+            )
             adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # allow graceful shutdown

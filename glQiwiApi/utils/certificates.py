@@ -26,8 +26,8 @@ except ImportError:
 
 @dataclass
 class SSLCertificate:
-    _cert_path: Union[str, PathLike]
-    _pkey_path: Union[str, PathLike]
+    _cert_path: Union[str, PathLike[Any]]
+    _pkey_path: Union[str, PathLike[Any]]
 
     def as_ssl_context(self) -> ssl.SSLContext:
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
@@ -40,8 +40,8 @@ class SSLCertificate:
 
 
 def get_or_generate_self_signed_certificate(hostname: str,  # your host machine ip address
-                                            cert_path: Union[str, PathLike] = "cert.pem",
-                                            pkey_path: Union[str, PathLike] = "pkey.pem",
+                                            cert_path: Union[str, PathLike[Any]] = "cert.pem",
+                                            pkey_path: Union[str, PathLike[Any]] = "pkey.pem",
                                             ip_addresses: Optional[Iterable[Any]] = None,
                                             rsa_private_key: Optional[
                                                 "RSAPrivateKeyWithSerialization"] = None,

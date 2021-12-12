@@ -37,7 +37,7 @@ class NotFilter(BaseFilter[Event]):
         self.filter_ = filter_
 
     async def check(self, update: Event) -> bool:
-        return not self.filter_.check(update)
+        return not await self.filter_.check(update)
 
 
 class LambdaBasedFilter(BaseFilter[Event]):

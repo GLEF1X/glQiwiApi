@@ -9,9 +9,9 @@ from aiohttp import ClientTimeout, ServerDisconnectedError, \
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.abc.router import AbstractRouter
-from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
 from glQiwiApi.core.cache import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
     CachedAPIRequest, Payload
+from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
 from glQiwiApi.utils.exceptions import APIError
 from glQiwiApi.utils.payload import make_payload, get_decoded_result
 
@@ -19,13 +19,12 @@ logger = logging.getLogger("glQiwiApi.RequestService")
 
 
 class EmptyMessages(Dict[Any, Any]):
-    EMPTY_STRING = ""
 
     def __init__(self) -> None:
         super().__init__({})
 
     def __getattr__(self, item: Any) -> Any:
-        return self.EMPTY_STRING
+        return ""  # pragma: no cover
 
 
 class RequestService:

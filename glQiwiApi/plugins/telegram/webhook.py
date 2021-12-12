@@ -16,6 +16,10 @@ ListOfRoutes = t.List[web.ResourceRoute]
 SubApps = t.List[t.Tuple[str, web.Application, ListOfRoutes]]
 
 
+class SSLCertificateIsMissingError(Exception):
+    pass
+
+
 class TelegramWebhookPlugin(Pluggable):
     """
     Managing loading webhooks of aiogram together with QiwiWrapper
@@ -47,13 +51,17 @@ class TelegramWebhookPlugin(Pluggable):
 
         self._app = web.Application()
         self._app_config = app_config
-
         self._app.router.add_route(
             "*", self._path, WebhookRequestHandler, name=route_name
         )
         self._app["BOT_DISPATCHER"] = self._dispatcher
-
         self._set_webhook_kwargs = kwargs
+
+        if self._app_config.ssl_certificate is None:
+            raise SSLCertificateIsMissingError(
+                "Webhooks won't work without ssl_certificate. "
+                "To fix it, please transmit ssl_certificate to ApplicationConfig to TelegramWebhookPlugin"
+            )
 
     async def install(self, ctx: t.Dict[t.Any, t.Any]) -> None:
         """
@@ -66,7 +74,7 @@ class TelegramWebhookPlugin(Pluggable):
             self._app,
             host=self._app_config.host,
             port=self._app_config.port,
-            ssl_context=self._app_config.ssl_certificate.as_ssl_context()
+            ssl_context=self._app_config.ssl_certificate.as_ssl_context()  # type: ignore
         )
 
     async def _set_telegram_webhook(self, ctx: t.Dict[t.Any, t.Any]) -> None:
@@ -75,10 +83,10 @@ class TelegramWebhookPlugin(Pluggable):
         API method `_set_telegram_webhook` like this: self.dispatcher.bot._set_telegram_webhook()
 
         """
-        url = self._host + self._prefix + self._path
+        url = self._host + self._path
         await self._dispatcher.bot.set_webhook(
             url=url,
-            certificate=self._app_config.ssl_certificate.as_input_file(),
+            certificate=self._app_config.ssl_certificate.as_input_file(),  # type: ignore
             **self._set_webhook_kwargs
         )
 

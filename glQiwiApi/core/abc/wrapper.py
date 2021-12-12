@@ -8,7 +8,7 @@ from typing import Union, Optional, Type, Any, Dict, cast, TypeVar, TYPE_CHECKIN
 from glQiwiApi.core.cache import UnrealizedCacheInvalidationStrategy
 
 if TYPE_CHECKING:
-    from glQiwiApi.core.request_service import RequestService
+    from glQiwiApi.core.request_service import RequestService  # pragma: no cover
 
 _T = TypeVar("_T", bound="Wrapper")
 

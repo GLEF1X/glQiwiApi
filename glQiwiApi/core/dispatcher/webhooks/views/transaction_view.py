@@ -24,7 +24,7 @@ class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
                 "Request has being blocked due to invalid signature of json request payload."
             )
             raise web.HTTPBadRequest(
-                body=WebhookAPIError(status="Invalid hash of transaction.").json(),
+                text=WebhookAPIError(status="Invalid hash of transaction.").json(),
                 content_type="application/json"
             )
 

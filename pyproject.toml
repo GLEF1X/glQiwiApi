@@ -81,6 +81,7 @@ aiofiles = "^0.8.0"
 types-orjson = "^3.6.1"
 types-aiofiles = "^0.7.0"
 types-pytz = "^2021.3.2"
+cryptography = "^36.0.0"
 
 
 

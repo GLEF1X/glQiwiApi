@@ -30,7 +30,7 @@ class TestBillWebhookView:
     async def test_with_right_payload(self, aiohttp_client: AiohttpClient, test_data: WebhookTestData,
                                       loop: AbstractEventLoop):
         dp = Dispatcher()
-        app = Application(loop=loop)
+        app = Application()
         event_handled_by_handler = asyncio.Event()
 
         @dp.bill_handler()
@@ -41,7 +41,7 @@ class TestBillWebhookView:
             handler=inject_dependencies(QiwiBillWebhookViewWithoutSignatureValidation, {
                 "event_cls": types.BillWebhook,
                 "dispatcher": dp,
-                "secret_key": test_data.base64_key_to_compare_hash,
+                "encryption_key": test_data.base64_key_to_compare_hash,
                 "collision_detector": HashBasedCollisionDetector(),
             }),
             path="/webhook",
