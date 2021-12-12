@@ -12,6 +12,7 @@ logger = logging.getLogger("glQiwiApi.webhooks.transaction")
 
 class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
     def _validate_event_signature(self, update: types.TransactionWebhook) -> None:
+        logger.debug("Validating signature with key = %s", self._encryption_key)
         if update.is_experimental:  # pragma: no cover
             return None
 

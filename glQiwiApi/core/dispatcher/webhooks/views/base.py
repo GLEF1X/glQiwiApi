@@ -53,6 +53,7 @@ class BaseWebhookView(web.View, Generic[Event]):
         return web.Response(text="")
 
     async def post(self) -> web.Response:
+        logger.debug("Get POST request to %s with payload = %s", self.request.path, await self.request.json())
         event = await self.parse_raw_request()
 
         try:

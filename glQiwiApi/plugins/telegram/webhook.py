@@ -40,10 +40,10 @@ class TelegramWebhookPlugin(Pluggable):
         """
         from aiogram.dispatcher.webhook import WebhookRequestHandler
 
-        self._path = path.format(token=dispatcher.bot._token)
-        self._prefix = prefix
+        self._path = prefix + path.format(token=dispatcher.bot._token)
         self._host = host
         self._dispatcher = dispatcher
+
         self._app = web.Application()
         self._app_config = app_config
 
@@ -60,6 +60,7 @@ class TelegramWebhookPlugin(Pluggable):
 
         :param ctx: keyword arguments, which contains application and host
         """
+        print(list(self._app.router.routes()))
         await self._set_telegram_webhook(ctx)
         await _run_app(self._app, host=self._app_config.host, port=self._app_config.port,
                        ssl_context=self._app_config.ssl_certificate.as_ssl_context())
