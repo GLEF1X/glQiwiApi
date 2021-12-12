@@ -3,7 +3,7 @@ import typing as t
 from aiohttp import web
 
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
-from glQiwiApi.core.dispatcher.webhooks.config import RoutesConfig, WebhookConfig
+from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
 from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import HashBasedCollisionDetector
 from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
 from glQiwiApi.core.dispatcher.webhooks.views.bill_view import QiwiBillWebhookView

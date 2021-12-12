@@ -69,7 +69,7 @@ class BaseWebhookView(web.View, Generic[Event]):
     async def parse_raw_request(self) -> Event:
         """Parse raw update and return pydantic model"""
         try:
-            data = await self.request.json(loads=json.loads)
+            data = await self.request.json()
             if isinstance(data, str):
                 return self._event_cls.parse_raw(data)
             elif isinstance(data, dict):  # pragma: no cover

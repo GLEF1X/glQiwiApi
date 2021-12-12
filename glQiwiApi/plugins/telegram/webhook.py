@@ -43,6 +43,7 @@ class TelegramWebhookPlugin(Pluggable):
         self._path = prefix + path.format(token=dispatcher.bot._token)
         self._host = host
         self._dispatcher = dispatcher
+        self._prefix = prefix
 
         self._app = web.Application()
         self._app_config = app_config
