@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ssl
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
@@ -28,6 +29,12 @@ class ApplicationConfig:
 
     kwargs: Dict[Any, Any] = field(default_factory=dict)
 
+    @property
+    def ssl_context(self) -> Optional[ssl.SSLContext]:
+        if self.ssl_certificate is None:
+            return None
+        return self.ssl_certificate.as_ssl_context()
+
 
 @dataclass()
 class RoutesConfig:
@@ -49,8 +56,14 @@ class SecurityConfig:
     check_ip: bool = True
 
 
+@dataclass()
+class HookRegistrationConfig:
+    host_or_ip_address: Optional[str] = None
+
+
 @dataclass
 class WebhookConfig:
+    hook_registration: HookRegistrationConfig = HookRegistrationConfig()
     app: ApplicationConfig = ApplicationConfig()
     routes: RoutesConfig = RoutesConfig()
     encryption: EncryptionConfig = EncryptionConfig()

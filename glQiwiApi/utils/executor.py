@@ -7,7 +7,6 @@ import abc
 import asyncio
 import inspect
 import logging
-import ssl
 from datetime import datetime
 from typing import (
     Union,
@@ -26,6 +25,7 @@ from aiohttp.web import _run_app
 from glQiwiApi.core.dispatcher.webhooks.app import configure_app
 from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
 from glQiwiApi.core.synchronous import adapter
+from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
 from glQiwiApi.qiwi.client import QiwiWrapper, MAX_HISTORY_TRANSACTION_LIMIT
 from glQiwiApi.types import Transaction
@@ -191,7 +191,7 @@ class BaseExecutor(abc.ABC):
         if ctx is None:
             ctx = {}
         incline_tasks = [plugin.install(ctx) for plugin in self._plugins]
-        await asyncio.shield(asyncio.gather(*incline_tasks))
+        await asyncio.gather(*incline_tasks)
 
     async def _shutdown(self) -> None:
         """
@@ -199,7 +199,7 @@ class BaseExecutor(abc.ABC):
         and call `close` method to clear resources
         """
         callbacks = [self.goodbye(), self._client.close(), self._shutdown_plugins()]
-        await asyncio.gather(*callbacks)
+        await asyncio.shield(asyncio.gather(*callbacks))
 
     async def _shutdown_plugins(self) -> None:
         logger.debug("Shutting down plugins")
@@ -328,22 +328,30 @@ class WebhookExecutor(BaseExecutor):
             config.encryption.secret_p2p_key = self._client._secret_p2p
 
         if config.encryption.base64_encryption_key is None:
-            config.encryption.base64_encryption_key = self.loop.run_until_complete(
-                self._get_webhook_encryption_key()
+            if config.hook_registration.host_or_ip_address is None:
+                raise ValueError(
+                    "You have transmit neither base64 "
+                    "encryption key to WebhookConfig nor host or ip address to bind new webhook."
+                    "To fix it, pass on WebhookConfig.hook_registration.host_or_ip_address or "
+                    "WebhookConfig.encryption.base64_encryption_key to executor.start_webhook(...)"
+                )
+            _, base64_encryption_key = self.loop.run_until_complete(
+                self._client.bind_webhook(
+                    url=WebhookURL.create(
+                        host=config.hook_registration.host_or_ip_address,
+                        port=config.app.port,
+                        webhook_path=config.routes.standard_qiwi_hook_path
+                    ),
+                    delete_old=True
+                )
             )
+            config.encryption.base64_encryption_key = base64_encryption_key
 
         self._application = configure_app(
             dispatcher=self._dispatcher,
             app=self._application,
             webhook_config=config
         )
-
-        cert = config.app.ssl_certificate
-        ssl_context: Optional[ssl.SSLContext] = None
-        if cert is not None:
-            ssl_context = cert.as_ssl_context()
-
-        self._add_application_into_client_data()
 
         self.loop.create_task(self._install_plugins())
         try:
@@ -353,20 +361,13 @@ class WebhookExecutor(BaseExecutor):
                     app=self._application,
                     host=config.app.host,
                     port=config.app.port,
-                    ssl_context=ssl_context,
+                    ssl_context=config.app.ssl_context,
                     **config.app.kwargs
                 )
             )
             adapter.run_forever_safe(self.loop)
         finally:
             self.loop.run_until_complete(self.goodbye())
-
-    async def _get_webhook_encryption_key(self) -> str:
-        current_webhook = await self._client.get_current_webhook()
-        return await self._client.get_webhook_secret_key(current_webhook.id)
-
-    def _add_application_into_client_data(self) -> None:
-        self._client[DEFAULT_APPLICATION_KEY] = self._application
 
 
 def _parse_timeout(timeout: Union[float, int]) -> float:
