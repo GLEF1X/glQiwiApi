@@ -69,21 +69,16 @@ class BaseWebhookView(web.View, Generic[Event]):
     async def parse_raw_request(self) -> Event:
         """Parse raw update and return pydantic model"""
         try:
-            data = await self.request.json()
+            data = await self.request.json(loads=json.loads)
             if isinstance(data, str):
                 return self._event_cls.parse_raw(data)
             elif isinstance(data, dict):  # pragma: no cover
                 return self._event_cls.parse_obj(data)
             else:
                 raise ValidationError  # pragma: no cover
-        except (ValidationError, json.JSONDecodeError) as ex:
-            body = WebhookAPIError(status="Validation error")
-            if isinstance(body, ValidationError):
-                body.detail = ex.json(indent=4)  # type: ignore
-            else:
-                body.detail = "Json format invalid"
+        except ValidationError as ex:
             raise web.HTTPBadRequest(
-                body=body.json(indent=4),
+                body=WebhookAPIError(status="Validation error", detail=ex.json(indent=4)).json(),
                 content_type="application/json"
             )
 
