@@ -5,7 +5,7 @@ import hmac
 from datetime import datetime
 from typing import Optional, Dict, Any, List, cast
 
-from pydantic import Field, root_validator
+from pydantic import Field, root_validator, PrivateAttr
 
 from glQiwiApi.types.amount import HashableSum
 from glQiwiApi.types.base import Base, HashableBase
@@ -40,7 +40,7 @@ class TransactionWebhook(HashableBase):
     version: str = Field(..., alias="version")
     payment: Optional[WebhookPayment] = Field(default=None, alias="payment")
 
-    signature: str
+    _signature: str = PrivateAttr()
     """
     NOT API field, it's generating by method `_webhook_signature_collector`
     Don't rely on it, if you want to use signature, generate new one using the same logic as in validator
@@ -49,7 +49,7 @@ class TransactionWebhook(HashableBase):
     def verify_signature(self, webhook_base64_key: str) -> None:
         webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
         generated_hash = hmac.new(
-            webhook_key, self.signature.encode("utf-8"), hashlib.sha256
+            webhook_key, self._signature.encode("utf-8"), hashlib.sha256
         ).hexdigest()
         if generated_hash != self.hash:
             raise WebhookSignatureUnverified()
