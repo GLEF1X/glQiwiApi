@@ -1,6 +1,6 @@
-########
+############
 YooMoney API
-########
+############
 
 .. autoclass:: glQiwiApi.yoo_money.client.YooMoneyAPI
     :members:

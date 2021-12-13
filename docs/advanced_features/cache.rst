@@ -17,15 +17,29 @@ Straightforward example
 
     import asyncio
 
-    from glQiwiApi.core.storage import InMemoryCacheStorage, UnrealizedCacheInvalidationStrategy
+    from glQiwiApi.core.cache import InMemoryCacheStorage
 
     storage = InMemoryCacheStorage()  # here is UnrealizedCacheInvalidationStrategy as an invalidation strategy
+    storage.update(cached=5)
+    cached = storage.retrieve("cached")
+    print(f"You have cached {cached}")
 
+Advanced usage
+--------------
 
-    async def main():
-        storage.update(cached=5)
-        cached = await storage.retrieve("cached")
-        print(f"You have cached {cached}")
+This very cache invalidation by timer strategy is worth using if you want to achieve cache invalidation.
+It should be noted that previous `UnrealizedCacheInvalidationStrategy` just ignores the invalidation and don't get rid of aged cache.
 
+.. code-block:: python
 
-    asyncio.run(main())
+    import time
+
+    from glQiwiApi.core.cache import InMemoryCacheStorage, CacheInvalidationByTimerStrategy
+
+    storage = InMemoryCacheStorage(CacheInvalidationByTimerStrategy(cache_time_in_seconds=1))
+
+    storage.update(x=5)
+
+    time.sleep(1)
+
+    value = storage.retrieve("x")  # None

@@ -9,8 +9,8 @@ from aiohttp import ClientTimeout, ServerDisconnectedError, \
 from aiohttp.typedefs import LooseCookies
 
 from glQiwiApi.core.abc.router import AbstractRouter
-from glQiwiApi.core.cache import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy, \
-    CachedAPIRequest, Payload
+from glQiwiApi.core.cache import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
+from glQiwiApi.core.cache.cached_types import CachedAPIRequest, Payload
 from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
 from glQiwiApi.utils.exceptions import APIError
 from glQiwiApi.utils.payload import make_payload, get_decoded_result
@@ -46,7 +46,7 @@ class RequestService:
             )
         self._error_messages = error_messages or EmptyMessages()
         self._cache = InMemoryCacheStorage(
-            invalidate_strategy=APIResponsesCacheInvalidationStrategy(cache_time=cache_time),
+            invalidate_strategy=APIResponsesCacheInvalidationStrategy(cache_time_in_seconds=cache_time),
         )
         self._session_holder: AbstractSessionHolder[Any] = session_holder
 
@@ -88,8 +88,8 @@ class RequestService:
             **kwargs: Any
     ) -> Dict[Any, Any]:
         request_args = {k: v for k, v in locals().items() if not isinstance(v, type(self))}
-        if await self._storage_has_similar_cached_response(**request_args):
-            return (await self._cache.retrieve(url)).response  # type: ignore
+        if self._storage_has_similar_cached_response(**request_args):
+            return self._cache.retrieve(url).response  # type: ignore
         session = await self._session_holder.get_session()
         _request_id = uuid.uuid4().hex
         try:
@@ -151,8 +151,8 @@ class RequestService:
         resp = await session.request(method, url, **kwargs)
         return cast(bytes, await resp.read())
 
-    async def _storage_has_similar_cached_response(self, **request_args: Any) -> bool:
-        return await self._cache.contains_similar(Payload(**request_args))
+    def _storage_has_similar_cached_response(self, **request_args: Any) -> bool:
+        return self._cache.contains_similar(Payload(**request_args))
 
     def _cache_result(self, response: Any, method: str, **kwargs: Any) -> None:
         logger.debug("Put response in cache %s kwargs = %s", response, kwargs)

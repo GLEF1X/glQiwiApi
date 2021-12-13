@@ -1,8 +1,9 @@
 ======================
 Available API wrappers
 ======================
-The glQiwiApi provides capability to use two different API wrappers
-independently(and QIWI Maps as a branch of QIWI API)
+
+The glQiwiApi is capable of interacting with many APIs independently.
+Actually, there is no restrictions to usage of both YooMoney and QIWI API.
 
 .. toctree::
     qiwi_api

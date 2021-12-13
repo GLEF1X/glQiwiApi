@@ -1,5 +1,5 @@
 ======================
-Low Level API features
+Low level API features
 ======================
 
 .. toctree::

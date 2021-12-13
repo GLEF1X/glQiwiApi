@@ -20,4 +20,4 @@ def on_startup(wrapper: QiwiWrapper):
     logger.info("This message logged on startup")
 
 
-executor.start_polling(wallet, on_startup=on_startup, skip_updates=True)
+executor.start_polling(wallet, on_startup=on_startup)

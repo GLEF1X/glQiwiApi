@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -19,4 +17,4 @@ async def os_error_handler(exception: Exception, *args: Any) -> None:
     logger.exception("Exception %s occurred. WTF!!!", exception)
 
 
-executor.start_polling(wallet, skip_updates=True)
+executor.start_polling(wallet)

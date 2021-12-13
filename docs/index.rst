@@ -27,20 +27,21 @@ Welcome to the glQiwiApi documentation!
 ..  image:: https://github.com/GLEF1X/glQiwiApi/actions/workflows/tests.yml/badge.svg
     :alt: CI
 
+=========
+Features:
+=========
 
-*   **Why should you choose exactly glQiwiApi and not other libraries?**
-
-    1. It's working faster than other async wrappers for qiwi and yoomoney |:boom:|
-    2. Evidently, It's asynchronous
-    3. Supports most of `qiwi <https://qiwi.com>`_ apis: `qiwi-maps <https://github.com/QIWI-API/qiwi-map>`_, `bills <https://developer.qiwi.com/en/bill-payments/>`_, `wallet <https://developer.qiwi.com/en/qiwi-wallet-personal/>`_ and, also, `yoomoney <https://yoomoney.ru/docs/wallet>`_
-    4. Provides support of polling and webhooks for QIWI as well as possible
-    5. Furnish many utils and extensions such a currency parser, `pydantic <https://pydantic-docs.helpmanual.io/>`_  support and code coverage not less than 80% "out of the box"
-    6. Full compatibility with `mypy`
+    * It's working faster than other async wrappers for qiwi and yoomoney |:boom:|
+    * Obviously, it's asynchronous
+    * Fully supports `qiwi <https://qiwi.com>`_ apis: `qiwi-maps <https://github.com/QIWI-API/qiwi-map>`_, `bills <https://developer.qiwi.com/en/bill-payments/>`_, `wallet <https://developer.qiwi.com/en/qiwi-wallet-personal/>`_ and also `yoomoney <https://yoomoney.ru/docs/wallet>`_
+    * Provides support of polling and webhooks for QIWI as well as possible
+    * Furnishes many utils and extensions such a `pydantic <https://pydantic-docs.helpmanual.io/>`_  support, code coverage not less than 80% and many other handy things
+    * Full compatibility with `static type checking(mypy) <https://mypy.readthedocs.io/en/stable/>`_
 
 
-===========
-Quick start
-===========
+=============
+Quick example
+=============
 
 .. code-block:: python
 
@@ -70,14 +71,14 @@ Quick start
 
 
 
-Content
-=======
+Contents
+========
 .. toctree::
-   :caption: Content:
 
    installation
+   getting-started/index
    API/index
-   examples/index
+   polling
    advanced_features/index
    types/index
 

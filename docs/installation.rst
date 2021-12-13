@@ -4,12 +4,13 @@
 Installation
 ============
 
-Supported Python versions: `3.7` and higher
+
+.. tip:: Supported Python versions: `3.7` and higher
 
 Stable release
 ----------------
 
-To install glQiwiApi, run this command in your terminal:
+In order to install glQiwiApi, run this command in your terminal:
 
 .. code-block:: console
 
@@ -23,13 +24,13 @@ If you do not have installed `pip`_, this `Python Installation Reference`_ can h
 
 
 From source files
-------------------
+-----------------
 
 You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/GLEF1X/glQiwiApi
+    $ git clone -b dev-1.x git://github.com/GLEF1X/glQiwiApi
 
 Once you get a copy of the source files, you can install them with:
 
@@ -40,11 +41,11 @@ Once you get a copy of the source files, you can install them with:
 
 Recommendations
 ---------------
-You can speedup api by following next instructions:
+You can hasten api by following the instructions below:
 
 - Use `uvloop <https://github.com/MagicStack/uvloop>`_ instead of default asyncio loop.
 
-    *uvloop* is a fast, drop-in replacement of the built-in asyncio event loop. uvloop is implemented in Cython and uses libuv under the hood.
+    *uvloop* is a rapid, drop-in replacement of the built-in asyncio event loop. uvloop is implemented in Cython and uses libuv under the hood.
 
     **Installation:**
 
@@ -54,12 +55,10 @@ You can speedup api by following next instructions:
 
 - Use `orjson <https://github.com/ijl/orjson>`_ instead of the default json module.
 
-    orjson is a fast, correct JSON library for Python. It benchmarks as the fastest Python library for JSON and is more correct than the standard json library or other third-party libraries
+    orjson is a rapid, correct JSON library for Python. It benchmarks as the fastest Python library for JSON and is more correct than the standard json library or other third-party libraries
 
     **Installation:**
 
         .. code-block:: bash
 
             $ pip install orjson
-
-.. tip:: Github: https://github.com/GLEF1X/glQiwiApi

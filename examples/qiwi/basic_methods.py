@@ -31,13 +31,13 @@ async def basic_usage():
         # Get the ip address from which the last login was made
         print(info.auth_info.ip)
         # We transfer money to another wallet, while receiving the ID of the payment
-        payment_id = await wallet.to_wallet(
-            amount=999, to_number="some_number", comment="I love glQiwiApi"
+        payment_id = await wallet.transfer_money(
+            amount=999, to_phone_number="some_number", comment="I love glQiwiApi"
         )
         print(payment_id)
         # handling types exceptions and get json representation
         try:
-            await wallet.to_wallet(to_number="+WRONG_NUMBER", amount=999)
+            await wallet.transfer_money(to_phone_number="+WRONG_NUMBER", amount=999)
         except APIError as ex:
             print(ex.json())
 

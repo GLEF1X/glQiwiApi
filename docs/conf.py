@@ -36,7 +36,6 @@ html_theme_options = {}
 html_css_files = [
     "stylesheets/extra.css",
 ]
-highlight_language = 'python3'
 
 
 rst_prolog = f"""

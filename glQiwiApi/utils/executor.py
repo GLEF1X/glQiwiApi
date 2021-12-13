@@ -209,11 +209,6 @@ class PollingExecutor(BaseExecutor):
             on_startup: Optional[Callable[..., Any]] = None,
             on_shutdown: Optional[Callable[..., Any]] = None
     ) -> None:
-        """
-
-        :param client: instance of BaseWrapper
-        :param tg_app: optional proxy to connect aiogram polling/webhook mode
-        """
         super(PollingExecutor, self).__init__(client, *plugins, loop=loop, on_startup=on_startup,
                                               on_shutdown=on_shutdown)
         self.offset: Optional[int] = None

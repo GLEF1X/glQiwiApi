@@ -61,6 +61,7 @@ from glQiwiApi.types import (
     TransactionType,
     InvoiceStatus,
 )
+from glQiwiApi.types.amount import CurrencyModel
 from glQiwiApi.types.arbitrary.file import File
 from glQiwiApi.types.arbitrary.inputs import BinaryIOInput
 from glQiwiApi.types.errors import QiwiErrorAnswer
@@ -636,7 +637,8 @@ class QiwiWrapper(
          - 'OUT'
          - 'QIWI_CARD'
 
-        :param transaction_id: transaction id, can be obtained by calling the to_wallet method, to_card
+        :param transaction_id: transaction id, can be obtained by calling the transfer_money method,
+         transfer_money_to_card
         :param transaction_type: type of transaction: 'IN', 'OUT', 'QIWI_CARD'
         :param file_format: format of file
         """
@@ -795,26 +797,29 @@ class QiwiWrapper(
             currency_alias=currency_alias,
         )
 
-    async def to_wallet(
+    async def transfer_money(
             self,
-            to_number: str,
+            to_phone_number: str,
             amount: Union[AmountType, str],
-            currency: str = "643",
+            currency: Union[str, CurrencyModel] = "643",
             comment: Optional[str] = None,
     ) -> PaymentInfo:
         """
-        Method for transferring money to another wallet \n
+        Method for transferring funds to wallet
+
         Detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#p2p
 
-        :param to_number: recipient number
+        :param to_phone_number: recipient number
         :param amount: the amount of money you want to transfer
         :param currency: special currency code
         :param comment: payment comment
         """
+        if isinstance(currency, CurrencyModel):
+            currency = currency.code
         data = set_data_to_wallet(
             data=deepcopy(self._router.config.QIWI_TO_WALLET),
-            to_number=to_number,
+            to_number=to_phone_number,
             trans_sum=amount,
             currency=currency,
             comment=comment,
@@ -829,20 +834,20 @@ class QiwiWrapper(
         )
         return PaymentInfo.parse_obj(response)
 
-    async def to_card(self, trans_sum: Union[float, int],
-                      to_card: str) -> PaymentInfo:
+    async def transfer_money_to_card(self, amount: AmountType, card_number: str) -> PaymentInfo:
         """
         Method for sending funds to the card.
+
         More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/#cards
         """
         data = retrieve_card_data(
             default_data=self._router.config.QIWI_TO_CARD,
-            to_card=to_card,
-            trans_sum=trans_sum,
+            to_card=card_number,
+            trans_sum=amount,
             auth_maker=self._add_authorization_header,
         )
-        privat_card_id = await self._detect_card_number(card_number=to_card)
+        privat_card_id = await self._detect_card_number(card_number=card_number)
         response = await self._request_service.api_request(
             "POST",
             QiwiApiMethods.TO_CARD,
