@@ -8,7 +8,10 @@ from typing import (
     cast,
     Dict,
     Type,
-    Union, overload, Literal, Generic, ClassVar, )
+    Union,
+    Generic,
+    ClassVar,
+)
 
 from glQiwiApi.core.dispatcher.filters import BaseFilter
 from glQiwiApi.core.dispatcher.implementation import (
@@ -55,25 +58,6 @@ class ContextInstanceMixin(Generic[ContextInstance]):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__()
         cls.__context_instance = contextvars.ContextVar(f"instance_{cls.__name__}")
-
-    @overload  # noqa: F811
-    @classmethod
-    def get_current(cls) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
-        ...
-
-    @overload  # noqa: F811
-    @classmethod
-    def get_current(  # noqa: F811
-            cls, no_error: Literal[True]
-    ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
-        ...
-
-    @overload  # noqa: F811
-    @classmethod
-    def get_current(  # noqa: F811
-            cls, no_error: Literal[False]
-    ) -> ContextInstance:  # pragma: no cover  # noqa: F811
-        ...
 
     @classmethod  # noqa: F811
     def get_current(  # noqa: F811
