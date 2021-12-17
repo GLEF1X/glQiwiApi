@@ -95,7 +95,6 @@ class override_error_message:  # NOQA
 
 
 class require:
-
     def __init__(self, *params):
         self._required_attrs = params
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import inspect
-from typing import Any, Awaitable, cast, Generic, TypeVar, Callable, Union
+from typing import Any, Awaitable, Callable, Generic, TypeVar, Union, cast
 
 Event = TypeVar("Event")
 
@@ -43,15 +43,13 @@ class NotFilter(BaseFilter[Event]):
 class LambdaBasedFilter(BaseFilter[Event]):
     __name__: str
 
-    def __init__(
-        self, function: Callable[[Event], Union[bool, Awaitable[bool]]]
-    ) -> None:
+    def __init__(self, function: Callable[[Event], Union[bool, Awaitable[bool]]]) -> None:
         self.__name__ = f"Filter around <{function!r}>"
 
         self.function = function
-        self.awaitable: bool = inspect.iscoroutinefunction(
+        self.awaitable: bool = inspect.iscoroutinefunction(function) or inspect.isawaitable(
             function
-        ) or inspect.isawaitable(function)
+        )
 
     async def check(self, update: Event) -> bool:
         if self.awaitable:

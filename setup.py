@@ -9,8 +9,8 @@ README = (PATH / "README.md").read_text()
 REQUIREMENTS = (PATH / "SETUP_REQUIREMENTS.txt").read_text()
 
 setuptools.setup(
-    packages=setuptools.find_packages(exclude=(
-        'tests', 'examples', 'examples.*', 'tests', 'tests.*')
+    packages=setuptools.find_packages(
+        exclude=("tests", "examples", "examples.*", "tests", "tests.*")
     ),
     name="glQiwiApi",  # Replace with your own username
     version="1.1.4",
@@ -29,9 +29,9 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Build Tools",
     ],
     install_requires=REQUIREMENTS,
     python_requires=">=3.7",

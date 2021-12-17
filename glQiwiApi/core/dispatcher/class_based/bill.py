@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 from typing import Optional
 
-from glQiwiApi.core.dispatcher.class_based.base import Handler, ClientMixin
+from glQiwiApi.core.dispatcher.class_based.base import ClientMixin, Handler
 from glQiwiApi.types import Bill, PlainAmount
 
 

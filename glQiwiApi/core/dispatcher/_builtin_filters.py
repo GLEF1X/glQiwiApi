@@ -1,7 +1,7 @@
-from typing import Union, Optional, Type, Any
+from typing import Any, Optional, Type, Union
 
 from glQiwiApi.core.dispatcher.filters import BaseFilter
-from glQiwiApi.types import Transaction, TransactionWebhook, BillWebhook
+from glQiwiApi.types import BillWebhook, Transaction, TransactionWebhook
 
 
 class TransactionFilter(BaseFilter[Transaction]):

@@ -2,7 +2,7 @@ import functools
 import inspect
 import sys
 from asyncio import Transport
-from typing import Tuple, cast, Type, Mapping, Any, TypeVar, no_type_check
+from typing import Any, Mapping, Tuple, Type, TypeVar, cast, no_type_check
 
 from aiohttp import web
 from aiohttp.abc import AbstractView
@@ -45,9 +45,9 @@ def inject_dependencies(view: View, dependencies: Mapping[str, Any]) -> View:
 
 @no_type_check
 def partial_class(name, cls, *args, **kwds):
-    new_cls = type(name, (cls,), {
-        '__init__': functools.partialmethod(cls.__init__, *args, **kwds)
-    })
+    new_cls = type(
+        name, (cls,), {"__init__": functools.partialmethod(cls.__init__, *args, **kwds)}
+    )
 
     # The following is copied nearly ad verbatim from `namedtuple's` source.
     """
@@ -57,7 +57,7 @@ def partial_class(name, cls, *args, **kwds):
     # defined for arguments greater than 0 (IronPython).
     """
     try:
-        new_cls.__module__ = sys._getframe(1).f_globals.get('__name__', '__main__')  # noqa
+        new_cls.__module__ = sys._getframe(1).f_globals.get("__name__", "__main__")  # noqa
     except (AttributeError, ValueError):  # pragma: no cover
         pass
 

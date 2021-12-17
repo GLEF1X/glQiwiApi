@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Union, Optional
+from typing import Optional, Union
 
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, Field, validator
 
 from glQiwiApi.types.base import HashableBase
 

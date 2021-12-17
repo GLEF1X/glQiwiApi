@@ -1,11 +1,11 @@
 import ipaddress
 from datetime import datetime
-from typing import Optional, List, Any, Dict, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field, validator
 
-from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.types.amount import CurrencyAmount, CurrencyModel
+from glQiwiApi.types.base import Base, ExtraBase
 from glQiwiApi.utils.currency_util import Currency
 
 
@@ -97,9 +97,7 @@ class UserInfo(Base):
 
     default_pay_currency: CurrencyModel = Field(..., alias="defaultPayCurrency")
     default_pay_source: Optional[int] = Field(None, alias="defaultPaySource")
-    default_pay_account_alias: Optional[str] = Field(
-        None, alias="defaultPayAccountAlias"
-    )
+    default_pay_account_alias: Optional[str] = Field(None, alias="defaultPayAccountAlias")
     email: Optional[str] = None
     first_transaction_id: Union[str, int, None] = Field(None, alias="firstTxnId")
     language: str

@@ -36,16 +36,15 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
         return self._session
 
     async def __aexit__(
-            self: AbstractSessionHolder[_SessionType],
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self: AbstractSessionHolder[_SessionType],
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 
 
 class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
-
     def __init__(self, **kwargs: Any):
         AbstractSessionHolder.__init__(self, **kwargs)
 
@@ -63,7 +62,6 @@ class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
 
     async def _instantiate_new_session(self) -> _SessionType:
         self._session: _SessionType = cast(
-            _SessionType,
-            aiohttp.ClientSession(**self._session_kwargs)
+            _SessionType, aiohttp.ClientSession(**self._session_kwargs)
         )
         return self._session

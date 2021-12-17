@@ -31,7 +31,7 @@ class YooMoneyConfig:
         }
         self.ERROR_CODE_MESSAGES = {
             400: "An error related to the type of request to the api,"
-                 "you may have passed an invalid API token",
+            "you may have passed an invalid API token",
             401: "A non-existent, expired, or revoked token is specified",
             403: "An operation has been requested for which the token has no rights",
             0: "Proxy error or unexpected server errors",

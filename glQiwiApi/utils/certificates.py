@@ -4,17 +4,17 @@ import ipaddress
 import pathlib
 import ssl
 from dataclasses import dataclass
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 from os import PathLike
-from typing import cast, TYPE_CHECKING, Optional, Iterable, Any, List, Union
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Union, cast
 
 if TYPE_CHECKING:
     try:
         from cryptography import x509  # NOQA  # pragma: no cover
-        from cryptography.hazmat.primitives.asymmetric.rsa import (  # pragma: no cover
-            RSAPrivateKeyWithSerialization,  # NOQA
-        )  # NOQA
+        from cryptography.hazmat.primitives.asymmetric.rsa import (
+            RSAPrivateKeyWithSerialization,  # pragma: no cover; NOQA; NOQA
+        )
     except ImportError:  # pragma: no cover
         pass
 
@@ -39,18 +39,19 @@ class SSLCertificate:
             return InputFile(BytesIO(file.read()))
 
 
-def get_or_generate_self_signed_certificate(hostname: str,  # your host machine ip address
-                                            cert_path: Union[str, PathLike[Any]] = "cert.pem",
-                                            pkey_path: Union[str, PathLike[Any]] = "pkey.pem",
-                                            ip_addresses: Optional[Iterable[Any]] = None,
-                                            rsa_private_key: Optional[
-                                                "RSAPrivateKeyWithSerialization"] = None,
-                                            public_exponent: int = 65537,
-                                            key_size: int = 2048,
-                                            backend: Optional[Any] = None,
-                                            serial_number: int = 1000,
-                                            expire_days: int = 3650,
-                                            *name_attributes: "x509.NameAttribute") -> SSLCertificate:
+def get_or_generate_self_signed_certificate(
+    hostname: str,  # your host machine ip address
+    cert_path: Union[str, PathLike[Any]] = "cert.pem",
+    pkey_path: Union[str, PathLike[Any]] = "pkey.pem",
+    ip_addresses: Optional[Iterable[Any]] = None,
+    rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
+    public_exponent: int = 65537,
+    key_size: int = 2048,
+    backend: Optional[Any] = None,
+    serial_number: int = 1000,
+    expire_days: int = 3650,
+    *name_attributes: "x509.NameAttribute",
+) -> SSLCertificate:
     """
     Generates self signed certificate for a hostname, and optional IP addresses.
 
@@ -58,11 +59,10 @@ def get_or_generate_self_signed_certificate(hostname: str,  # your host machine 
     """
     try:
         from cryptography import x509
-        from cryptography.x509.oid import NameOID
-        from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
     except ImportError:  # pragma: no cover
         raise ImportError(  # pragma: no cover
             "You need to install cryptography package for generating self-signed cert"
@@ -79,9 +79,7 @@ def get_or_generate_self_signed_certificate(hostname: str,  # your host machine 
             backend=backend or default_backend(),
         )
 
-    name = x509.Name(
-        [x509.NameAttribute(NameOID.COMMON_NAME, hostname), *name_attributes]
-    )
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, hostname), *name_attributes])
 
     # best practice seem to be to include the hostname in the SAN,
     # which *SHOULD* mean COMMON_NAME is ignored.
@@ -103,19 +101,17 @@ def get_or_generate_self_signed_certificate(hostname: str,  # your host machine 
     now = datetime.utcnow()
     cert = (
         x509.CertificateBuilder()
-            .subject_name(name)
-            .issuer_name(name)
-            .public_key(rsa_private_key.public_key())
-            .serial_number(serial_number)
-            .not_valid_before(now)
-            .not_valid_after(now + timedelta(days=expire_days))
-            .add_extension(basic_constraints, False)
-            .add_extension(san, False)
-            .sign(rsa_private_key, hashes.SHA256(), default_backend())
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(rsa_private_key.public_key())
+        .serial_number(serial_number)
+        .not_valid_before(now)
+        .not_valid_after(now + timedelta(days=expire_days))
+        .add_extension(basic_constraints, False)
+        .add_extension(san, False)
+        .sign(rsa_private_key, hashes.SHA256(), default_backend())
     )
-    cert_pem = cert.public_bytes(
-        encoding=cast(serialization.Encoding, serialization.Encoding.PEM)
-    )
+    cert_pem = cert.public_bytes(encoding=cast(serialization.Encoding, serialization.Encoding.PEM))
     key_pem = rsa_private_key.private_bytes(
         encoding=cast(serialization.Encoding, serialization.Encoding.PEM),
         format=cast(

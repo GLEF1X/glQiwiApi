@@ -1,5 +1,6 @@
 import pytest
-from glQiwiApi import types, QiwiMaps
+
+from glQiwiApi import QiwiMaps, types
 
 pytestmark = pytest.mark.asyncio
 

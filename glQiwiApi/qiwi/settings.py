@@ -49,9 +49,7 @@ class QiwiApiMethods:
     TRANSACTIONS: str = "/payment-history/v2/persons/{stripped_number}/payments"
     TO_WALLET: str = "/sinap/api/v2/terms/99/payments"
     TRANSACTION_INFO: str = "/payment-history/v1/transactions/{transaction_id}"
-    CHECK_RESTRICTION: str = (
-        "/person-profile/v1/persons/{phone_number}/status/restrictions"
-    )
+    CHECK_RESTRICTION: str = "/person-profile/v1/persons/{phone_number}/status/restrictions"
     GET_IDENTIFICATION: str = "/identification/v1/persons/{phone_number}/identification"
     GET_LIMITS: str = "/qw-limits/v1/persons/{stripped_number}/actual-limits"
     GET_LIST_OF_CARDS: str = "/cards/v1/cards"
@@ -60,21 +58,15 @@ class QiwiApiMethods:
     GET_RECEIPT: str = "/payment-history/v1/transactions/{transaction_id}/cheque/file"
     COMMISSION: str = "/sinap/providers/{special_code}/onlineCommission"
     ACCOUNT_INFO: str = "/person-profile/v1/profile/current"
-    FETCH_STATISTICS: str = (
-        "/payment-history/v2/persons/{stripped_number}/payments/total"
-    )
+    FETCH_STATISTICS: str = "/payment-history/v2/persons/{stripped_number}/payments/total"
     LIST_OF_BALANCES: str = "/funding-sources/v2/persons/{stripped_number}/accounts"
     CREATE_NEW_BALANCE: str = "/funding-sources/v2/persons/{stripped_number}/accounts"
-    AVAILABLE_BALANCES: str = (
-        "/funding-sources/v2/persons/{stripped_number}/accounts/offer"
-    )
+    AVAILABLE_BALANCES: str = "/funding-sources/v2/persons/{stripped_number}/accounts/offer"
     SET_DEFAULT_BALANCE: str = (
         "/funding-sources/v2/persons/{stripped_number}/accounts/{currency_alias}"
     )
     BUY_QIWI_MASTER: str = "/sinap/api/v2/terms/28004/payments"
-    CONFIRM_QIWI_MASTER: str = (
-        "/cards/v2/persons/{stripped_number}/orders/{order_id}/submit"
-    )
+    CONFIRM_QIWI_MASTER: str = "/cards/v2/persons/{stripped_number}/orders/{order_id}/submit"
     BUY_QIWI_CARD = "/sinap/test_core/v2/terms/32064/payments"
     CARDS_QIWI_MASTER: str = "/cards/v1/cards/?vas-alias=qvc-master"
     PRE_QIWI_REQUEST: str = "/cards/v2/persons/{number}/orders"
@@ -112,15 +104,15 @@ class QiwiConfig:
         }
         self.ERROR_CODE_MESSAGES = {
             400: "Query syntax error (invalid data format). Can be related to wrong arguments,"
-                 " that you have passed to method",
+            " that you have passed to method",
             401: "Invalid token or API token was expired",
             403: "No permission for this request(API token has insufficient permissions)",
             404: "Object was not found or there are no objects with the specified characteristics",
             423: "Too many requests, the service is temporarily unavailable",
             422: "The domain / subnet / host is incorrectly specified"
-                 "webhook (in the new_url parameter for the webhook URL),"
-                 "the hook type or transaction type is incorrectly specified,"
-                 "an attempt to create a hook if there is one already created",
+            "webhook (in the new_url parameter for the webhook URL),"
+            "the hook type or transaction type is incorrectly specified,"
+            "an attempt to create a hook if there is one already created",
             405: "Error related to the type of API request, contact the developer or open an issue",
             500: "Internal service error",
             0: "An error related to using a proxy or library problems",

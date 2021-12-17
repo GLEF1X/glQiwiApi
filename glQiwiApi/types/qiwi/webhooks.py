@@ -3,7 +3,7 @@ import enum
 import hashlib
 import hmac
 from datetime import datetime
-from typing import Optional, Dict, Any, List, cast
+from typing import Any, Dict, List, Optional, cast
 
 from pydantic import Field, root_validator
 
@@ -78,8 +78,7 @@ class TransactionWebhook(HashableBase):
 
         sign_fields_list = cast(str, sign_fields).split(",")
         webhook_signature = "|".join(
-            str(_get_sign_field(payment, sign_field.split(".")))
-            for sign_field in sign_fields_list
+            str(_get_sign_field(payment, sign_field.split("."))) for sign_field in sign_fields_list
         )
         values.update(signature=webhook_signature)
         return values
@@ -112,9 +111,9 @@ class HookParameters(Base):
 
 
 class WebhookTransactionType(str, enum.Enum):
-    IN = 'IN'
-    OUT = 'OUT'
-    BOTH = 'BOTH'
+    IN = "IN"
+    OUT = "OUT"
+    BOTH = "BOTH"
 
 
 class WebhookInfo(Base):

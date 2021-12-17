@@ -5,8 +5,7 @@ from typing import Dict
 
 import pytest
 
-from glQiwiApi import QiwiWrapper, execute_async_as_sync
-from glQiwiApi import types
+from glQiwiApi import QiwiWrapper, execute_async_as_sync, types
 
 
 @pytest.fixture(name="api_stub")

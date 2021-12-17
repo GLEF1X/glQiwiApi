@@ -15,14 +15,18 @@ from glQiwiApi.utils.payload import check_transaction
         (None, None),
         (None, "my_comment"),
         ("+38908234234", None),
-    ]
+    ],
 )
-def test_check_transaction(transaction: Transaction, sender: Optional[str],
-                           comment: Optional[str]):
-    assert check_transaction(
-        [transaction],
-        amount=transaction.sum.amount,
-        transaction_type=TransactionType.OUT,
-        sender=sender,
-        comment=comment
-    ) is True
+def test_check_transaction(
+    transaction: Transaction, sender: Optional[str], comment: Optional[str]
+):
+    assert (
+        check_transaction(
+            [transaction],
+            amount=transaction.sum.amount,
+            transaction_type=TransactionType.OUT,
+            sender=sender,
+            comment=comment,
+        )
+        is True
+    )

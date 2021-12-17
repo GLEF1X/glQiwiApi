@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from collections import namedtuple
-from typing import TypeVar, Type, Optional, Any, cast, Pattern
+from typing import Any, Optional, Pattern, Type, TypeVar, cast
 
 from glQiwiApi.core.dispatcher.webhooks.config import DEFAULT_QIWI_WEBHOOK_PATH
 
@@ -32,20 +32,17 @@ class WebhookURL(
 
     @classmethod
     def create(
-            cls: Type[_URL],
-            host: str,
-            port: Optional[int] = None,
-            webhook_path: Optional[str] = None,
-            https: bool = False
+        cls: Type[_URL],
+        host: str,
+        port: Optional[int] = None,
+        webhook_path: Optional[str] = None,
+        https: bool = False,
     ) -> _URL:
         return cls(
             host=cls._assert_host(host, param_name="host"),
-            webhook_path=cls._assert_str(
-                webhook_path,
-                param_name="webhook_path"
-            ),
+            webhook_path=cls._assert_str(webhook_path, param_name="webhook_path"),
             port=cls._assert_int(port, param_name="port"),
-            https=https
+            https=https,
         )
 
     @classmethod
@@ -58,12 +55,7 @@ class WebhookURL(
         return v
 
     @classmethod
-    def _assert_str(
-            cls,
-            v: Optional[Any],
-            *,
-            param_name: str
-    ) -> Optional[str]:
+    def _assert_str(cls, v: Optional[Any], *, param_name: str) -> Optional[str]:
         if v is None:
             return v
 
@@ -75,8 +67,7 @@ class WebhookURL(
     def _assert_host(cls, v: Any, *, param_name: str) -> str:
         if not re.match(HOST_REGEX, v):
             raise TypeError(
-                "%s must be like https://127.0.0.1/ or https://website.com/"
-                % param_name
+                "%s must be like https://127.0.0.1/ or https://website.com/" % param_name
             )
         return cast(str, v)
 

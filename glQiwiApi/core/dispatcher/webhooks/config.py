@@ -3,7 +3,7 @@ from __future__ import annotations
 import ssl
 from copy import copy, deepcopy
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from aiohttp import web
 
@@ -49,7 +49,9 @@ class RoutesConfig:
 @dataclass()
 class EncryptionConfig:
     secret_p2p_key: Optional[str] = None  # taken from QiwiWrapper instance by default
-    base64_encryption_key: Optional[str] = None  # taken from QIWI API using QiwiWrapper instance by default
+    base64_encryption_key: Optional[
+        str
+    ] = None  # taken from QIWI API using QiwiWrapper instance by default
 
 
 @dataclass()

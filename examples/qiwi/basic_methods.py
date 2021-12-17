@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 
-from glQiwiApi import QiwiWrapper, APIError
+from glQiwiApi import APIError, QiwiWrapper
 from glQiwiApi.types import TransactionType
 
 TOKEN = "YOUR_API_ACCESS_TOKEN"

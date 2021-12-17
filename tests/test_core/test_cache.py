@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from glQiwiApi.core.cache import InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
+from glQiwiApi.core.cache import APIResponsesCacheInvalidationStrategy, InMemoryCacheStorage
 
 pytestmark = pytest.mark.asyncio
 
@@ -23,7 +23,9 @@ def cache_time() -> float:
 
 @pytest.fixture(name="temporary_storage")
 def storage_with_limited_cache_time(cache_time: float) -> InMemoryCacheStorage:
-    storage = InMemoryCacheStorage(APIResponsesCacheInvalidationStrategy(cache_time_in_seconds=cache_time))
+    storage = InMemoryCacheStorage(
+        APIResponsesCacheInvalidationStrategy(cache_time_in_seconds=cache_time)
+    )
     yield storage
     storage.clear()
 
@@ -44,8 +46,7 @@ def test_retrieve_all(permanent_storage: InMemoryCacheStorage):
     assert permanent_storage.retrieve_all() == [5, 7]
 
 
-def test_invalidation_by_cache_time(temporary_storage: InMemoryCacheStorage,
-                                    cache_time: float):
+def test_invalidation_by_cache_time(temporary_storage: InMemoryCacheStorage, cache_time: float):
     temporary_storage.update(x=5)
     time.sleep(cache_time + 0.01)
     assert temporary_storage.retrieve("x") is None

@@ -25,7 +25,7 @@ class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
             )
             raise web.HTTPBadRequest(
                 text=WebhookAPIError(status="Invalid hash of transaction.").json(),
-                content_type="application/json"
+                content_type="application/json",
             )
 
     async def ok_response(self) -> web.Response:

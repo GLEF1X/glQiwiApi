@@ -4,8 +4,7 @@ import uuid
 
 import pytest
 
-from glQiwiApi import QiwiWrapper
-from glQiwiApi import types, InvalidPayload
+from glQiwiApi import InvalidPayload, QiwiWrapper, types
 from glQiwiApi.types import TransactionType
 from glQiwiApi.types.arbitrary.file import File
 
@@ -29,6 +28,7 @@ async def api_fixture(credentials: dict):
 
 async def test_get_balance(api: QiwiWrapper):
     from glQiwiApi.types.amount import CurrencyModel
+
     result = await api.get_balance()
     assert isinstance(result, types.CurrencyAmount)
     assert isinstance(result.currency, CurrencyModel)
@@ -77,11 +77,7 @@ async def test_identification(api: QiwiWrapper):
             "amount": 1,
             "sender": "+380985272064",
         },
-        {
-            "transaction_type": TransactionType.OUT,
-            "amount": 1,
-            "sender": "+380985272064"
-        },
+        {"transaction_type": TransactionType.OUT, "amount": 1, "sender": "+380985272064"},
     ],
 )
 async def test_check_transaction(api: QiwiWrapper, payload: dict):
@@ -239,9 +235,7 @@ async def test_get_cross_rates(api: QiwiWrapper):
 
 
 async def test_register_webhook(api: QiwiWrapper):
-    config, key = await api.bind_webhook(
-        url="https://45.147.178.166:80//", delete_old=True
-    )
+    config, key = await api.bind_webhook(url="https://45.147.178.166:80//", delete_old=True)
 
     assert isinstance(config, types.WebhookInfo)
     assert isinstance(key, str)
@@ -275,8 +269,9 @@ class TestFail:
             await api.transactions(rows=rows)
 
     @pytest.mark.parametrize("rows", [-5, 51, 0])
-    async def test_retrieve_bills_fail_if_rows_num_not_in_normal_boundaries(self, api: QiwiWrapper,
-                                                                            rows: int):
+    async def test_retrieve_bills_fail_if_rows_num_not_in_normal_boundaries(
+        self, api: QiwiWrapper, rows: int
+    ):
         with pytest.raises(InvalidPayload):
             await api.retrieve_bills(rows=rows)
 
@@ -294,10 +289,10 @@ class TestFail:
         ],
     )
     async def test_fetch_statistic_fail(
-            self,
-            api: QiwiWrapper,
-            start_date: datetime.datetime,
-            end_date: datetime.datetime,
+        self,
+        api: QiwiWrapper,
+        start_date: datetime.datetime,
+        end_date: datetime.datetime,
     ):
         with pytest.raises(ValueError):
             await api.fetch_statistics(start_date=start_date, end_date=end_date)

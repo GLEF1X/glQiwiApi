@@ -16,12 +16,14 @@ class EmptyCls(object):
 try:
     import aiofiles
 except ImportError:
+
     class aiofiles_compat:
         def open(self, *args: Any, **kwargs: Any) -> AsyncContextManager[Any]:
             raise ModuleNotInstalledException(
                 "Module aiofiles not installed and you can't use it's "
                 "functionality till you install this module."
             )
+
     aiofiles = aiofiles_compat()  # type: ignore
 
 try:
@@ -37,7 +39,7 @@ except (ModuleNotFoundError, ImportError):
     InputFile = EmptyCls
 
 if sys.version_info >= (3, 8):
-    from typing import Literal as Literal
     from typing import Final as Final
+    from typing import Literal as Literal
 else:
-    from typing_extensions import Literal, Final
+    from typing_extensions import Final, Literal

@@ -24,4 +24,4 @@ def datetime_to_iso8601_with_moscow_timezone(obj: Optional[datetime]) -> str:
     """
     if not isinstance(obj, datetime):
         return ""  # pragma: no cover
-    return obj.astimezone(pytz.timezone(DEFAULT_QIWI_TIMEZONE)).isoformat(timespec='seconds')
+    return obj.astimezone(pytz.timezone(DEFAULT_QIWI_TIMEZONE)).isoformat(timespec="seconds")

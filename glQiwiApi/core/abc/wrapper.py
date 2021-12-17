@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import copy
 from types import TracebackType
-from typing import Union, Optional, Type, Any, Dict, cast, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type, TypeVar, Union
 
 from glQiwiApi.core.cache import UnrealizedCacheInvalidationStrategy
 
@@ -36,10 +36,10 @@ class Wrapper(abc.ABC):
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         pass
         await self.close()
@@ -60,7 +60,7 @@ class Wrapper(abc.ABC):
     def __deepcopy__(self, memo: Dict[Any, Any]) -> Wrapper:  # pragma: no cover
         cls = self.__class__
         kw = {"__copy_signal__": True}
-        result = cls.__new__(cls, **kw)  # type: ignore  # pragma: no cover
+        result = cls.__new__(cls, **kw)  # pragma: no cover
         memo[id(self)] = result
         instance_dictionary = {
             slot: self._get(slot)
@@ -73,4 +73,4 @@ class Wrapper(abc.ABC):
             elif k == "dispatcher":
                 value._loop = None
             setattr(result, k, copy.deepcopy(value, memo))  # NOQA
-        return cast(Wrapper, result)
+        return result

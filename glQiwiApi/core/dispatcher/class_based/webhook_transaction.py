@@ -5,10 +5,13 @@ from typing import Optional
 
 from glQiwiApi.types import TransactionWebhook
 from glQiwiApi.types.qiwi.webhooks import WebhookPayment
-from .base import Handler, ClientMixin
+
+from .base import ClientMixin, Handler
 
 
-class AbstractTransactionWebhookHandler(Handler[TransactionWebhook], ClientMixin[TransactionWebhook], abc.ABC):
+class AbstractTransactionWebhookHandler(
+    Handler[TransactionWebhook], ClientMixin[TransactionWebhook], abc.ABC
+):
     @property
     def hook_id(self) -> str:
         return self.event.id

@@ -3,9 +3,7 @@ import asyncio
 from glQiwiApi import QiwiWrapper
 
 wallet = QiwiWrapper(
-    api_access_token="token",
-    phone_number="+number",
-    secret_p2p="your secret p2p"
+    api_access_token="token", phone_number="+number", secret_p2p="your secret p2p"
 )
 
 

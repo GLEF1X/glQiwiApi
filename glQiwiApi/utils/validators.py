@@ -4,18 +4,17 @@ import abc
 import re
 from abc import ABC
 from typing import (
-    Optional,
     Any,
-    Pattern,
-    Match,
     Callable,
     Generic,
-    TypeVar,
+    Match,
+    Optional,
+    Pattern,
     Type,
+    TypeVar,
+    Union,
     cast,
     overload,
-    Union,
-
 )
 
 from glQiwiApi.utils.compat import Literal
@@ -33,12 +32,11 @@ _FieldType = TypeVar("_FieldType", bound=Any)
 
 
 class Field(ABC, Generic[_FieldType]):
-
     def __init__(self, *validators: Callable[[_FieldType], None]):
         self._validators = validators
 
     def __set_name__(self, owner: Type[Any], name: str) -> None:
-        self.private_name = '_' + name
+        self.private_name = "_" + name
 
     def __get__(self, obj: Any, objtype: Optional[Type[Any]] = None) -> _FieldType:
         return cast(_FieldType, getattr(obj, self.private_name))
@@ -53,7 +51,6 @@ class Field(ABC, Generic[_FieldType]):
 
 
 class AbstractValidator(ABC):
-
     def __init__(self, optional: bool = False):
         self._optional = optional
 
@@ -71,10 +68,14 @@ class AbstractValidator(ABC):
 
 
 class StringValidator(AbstractValidator):
-
-    def __init__(self, *, minsize: Optional[int] = None,
-                 maxsize: Optional[int] = None,
-                 predicate: Optional[Callable[[Any], bool]] = None, optional: bool = False):
+    def __init__(
+        self,
+        *,
+        minsize: Optional[int] = None,
+        maxsize: Optional[int] = None,
+        predicate: Optional[Callable[[Any], bool]] = None,
+        optional: bool = False,
+    ):
         AbstractValidator.__init__(self, optional=optional)
         self.minsize = minsize
         self.maxsize = maxsize
@@ -83,19 +84,13 @@ class StringValidator(AbstractValidator):
 
     def _validate(self, value: Any) -> None:
         if not isinstance(value, str):
-            raise ValidationError(f'Expected {value!r} to be an str')
+            raise ValidationError(f"Expected {value!r} to be an str")
         if self.minsize is not None and len(value) < self.minsize:
-            raise ValidationError(
-                f'Expected {value!r} to be no smaller than {self.minsize!r}'
-            )
+            raise ValidationError(f"Expected {value!r} to be no smaller than {self.minsize!r}")
         if self.maxsize is not None and len(value) > self.maxsize:
-            raise ValidationError(
-                f'Expected {value!r} to be no bigger than {self.maxsize!r}'
-            )
+            raise ValidationError(f"Expected {value!r} to be no bigger than {self.maxsize!r}")
         if self.predicate is not None and not self.predicate(value):
-            raise ValidationError(
-                f'Expected {self.predicate} to be true for {value!r}'
-            )
+            raise ValidationError(f"Expected {self.predicate} to be true for {value!r}")
 
 
 class PhoneNumberValidator(StringValidator):
@@ -108,16 +103,13 @@ class PhoneNumberValidator(StringValidator):
                 "Please, enter the correct phone number."
             )
         if not value.startswith("+"):  # type: ignore
-            raise ValidationError(
-                f'Expected {value!r} starts with + sign'
-            )
+            raise ValidationError(f"Expected {value!r} starts with + sign")
 
 
 class IntegerValidator(AbstractValidator):
-
     def _validate(self, value: _FieldType) -> None:
         if not isinstance(value, int):
-            raise ValidationError(f'Expected {value!r} to be an integer')
+            raise ValidationError(f"Expected {value!r} to be an integer")
 
 
 @overload

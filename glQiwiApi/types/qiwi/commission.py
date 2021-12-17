@@ -1,7 +1,7 @@
 from pydantic import Field
 
-from glQiwiApi.types.base import ExtraBase
 from glQiwiApi.types.amount import CurrencyAmount
+from glQiwiApi.types.base import ExtraBase
 
 
 class Commission(ExtraBase):

@@ -13,7 +13,6 @@ class B:
 
 
 class SomeView(web.View):
-
     def __init__(self, request: Request, a: A, b: B):
         super().__init__(request)
         self.a = a
@@ -24,10 +23,7 @@ class SomeView(web.View):
 
 
 def test_inject_dependencies():
-    dependencies = {
-        "a": A(),
-        "b": B()
-    }
+    dependencies = {"a": A(), "b": B()}
     patched_view = inject_dependencies(SomeView, dependencies)
     assert patched_view("hello").a == dependencies["a"]  # type: ignore  # noqa
     assert patched_view("hello").b == dependencies["b"]  # type: ignore  # noqa

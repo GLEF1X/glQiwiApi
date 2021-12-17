@@ -1,6 +1,7 @@
 import abc
 import logging
-from typing import Generic, TypeVar, Type, TYPE_CHECKING as MYPY, Any
+from typing import TYPE_CHECKING as MYPY
+from typing import Any, Generic, Type, TypeVar
 
 from aiohttp import web
 from aiohttp.web_request import Request
@@ -8,8 +9,10 @@ from pydantic import ValidationError
 
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
-from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import UnexpectedCollision, \
-    AbstractCollisionDetector
+from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
+    AbstractCollisionDetector,
+    UnexpectedCollision,
+)
 
 if MYPY:
     from glQiwiApi.types.base import HashableBase  # pragma: no cover  # noqa
@@ -32,12 +35,12 @@ class BaseWebhookView(web.View, Generic[Event]):
     """
 
     def __init__(
-            self,
-            request: Request,
-            dispatcher: Dispatcher,
-            collision_detector: AbstractCollisionDetector[Any],
-            event_cls: Type[Event],
-            encryption_key: str
+        self,
+        request: Request,
+        dispatcher: Dispatcher,
+        collision_detector: AbstractCollisionDetector[Any],
+        event_cls: Type[Event],
+        encryption_key: str,
     ) -> None:
         super().__init__(request)
         self._dispatcher = dispatcher
@@ -74,11 +77,11 @@ class BaseWebhookView(web.View, Generic[Event]):
             elif isinstance(data, dict):  # pragma: no cover
                 return self._event_cls.parse_obj(data)
             else:
-                raise ValidationError  # pragma: no cover
-        except ValidationError as ex:
+                raise ValueError()
+        except ValueError:
             raise web.HTTPBadRequest(
-                text=WebhookAPIError(status="Validation error", detail=ex.json(indent=4)).json(),
-                content_type="application/json"
+                text=WebhookAPIError(status="Validation error").json(),
+                content_type="application/json",
             )
 
     @abc.abstractmethod

@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, Bot
+from aiogram import Bot, Dispatcher
 from pytest_mock import MockerFixture
 
 from glQiwiApi.plugins.telegram.polling import TelegramPollingPlugin

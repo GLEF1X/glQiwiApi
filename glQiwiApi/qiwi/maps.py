@@ -7,7 +7,7 @@ from glQiwiApi.core import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin
 from glQiwiApi.core.session.holder import AbstractSessionHolder
-from glQiwiApi.utils.payload import parse_iterable_to_list_of_objects, filter_none
+from glQiwiApi.utils.payload import filter_none, parse_iterable_to_list_of_objects
 
 
 class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
@@ -17,24 +17,29 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
 
     """
 
-    def __init__(self, cache_time: int = 0,
-                 session_holder: typing.Optional[AbstractSessionHolder[typing.Any]] = None) -> None:
-        self._request_service = RequestService(cache_time=cache_time, session_holder=session_holder)
+    def __init__(
+        self,
+        cache_time: int = 0,
+        session_holder: typing.Optional[AbstractSessionHolder[typing.Any]] = None,
+    ) -> None:
+        self._request_service = RequestService(
+            cache_time=cache_time, session_holder=session_holder
+        )
 
     def get_request_service(self) -> RequestService:
         return self._request_service
 
     async def terminals(
-            self,
-            polygon: types.Polygon,
-            zoom: typing.Optional[int] = None,
-            pop_if_inactive_x_mins: int = 30,
-            include_partners: typing.Optional[bool] = None,
-            partners_ids: typing.Optional[typing.List[typing.Any]] = None,
-            cache_terminals: typing.Optional[bool] = None,
-            card_terminals: typing.Optional[bool] = None,
-            identification_types: typing.Optional[int] = None,
-            terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
+        self,
+        polygon: types.Polygon,
+        zoom: typing.Optional[int] = None,
+        pop_if_inactive_x_mins: int = 30,
+        include_partners: typing.Optional[bool] = None,
+        partners_ids: typing.Optional[typing.List[typing.Any]] = None,
+        cache_terminals: typing.Optional[bool] = None,
+        card_terminals: typing.Optional[bool] = None,
+        identification_types: typing.Optional[int] = None,
+        terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
     ) -> typing.List[types.Terminal]:
         """
         Get map of terminals sent for passed polygon with additional params

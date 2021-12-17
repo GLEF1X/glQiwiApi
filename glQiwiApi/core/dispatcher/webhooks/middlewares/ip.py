@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Awaitable, Any
+from typing import Any, Awaitable, Callable
 
 from aiohttp import web
 from aiohttp.typedefs import Handler

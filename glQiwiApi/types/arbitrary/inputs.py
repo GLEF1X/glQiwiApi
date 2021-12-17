@@ -5,11 +5,11 @@ import io
 import os
 import pathlib
 from types import TracebackType
-from typing import Generic, BinaryIO, Type, TypeVar, Any, Optional
+from typing import Any, BinaryIO, Generic, Optional, Type, TypeVar
 
 InputType = TypeVar("InputType")
 
-__all__ = ('AbstractInput', 'PlainPathInput', 'PathlibPathInput', 'BinaryIOInput')
+__all__ = ("AbstractInput", "PlainPathInput", "PathlibPathInput", "BinaryIOInput")
 
 
 class AbstractInput(abc.ABC, Generic[InputType]):
@@ -41,10 +41,10 @@ class AbstractInput(abc.ABC, Generic[InputType]):
         return self
 
     def __exit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         self.close()
 

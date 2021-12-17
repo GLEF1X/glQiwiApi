@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import abc
-from typing import Optional, Any, List, Dict
+from typing import Any, Dict, List, Optional
 
 from glQiwiApi.core.cache.constants import VALUE_PLACEHOLDER
 from glQiwiApi.core.cache.exceptions import CacheExpiredError, CacheValidationError
-from glQiwiApi.core.cache.invalidation import UnrealizedCacheInvalidationStrategy, CacheInvalidationStrategy
+from glQiwiApi.core.cache.invalidation import (
+    CacheInvalidationStrategy,
+    UnrealizedCacheInvalidationStrategy,
+)
 from glQiwiApi.core.cache.utils import embed_cache_time
 
 
 class CacheStorage(abc.ABC):
-
     def __init__(self, invalidate_strategy: Optional[CacheInvalidationStrategy] = None):
         if invalidate_strategy is None:
             invalidate_strategy = UnrealizedCacheInvalidationStrategy()

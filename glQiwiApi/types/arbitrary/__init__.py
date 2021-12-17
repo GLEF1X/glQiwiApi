@@ -1,2 +1,2 @@
 from .file import File
-from .inputs import AbstractInput, BinaryIOInput, PlainPathInput, PathlibPathInput
+from .inputs import AbstractInput, BinaryIOInput, PathlibPathInput, PlainPathInput

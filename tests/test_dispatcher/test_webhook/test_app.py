@@ -6,7 +6,7 @@ from aiohttp.web_request import Request
 
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.app import configure_app
-from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig, EncryptionConfig
+from glQiwiApi.core.dispatcher.webhooks.config import EncryptionConfig, WebhookConfig
 from glQiwiApi.core.dispatcher.webhooks.middlewares.ip import ip_filter_middleware
 from glQiwiApi.core.dispatcher.webhooks.services.security.ip import IPFilter
 from tests.test_dispatcher.mocks import WebhookTestData
@@ -17,10 +17,15 @@ class TestAiohttpServer:
         app = Application()
 
         dp = Dispatcher()
-        configure_app(dp, app, WebhookConfig(encryption=EncryptionConfig(
-            secret_p2p_key="",
-            base64_encryption_key=test_data.base64_key_to_compare_hash
-        )))
+        configure_app(
+            dp,
+            app,
+            WebhookConfig(
+                encryption=EncryptionConfig(
+                    secret_p2p_key="", base64_encryption_key=test_data.base64_key_to_compare_hash
+                )
+            ),
+        )
 
         assert len(app.router.routes()) == 2
 

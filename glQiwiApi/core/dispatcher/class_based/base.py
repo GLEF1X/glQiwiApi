@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Generic, TypeVar, TYPE_CHECKING, Dict, Union
+from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar, Union
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.client import QiwiWrapper  # NOQA  # pragma: no cover
@@ -21,7 +21,9 @@ class ClientMixin(Generic[T]):
 
     @property
     def client(self) -> "QiwiWrapper":
-        return self.event.client
+        if isinstance(self.event, Exception):
+            return QiwiWrapper.get_current()  # type: ignore
+        return self.event.client  # type: ignore
 
     @property
     def client_data(self) -> Dict[Any, Any]:

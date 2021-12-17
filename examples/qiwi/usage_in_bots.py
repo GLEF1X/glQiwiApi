@@ -5,7 +5,8 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.utils import executor
 
-from glQiwiApi import QiwiWrapper, types as qiwi_types
+from glQiwiApi import QiwiWrapper
+from glQiwiApi import types as qiwi_types
 
 wallet = QiwiWrapper(secret_p2p="YOUR_SECRET_P2P_TOKEN")
 

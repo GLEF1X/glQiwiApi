@@ -56,7 +56,11 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          poetry run flake8 glQiwiApi examples tests --jobs=8 --ignore=E999,F401,E123 
+          poetry run flake8 glQiwiApi examples tests --jobs=8 --ignore=E999,F401,E123
+      
+      - name: Check code-style (Black)
+        run: |
+          poetry run black --check --diff glQiwiApi tests
 
       - name: Mypy check
         run: |

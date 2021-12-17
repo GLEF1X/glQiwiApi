@@ -1,26 +1,16 @@
 from __future__ import annotations
 
 import contextvars
-from typing import (
-    Any,
-    TypeVar,
-    Optional,
-    cast,
-    Dict,
-    Type,
-    Union,
-    Generic,
-    ClassVar,
-)
+from typing import Any, ClassVar, Dict, Generic, Optional, Type, TypeVar, Union, cast
 
 from glQiwiApi.core.dispatcher.filters import BaseFilter
 from glQiwiApi.core.dispatcher.implementation import (
-    Dispatcher,
-    TxnRawHandler,
-    TxnFilters,
     BillFilters,
     BillRawHandler,
+    Dispatcher,
     ErrorRawHandler,
+    TxnFilters,
+    TxnRawHandler,
 )
 
 
@@ -61,7 +51,7 @@ class ContextInstanceMixin(Generic[ContextInstance]):
 
     @classmethod  # noqa: F811
     def get_current(  # noqa: F811
-            cls, no_error: bool = True
+        cls, no_error: bool = True
     ) -> Optional[ContextInstance]:  # pragma: no cover  # noqa: F811
         # on mypy 0.770 I catch that contextvars.ContextVar always contextvars.ContextVar[Any]
         cls.__context_instance = cast(
@@ -123,21 +113,17 @@ class DispatcherShortcutsMixin:
         return self.dispatcher.bill_handler
 
     def register_transaction_handler(
-            self, event_handler: TxnRawHandler, *filters: TxnFilters
+        self, event_handler: TxnRawHandler, *filters: TxnFilters
     ) -> None:
         return self.dispatcher.register_transaction_handler(event_handler, *filters)
 
-    def register_bill_handler(
-            self, event_handler: BillRawHandler, *filters: BillFilters
-    ) -> None:
+    def register_bill_handler(self, event_handler: BillRawHandler, *filters: BillFilters) -> None:
         return self.dispatcher.register_bill_handler(event_handler, *filters)
 
     def register_error_handler(
-            self,
-            event_handler: ErrorRawHandler,
-            exception: Optional[Union[Type[Exception], Exception]] = None,
-            *filters: BaseFilter[Exception],
+        self,
+        event_handler: ErrorRawHandler,
+        exception: Optional[Union[Type[Exception], Exception]] = None,
+        *filters: BaseFilter[Exception],
     ) -> None:
-        return self.dispatcher.register_error_handler(
-            event_handler, exception, *filters
-        )
+        return self.dispatcher.register_error_handler(event_handler, exception, *filters)

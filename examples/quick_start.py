@@ -1,6 +1,6 @@
 import asyncio
 
-from glQiwiApi import QiwiWrapper, APIError
+from glQiwiApi import APIError, QiwiWrapper
 
 
 async def print_balance(qiwi_token: str, phone_number: str) -> None:

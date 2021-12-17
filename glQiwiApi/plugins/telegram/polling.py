@@ -16,15 +16,15 @@ class TelegramPollingPlugin(Pluggable):
     """
 
     def __init__(
-            self,
-            dispatcher: Dispatcher,
-            timeout: int = 20,
-            relax: float = 0.1,
-            limit: t.Optional[t.Any] = None,
-            reset_webhook: t.Optional[t.Any] = None,
-            fast: t.Optional[bool] = True,
-            error_sleep: int = 5,
-            allowed_updates: t.Optional[t.List[str]] = None
+        self,
+        dispatcher: Dispatcher,
+        timeout: int = 20,
+        relax: float = 0.1,
+        limit: t.Optional[t.Any] = None,
+        reset_webhook: t.Optional[t.Any] = None,
+        fast: t.Optional[bool] = True,
+        error_sleep: int = 5,
+        allowed_updates: t.Optional[t.List[str]] = None,
     ) -> None:
         self._allowed_updates = allowed_updates
         self._error_sleep = error_sleep
@@ -48,7 +48,7 @@ class TelegramPollingPlugin(Pluggable):
             allowed_updates=self._allowed_updates,
             limit=self._limit,
             error_sleep=self._error_sleep,
-            fast=self._fast
+            fast=self._fast,
         )
 
     async def shutdown(self) -> None:

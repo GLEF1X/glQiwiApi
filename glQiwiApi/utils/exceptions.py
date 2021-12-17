@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Optional, Union, Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from aiohttp import RequestInfo
 from pydantic import BaseModel
@@ -42,11 +42,11 @@ class ChequeIsNotAvailable(Exception):
 
 class APIError(Exception):
     def __init__(
-            self,
-            message: Optional[str],
-            status_code: Union[str, int],
-            additional_info: Optional[str] = None,
-            request_data: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
+        self,
+        message: Optional[str],
+        status_code: Union[str, int],
+        additional_info: Optional[str] = None,
+        request_data: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(APIError, self).__init__()
         self.message = message
@@ -55,10 +55,10 @@ class APIError(Exception):
         self.request_data = request_data
 
     def __str__(self) -> str:
-        resp = "code={sc} doc(for specific cases may be deceiving)={msg}, additional_info={info}" ""
-        return resp.format(
-            sc=self.status_code, msg=self.message, info=self.additional_info
+        resp = (
+            "code={sc} doc(for specific cases may be deceiving)={msg}, additional_info={info}" ""
         )
+        return resp.format(sc=self.status_code, msg=self.message, info=self.additional_info)
 
     def to_model(self) -> ExceptionTraceback:
         """Convert exception to :class:`ExceptionTraceback`"""
@@ -105,5 +105,5 @@ __all__ = (
     "CantParseUrl",
     "APIError",
     "ChequeIsNotAvailable",
-    "SecretP2PTokenIsEmpty"
+    "SecretP2PTokenIsEmpty",
 )

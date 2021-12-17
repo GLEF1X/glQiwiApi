@@ -8,16 +8,7 @@ import asyncio
 import inspect
 import logging
 from datetime import datetime
-from typing import (
-    Union,
-    Optional,
-    List,
-    Callable,
-    TypeVar,
-    Any,
-    cast,
-    Dict, Iterable, Tuple,
-)
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union, cast
 
 from aiohttp import web
 from aiohttp.web import _run_app
@@ -28,7 +19,7 @@ from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.core.synchronous.adapter import run_forever_safe
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
-from glQiwiApi.qiwi.client import QiwiWrapper, MAX_HISTORY_TRANSACTION_LIMIT
+from glQiwiApi.qiwi.client import MAX_HISTORY_TRANSACTION_LIMIT, QiwiWrapper
 from glQiwiApi.types import Transaction
 from glQiwiApi.utils.exceptions import SecretP2PTokenIsEmpty
 
@@ -49,7 +40,9 @@ class NoUpdatesToExecute(Exception):
 
 
 class ExecutorEvent:
-    def __init__(self, context: Any, init_handlers: Iterable[Optional[Callable[..., Any]]] = ()) -> None:
+    def __init__(
+        self, context: Any, init_handlers: Iterable[Optional[Callable[..., Any]]] = ()
+    ) -> None:
         self._handlers: List[Tuple[Callable[..., Any], bool]] = []
         for handler in init_handlers:
             if handler is None:
@@ -59,11 +52,15 @@ class ExecutorEvent:
         self.context = context
 
     def __iadd__(self, handler: Callable[..., Any]) -> "ExecutorEvent":
-        self._handlers.append((handler, inspect.isawaitable(handler) or inspect.iscoroutinefunction(handler)))
+        self._handlers.append(
+            (handler, inspect.isawaitable(handler) or inspect.iscoroutinefunction(handler))
+        )
         return self
 
     def __isub__(self, handler: Callable[..., Any]) -> "ExecutorEvent":
-        self._handlers.remove((handler, inspect.isawaitable(handler) or inspect.iscoroutinefunction(handler)))
+        self._handlers.remove(
+            (handler, inspect.isawaitable(handler) or inspect.iscoroutinefunction(handler))
+        )
         return self
 
     def __len__(self) -> int:
@@ -79,12 +76,12 @@ class ExecutorEvent:
 
 
 def start_webhook(
-        client: QiwiWrapper,
-        *plugins: Pluggable,
-        webhook_config: WebhookConfig = WebhookConfig(),
-        on_startup: Optional[Callable[..., Any]] = None,
-        on_shutdown: Optional[Callable[..., Any]] = None,
-        loop: Optional[asyncio.AbstractEventLoop] = None
+    client: QiwiWrapper,
+    *plugins: Pluggable,
+    webhook_config: WebhookConfig = WebhookConfig(),
+    on_startup: Optional[Callable[..., Any]] = None,
+    on_shutdown: Optional[Callable[..., Any]] = None,
+    loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Blocking function that listens for webhooks.
@@ -100,19 +97,20 @@ def start_webhook(
          in the background
     :param loop:
     """
-    executor = WebhookExecutor(client, *plugins, on_shutdown=on_shutdown, on_startup=on_startup,
-                               loop=loop)
+    executor = WebhookExecutor(
+        client, *plugins, on_shutdown=on_shutdown, on_startup=on_startup, loop=loop
+    )
     executor.start_webhook(config=webhook_config)
 
 
 def start_polling(
-        client: QiwiWrapper,
-        *plugins: Pluggable,
-        skip_updates: bool = False,
-        timeout: float = DEFAULT_TIMEOUT,
-        on_startup: Optional[Callable[..., Any]] = None,
-        on_shutdown: Optional[Callable[..., Any]] = None,
-        loop: Optional[asyncio.AbstractEventLoop] = None
+    client: QiwiWrapper,
+    *plugins: Pluggable,
+    skip_updates: bool = False,
+    timeout: float = DEFAULT_TIMEOUT,
+    on_startup: Optional[Callable[..., Any]] = None,
+    on_shutdown: Optional[Callable[..., Any]] = None,
+    loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> None:
     """
     Setup for long-polling mode. Support only `glQiwiApi.types.Transaction` as event.
@@ -132,17 +130,26 @@ def start_polling(
     :param loop:
     """
     executor = PollingExecutor(
-        client, *plugins, timeout=timeout, skip_updates=skip_updates,
-        on_startup=on_startup, on_shutdown=on_shutdown, loop=loop
+        client,
+        *plugins,
+        timeout=timeout,
+        skip_updates=skip_updates,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        loop=loop,
     )
     executor.start_polling()
 
 
 class BaseExecutor(abc.ABC):
-    def __init__(self, client: QiwiWrapper, *plugins: Pluggable,
-                 loop: Optional[asyncio.AbstractEventLoop] = None,
-                 on_startup: Optional[Callable[..., Any]] = None,
-                 on_shutdown: Optional[Callable[..., Any]] = None) -> None:
+    def __init__(
+        self,
+        client: QiwiWrapper,
+        *plugins: Pluggable,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        on_startup: Optional[Callable[..., Any]] = None,
+        on_shutdown: Optional[Callable[..., Any]] = None,
+    ) -> None:
         if loop is not None:
             self._loop = loop  # pragma: no cover
         self._client = client
@@ -200,17 +207,18 @@ class BaseExecutor(abc.ABC):
 
 class PollingExecutor(BaseExecutor):
     def __init__(
-            self,
-            client: QiwiWrapper,
-            *plugins: Pluggable,
-            loop: Optional[asyncio.AbstractEventLoop] = None,
-            timeout: Union[float, int] = DEFAULT_TIMEOUT,
-            skip_updates: bool = False,
-            on_startup: Optional[Callable[..., Any]] = None,
-            on_shutdown: Optional[Callable[..., Any]] = None
+        self,
+        client: QiwiWrapper,
+        *plugins: Pluggable,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        timeout: Union[float, int] = DEFAULT_TIMEOUT,
+        skip_updates: bool = False,
+        on_startup: Optional[Callable[..., Any]] = None,
+        on_shutdown: Optional[Callable[..., Any]] = None,
     ) -> None:
-        super(PollingExecutor, self).__init__(client, *plugins, loop=loop, on_startup=on_startup,
-                                              on_shutdown=on_shutdown)
+        super(PollingExecutor, self).__init__(
+            client, *plugins, loop=loop, on_startup=on_startup, on_shutdown=on_shutdown
+        )
         self.offset: Optional[int] = None
         self.get_updates_from = datetime.now()
         self._timeout: Union[int, float] = _parse_timeout(timeout)
@@ -220,10 +228,7 @@ class PollingExecutor(BaseExecutor):
         try:
             self.loop.run_until_complete(self.welcome())
             asyncio.ensure_future(
-                asyncio.gather(
-                    self._install_plugins(),
-                    self._run_infinite_polling()
-                )
+                asyncio.gather(self._install_plugins(), self._run_infinite_polling())
             )
             adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
@@ -275,8 +280,7 @@ class PollingExecutor(BaseExecutor):
         which is what this method does.
         """
         history_from_last_to_first = await self._client.transactions(
-            start_date=self.get_updates_from,
-            end_date=datetime.now()
+            start_date=self.get_updates_from, end_date=datetime.now()
         )
         history_from_first_to_last = list(reversed(history_from_last_to_first))
         return history_from_first_to_last
@@ -297,25 +301,28 @@ class PollingExecutor(BaseExecutor):
 
 
 class WebhookExecutor(BaseExecutor):
-
     def __init__(
-            self,
-            client: QiwiWrapper,
-            *plugins: Pluggable,
-            on_startup: Optional[Callable[..., Any]] = None,
-            on_shutdown: Optional[Callable[..., Any]] = None,
-            loop: Optional[asyncio.AbstractEventLoop] = None
+        self,
+        client: QiwiWrapper,
+        *plugins: Pluggable,
+        on_startup: Optional[Callable[..., Any]] = None,
+        on_shutdown: Optional[Callable[..., Any]] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ):
-        super().__init__(client, *plugins, on_startup=on_startup, on_shutdown=on_shutdown, loop=loop)
+        super().__init__(
+            client, *plugins, on_startup=on_startup, on_shutdown=on_shutdown, loop=loop
+        )
         self._application = web.Application(loop=self.loop)
 
     def start_webhook(self, config: WebhookConfig) -> None:
-        supplemented_configuration = self.loop.run_until_complete(self._supplement_configuration(config))
+        supplemented_configuration = self.loop.run_until_complete(
+            self._supplement_configuration(config)
+        )
 
         self._application = configure_app(
             dispatcher=self._dispatcher,
             app=self._application,
-            webhook_config=supplemented_configuration
+            webhook_config=supplemented_configuration,
         )
 
         self.loop.create_task(self._install_plugins())
@@ -327,7 +334,7 @@ class WebhookExecutor(BaseExecutor):
                     host=supplemented_configuration.app.host,
                     port=supplemented_configuration.app.port,
                     ssl_context=supplemented_configuration.app.ssl_context,
-                    **supplemented_configuration.app.kwargs
+                    **supplemented_configuration.app.kwargs,
                 )
             )
             run_forever_safe(self.loop)
@@ -365,9 +372,9 @@ class WebhookExecutor(BaseExecutor):
                     host=config.hook_registration.host_or_ip_address,
                     port=config.app.port,
                     webhook_path=config.routes.standard_qiwi_hook_path[1:],
-                    https=config.app.ssl_context is not None
+                    https=config.app.ssl_context is not None,
                 ),
-                delete_old=True
+                delete_old=True,
             )
             config.encryption.base64_encryption_key = base64_encryption_key
 

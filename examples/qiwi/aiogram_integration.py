@@ -1,7 +1,6 @@
 import logging
 
-from aiogram import Bot, Dispatcher
-from aiogram import types
+from aiogram import Bot, Dispatcher, types
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi.plugins.telegram.polling import TelegramPollingPlugin

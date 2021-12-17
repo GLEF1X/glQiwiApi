@@ -1,13 +1,13 @@
 import io
 import pathlib
-from typing import Generator, Callable, Any
+from typing import Any, Callable, Generator
 
 import pytest
 from _pytest.fixtures import SubRequest
 from _pytest.tmpdir import TempdirFactory
 
 from glQiwiApi.types.arbitrary.file import File
-from glQiwiApi.types.arbitrary.inputs import PlainPathInput, PathlibPathInput, BinaryIOInput
+from glQiwiApi.types.arbitrary.inputs import BinaryIOInput, PathlibPathInput, PlainPathInput
 
 # spike for mypy
 lazy_fixture: Callable[..., Any] = pytest.lazy_fixture  # type: ignore  # noqa
@@ -49,18 +49,14 @@ def file(request: SubRequest) -> File:
         lazy_fixture("plain_path_input"),
         lazy_fixture("pathlib_input"),
     ],
-    indirect=True
+    indirect=True,
 )
 def test_get_filename(file: File, path_to_test_file: pathlib.Path) -> None:
     filename = file.get_filename()
     assert filename == path_to_test_file.name
 
 
-@pytest.mark.parametrize(
-    "file",
-    [lazy_fixture("binary_io_input")],
-    indirect=True
-)
+@pytest.mark.parametrize("file", [lazy_fixture("binary_io_input")], indirect=True)
 def test_fail_to_get_filename_cause_binary_input(file: File) -> None:
     with pytest.raises(TypeError):
         file.get_filename()
@@ -72,18 +68,14 @@ def test_fail_to_get_filename_cause_binary_input(file: File) -> None:
         lazy_fixture("plain_path_input"),
         lazy_fixture("pathlib_input"),
     ],
-    indirect=True
+    indirect=True,
 )
 def test_get_path(file: File) -> None:
     path = file.get_path()
     assert isinstance(path, str) is True
 
 
-@pytest.mark.parametrize(
-    "file",
-    [lazy_fixture("binary_io_input")],
-    indirect=True
-)
+@pytest.mark.parametrize("file", [lazy_fixture("binary_io_input")], indirect=True)
 def test_fail_to_get_path_cause_input_is_binary(file: File) -> None:
     with pytest.raises(TypeError):
         file.get_path()
@@ -94,9 +86,9 @@ def test_fail_to_get_path_cause_input_is_binary(file: File) -> None:
     [
         lazy_fixture("plain_path_input"),
         lazy_fixture("pathlib_input"),
-        lazy_fixture("binary_io_input")
+        lazy_fixture("binary_io_input"),
     ],
-    indirect=True
+    indirect=True,
 )
 def test_get_binary(file: File) -> None:
     stream = file.get_underlying_file_descriptor()
@@ -108,9 +100,9 @@ def test_get_binary(file: File) -> None:
     [
         lazy_fixture("plain_path_input"),
         lazy_fixture("pathlib_input"),
-        lazy_fixture("binary_io_input")
+        lazy_fixture("binary_io_input"),
     ],
-    indirect=True
+    indirect=True,
 )
 def test_save(file: File, path_to_test_file: pathlib.Path) -> None:
     file.save(path_to_test_file)
@@ -122,9 +114,9 @@ def test_save(file: File, path_to_test_file: pathlib.Path) -> None:
     [
         lazy_fixture("plain_path_input"),
         lazy_fixture("pathlib_input"),
-        lazy_fixture("binary_io_input")
+        lazy_fixture("binary_io_input"),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.asyncio
 async def test_asynchronously(file: File, path_to_test_file: pathlib.Path) -> None:

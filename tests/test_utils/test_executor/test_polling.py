@@ -1,12 +1,11 @@
 import asyncio
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 import pytest
 import timeout_decorator
 
-from glQiwiApi import QiwiWrapper
-from glQiwiApi import types
+from glQiwiApi import QiwiWrapper, types
 from glQiwiApi.core.dispatcher.implementation import Dispatcher, Event
 from glQiwiApi.types import Transaction
 from glQiwiApi.types.qiwi.transaction import Source, TransactionType
@@ -17,7 +16,6 @@ pytestmark = pytest.mark.asyncio
 
 
 class StubDispatcher(Dispatcher):
-
     def __init__(self, fake_event: Event) -> None:
         super().__init__()
         self._fake_event = fake_event
@@ -27,7 +25,6 @@ class StubDispatcher(Dispatcher):
 
 
 class StubQiwiWrapper(QiwiWrapper):
-
     def __init__(self, fake_event: Transaction, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._fake_transaction = fake_event
@@ -37,12 +34,12 @@ class StubQiwiWrapper(QiwiWrapper):
         return object().__new__(cls)
 
     async def transactions(
-            self,
-            rows: int = 50,
-            operation: TransactionType = TransactionType.ALL,
-            sources: Optional[List[Source]] = None,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
+        self,
+        rows: int = 50,
+        operation: TransactionType = TransactionType.ALL,
+        sources: Optional[List[Source]] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> List[Transaction]:
         return [self._fake_transaction]
 

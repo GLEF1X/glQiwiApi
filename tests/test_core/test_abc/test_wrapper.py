@@ -1,8 +1,7 @@
-from glQiwiApi.core import Wrapper, RequestService
+from glQiwiApi.core import RequestService, Wrapper
 
 
 class _SomeWrapper(Wrapper):
-
     def __init__(self, request_service: RequestService):
         self._request_service = request_service
 

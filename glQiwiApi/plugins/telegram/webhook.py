@@ -34,14 +34,14 @@ class TelegramWebhookPlugin(Pluggable):
     """
 
     def __init__(
-            self,
-            dispatcher: Dispatcher,
-            host: str,
-            path: str = DEFAULT_TELEGRAM_WEBHOOK_PATH,
-            prefix: str = DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX,
-            route_name: str = DEFAULT_TELEGRAM_WEBHOOK_ROUTE_NAME,
-            app_config: ApplicationConfig = ApplicationConfig(),
-            **kwargs: t.Any
+        self,
+        dispatcher: Dispatcher,
+        host: str,
+        path: str = DEFAULT_TELEGRAM_WEBHOOK_PATH,
+        prefix: str = DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX,
+        route_name: str = DEFAULT_TELEGRAM_WEBHOOK_ROUTE_NAME,
+        app_config: ApplicationConfig = ApplicationConfig(),
+        **kwargs: t.Any,
     ) -> None:
         """
 
@@ -58,9 +58,7 @@ class TelegramWebhookPlugin(Pluggable):
 
         self._app = web.Application()
         self._app_config = app_config
-        self._app.router.add_route(
-            "*", self._path, WebhookRequestHandler, name=route_name
-        )
+        self._app.router.add_route("*", self._path, WebhookRequestHandler, name=route_name)
         self._app["BOT_DISPATCHER"] = self._dispatcher
         self._set_webhook_kwargs = kwargs
 
@@ -81,7 +79,7 @@ class TelegramWebhookPlugin(Pluggable):
             self._app,
             host=self._app_config.host,
             port=self._app_config.port,
-            ssl_context=self._app_config.ssl_certificate.as_ssl_context()  # type: ignore
+            ssl_context=self._app_config.ssl_certificate.as_ssl_context(),  # type: ignore
         )
 
     async def _set_telegram_webhook(self, ctx: t.Dict[t.Any, t.Any]) -> None:
@@ -94,7 +92,7 @@ class TelegramWebhookPlugin(Pluggable):
         await self._dispatcher.bot.set_webhook(
             url=url,
             certificate=self._app_config.ssl_certificate.as_input_file(),  # type: ignore
-            **self._set_webhook_kwargs
+            **self._set_webhook_kwargs,
         )
 
     async def shutdown(self) -> None:

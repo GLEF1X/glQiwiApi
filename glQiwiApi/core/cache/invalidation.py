@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import time
-from typing import Any, Union, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from glQiwiApi.core.cache.cached_types import CachedAPIRequest, Payload
 from glQiwiApi.core.cache.constants import ADD_TIME_PLACEHOLDER
@@ -15,7 +15,6 @@ INFINITE = float("inf")
 
 
 class CacheInvalidationStrategy(abc.ABC):
-
     @abc.abstractmethod
     def process_update(self, **kwargs: Any) -> None:
         pass
@@ -36,7 +35,6 @@ class CacheInvalidationStrategy(abc.ABC):
 
 
 class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
-
     def process_update(self, **kwargs: Any) -> None:
         pass
 
@@ -49,7 +47,6 @@ class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
 
 
 class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
-
     def __init__(self, cache_time_in_seconds: Union[float, int] = INFINITE):
         self._cache_time = cache_time_in_seconds
 
@@ -97,9 +94,9 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
             if not isinstance(value, CachedAPIRequest):
                 continue
             if (
-                    value.method == "GET"
-                    and value.payload.headers == item.headers  # noqa: W503
-                    and value.payload.params == item.params  # noqa: W503
+                value.method == "GET"
+                and value.payload.headers == item.headers  # noqa: W503
+                and value.payload.params == item.params  # noqa: W503
             ):
                 return True
             else:

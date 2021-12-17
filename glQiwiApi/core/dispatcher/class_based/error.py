@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 from typing import Any
 
-from .base import Handler, ClientMixin
+from .base import ClientMixin, Handler
 
 
 class ExceptionHandler(Handler[Exception], ClientMixin[Exception], abc.ABC):
