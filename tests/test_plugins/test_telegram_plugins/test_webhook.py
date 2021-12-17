@@ -22,6 +22,7 @@ def self_signed_certificate(tmpdir: py.path.local) -> SSLCertificate:
     )
 
 
+@pytest.mark.skipif("sys.version_info <= (3, 8)")
 async def test_webhook_plugin_install(
     mocker: MockerFixture, self_signed_certificate: SSLCertificate
 ):

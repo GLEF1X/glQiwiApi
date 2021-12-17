@@ -1,9 +1,11 @@
+import pytest
 from aiogram import Bot, Dispatcher
 from pytest_mock import MockerFixture
 
 from glQiwiApi.plugins.telegram.polling import TelegramPollingPlugin
 
 
+@pytest.mark.skipif("sys.version_info <= (3, 8)")
 async def test_install_telegram_polling_plugin(mocker: MockerFixture):
     dispatcher = Dispatcher(Bot(token="231:23dfgd", validate_token=False))
     start_polling_mock_method = mocker.AsyncMock(spec=dispatcher.start_polling)
