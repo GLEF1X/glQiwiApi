@@ -5,9 +5,14 @@ import io
 import os
 import pathlib
 from types import TracebackType
-from typing import Generic, BinaryIO, Type, TypeVar, Any, Optional, get_args
+from typing import Generic, BinaryIO, Type, TypeVar, Any, Optional
 
 InputType = TypeVar("InputType")
+
+try:
+    from typing import get_args
+except ImportError:
+    from typing_extensions import get_args
 
 __all__ = ('AbstractInput', 'PlainPathInput', 'PathlibPathInput', 'BinaryIOInput')
 
