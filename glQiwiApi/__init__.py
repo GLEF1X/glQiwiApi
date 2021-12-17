@@ -9,7 +9,7 @@ from .core import (
     execute_async_as_sync,
 )
 from .qiwi import QiwiWrapper, QiwiMaps
-from .types.exceptions import WebhookSignatureUnverified
+from .types.exceptions import WebhookSignatureUnverifiedError
 from .utils.exceptions import (
     InvalidPayload,
     CantParseUrl,
@@ -44,7 +44,7 @@ __all__ = (
     "InvalidPayload",
     "CantParseUrl",
     "APIError",
-    "WebhookSignatureUnverified",
+    "WebhookSignatureUnverifiedError",
     "ChequeIsNotAvailable",
     # other
     "__version__",

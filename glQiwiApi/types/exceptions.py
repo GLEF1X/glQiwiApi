@@ -1,2 +1,2 @@
-class WebhookSignatureUnverified(Exception):
+class WebhookSignatureUnverifiedError(Exception):
     pass

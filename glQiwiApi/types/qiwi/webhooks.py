@@ -9,7 +9,7 @@ from pydantic import Field, root_validator
 
 from glQiwiApi.types.amount import HashableSum
 from glQiwiApi.types.base import Base, HashableBase
-from glQiwiApi.types.exceptions import WebhookSignatureUnverified
+from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
 
 class WebhookPayment(HashableBase):
@@ -48,14 +48,14 @@ class TransactionWebhook(HashableBase):
 
     def verify_signature(self, webhook_base64_key: str) -> None:
         if self.signature is None:
-            raise WebhookSignatureUnverified("Signature attribute is None")
+            raise WebhookSignatureUnverifiedError("Signature attribute is None")
 
         webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
         generated_hash = hmac.new(
             webhook_key, self.signature.encode("utf-8"), hashlib.sha256
         ).hexdigest()
         if generated_hash != self.hash:
-            raise WebhookSignatureUnverified()
+            raise WebhookSignatureUnverifiedError()
 
     @root_validator(pre=True)
     def _webhook_signature_collector(cls, values: Dict[Any, Any]) -> Dict[Any, Any]:

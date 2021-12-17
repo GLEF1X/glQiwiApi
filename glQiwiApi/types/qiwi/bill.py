@@ -9,7 +9,7 @@ from pydantic import Field, Extra
 
 from glQiwiApi.types.amount import PlainAmount, HashableOptionalSum
 from glQiwiApi.types.base import Base, HashableBase
-from glQiwiApi.types.exceptions import WebhookSignatureUnverified
+from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
 
 class Customer(HashableBase):
@@ -105,7 +105,7 @@ class BillWebhook(HashableBase):
         ).hexdigest()
 
         if generated_signature != sha256_signature:
-            raise WebhookSignatureUnverified()
+            raise WebhookSignatureUnverifiedError()
 
 
 class P2PKeys(Base):

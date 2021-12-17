@@ -25,7 +25,7 @@ class allow_response_code:  # NOQA
     def __call__(self, func: glQiwiApi.core.synchronous.adapter.N) -> glQiwiApi.core.synchronous.adapter.N: ...
 
 
-class override_error_messages:  # NOQA
+class override_error_message:  # NOQA
     status_codes: Dict[int, Dict[str, str]]
 
     def __init__(self, status_codes: Dict[int, Dict[str, str]]): ...

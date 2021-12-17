@@ -5,7 +5,7 @@ from aiohttp import web
 from glQiwiApi import types
 from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
 from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
-from glQiwiApi.types.exceptions import WebhookSignatureUnverified
+from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
 logger = logging.getLogger("glQiwiApi.webhooks.transaction")
 
@@ -19,7 +19,7 @@ class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
 
         try:
             update.verify_signature(self._encryption_key)
-        except WebhookSignatureUnverified:
+        except WebhookSignatureUnverifiedError:
             logger.debug(
                 "Request has being blocked due to invalid signature of json request payload."
             )

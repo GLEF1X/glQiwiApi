@@ -11,16 +11,16 @@ from typing import cast, TYPE_CHECKING, Optional, Iterable, Any, List, Union
 
 if TYPE_CHECKING:
     try:
-        from cryptography import x509  # NOQA
-        from cryptography.hazmat.primitives.asymmetric.rsa import (
+        from cryptography import x509  # NOQA  # pragma: no cover
+        from cryptography.hazmat.primitives.asymmetric.rsa import (  # pragma: no cover
             RSAPrivateKeyWithSerialization,  # NOQA
         )  # NOQA
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
 
 try:
     from aiogram.types import InputFile  # NOQA
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 
@@ -63,11 +63,13 @@ def get_or_generate_self_signed_certificate(hostname: str,  # your host machine 
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric import rsa
-    except ImportError:
-        raise ImportError("You need to install cryptography package for generating self-signed cert")
+    except ImportError:  # pragma: no cover
+        raise ImportError(  # pragma: no cover
+            "You need to install cryptography package for generating self-signed cert"
+        )
 
     if pathlib.Path(cert_path).is_file() and pathlib.Path(pkey_path).is_file():
-        return SSLCertificate(_cert_path=cert_path, _pkey_path=pkey_path)
+        return SSLCertificate(_cert_path=cert_path, _pkey_path=pkey_path)  # pragma: no cover
 
     # Generate our key
     if rsa_private_key is None:

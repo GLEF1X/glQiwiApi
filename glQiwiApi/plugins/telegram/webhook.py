@@ -15,6 +15,13 @@ if t.TYPE_CHECKING:
 ListOfRoutes = t.List[web.ResourceRoute]
 SubApps = t.List[t.Tuple[str, web.Application, ListOfRoutes]]
 
+DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX = "/tg/webhooks"
+DEFAULT_TELEGRAM_WEBHOOK_PATH = "/bot/{token}"
+DEFAULT_TELEGRAM_WEBHOOK_ROUTE_NAME = "webhook_handler"
+
+# This one was created only for testing purposes
+run_app = _run_app
+
 
 class SSLCertificateIsMissingError(Exception):
     pass
@@ -30,9 +37,9 @@ class TelegramWebhookPlugin(Pluggable):
             self,
             dispatcher: Dispatcher,
             host: str,
-            path: str = "/bot/{token}",
-            prefix: str = "/tg/webhooks",
-            route_name: str = "webhook_handler",
+            path: str = DEFAULT_TELEGRAM_WEBHOOK_PATH,
+            prefix: str = DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX,
+            route_name: str = DEFAULT_TELEGRAM_WEBHOOK_ROUTE_NAME,
             app_config: ApplicationConfig = ApplicationConfig(),
             **kwargs: t.Any
     ) -> None:
@@ -70,7 +77,7 @@ class TelegramWebhookPlugin(Pluggable):
         :param ctx: keyword arguments, which contains application and host
         """
         await self._set_telegram_webhook(ctx)
-        await _run_app(
+        await run_app(
             self._app,
             host=self._app_config.host,
             port=self._app_config.port,
@@ -80,7 +87,7 @@ class TelegramWebhookPlugin(Pluggable):
     async def _set_telegram_webhook(self, ctx: t.Dict[t.Any, t.Any]) -> None:
         """
         You can override this method to correctly setup webhooks with aiogram
-        API method `_set_telegram_webhook` like this: self.dispatcher.bot._set_telegram_webhook()
+        self.dispatcher.bot.set_webhook(...)
 
         """
         url = self._host + self._path

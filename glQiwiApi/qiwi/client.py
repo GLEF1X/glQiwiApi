@@ -63,7 +63,7 @@ from glQiwiApi.types import (
 )
 from glQiwiApi.types.amount import CurrencyModel
 from glQiwiApi.types.arbitrary.file import File
-from glQiwiApi.types.arbitrary.inputs import BinaryIOInput
+from glQiwiApi.types.arbitrary.inputs import BinaryIOInput, get_autodetected_input
 from glQiwiApi.types.errors import QiwiErrorAnswer
 from glQiwiApi.types.qiwi.transaction import Source
 from glQiwiApi.utils.compat import Final
@@ -72,7 +72,7 @@ from glQiwiApi.utils.dates_conversion import \
 from glQiwiApi.utils.exceptions import APIError, InvalidPayload, \
     ChequeIsNotAvailable
 from glQiwiApi.utils.helper import allow_response_code, \
-    override_error_messages, require
+    override_error_message, require
 from glQiwiApi.utils.payload import (
     make_payload,
     format_dates,
@@ -329,7 +329,7 @@ class QiwiWrapper(
 
         return webhook, key
 
-    @override_error_messages(
+    @override_error_message(
         {
             404: {
                 "message": "Wrong card number entered, possibly"
@@ -615,7 +615,7 @@ class QiwiWrapper(
             data=filter_none(payload),
         )
 
-    @override_error_messages(
+    @override_error_message(
         {
             422: {
                 "message": "It is impossible to receive a check due to the fact that "

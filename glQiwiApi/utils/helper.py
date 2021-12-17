@@ -67,7 +67,7 @@ class allow_response_code:  # NOQA
         return wrapper
 
 
-class override_error_messages:  # NOQA
+class override_error_message:  # NOQA
     def __init__(self, status_codes) -> None:
         self.status_codes = status_codes
 
