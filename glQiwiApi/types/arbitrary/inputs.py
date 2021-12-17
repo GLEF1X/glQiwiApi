@@ -9,11 +9,6 @@ from typing import Generic, BinaryIO, Type, TypeVar, Any, Optional
 
 InputType = TypeVar("InputType")
 
-try:
-    from typing import get_args
-except ImportError:
-    from typing_extensions import get_args
-
 __all__ = ('AbstractInput', 'PlainPathInput', 'PathlibPathInput', 'BinaryIOInput')
 
 
@@ -89,12 +84,3 @@ class BinaryIOInput(AbstractInput[BinaryIO]):
     @classmethod
     def from_bytes(cls: Type[BinaryIOInput], b: bytes) -> BinaryIOInput:
         return cls(input_=io.BytesIO(b))
-
-
-def get_autodetected_input(input_: Any) -> AbstractInput[Any]:
-    input_subclasses = AbstractInput.__subclasses__()
-    for subclass in input_subclasses:
-        if isinstance(input_, get_args(subclass.__orig_bases__[0])):  # type: ignore
-            return subclass(input_)  # type: ignore
-
-    raise
