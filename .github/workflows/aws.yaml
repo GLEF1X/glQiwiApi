@@ -16,6 +16,10 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ./referrer/proxy
+
     steps:
       - name: checkout repository
         uses: actions/checkout@master
@@ -23,11 +27,10 @@ jobs:
           lfs: 'true'
 
       - name: Build docker images
-        working-directory: ./referrer/proxy
         run: docker-compose build --parallel
 
       - name: Generate Deployment Package
-        run: zip -r deploy.zip *
+        run: zip -r deploy.zip * -x '*.git*'
 
       - name: Get timestamp
         uses: gerred/actions/current-time@master
@@ -51,4 +54,4 @@ jobs:
           environment_name: QiwiProxyRefferer-env
           version_label: "QiwiProxyRefferer-${{ steps.format-time.outputs.replaced }}"
           region: ${{ secrets.AWS_REGION }}
-          deployment_package: deploy.zip
+          deployment_package: ./referrer/proxy/deploy.zip
