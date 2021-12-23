@@ -81,6 +81,6 @@ async def test_check_transaction(api: YooMoneyAPI, payload: dict):
 @pytest.mark.skip("")
 async def test_send_and_check_txn(api: YooMoneyAPI):
     payload = {"amount": 2, "comment": "unit_test"}
-    await api.send(to_account="4100116633099701", **payload)
+    await api.transfer_money(to_account="4100116633099701", **payload)
     answer = await api.check_transaction(**payload, operation_type="out")
     assert answer is True

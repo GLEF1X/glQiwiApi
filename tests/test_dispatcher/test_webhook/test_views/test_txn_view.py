@@ -74,7 +74,7 @@ class TestTxnWebhookView:
 
         txn = types.TransactionWebhook.parse_raw(test_data.transaction_webhook_json)
 
-        # Copy transaction to update hash to fake and test that service will send unsuccessfull response
+        # Copy transaction to update hash to fake and test that service will transfer_money unsuccessfull response
         fake_transaction = txn.copy(
             update={
                 "hash": "fake hash",

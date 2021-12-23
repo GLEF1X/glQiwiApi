@@ -7,7 +7,7 @@ from glQiwiApi.core import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin
 from glQiwiApi.core.session.holder import AbstractSessionHolder
-from glQiwiApi.utils.payload import filter_none, parse_iterable_to_list_of_objects
+from glQiwiApi.utils.payload import filter_dictionary_none_values, parse_iterable_to_list_of_objects
 
 
 class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
@@ -60,7 +60,7 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = filter_none(
+        params = filter_dictionary_none_values(
             {
                 **polygon.dict,
                 "zoom": zoom,

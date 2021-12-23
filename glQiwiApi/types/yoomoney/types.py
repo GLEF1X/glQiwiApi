@@ -102,15 +102,6 @@ class OperationType(Enum):
     TRANSFERS = "incoming-transfers-unaccepted"
     """непринятые входящие P2P-переводы любого типа."""
 
-    @classmethod
-    def from_input(cls, op_type: str) -> OperationType:
-        if op_type.lower() == "in":
-            return cls.DEPOSITION
-        elif op_type.lower() == "out":
-            return cls.PAYMENT
-        else:
-            return cls.TRANSFERS
-
 
 class DigitalGoods(BaseModel):
     """
@@ -173,7 +164,7 @@ class Operation(BaseModel):
     label: Optional[str] = None
     """Метка платежа.
      Присутствует для входящих и исходящих переводов другим пользователям
-     у которых был указан параметр label вызова send()
+     у которых был указан параметр label вызова transfer_money()
      """
 
     pattern_id: Optional[str] = None
@@ -247,7 +238,7 @@ class OperationDetails(BaseModel):
     """
     Дата и время приема или отмены перевода, защищенного кодом протекции.
     Присутствует для входящих и исходящих переводов, защищенных кодом протекции
-    если при вызове send вы указали protect=True при передаче аргументов.
+    если при вызове transfer_money вы указали protect=True при передаче аргументов.
     Если перевод еще не принят или не отвергнут получателем, поле отсутствует.
     """
 
@@ -256,7 +247,7 @@ class OperationDetails(BaseModel):
     Дата и время истечения срока действия кода протекции.
     Присутствует для входящих и исходящих переводов (от/другим) пользователям,
     защищенных кодом протекции,
-    если при вызове send вы указали protect=True при передаче аргументов.
+    если при вызове transfer_money вы указали protect=True при передаче аргументов.
     """
 
     protection_code: Optional[str] = None
@@ -386,7 +377,7 @@ class PreProcessPaymentResponse(BaseModel):
     Объект, который вы получаете при вызове _pre_process_payment.
     При вызове данного метода вы не списываете деньги со своего счёта,
     а условно подготавливаете его к отправке.
-    Для отправки денег на счёт используйте метод send()
+    Для отправки денег на счёт используйте метод transfer_money()
     """
 
     status: str
@@ -430,7 +421,7 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
     payment_id: str
     """
     Идентификатор проведенного платежа.
-    Присутствует только при успешном выполнении метода send().
+    Присутствует только при успешном выполнении метода transfer_money().
     """
 
     credit_amount: Optional[float] = None
@@ -498,7 +489,7 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
     protection_code: Optional[str] = None
     """
     Код протекции, который был сгенерирован,
-    если при вызове метода апи send вы указали protect=True
+    если при вызове метода апи transfer_money вы указали protect=True
     при передаче аргументов
     """
 

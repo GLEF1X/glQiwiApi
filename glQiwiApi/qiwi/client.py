@@ -58,7 +58,7 @@ from glQiwiApi.utils.helper import allow_response_code, override_error_message, 
 from glQiwiApi.utils.payload import (
     check_dates_for_statistic_request,
     check_transaction,
-    filter_none,
+    filter_dictionary_none_values,
     format_dates,
     get_new_card_data,
     get_qiwi_master_data,
@@ -277,7 +277,7 @@ class QiwiWrapper(
 
         :param url: service url
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
-        :param send_test_notification:  test_qiwi will send
+        :param send_test_notification:  test_qiwi will transfer_money
          you test webhook update
         :param delete_old: boolean, if True - delete old webhook
 
@@ -523,10 +523,10 @@ class QiwiWrapper(
         snils: Optional[str] = None,
     ) -> Dict[Any, Any]:
         """
-        This request allows you to send data to identify your QIWI wallet.
+        This request allows you to transfer_money data to identify your QIWI wallet.
         It is allowed to identify no more than 5 wallets per owner
 
-        To identify the wallet, you must send your full name, passport series number and date of birth.
+        To identify the wallet, you must transfer_money your full name, passport series number and date of birth.
         If the data has been verified, then the response will display
         your TIN and simplified wallet identification will be installed.
         If the data has not been verified,
@@ -559,7 +559,7 @@ class QiwiWrapper(
             self._router,
             stripped_number=self._phone_number,
             headers=headers,
-            data=filter_none(payload),
+            data=filter_dictionary_none_values(payload),
         )
 
     @override_error_message(
@@ -713,7 +713,7 @@ class QiwiWrapper(
         )
         return parse_iterable_to_list_of_objects(iterable=response, model=Balance)
 
-    @allow_response_code(status_code=204)
+    @allow_response_code(204)
     async def set_default_balance(self, currency_alias: str) -> Dict[Any, Any]:
         """
         The request sets up an account for your QIWI Wallet, whose balance will be used for funding

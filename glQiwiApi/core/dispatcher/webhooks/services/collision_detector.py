@@ -24,7 +24,7 @@ def _is_object_unhashable(obj: Any) -> bool:
 
 class AbstractCollisionDetector(abc.ABC, Generic[T]):
     """
-    QIWI API can send the same update twice or more, so we need to avoid this problem anyway.
+    QIWI API can transfer_money the same update twice or more, so we need to avoid this problem anyway.
     Also, you can override it with redis usage or more advanced hashing.
     """
 

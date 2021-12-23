@@ -24,7 +24,7 @@ async def main():
         # Getting balance
         print(await w.get_balance())
 
-        payment = await w.send(to_account="Some_account", amount=2, comment="i love glQiwiApi")
+        payment = await w.transfer_money(to_account="Some_account", amount=2, comment="i love glQiwiApi")
         print(payment)
         # Revoke the API token
         await w.revoke_api_token()

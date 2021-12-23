@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  backend:
+    container_name: refferer-gasket
+    restart: always
+    build:
+      context: .
+      dockerfile: python-deploy/Dockerfile
+    environment:
+      GUNICORN_WORKERS: 1  # you can increment it if the throughput is poor for your use case
+    expose:
+      - "5000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+        cache-disabled: "false"
+    privileged: false
+
+  nginx:
+    container_name: nginx
+    build:
+      context: nginx-delpoy
+      dockerfile: Dockerfile
+    environment:
+      DOMAIN_NAME_OR_IP: ${DOMAIN_NAME_OR_IP:-proxy} # "proxy" by default if env variable is unset or empty
+      UID: 2000
+      GID: 2000
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: on-failure
+    depends_on:
+      - backend
+    stop_signal: SIGQUIT

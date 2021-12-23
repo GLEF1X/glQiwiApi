@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import base64
 import hashlib
 import hmac
-import warnings
 from datetime import datetime
 from typing import Any, Dict, Optional, Union
 
@@ -48,27 +49,29 @@ class BillError(HashableBase):
 class Bill(HashableBase):
     """Object: Bill"""
 
-    site_id: str = Field(..., alias="siteId")
-    bill_id: str = Field(..., alias="billId")
     amount: HashableOptionalSum
     status: BillStatus
-    creation_date_time: Optional[datetime] = Field(None, alias="creationDateTime")
-    expiration_date_time: Optional[datetime] = Field(None, alias="expirationDateTime")
-    pay_url: Optional[str] = Field(None, alias="payUrl")
-    custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
+    site_id: str = Field(..., alias="siteId")
+    bill_id: str = Field(..., alias="billId")
+    pay_url: str = Field(..., alias="payUrl")
+    creation_date_time: datetime = Field(..., alias="creationDateTime")
+    expiration_date_time: datetime = Field(..., alias="expirationDateTime")
+    custom_fields: CustomFields = Field(None, alias="customFields")
     customer: Optional[Customer] = None
-    workaround_url: Optional[str] = None
+
+    @property
+    def invoice_uid(self) -> str:
+        return self.pay_url[-36:]
 
     class Config:
         extra = Extra.allow
         allow_mutation = True
 
     async def check(self) -> bool:
-        """Checking p2p payment status"""
         return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
 
-    async def reject(self) -> None:
-        await self.client.reject_p2p_bill(bill_id=self.bill_id)
+    async def reject(self) -> Bill:
+        return await self.client.reject_p2p_bill(bill_id=self.bill_id)
 
 
 class RefundBill(Base):

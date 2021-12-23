@@ -17,7 +17,7 @@ class YooMoneyRouter(AbstractRouter):
     def setup_config(self) -> YooMoneyConfig:
         return YooMoneyConfig()
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=1024)
     def build_url(self, tail: str, **kwargs: Any) -> str:
         pre_build_url = self.__head__ + tail
         return super()._format_url_kwargs(pre_build_url, **kwargs)
