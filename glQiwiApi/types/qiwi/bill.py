@@ -53,11 +53,11 @@ class Bill(HashableBase):
     status: BillStatus
     site_id: str = Field(..., alias="siteId")
     bill_id: str = Field(..., alias="billId")
-    pay_url: str = Field(..., alias="payUrl")
     creation_date_time: datetime = Field(..., alias="creationDateTime")
     expiration_date_time: datetime = Field(..., alias="expirationDateTime")
-    custom_fields: CustomFields = Field(None, alias="customFields")
+    pay_url: str = Field(..., alias="payUrl")
     customer: Optional[Customer] = None
+    custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
 
     @property
     def invoice_uid(self) -> str:
@@ -89,11 +89,15 @@ class RefundBill(Base):
         return self.amount.value
 
 
+class BillWebhookPayload(Bill):
+    pay_url: None = Field(None, exclude=True)  # type: ignore
+
+
 class BillWebhook(HashableBase):
     """Object: BillWebhook"""
 
     version: str = Field(..., alias="version")
-    bill: Bill = Field(..., alias="bill")
+    bill: BillWebhookPayload = Field(..., alias="bill")
 
     def __repr__(self) -> str:
         return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "

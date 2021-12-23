@@ -36,7 +36,7 @@ class YooMoneyConfig:
             403: "An operation has been requested for which the token has no rights",
             0: "Proxy error or unexpected server errors",
         }
-        self.content_and_auth = {"content_json": True, "auth": True}
+        self.content_and_auth = {"is_content_json": True, "auth": True}
 
 
 class YooMoneyMethods:

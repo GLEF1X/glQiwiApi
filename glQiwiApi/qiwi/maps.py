@@ -7,7 +7,10 @@ from glQiwiApi.core import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin
 from glQiwiApi.core.session.holder import AbstractSessionHolder
-from glQiwiApi.utils.payload import filter_dictionary_none_values, parse_iterable_to_list_of_objects
+from glQiwiApi.utils.payload import (
+    filter_dictionary_none_values,
+    parse_iterable_to_list_of_objects,
+)
 
 
 class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):

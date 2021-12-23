@@ -58,10 +58,10 @@ def make_payload(**kwargs: Any) -> Dict[Any, Any]:
 
 
 def get_decoded_result(
-        error_messages: Dict[int, str],
-        status_code: int,
-        request_info: RequestInfo,
-        body: str,
+    error_messages: Dict[int, str],
+    status_code: int,
+    request_info: RequestInfo,
+    body: str,
 ) -> Dict[Any, Any]:
     """
     Checks whether `result` is a valid API response.
@@ -105,9 +105,9 @@ def parse_auth_link(response_data: str) -> str:
 
 
 def format_dates(
-        start_date: Optional[datetime],
-        end_date: Optional[datetime],
-        payload_data: Dict[Any, Any],
+    start_date: Optional[datetime],
+    end_date: Optional[datetime],
+    payload_data: Dict[Any, Any],
 ) -> Dict[Any, Any]:
     """Check correctness of transferred dates and add it to request"""
     if isinstance(start_date, datetime) and isinstance(end_date, datetime):
@@ -127,10 +127,10 @@ FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 
 def parse_commission_request_payload(
-        default_data: types.WrappedRequestPayload,
-        auth_maker: FuncT,
-        pay_sum: Union[int, float],
-        to_account: str,
+    default_data: types.WrappedRequestPayload,
+    auth_maker: FuncT,
+    pay_sum: Union[int, float],
+    to_account: str,
 ) -> Tuple[types.WrappedRequestPayload, Union[str, None]]:
     """Set calc_commission payload"""
     payload = deepcopy(default_data)
@@ -141,10 +141,10 @@ def parse_commission_request_payload(
 
 
 def retrieve_card_data(
-        default_data: types.WrappedRequestPayload,
-        trans_sum: Union[int, float, str],
-        to_card: str,
-        auth_maker: FuncT,
+    default_data: types.WrappedRequestPayload,
+    trans_sum: Union[int, float, str],
+    to_card: str,
+    auth_maker: FuncT,
 ) -> types.WrappedRequestPayload:
     """Set card data payload"""
     data = deepcopy(default_data)
@@ -155,7 +155,7 @@ def retrieve_card_data(
 
 
 def retrieve_base_headers_for_yoomoney(
-        is_content_json: bool = False, auth: bool = False
+    is_content_json: bool = False, auth: bool = False
 ) -> Dict[Any, Any]:
     headers = {
         "Host": "yoomoney.ru",
@@ -169,11 +169,11 @@ def retrieve_base_headers_for_yoomoney(
 
 
 def set_data_to_wallet(
-        data: types.WrappedRequestPayload,
-        to_number: str,
-        trans_sum: Union[str, int, float],
-        comment: Optional[str] = None,
-        currency: str = "643",
+    data: types.WrappedRequestPayload,
+    to_number: str,
+    trans_sum: Union[str, int, float],
+    comment: Optional[str] = None,
+    currency: str = "643",
 ) -> types.WrappedRequestPayload:
     data.json["sum"]["amount"] = str(trans_sum)
     data.json["sum"]["currency"] = currency
@@ -185,12 +185,12 @@ def set_data_to_wallet(
 
 
 def patch_p2p_create_payload(
-        wrapped_data: types.WrappedRequestPayload,
-        amount: Union[str, int, float],
-        life_time: str,
-        comment: Optional[str] = None,
-        theme_code: Optional[str] = None,
-        pay_source_filter: Optional[List[str]] = None,
+    wrapped_data: types.WrappedRequestPayload,
+    amount: Union[str, int, float],
+    life_time: str,
+    comment: Optional[str] = None,
+    theme_code: Optional[str] = None,
+    pay_source_filter: Optional[List[str]] = None,
 ) -> Dict[MutableMapping[Any, Any], Any]:
     """Setting data for p2p form creation transfer"""
     wrapped_data.json["amount"]["value"] = str(amount)
@@ -234,12 +234,29 @@ def get_new_card_data(ph_number: str, order_id: str, data: Dict[Any, Any]) -> Di
     return payload
 
 
+def parse_amount(txn_type: str, txn: types.OperationDetails) -> Tuple[Union[int, float], str]:
+    transaction_type_in_lower = types.OperationType.DEPOSITION.value.lower()  # type: str
+    if txn_type == transaction_type_in_lower:
+        return txn.amount, txn.comment  # type: ignore
+    else:
+        return txn.amount_due, txn.message  # type: ignore
+
+
+def check_params(
+    amount_: Union[int, float],
+    amount: Union[int, float],
+    txn: types.OperationDetails,
+    transaction_type: str,
+) -> bool:
+    return amount is not None and amount <= amount_ and txn.direction == transaction_type
+
+
 def check_transaction(
-        transactions: List[types.Transaction],
-        amount: Union[int, float],
-        transaction_type: types.TransactionType = types.TransactionType.IN,
-        sender: Optional[str] = None,
-        comment: Optional[str] = None,
+    transactions: List[types.Transaction],
+    amount: Union[int, float],
+    transaction_type: types.TransactionType = types.TransactionType.IN,
+    sender: Optional[str] = None,
+    comment: Optional[str] = None,
 ) -> bool:
     for txn in transactions:
         if txn.sum.amount < amount or txn.type != transaction_type.value:
@@ -276,12 +293,14 @@ def check_api_method(api_method: str) -> None:
 
 
 def format_transactions_payload(
-        data: Dict[Any, Any],
-        records: int,
-        operation_types: Optional[Iterable[types.OperationType]] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        start_record: Optional[int] = None,
+    data: Dict[Any, Any],
+    records: int,
+    operation_types: Optional[
+        Union[List[types.OperationType], Tuple[types.OperationType, ...]]
+    ] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    start_record: Optional[int] = None,
 ) -> Dict[Any, Any]:
     from glQiwiApi import InvalidPayload
 
@@ -292,7 +311,7 @@ def format_transactions_payload(
             "be in the range from 1 to 100 inclusive"
         )
     if operation_types and all(
-            isinstance(operation_type, types.OperationType) for operation_type in operation_types
+        isinstance(operation_type, types.OperationType) for operation_type in operation_types
     ):
         op_types = [operation_type.value for operation_type in operation_types]
         data.update({"type": " ".join(op_types)})
