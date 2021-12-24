@@ -1,19 +1,14 @@
 name: CI-CD Pipeline to AWS
 
 on:
-  workflow_run:
-    types:
-      - completed
-    workflows:
-      - "CI"
-    branches:
-      - "dev-1.x"
+  push:
+    branches: [ dev-1.x ]
+  pull_request:
+    branches: [ dev-1.x ]
 
 
 jobs:
-
   build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     defaults:
@@ -50,8 +45,8 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: QiwiProxyRefferer
-          environment_name: QiwiProxyRefferer-env
-          version_label: "QiwiProxyRefferer-${{ steps.format-time.outputs.replaced }}"
+          application_name: Proxy
+          environment_name: Proxy-env
+          version_label: "Proxy-${{ steps.format-time.outputs.replaced }}"
           region: ${{ secrets.AWS_REGION }}
           deployment_package: ./referrer/proxy/deploy.zip

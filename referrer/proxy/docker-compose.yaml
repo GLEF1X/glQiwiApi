@@ -25,7 +25,7 @@ services:
       context: nginx-delpoy
       dockerfile: Dockerfile
     environment:
-      DOMAIN_NAME_OR_IP: ${DOMAIN_NAME_OR_IP:-proxy} # "proxy" by default if env variable is unset or empty
+      DOMAIN_NAME_OR_IP: ${DOMAIN_NAME_OR_IP:-qiwi-proxy.us-east-2.elasticbeanstalk.com} # "proxy" by default if env variable is unset or empty
       UID: 2000
       GID: 2000
     ports:

@@ -11,6 +11,7 @@ app = FastAPI()
     response_class=HTMLResponse,
     tags=["proxy"],
     summary="Helps you to add Referrer attribute when use qiwi p2p to avoid blocking",
+    name="p2p_proxy"
 )
 async def process_proxy_p2p_request(invoice_uid: uuid.UUID) -> HTMLResponse:
     return HTMLResponse(
