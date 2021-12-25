@@ -1,7 +1,7 @@
 import pytest
 
-from glQiwiApi import types
 from glQiwiApi.core.dispatcher._builtin_filters import BillFilter, ErrorFilter, TransactionFilter
+from glQiwiApi.qiwi.types import BillWebhook, TransactionWebhook, Transaction
 from tests.test_dispatcher.mocks import (
     MOCK_BILL_WEBHOOK_RAW_DATA,
     MOCK_TRANSACTION_WEBHOOK_RAW_DATA,
@@ -11,7 +11,7 @@ from tests.types.dataset import TXN_RAW_DATA
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.mark.parametrize("event", [types.BillWebhook.parse_raw(MOCK_BILL_WEBHOOK_RAW_DATA)])
+@pytest.mark.parametrize("event", [BillWebhook.parse_raw(MOCK_BILL_WEBHOOK_RAW_DATA)])
 async def test_bill_webhook_filter(event):
     assert await BillFilter().check(event)
 
@@ -19,8 +19,8 @@ async def test_bill_webhook_filter(event):
 @pytest.mark.parametrize(
     "event",
     [
-        types.TransactionWebhook.parse_raw(MOCK_TRANSACTION_WEBHOOK_RAW_DATA),
-        types.Transaction.parse_raw(TXN_RAW_DATA),
+        TransactionWebhook.parse_raw(MOCK_TRANSACTION_WEBHOOK_RAW_DATA),
+        Transaction.parse_raw(TXN_RAW_DATA),
     ],
 )
 async def test_transaction_webhook_filter(event):

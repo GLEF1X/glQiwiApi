@@ -9,8 +9,6 @@ from .core import (
     execute_async_as_sync,
 )
 from .qiwi import QiwiMaps, QiwiWrapper
-from .types.exceptions import WebhookSignatureUnverifiedError
-from .utils.exceptions import APIError, CantParseUrl, ChequeIsNotAvailable, InvalidPayload
 from .yoo_money import YooMoneyAPI
 
 try:
@@ -20,7 +18,7 @@ try:
 except ImportError:
     pass
 
-__version__ = "1.2.0"
+__version__ = "2.0.0b1"
 
 __all__ = (
     "QiwiWrapper",
@@ -35,12 +33,6 @@ __all__ = (
     "AbstractTransactionHandler",
     "AbstractTransactionWebhookHandler",
     "Handler",
-    # Exceptions
-    "InvalidPayload",
-    "CantParseUrl",
-    "APIError",
-    "WebhookSignatureUnverifiedError",
-    "ChequeIsNotAvailable",
     # other
     "__version__",
 )

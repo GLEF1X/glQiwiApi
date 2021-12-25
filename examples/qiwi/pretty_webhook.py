@@ -1,4 +1,4 @@
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import QiwiWrapper, base_types
 from glQiwiApi.utils import executor
 
 wallet = QiwiWrapper(
@@ -8,12 +8,12 @@ wallet = QiwiWrapper(
 
 
 @wallet.transaction_handler(lambda event: ...)
-async def get_transaction(event: types.TransactionWebhook):
+async def get_transaction(event: base_types.TransactionWebhook):
     print(event)
 
 
 @wallet.bill_handler()
-async def fetch_bill(notification: types.BillWebhook):
+async def fetch_bill(notification: base_types.BillWebhook):
     print(notification)
 
 

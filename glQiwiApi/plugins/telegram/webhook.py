@@ -11,7 +11,6 @@ from glQiwiApi.plugins import Pluggable
 if t.TYPE_CHECKING:
     from glQiwiApi.utils.compat import Dispatcher
 
-# Some aliases =)
 ListOfRoutes = t.List[web.ResourceRoute]
 SubApps = t.List[t.Tuple[str, web.Application, ListOfRoutes]]
 

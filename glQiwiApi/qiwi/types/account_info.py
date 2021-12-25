@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field, validator
 
-from glQiwiApi.types.amount import CurrencyAmount, CurrencyModel
-from glQiwiApi.types.base import Base, ExtraBase
+from glQiwiApi.base_types.amount import AmountWithCurrency, CurrencyModel
+from glQiwiApi.base_types.base import Base, ExtraBase
 from glQiwiApi.utils.currency_util import Currency
 
 
@@ -48,7 +48,7 @@ class AuthInfo(Base):
 class SmsNotification(Base):
     """object: SmsNotification"""
 
-    price: CurrencyAmount
+    price: AmountWithCurrency
     enabled: bool
     active: bool
     end_date: Optional[datetime] = Field(None, alias="endDate")

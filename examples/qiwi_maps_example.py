@@ -4,7 +4,7 @@ import asyncio
 from geopy.distance import distance
 
 from glQiwiApi import QiwiMaps
-from glQiwiApi.types import Polygon
+from glQiwiApi.base_types import Polygon
 from glQiwiApi.utils.helper import measure_time
 
 

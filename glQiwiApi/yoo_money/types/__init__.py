@@ -3,14 +3,12 @@ from .types import (
     IncomingTransaction,
     Operation,
     OperationDetails,
-    OperationType,
     Payment,
     PreProcessPaymentResponse,
 )
 
 __all__ = (
     "AccountInfo",
-    "OperationType",
     "Operation",
     "OperationDetails",
     "PreProcessPaymentResponse",

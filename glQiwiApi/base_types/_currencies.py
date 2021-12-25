@@ -1,4 +1,4 @@
-from glQiwiApi.types.amount import CurrencyModel
+from glQiwiApi.base_types.amount import CurrencyModel
 
 codes_number = {
     "008": "ALL",

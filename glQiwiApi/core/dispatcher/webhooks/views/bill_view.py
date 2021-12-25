@@ -3,17 +3,18 @@ from typing import cast
 
 from aiohttp import web
 
-from glQiwiApi import types
+from glQiwiApi import base_types
 from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
-from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.qiwi.types import BillWebhook
 
 logger = logging.getLogger("glQiwiApi.webhooks.p2p")
 
 
-class QiwiBillWebhookView(BaseWebhookView[types.BillWebhook]):
+class QiwiBillWebhookView(BaseWebhookView[BillWebhook]):
     """View, which processes p2p notifications"""
 
-    def _validate_event_signature(self, update: types.BillWebhook) -> None:
+    def _validate_event_signature(self, update: BillWebhook) -> None:
         sha256_signature = cast(
             str, self.request.headers.get("X-Api-Signature-SHA256")
         )  # pragma: no cover

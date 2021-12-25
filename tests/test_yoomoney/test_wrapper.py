@@ -3,8 +3,8 @@ from typing import Dict
 
 import pytest
 
-from glQiwiApi import YooMoneyAPI, types
-from glQiwiApi.types import OperationType
+from glQiwiApi import YooMoneyAPI
+from glQiwiApi.yoo_money.types import Operation, AccountInfo, OperationDetails
 
 pytestmark = pytest.mark.asyncio
 
@@ -31,31 +31,31 @@ async def test_get_balance(api: YooMoneyAPI):
         },
         {
             "records": 50,
-            "operation_types": [OperationType.PAYMENT, OperationType.DEPOSITION],
+            "operation_types": ["PAYMENT", "DEPOSITION"],
         },
-        {"records": 40, "operation_types": [OperationType.PAYMENT]},
+        {"records": 40, "operation_types": ["PAYMENT"]},
         {
             "records": 80,
-            "operation_types": [OperationType.PAYMENT, OperationType.DEPOSITION],
+            "operation_types": ["PAYMENT", "DEPOSITION"],
             "start_date": datetime.datetime.now() - datetime.timedelta(days=80),
             "end_date": datetime.datetime.now(),
         },
     ],
 )
 async def test_get_transactions(api: YooMoneyAPI, payload: dict):
-    transactions = await api.transactions(**payload)
-    assert all(isinstance(txn, types.Operation) for txn in transactions)
+    transactions = await api.operation_history(**payload)
+    assert all(isinstance(txn, Operation) for txn in transactions)
 
 
 async def test_account_info(api: YooMoneyAPI):
     info = await api.retrieve_account_info()
-    assert isinstance(info, types.AccountInfo)
+    assert isinstance(info, AccountInfo)
 
 
 @pytest.mark.parametrize("operation_id", ["672180330623679897", "671568515431002412"])
 async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
-    transaction = await api.transaction_info(operation_id)
-    assert isinstance(transaction, types.OperationDetails)
+    transaction = await api.operation_info(operation_id)
+    assert isinstance(transaction, OperationDetails)
 
 
 @pytest.mark.skip
@@ -74,13 +74,14 @@ async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
     ],
 )
 async def test_check_transaction(api: YooMoneyAPI, payload: dict):
-    result = await api.check_transaction(**payload)
+    result = await api.is_exists_transaction_with_similar_properties(**payload)
     assert isinstance(result, bool)
 
 
-@pytest.mark.skip("")
 async def test_send_and_check_txn(api: YooMoneyAPI):
     payload = {"amount": 2, "comment": "unit_test"}
-    await api.transfer_money(to_account="4100116633099701", **payload)
-    answer = await api.check_transaction(**payload, operation_type="out")
+    await api.send(to_account="4100116633099701", **payload)
+    answer = await api.is_exists_transaction_with_similar_properties(
+        **payload, operation_types=["out"]
+    )
     assert answer is True

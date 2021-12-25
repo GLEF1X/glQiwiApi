@@ -3,9 +3,8 @@ from __future__ import annotations
 import abc
 from typing import Optional
 
-from glQiwiApi.types import TransactionWebhook
-from glQiwiApi.types.qiwi.webhooks import WebhookPayment
-
+from glQiwiApi.qiwi.types import TransactionWebhook
+from glQiwiApi.qiwi.types.webhooks import WebhookPayment
 from .base import ClientMixin, Handler
 
 

@@ -15,7 +15,7 @@ def sync_function() -> None:
     # Use the sync () function and pass the function we want to execute
     # without calling it, that is, pass it as a regular variable
     result = execute_async_as_sync(
-        wallet.transactions,
+        wallet.history,
         rows_num=50,
         start_date=start_date,
         end_date=datetime.datetime.now(),

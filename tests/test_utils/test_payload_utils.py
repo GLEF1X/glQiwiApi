@@ -4,9 +4,9 @@ from typing import Optional
 
 import pytest
 
-from glQiwiApi.types import Transaction
-from glQiwiApi.types.qiwi.transaction import TransactionType
-from glQiwiApi.utils.payload import check_transaction
+from glQiwiApi.qiwi.types import Transaction, TransactionType
+from glQiwiApi.qiwi.types.transaction import History
+from glQiwiApi.utils.payload import is_transaction_exists_in_history
 
 
 @pytest.mark.parametrize(
@@ -21,8 +21,8 @@ def test_check_transaction(
     transaction: Transaction, sender: Optional[str], comment: Optional[str]
 ):
     assert (
-        check_transaction(
-            [transaction],
+        is_transaction_exists_in_history(
+            History.parse_obj({"data": [transaction]}),
             amount=transaction.sum.amount,
             transaction_type=TransactionType.OUT,
             sender=sender,

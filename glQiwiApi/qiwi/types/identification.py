@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.base_types.base import Base
 
 
 class Identification(Base):

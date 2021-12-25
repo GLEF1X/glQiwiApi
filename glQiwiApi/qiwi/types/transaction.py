@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Iterator, SupportsIndex
 
 from pydantic import Field
 
-from glQiwiApi.types.amount import CurrencyAmount
-from glQiwiApi.types.base import Base, ExtraBase
+from glQiwiApi.base_types.amount import AmountWithCurrency
+from glQiwiApi.base_types.base import Base, ExtraBase
 
 
 class TransactionType(str, enum.Enum):
@@ -104,13 +106,13 @@ class Transaction(ExtraBase):
     Для пополнений - номер отправителя,
     терминала или название агента пополнения кошелька
     """
-    sum: CurrencyAmount
+    sum: AmountWithCurrency
     """Данные о сумме платежа или пополнения."""
 
-    commission: CurrencyAmount
+    commission: AmountWithCurrency
     """Данные о комиссии"""
 
-    total: CurrencyAmount
+    total: AmountWithCurrency
     """Общие данные о платеже в формате объекта Sum"""
 
     provider: Provider
@@ -145,3 +147,55 @@ class Transaction(ExtraBase):
 
     class Config:
         use_enum_values = True
+
+
+class History(Base):
+    transactions: List[Transaction] = Field(..., alias="data")
+    next_transaction_date: Optional[datetime] = Field(..., alias="nextTxnDate")
+    next_transaction_id: Optional[int] = Field(..., alias="nextTxnId")
+
+    def __iter__(self) -> Iterator[Transaction]:  # type: ignore
+        for t in self.transactions:
+            yield t
+
+    def __len__(self) -> int:
+        return len(self.transactions)
+
+    def __str__(self) -> str:
+        start_txn_date: Optional[datetime] = None
+        end_txn_date: Optional[datetime] = None
+        if self.transactions:
+            start_txn_date = self.transactions[0].date
+            end_txn_date = self.transactions[-1].date
+        return (
+            f"History from {start_txn_date} to {end_txn_date} | "
+            f"next transaction id = {self.next_transaction_id} | size = {len(self)}"
+        )
+
+    def sorted_by_id(self) -> History:
+        return self.copy(
+            exclude={"transactions"},
+            update=dict(transactions=sorted(self.transactions, key=lambda txn: txn.id)),
+        )
+
+    def sorted_by_date(self, *, from_later_to_earliest: bool = False) -> History:
+        return self.copy(
+            exclude={"transactions"},
+            update=dict(
+                transactions=sorted(
+                    self.transactions, key=lambda txn: txn.date, reverse=from_later_to_earliest
+                )
+            ),
+        )
+
+    def __getitem__(self, i: SupportsIndex) -> Transaction:
+        return self.transactions.__getitem__(i)
+
+    def __bool__(self) -> bool:
+        return bool(self.transactions)
+
+    def first(self) -> Transaction:
+        return self.transactions[0]
+
+    def last(self) -> Transaction:
+        return self.transactions[-1]

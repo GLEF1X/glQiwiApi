@@ -4,7 +4,7 @@ import logging
 from typing import Any, Callable, Collection, Dict, Union
 
 import glQiwiApi.core.synchronous.adapter
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import QiwiWrapper, base_types
 
 class measure_time(object):  # NOQA
     _logger: Union[logging.Logger, None] = None

@@ -32,7 +32,6 @@ __all__ = (
     "async_as_sync",
     "execute_async_as_sync",
     # webhooks
-    "app.py",
     "QiwiBillWebhookView",
     "QiwiTransactionWebhookView",
     "BaseWebhookView",

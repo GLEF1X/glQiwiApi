@@ -59,9 +59,9 @@ class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
             raise CacheValidationError()
 
     def process_retrieve(self, **kwargs: Any) -> None:
-        self._have_cache_expired(**kwargs)
+        self._is_cache_expired(**kwargs)
 
-    def _have_cache_expired(self, **kwargs: Dict[str, Union[Any, float]]) -> None:
+    def _is_cache_expired(self, **kwargs: Dict[str, Union[Any, float]]) -> None:
         for key, value in kwargs.items():
             added_at: float = value[ADD_TIME_PLACEHOLDER]
             elapsed_time_since_adding = time.monotonic() - added_at
@@ -70,7 +70,7 @@ class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
 
 
 class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
-    _validator_criteria = ("params", "json", "data", "headers")
+    _validation_criteria = ("params", "json", "data", "headers")
 
     def __init__(self, cache_time_in_seconds: Union[float, int] = INFINITE):
         super().__init__(cache_time_in_seconds)
@@ -102,6 +102,6 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
             else:
                 if value.method == "GET":
                     return False
-                keys = (k for k in self._validator_criteria if k != "headers")
+                keys = (k for k in self._validation_criteria if k != "headers")
                 return any(getattr(item, key) == getattr(value.payload, key) for key in keys)
         return False

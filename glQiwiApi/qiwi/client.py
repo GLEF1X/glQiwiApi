@@ -15,20 +15,20 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, TypeVar, Un
 
 from pydantic import ValidationError
 
-from glQiwiApi.core import RequestService
+from glQiwiApi.core.request_service import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin, DispatcherShortcutsMixin
 from glQiwiApi.core.session.holder import AbstractSessionHolder
 from glQiwiApi.ext.webhook_url import WebhookURL
+from glQiwiApi.qiwi.exceptions import ChequeIsNotAvailable, APIError
 from glQiwiApi.qiwi.settings import QiwiApiMethods, QiwiKassaRouter, QiwiRouter
-from glQiwiApi.types import (
+from glQiwiApi.qiwi.types import (
     Account,
     Balance,
     Bill,
     Card,
     Commission,
     CrossRate,
-    CurrencyAmount,
     FreePaymentDetailsFields,
     Identification,
     InvoiceStatus,
@@ -37,7 +37,6 @@ from glQiwiApi.types import (
     P2PKeys,
     PaymentInfo,
     PaymentMethod,
-    PlainAmount,
     QiwiAccountInfo,
     RefundBill,
     Restriction,
@@ -45,19 +44,18 @@ from glQiwiApi.types import (
     Transaction,
     TransactionType,
     WebhookInfo,
+    Source,
 )
-from glQiwiApi.types.amount import CurrencyModel
-from glQiwiApi.types.arbitrary.file import File
-from glQiwiApi.types.arbitrary.inputs import BinaryIOInput
-from glQiwiApi.types.errors import QiwiErrorAnswer
-from glQiwiApi.types.qiwi.transaction import Source
+from glQiwiApi.base_types.amount import CurrencyModel, AmountWithCurrency, PlainAmount
+from glQiwiApi.base_types.arbitrary.file import File
+from glQiwiApi.base_types.arbitrary.inputs import BinaryIOInput
+from glQiwiApi.base_types.errors import QiwiErrorAnswer
+from glQiwiApi.qiwi.types.transaction import History
 from glQiwiApi.utils.compat import Final
 from glQiwiApi.utils.dates_conversion import datetime_to_iso8601_with_moscow_timezone
-from glQiwiApi.utils.exceptions import APIError, ChequeIsNotAvailable, InvalidPayload
 from glQiwiApi.utils.helper import allow_response_code, override_error_message, require
 from glQiwiApi.utils.payload import (
     check_dates_for_statistic_request,
-    check_transaction,
     filter_dictionary_none_values,
     format_dates,
     get_new_card_data,
@@ -69,16 +67,15 @@ from glQiwiApi.utils.payload import (
     patch_p2p_create_payload,
     retrieve_card_data,
     set_data_to_wallet,
+    is_transaction_exists_in_history,
 )
 from glQiwiApi.utils.validators import PhoneNumber, String
 
-MAX_HISTORY_TRANSACTION_LIMIT: Final[int] = 50
+MAX_HISTORY_LIMIT: Final[int] = 50
 AmountType = Union[int, float]
 
-DEFAULT_BILL_STATUSES = "READY_FOR_PAY"
 
-
-def get_default_bill_time() -> datetime:
+def _get_default_bill_time() -> datetime:
     return datetime.now() + timedelta(days=2)
 
 
@@ -113,6 +110,7 @@ class QiwiWrapper(
         secret_p2p: Optional[str] = None,
         cache_time_in_seconds: Union[float, int] = 0,
         session_holder: Optional[AbstractSessionHolder[Any]] = None,
+        shim_server_url: Optional[str] = None,
     ) -> None:
         """
         :param api_access_token: QIWI API token received from https://qiwi.com/api
@@ -122,6 +120,7 @@ class QiwiWrapper(
                            default 0, respectively the request will not use the cache by default
         :param session_holder: obtains session and helps to manage session lifecycle. You can pass
                                your own session holder, for example using httpx lib and use it
+        :param shim_server_url:
         """
         self._phone_number = phone_number
         self._router = QiwiRouter()
@@ -133,6 +132,7 @@ class QiwiWrapper(
         )
         self._api_access_token = api_access_token
         self._secret_p2p = secret_p2p
+        self._shim_server_url = shim_server_url
 
         self.set_current(self)
 
@@ -201,7 +201,7 @@ class QiwiWrapper(
         )
         return WebhookInfo.parse_obj(response)
 
-    async def send_test_notification(self) -> Dict[Any, Any]:
+    async def send_test_webhook_notification(self) -> Dict[Any, Any]:
         """
         Use this request to test your webhooks handler.
         Test notification is sent to the address specified during the call register_webhook
@@ -293,8 +293,8 @@ class QiwiWrapper(
         webhook = await self.register_webhook(url, transactions_type)
         key = await self.get_webhook_secret_key(webhook.id)
 
-        if send_test_notification:
-            await self.send_test_notification()
+        if send_test_notification is True:
+            await self.send_test_webhook_notification()
 
         return webhook, key
 
@@ -322,7 +322,7 @@ class QiwiWrapper(
         )
         return cast(str, response["message"])
 
-    async def get_balance(self, *, account_number: int = 1) -> CurrencyAmount:
+    async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
         headers = self._add_authorization_header(self._router.generate_default_headers())
         response = await self._request_service.api_request(
             "GET",
@@ -331,22 +331,22 @@ class QiwiWrapper(
             headers=headers,
             phone_number=self._phone_number,
         )
-        return CurrencyAmount.parse_obj(response["accounts"][account_number - 1]["balance"])
+        return AmountWithCurrency.parse_obj(response["accounts"][account_number - 1]["balance"])
 
-    async def transactions(
+    async def history(
         self,
-        rows: int = MAX_HISTORY_TRANSACTION_LIMIT,
+        rows: int = MAX_HISTORY_LIMIT,
         operation: TransactionType = TransactionType.ALL,
         sources: Optional[List[Source]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-    ) -> List[Transaction]:
+    ) -> History:
         """
-        Method for receiving transactions on the account
+        Method for receiving transactions history on the account
         More detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#payments_list
 
-        :param rows: number of transactions you want to receive
+        :param rows: number of operation_history you want to receive
         :param operation: The type of operations in the report for selection.
         :param sources: List of payment sources, for filter
         :param start_date: The starting date for searching for payments.
@@ -354,27 +354,26 @@ class QiwiWrapper(
         :param end_date: the end date of the search for payments.
                             Used only in conjunction with start_date.
         """
-        if rows > 50 or rows <= 0:
-            raise InvalidPayload("You can check no more than 50 transactions")
         headers = self._add_authorization_header(self._router.generate_default_headers())
         payload_data = format_dates(
             start_date=start_date,
             end_date=end_date,
             payload_data={"rows": rows, "operation": operation.value},
         )
+
         if sources is not None:
             for index, source in enumerate(sources, start=1):
                 payload_data.update({f"source[{index}]": source.value})
-        response = await self._request_service.api_request(
-            "GET",
-            QiwiApiMethods.TRANSACTIONS,
-            self._router,
-            params=payload_data,
-            headers=headers,
-            stripped_number=self._phone_number,
-        )
-        return parse_iterable_to_list_of_objects(
-            cast(Iterable[Any], response.get("data")), Transaction
+
+        return History.parse_obj(
+            await self._request_service.api_request(
+                "GET",
+                QiwiApiMethods.TRANSACTIONS,
+                self._router,
+                params=payload_data,
+                headers=headers,
+                stripped_number=self._phone_number,
+            )
         )
 
     async def transaction_info(
@@ -449,7 +448,7 @@ class QiwiWrapper(
         [ NON API METHOD ]
 
         Method for verifying a transaction.
-        This method uses self.transactions (rows = rows) "under the hood" to check payment.
+        This method uses self.history (rows = rows) "under the hood" to check payment.
 
         For a little optimization, you can decrease rows by setting it,
         however, this does not guarantee the correct result
@@ -466,11 +465,9 @@ class QiwiWrapper(
         :param rows_num: number of payments to be checked
         :param comment: comment by which the transaction will be verified
         """
-        if rows_num > 50 or rows_num <= 0:
-            raise InvalidPayload("You can check no more than 50 transactions.")
-        transactions = await self.transactions(rows=rows_num)
-        return check_transaction(
-            transactions=transactions,
+        history = await self.history(rows=rows_num)
+        return is_transaction_exists_in_history(
+            history=history,
             transaction_type=transaction_type,
             comment=comment,
             amount=amount,
@@ -482,17 +479,18 @@ class QiwiWrapper(
         Function for getting limits on the qiwi wallet account
         Returns wallet limits as a list,
         if there is no limit for a certain country, then it does not include it in the list
+        payload of limit types must be dict in format like array of strings {
+            "types[0]": "Some type",
+            "types[1]": "some other type",
+            "types[n]": "n type"
+        }
+
         Detailed documentation:
 
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
         """
         headers = self._add_authorization_header(self._router.generate_default_headers())
         limit_types = limit_types or self._router.config.DEFAULT_LIMIT_TYPES
-        # payload of limit types must be dict in format like array of strings {
-        #    "types[0]": "Some type",
-        #    "types[1]": "some other type",
-        #    "types[n]": "n type"
-        # }
         payload = {f"types[{index}]": limit_type for index, limit_type in enumerate(limit_types)}
         response = await self._request_service.api_request(
             "GET",
@@ -571,7 +569,7 @@ class QiwiWrapper(
             }
         }
     )
-    async def get_receipt(
+    async def obtain_receipt(
         self,
         transaction_id: Union[str, int],
         transaction_type: TransactionType,
@@ -587,7 +585,7 @@ class QiwiWrapper(
         :param transaction_id: transaction id, can be obtained by calling the transfer_money method,
          transfer_money_to_card
         :param transaction_type: type of transaction: 'IN', 'OUT', 'QIWI_CARD'
-        :param file_format: format of file
+        :param file_format: format of file(JPEG or PDF)
         """
         headers = self._add_authorization_header(self._router.generate_default_headers())
         data = {"type": transaction_type.value, "format": file_format}
@@ -734,6 +732,7 @@ class QiwiWrapper(
             currency_alias=currency_alias,
         )
 
+    @override_error_message({400: {"message": "Not enough funds to execute this operation"}})
     async def transfer_money(
         self,
         to_phone_number: str,
@@ -752,8 +751,6 @@ class QiwiWrapper(
         :param currency: special currency code
         :param comment: payment comment
         """
-        if isinstance(currency, CurrencyModel):
-            currency = currency.code
         data = set_data_to_wallet(
             data=deepcopy(self._router.config.QIWI_TO_WALLET),
             to_number=to_phone_number,
@@ -849,7 +846,7 @@ class QiwiWrapper(
 
     async def payment_by_payment_details(
         self,
-        payment_sum: CurrencyAmount,
+        payment_sum: AmountWithCurrency,
         payment_method: PaymentMethod,
         fields: FreePaymentDetailsFields,
         payment_id: Optional[str] = None,
@@ -979,7 +976,7 @@ class QiwiWrapper(
         return Bill.parse_obj(response)
 
     @require("_secret_p2p")
-    async def check_p2p_bill_status(self, bill_id: str) -> str:
+    async def get_bill_by_id(self, bill_id: str) -> Bill:
         """
         Method for checking the status of a p2p transaction.\n
         Possible transaction types: \n
@@ -1002,7 +999,24 @@ class QiwiWrapper(
             headers=headers,
             bill_id=bill_id,
         )
-        return Bill.parse_obj(response).status.value
+        return Bill.parse_obj(response)
+
+    @require("_secret_p2p")
+    async def get_bill_status(self, bill_id: str) -> str:
+        """
+        Method for checking the status of a p2p transaction.\n
+        Possible transaction types: \n
+        WAITING	Bill is waiting for pay	\n
+        PAID	Bill was paid	\n
+        REJECTED	Bill was rejected\n
+        EXPIRED	The bill has expired. Invoice not paid\n
+        Docs:
+        https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
+
+        :param bill_id:
+        :return: status of bill
+        """
+        return (await self.get_bill_by_id(bill_id)).status.value
 
     @require("_secret_p2p")
     async def create_p2p_bill(
@@ -1010,7 +1024,7 @@ class QiwiWrapper(
         amount: AmountType,
         bill_id: Optional[str] = None,
         comment: Optional[str] = None,
-        life_time: Optional[datetime] = None,
+        expire_at: Optional[datetime] = None,
         theme_code: Optional[str] = None,
         pay_source_filter: Optional[List[str]] = None,
     ) -> Bill:
@@ -1027,7 +1041,7 @@ class QiwiWrapper(
         :param amount: amount of payment
         :param bill_id: unique transaction number, if not transmitted,
          generated automatically,
-        :param life_time: the date until which the invoice will be available for payment.
+        :param expire_at: the date until which the invoice will be available for payment.
         :param comment:
         :param theme_code:
         :param pay_source_filter: When you open the form, the following will be displayed
@@ -1035,13 +1049,13 @@ class QiwiWrapper(
         """
         if not isinstance(bill_id, (str, int)):
             bill_id = str(uuid.uuid4())
-        life_time = datetime_to_iso8601_with_moscow_timezone(  # type: ignore
-            life_time or get_default_bill_time()
+        expire_at = datetime_to_iso8601_with_moscow_timezone(  # type: ignore
+            expire_at or _get_default_bill_time()
         )
         data = deepcopy(self._p2p_router.config.P2P_DATA)
         headers = self._add_authorization_header(data.headers, p2p=True)
         payload = patch_p2p_create_payload(
-            data, amount, str(life_time), comment, theme_code, pay_source_filter
+            data, amount, str(expire_at), comment, theme_code, pay_source_filter
         )
         response = await self._request_service.api_request(
             "PUT",
@@ -1053,7 +1067,7 @@ class QiwiWrapper(
         )
         return Bill.parse_obj(response)
 
-    async def retrieve_bills(self, rows: int, statuses: str = DEFAULT_BILL_STATUSES) -> List[Bill]:
+    async def list_of_invoices(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
 
@@ -1067,8 +1081,6 @@ class QiwiWrapper(
         """
         params = make_payload(**locals())
         headers = self._add_authorization_header(self._router.generate_default_headers())
-        if rows > 50 or rows <= 0:
-            raise InvalidPayload("You can get no more than 50 invoices")
         response = await self._request_service.api_request(
             "GET",
             QiwiApiMethods.GET_BILLS,

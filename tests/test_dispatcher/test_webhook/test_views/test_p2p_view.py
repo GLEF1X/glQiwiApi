@@ -6,20 +6,21 @@ from aiohttp.pytest_plugin import AiohttpClient
 from aiohttp.test_utils import TestClient
 from aiohttp.web_app import Application
 
-from glQiwiApi import types
+from glQiwiApi import base_types
 from glQiwiApi.core import QiwiBillWebhookView
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
     HashBasedCollisionDetector,
 )
 from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
+from glQiwiApi.qiwi.types import BillWebhook
 from tests.test_dispatcher.mocks import WebhookTestData
 
 pytestmark = pytest.mark.asyncio
 
 
 class QiwiBillWebhookViewWithoutSignatureValidation(QiwiBillWebhookView):
-    def _validate_event_signature(self, update: types.BillWebhook) -> None:
+    def _validate_event_signature(self, update: BillWebhook) -> None:
         """
         We cannot test, because we have not X-Api-Signature-SHA256 for webhook.
         I have tested it manually on remote host
@@ -35,14 +36,14 @@ class TestBillWebhookView:
         event_handled_by_handler = asyncio.Event()
 
         @dp.bill_handler()
-        async def handle_bill_webhook(_: types.BillWebhook):
+        async def handle_bill_webhook(_: BillWebhook):
             event_handled_by_handler.set()
 
         app.router.add_view(
             handler=inject_dependencies(
                 QiwiBillWebhookViewWithoutSignatureValidation,
                 {
-                    "event_cls": types.BillWebhook,
+                    "event_cls": BillWebhook,
                     "dispatcher": dp,
                     "encryption_key": test_data.base64_key_to_compare_hash,
                     "collision_detector": HashBasedCollisionDetector(),

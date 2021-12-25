@@ -7,7 +7,7 @@ from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
     UnexpectedCollision,
     UnhashableObjectError,
 )
-from glQiwiApi.types import TransactionWebhook
+from glQiwiApi.qiwi.types import TransactionWebhook
 
 
 class UnhashableTestClass:

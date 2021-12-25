@@ -8,7 +8,6 @@ from aiohttp.pytest_plugin import AiohttpClient
 from aiohttp.test_utils import TestClient
 from aiohttp.web_app import Application
 
-from glQiwiApi import types
 from glQiwiApi.core import QiwiTransactionWebhookView
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
@@ -16,6 +15,7 @@ from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
     HashBasedCollisionDetector,
 )
 from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
+from glQiwiApi.qiwi.types import TransactionWebhook
 from tests.test_dispatcher.mocks import WebhookTestData
 
 pytestmark = pytest.mark.asyncio
@@ -30,14 +30,14 @@ async def application(test_data: WebhookTestData, loop: AbstractEventLoop):
     app["handler_event"] = handler_event
 
     @dp.transaction_handler()
-    async def handle_txn_webhook(_: types.TransactionWebhook):
+    async def handle_txn_webhook(_: TransactionWebhook):
         handler_event.set()
 
     app.router.add_view(
         handler=inject_dependencies(
             QiwiTransactionWebhookView,
             {
-                "event_cls": types.TransactionWebhook,
+                "event_cls": TransactionWebhook,
                 "dispatcher": dp,
                 "encryption_key": test_data.base64_key_to_compare_hash,
                 "collision_detector": HashBasedCollisionDetector(),
@@ -72,7 +72,7 @@ class TestTxnWebhookView:
     ):
         client: TestClient = await aiohttp_client(application)
 
-        txn = types.TransactionWebhook.parse_raw(test_data.transaction_webhook_json)
+        txn = TransactionWebhook.parse_raw(test_data.transaction_webhook_json)
 
         # Copy transaction to update hash to fake and test that service will transfer_money unsuccessfull response
         fake_transaction = txn.copy(

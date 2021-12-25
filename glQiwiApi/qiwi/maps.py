@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import typing
 
-from glQiwiApi import types
-from glQiwiApi.core import RequestService
+from glQiwiApi.core.request_service import RequestService
 from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.mixins import ContextInstanceMixin, DataMixin
 from glQiwiApi.core.session.holder import AbstractSessionHolder
+from glQiwiApi.qiwi.types import Partner, Terminal, Polygon
 from glQiwiApi.utils.payload import (
     filter_dictionary_none_values,
     parse_iterable_to_list_of_objects,
@@ -34,7 +34,7 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
 
     async def terminals(
         self,
-        polygon: types.Polygon,
+        polygon: Polygon,
         zoom: typing.Optional[int] = None,
         pop_if_inactive_x_mins: int = 30,
         include_partners: typing.Optional[bool] = None,
@@ -43,7 +43,7 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         card_terminals: typing.Optional[bool] = None,
         identification_types: typing.Optional[int] = None,
         terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
-    ) -> typing.List[types.Terminal]:
+    ) -> typing.List[Terminal]:
         """
         Get map of terminals sent for passed polygon with additional params
 
@@ -79,10 +79,10 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
         url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
         response = await self._request_service.raw_request(url, "GET", params=params)
         return parse_iterable_to_list_of_objects(
-            typing.cast(typing.List[typing.Any], response), types.Terminal
+            typing.cast(typing.List[typing.Any], response), Terminal
         )
 
-    async def partners(self) -> typing.List[types.Partner]:
+    async def partners(self) -> typing.List[Partner]:
         """
         Get terminal partners for ttpGroups
         :return: list of TTPGroups
@@ -92,5 +92,5 @@ class QiwiMaps(Wrapper, DataMixin, ContextInstanceMixin["QiwiMaps"]):
             url, "GET", headers={"Content-type": "text/json"}
         )
         return parse_iterable_to_list_of_objects(
-            typing.cast(typing.List[typing.Any], response), types.Partner
+            typing.cast(typing.List[typing.Any], response), Partner
         )

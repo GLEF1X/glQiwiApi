@@ -24,12 +24,21 @@ from typing import (
 
 from glQiwiApi.core.dispatcher._builtin_filters import BillFilter, ErrorFilter, TransactionFilter
 
-from .class_based import AbstractBillHandler, AbstractTransactionHandler, ExceptionHandler, Handler
 from .filters import BaseFilter, LambdaBasedFilter
 
 if TYPE_CHECKING:
-    from glQiwiApi.types import BillWebhook, Transaction, TransactionWebhook  # pragma: no cover
-    from glQiwiApi.types.base import Base, HashableBase  # noqa  # pragma: no cover
+    from .class_based import (
+        AbstractBillHandler,
+        AbstractTransactionHandler,
+        ExceptionHandler,
+        Handler,
+    )
+    from glQiwiApi.qiwi.types import (
+        BillWebhook,
+        Transaction,
+        TransactionWebhook,
+    )  # pragma: no cover
+    from glQiwiApi.base_types.base import Base, HashableBase  # noqa  # pragma: no cover
 
 Event = TypeVar("Event", bound=Union["HashableBase", Exception, "Base"])
 _T = TypeVar("_T")
@@ -46,9 +55,9 @@ BillFilters = Union[Callable[["BillWebhook"], bool], BaseFilter["BillWebhook"]]
 HandlerType = TypeVar("HandlerType", bound="EventHandler[Any]")
 
 # handlers
-TxnRawHandler = Union[Type[AbstractTransactionHandler], Callable[..., Awaitable[Any]]]
-BillRawHandler = Union[Type[AbstractBillHandler], Callable[..., Awaitable[Any]]]
-ErrorRawHandler = Union[Type[ExceptionHandler], Callable[..., Awaitable[Any]]]
+TxnRawHandler = Union[Type["AbstractTransactionHandler"], Callable[..., Awaitable[Any]]]
+BillRawHandler = Union[Type["AbstractBillHandler"], Callable[..., Awaitable[Any]]]
+ErrorRawHandler = Union[Type["ExceptionHandler"], Callable[..., Awaitable[Any]]]
 
 logger = logging.getLogger("glQiwiApi.dispatcher")
 

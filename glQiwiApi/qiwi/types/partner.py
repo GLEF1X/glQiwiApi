@@ -1,7 +1,7 @@
 """Main model: Partner"""
 from typing import List, Optional
 
-from glQiwiApi.types.base import Base
+from glQiwiApi.base_types.base import Base
 
 
 class Partner(Base):

@@ -19,8 +19,8 @@ from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.core.synchronous.adapter import run_forever_safe
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
-from glQiwiApi.qiwi.client import MAX_HISTORY_TRANSACTION_LIMIT, QiwiWrapper
-from glQiwiApi.types import Transaction
+from glQiwiApi.qiwi.client import MAX_HISTORY_LIMIT, QiwiWrapper
+from glQiwiApi.base_types.qiwi.transaction import History
 from glQiwiApi.utils.exceptions import SecretP2PTokenIsEmpty
 
 __all__ = ["start_webhook", "start_polling"]
@@ -35,7 +35,7 @@ DEFAULT_TIMEOUT = 5
 DEFAULT_APPLICATION_KEY = "__aiohttp_web_application__"
 
 
-class NoUpdatesToExecute(Exception):
+class _NoUpdatesToExecute(Exception):
     """Internal exception to determine that history is empty"""
 
 
@@ -250,50 +250,41 @@ class PollingExecutor(BaseExecutor):
 
     async def _try_fetch_new_updates(self) -> None:
         try:
-            updates = await self._fetch_updates()
-        except NoUpdatesToExecute:
+            history = await self._fetch_history()
+        except _NoUpdatesToExecute:
             return
         if self.offset is None:
-            first_update = updates[0]
+            first_update = history[0]
             self.offset = first_update.id - 1
         logger.debug("Current transaction offset is %d", self.offset)
-        await self.process_updates(updates)
+        await self.process_updates(history)
 
-    async def _fetch_updates(self) -> List[Transaction]:
-        history = await self._get_consistent_history()
-        if len(history) == MAX_HISTORY_TRANSACTION_LIMIT:
+    async def _fetch_history(self) -> History:
+        history = (
+            await self._client.history(start_date=self.get_updates_from, end_date=datetime.now())
+        ).sorted_by_date()
+
+        if len(history) == MAX_HISTORY_LIMIT:
             logger.debug("History is out of max history transaction limit")
             first_txn_by_date = history[-1]
             self.get_updates_from = first_txn_by_date.date
 
         if self.skip_updates:
             self.skip_updates = False
-            raise NoUpdatesToExecute()
+            raise _NoUpdatesToExecute()
         elif not history:
-            raise NoUpdatesToExecute()
+            raise _NoUpdatesToExecute()
 
         return history
 
-    async def _get_consistent_history(self) -> List[Transaction]:
-        """
-        QIWI API returns history sorted by dates descending, but for "consistency" we have to reverse it,
-        which is what this method does.
-        """
-        history_from_last_to_first = await self._client.transactions(
-            start_date=self.get_updates_from, end_date=datetime.now()
-        )
-        history_from_first_to_last = list(reversed(history_from_last_to_first))
-        return history_from_first_to_last
-
-    async def process_updates(self, history: List[Transaction]) -> None:
+    async def process_updates(self, history: History) -> None:
         tasks: List[asyncio.Task[None]] = [
             asyncio.create_task(self._dispatcher.process_event(event))
             for event in history
             if cast(int, self.offset) < event.id
         ]
         if history:
-            sorted_history = sorted(history, key=lambda txn: txn.id)
-            self.offset = sorted_history[-1].id
+            self.offset = history.sorted_by_id().last().id
         await asyncio.gather(*tasks)
 
     def _set_timeout(self, exception_timeout: Union[int, float]) -> None:

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ dev-1.x ]
+    branches: [ dev-2.x ]
   pull_request:
-    branches: [ dev-1.x ]
+    branches: [ dev-2.x ]
 
 jobs:
   build:
@@ -56,7 +56,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          poetry run flake8 glQiwiApi examples tests --jobs=8 --ignore=E999,F401,E123
+          poetry run flake8 glQiwiApi examples tests --jobs=8 --ignore=E999,F401,E123,E501
       
       - name: Check code-style (Black)
         run: |

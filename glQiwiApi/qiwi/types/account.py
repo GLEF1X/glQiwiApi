@@ -2,8 +2,8 @@ from typing import Optional
 
 from pydantic import Field, validator
 
-from glQiwiApi.types.amount import CurrencyAmount, CurrencyModel, Type
-from glQiwiApi.types.base import Base
+from glQiwiApi.base_types.amount import AmountWithCurrency, CurrencyModel, Type
+from glQiwiApi.base_types.base import Base
 from glQiwiApi.utils.currency_util import Currency
 
 
@@ -15,7 +15,7 @@ class Account(Base):
     fs_alias: str = Field(alias="fsAlias")
     bank_alias: str = Field(alias="bankAlias")
     has_balance: bool = Field(alias="hasBalance")
-    balance: Optional[CurrencyAmount] = None
+    balance: Optional[AmountWithCurrency] = None
     currency: CurrencyModel
     account_type: Optional[Type] = Field(None, alias="type")
     is_default_account: bool = Field(alias="defaultAccount")

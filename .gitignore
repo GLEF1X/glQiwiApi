@@ -12,6 +12,8 @@ setup.py
 .coverage
 htmlcov
 
+.benchmarks
+
 glQiwiApi/t.py
 *.pem
 # Distribution / packaging

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import contextvars
-from typing import Any, ClassVar, Dict, Generic, Optional, Type, TypeVar, Union, cast
+from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
 
 from glQiwiApi.core.dispatcher.filters import BaseFilter
 from glQiwiApi.core.dispatcher.implementation import (

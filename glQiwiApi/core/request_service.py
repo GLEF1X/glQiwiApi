@@ -18,7 +18,7 @@ from glQiwiApi.core.abc.router import AbstractRouter
 from glQiwiApi.core.cache import APIResponsesCacheInvalidationStrategy, InMemoryCacheStorage
 from glQiwiApi.core.cache.cached_types import CachedAPIRequest, Payload
 from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
-from glQiwiApi.utils.exceptions import APIError
+from glQiwiApi.qiwi.exceptions import APIError
 from glQiwiApi.utils.payload import get_decoded_result, make_payload
 
 logger = logging.getLogger("glQiwiApi.RequestService")
@@ -44,10 +44,12 @@ class RequestService:
         error_messages: Optional[Dict[int, str]] = None,
         cache_time: Union[float, int] = 0,
         session_holder: Optional[AbstractSessionHolder[Any]] = None,
+        base_headers: Optional[Dict[str, Any]] = None,
     ) -> None:
         if session_holder is None:
             session_holder = AiohttpSessionHolder(
-                timeout=ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None)
+                timeout=ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None),
+                headers=base_headers,
             )
         self._error_messages = error_messages or EmptyMessages()
         self._cache = InMemoryCacheStorage(

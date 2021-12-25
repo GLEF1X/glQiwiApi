@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
-from glQiwiApi.types import _currencies as currencies  # noqa
-from glQiwiApi.types.amount import CurrencyModel
+from glQiwiApi.base_types import _currencies as currencies  # noqa
+from glQiwiApi.base_types.amount import CurrencyModel
 
 
 class Currency:

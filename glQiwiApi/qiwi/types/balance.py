@@ -1,7 +1,7 @@
 from pydantic import validator
 
-from glQiwiApi.types.amount import CurrencyModel
-from glQiwiApi.types.base import Base
+from glQiwiApi.base_types.amount import CurrencyModel
+from glQiwiApi.base_types.base import Base
 from glQiwiApi.utils.currency_util import Currency
 
 

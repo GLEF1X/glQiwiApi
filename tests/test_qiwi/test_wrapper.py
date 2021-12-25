@@ -4,9 +4,24 @@ import uuid
 
 import pytest
 
-from glQiwiApi import InvalidPayload, QiwiWrapper, types
-from glQiwiApi.types import TransactionType
-from glQiwiApi.types.arbitrary.file import File
+from glQiwiApi import QiwiWrapper
+from glQiwiApi.base_types import AmountWithCurrency
+from glQiwiApi.base_types.arbitrary.file import File
+from glQiwiApi.qiwi.types import (
+    TransactionType,
+    Transaction,
+    Identification,
+    Card,
+    QiwiAccountInfo,
+    Statistic,
+    Account,
+    Bill,
+    Restriction,
+    CrossRate,
+    Commission,
+    WebhookInfo,
+    Balance,
+)
 
 pytestmark = pytest.mark.asyncio
 
@@ -27,10 +42,10 @@ async def api_fixture(credentials: dict):
 
 
 async def test_get_balance(api: QiwiWrapper):
-    from glQiwiApi.types.amount import CurrencyModel
+    from glQiwiApi.base_types.amount import CurrencyModel
 
     result = await api.get_balance()
-    assert isinstance(result, types.CurrencyAmount)
+    assert isinstance(result, AmountWithCurrency)
     assert isinstance(result.currency, CurrencyModel)
 
 
@@ -49,9 +64,9 @@ async def test_get_balance(api: QiwiWrapper):
 )
 async def test_transactions(api: QiwiWrapper, payload: dict):
     async with api:
-        result = await api.transactions(**payload)
+        result = await api.history(**payload)
 
-    assert all(isinstance(t, types.Transaction) for t in result)
+    assert all(isinstance(t, Transaction) for t in result)
 
 
 @pytest.mark.parametrize(
@@ -60,12 +75,12 @@ async def test_transactions(api: QiwiWrapper, payload: dict):
 )
 async def test_transaction_info(api: QiwiWrapper, payload: dict):
     result = await api.transaction_info(**payload)
-    assert isinstance(result, types.Transaction)
+    assert isinstance(result, Transaction)
 
 
 async def test_identification(api: QiwiWrapper):
     result = await api.get_identification()
-    assert isinstance(result, types.Identification)
+    assert isinstance(result, Identification)
 
 
 @pytest.mark.parametrize(
@@ -93,18 +108,18 @@ async def test_get_limits(api: QiwiWrapper):
 
 async def test_get_list_of_cards(api: QiwiWrapper):
     result = await api.get_list_of_cards()
-    assert all(isinstance(c, types.Card) for c in result) is True
+    assert all(isinstance(c, Card) for c in result) is True
 
 
 async def test_get_receipt(api: QiwiWrapper):
     payload = {"transaction_id": 21601937643, "transaction_type": TransactionType.OUT}
-    response = await api.get_receipt(**payload)  # type: ignore
+    response = await api.obtain_receipt(**payload)  # type: ignore
     assert isinstance(response, File) is True
 
 
 async def test_account_info(api: QiwiWrapper):
     result = await api.get_account_info()
-    assert isinstance(result, types.QiwiAccountInfo) is True
+    assert isinstance(result, QiwiAccountInfo) is True
 
 
 @pytest.mark.parametrize(
@@ -145,12 +160,12 @@ async def test_account_info(api: QiwiWrapper):
 )
 async def test_fetch_statistic(api: QiwiWrapper, payload: dict):
     result = await api.fetch_statistics(**payload)
-    assert isinstance(result, types.Statistic)
+    assert isinstance(result, Statistic)
 
 
 async def test_list_of_balances(api: QiwiWrapper):
     balances = await api.list_of_balances()
-    assert all(isinstance(b, types.Account) for b in balances)
+    assert all(isinstance(b, Account) for b in balances)
 
 
 async def test_fail_fetch_statistic(api: QiwiWrapper):
@@ -184,13 +199,13 @@ async def test_fail_fetch_statistic(api: QiwiWrapper):
 )
 async def test_create_p2p_bill(api: QiwiWrapper, payload: dict):
     result = await api.create_p2p_bill(**payload)
-    assert isinstance(result, types.Bill)
+    assert isinstance(result, Bill)
     assert payload["amount"] == result.amount.value
 
 
 async def test_check_p2p_bill_status(api: QiwiWrapper):
     test_bill = await api.create_p2p_bill(amount=1)
-    result = await api.check_p2p_bill_status(bill_id=test_bill.bill_id)
+    result = await api.get_bill_status(bill_id=test_bill.id)
     assert isinstance(result, str)
 
 
@@ -198,7 +213,7 @@ async def test_check_p2p_on_object(api: QiwiWrapper):
     api.set_current(api)
 
     bill = await api.create_p2p_bill(amount=1)
-    assert isinstance(bill, types.Bill)
+    assert isinstance(bill, Bill)
     result = await bill.check()
 
     assert isinstance(result, bool)
@@ -206,15 +221,15 @@ async def test_check_p2p_on_object(api: QiwiWrapper):
 
 @pytest.mark.parametrize("rows", [5, 10, 50])
 async def test_get_bills(api: QiwiWrapper, rows: int):
-    result = await api.retrieve_bills(rows=rows)
+    result = await api.list_of_invoices(rows=rows)
     assert isinstance(result, list)
-    assert all(isinstance(b, types.Bill) for b in result)
+    assert all(isinstance(b, Bill) for b in result)
 
 
 async def test_check_restriction(api: QiwiWrapper):
     result = await api.get_restriction()
     assert isinstance(result, list)
-    assert all(isinstance(r, types.Restriction) for r in result)
+    assert all(isinstance(r, Restriction) for r in result)
 
 
 @pytest.mark.parametrize(
@@ -226,18 +241,18 @@ async def test_check_restriction(api: QiwiWrapper):
 )
 async def test_commission(api: QiwiWrapper, payload: dict):
     result = await api.predict_commission(**payload)
-    assert isinstance(result, types.Commission)
+    assert isinstance(result, Commission)
 
 
 async def test_get_cross_rates(api: QiwiWrapper):
     result = await api.get_cross_rates()
-    assert all(isinstance(r, types.CrossRate) for r in result)
+    assert all(isinstance(r, CrossRate) for r in result)
 
 
 async def test_register_webhook(api: QiwiWrapper):
     config, key = await api.bind_webhook(url="https://45.147.178.166:80//", delete_old=True)
 
-    assert isinstance(config, types.WebhookInfo)
+    assert isinstance(config, WebhookInfo)
     assert isinstance(key, str)
 
 
@@ -248,7 +263,7 @@ async def test_create_new_balance(api: QiwiWrapper):
 
 async def test_available_balances(api: QiwiWrapper):
     balances = await api.available_balances()
-    assert all(isinstance(b, types.Balance) for b in balances)
+    assert all(isinstance(b, Balance) for b in balances)
 
 
 async def test_set_default_balance(api: QiwiWrapper):
@@ -258,23 +273,11 @@ async def test_set_default_balance(api: QiwiWrapper):
 
 async def test_reject_p2p_bill(api: QiwiWrapper):
     b = await api.create_p2p_bill(amount=1)
-    rejected_bill = await api.reject_p2p_bill(b.bill_id)
-    assert isinstance(rejected_bill, types.Bill)
+    rejected_bill = await api.reject_p2p_bill(b.id)
+    assert isinstance(rejected_bill, Bill)
 
 
 class TestFail:
-    @pytest.mark.parametrize("rows", [-5, 51, 0])
-    async def test_transactions_fail(self, api: QiwiWrapper, rows: int):
-        with pytest.raises(InvalidPayload):
-            await api.transactions(rows=rows)
-
-    @pytest.mark.parametrize("rows", [-5, 51, 0])
-    async def test_retrieve_bills_fail_if_rows_num_not_in_normal_boundaries(
-        self, api: QiwiWrapper, rows: int
-    ):
-        with pytest.raises(InvalidPayload):
-            await api.retrieve_bills(rows=rows)
-
     @pytest.mark.parametrize(
         "start_date,end_date",
         [

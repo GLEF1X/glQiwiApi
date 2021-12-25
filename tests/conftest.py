@@ -2,8 +2,9 @@ from datetime import datetime
 
 import pytest
 
-from glQiwiApi.types import CurrencyAmount, Transaction, TransactionStatus, TransactionWebhook
-from glQiwiApi.types.qiwi.transaction import Provider, TransactionType
+from glQiwiApi.base_types import AmountWithCurrency
+from glQiwiApi.qiwi.types import Transaction, TransactionStatus, TransactionWebhook
+from glQiwiApi.qiwi.types.transaction import Provider, TransactionType
 
 pytestmark = pytest.mark.asyncio
 
@@ -33,10 +34,10 @@ def transaction() -> Transaction:
         statusText="hello",
         trmTxnId="world",
         account="+38908234234",
-        sum=CurrencyAmount(amount=999, currency="643"),
-        total=CurrencyAmount(amount=999, currency="643"),
+        sum=AmountWithCurrency(amount=999, currency="643"),
+        total=AmountWithCurrency(amount=999, currency="643"),
         provider=Provider(),
-        commission=CurrencyAmount(amount=999, currency="643"),
+        commission=AmountWithCurrency(amount=999, currency="643"),
         currencyRate=643,
         type=TransactionType.OUT,
         comment="my_comment",

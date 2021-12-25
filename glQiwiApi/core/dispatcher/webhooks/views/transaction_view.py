@@ -2,16 +2,17 @@ import logging
 
 from aiohttp import web
 
-from glQiwiApi import types
+from glQiwiApi import base_types
 from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
 from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
-from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.qiwi.types import TransactionWebhook
 
 logger = logging.getLogger("glQiwiApi.webhooks.transaction")
 
 
-class QiwiTransactionWebhookView(BaseWebhookView[types.TransactionWebhook]):
-    def _validate_event_signature(self, update: types.TransactionWebhook) -> None:
+class QiwiTransactionWebhookView(BaseWebhookView[TransactionWebhook]):
+    def _validate_event_signature(self, update: TransactionWebhook) -> None:
         if update.is_experimental:  # pragma: no cover
             return None
 

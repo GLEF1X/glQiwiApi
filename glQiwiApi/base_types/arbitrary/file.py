@@ -6,7 +6,7 @@ import logging
 import pathlib
 from typing import Any, BinaryIO, Union
 
-from glQiwiApi.types.arbitrary.inputs import AbstractInput
+from glQiwiApi.base_types.arbitrary.inputs import AbstractInput
 from glQiwiApi.utils.compat import aiofiles
 
 CHUNK_SIZE = 65536
@@ -60,8 +60,7 @@ class File:
         try:
             return self.get_filename()
         except TypeError:
-            # it determines, that input is binary stream
-            return "<File>"
+            return "<File(binary stream underlies)>"
 
     def __del__(self) -> None:
         if not hasattr(self, "_input"):

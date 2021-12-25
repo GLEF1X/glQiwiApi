@@ -2,7 +2,7 @@ import asyncio
 import datetime
 
 from glQiwiApi import APIError, QiwiWrapper
-from glQiwiApi.types import TransactionType
+from glQiwiApi.base_types import TransactionType
 
 TOKEN = "YOUR_API_ACCESS_TOKEN"
 WALLET = "+NUMBER"
@@ -15,7 +15,7 @@ async def basic_usage():
     ) as wallet:
         # So you can get information on a transaction, knowing its ID and type
         print(
-            await wallet.transaction_info(
+            await wallet.operation_info(
                 transaction_type=TransactionType.OUT, transaction_id=21249852701
             )
         )

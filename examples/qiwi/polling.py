@@ -1,6 +1,6 @@
 import logging
 
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import QiwiWrapper, base_types
 from glQiwiApi.utils import executor
 
 api_access_token = "your token"
@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 @wallet.transaction_handler()
-async def my_first_handler(update: types.Transaction):
-    assert isinstance(update, types.Transaction)
+async def my_first_handler(update: base_types.Transaction):
+    assert isinstance(update, base_types.Transaction)
 
 
 def on_startup(wrapper: QiwiWrapper):

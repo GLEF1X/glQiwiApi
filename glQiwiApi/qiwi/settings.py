@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from glQiwiApi.core.abc.router import AbstractRouter
-from glQiwiApi.types import WrappedRequestPayload
+from glQiwiApi.base_types import WrappedRequestPayload
 from glQiwiApi.utils.mypy_hacks import lru_cache
 
 __all__ = ("get_config", "QiwiRouter", "QiwiKassaRouter", "QiwiApiMethods")
@@ -48,14 +48,14 @@ class QiwiApiMethods:
     GET_BALANCE: str = "/funding-sources/v2/persons/{phone_number}/accounts"
     TRANSACTIONS: str = "/payment-history/v2/persons/{stripped_number}/payments"
     TO_WALLET: str = "/sinap/api/v2/terms/99/payments"
-    TRANSACTION_INFO: str = "/payment-history/v1/transactions/{transaction_id}"
+    TRANSACTION_INFO: str = "/payment-history/v1/operation_history/{transaction_id}"
     CHECK_RESTRICTION: str = "/person-profile/v1/persons/{phone_number}/status/restrictions"
     GET_IDENTIFICATION: str = "/identification/v1/persons/{phone_number}/identification"
     GET_LIMITS: str = "/qw-limits/v1/persons/{stripped_number}/actual-limits"
     GET_LIST_OF_CARDS: str = "/cards/v1/cards"
     AUTHENTICATE: str = "/identification/v1/persons/{stripped_number}/identification"
     GET_BILLS: str = "/checkout-api/api/bill/search"
-    GET_RECEIPT: str = "/payment-history/v1/transactions/{transaction_id}/cheque/file"
+    GET_RECEIPT: str = "/payment-history/v1/operation_history/{transaction_id}/cheque/file"
     COMMISSION: str = "/sinap/providers/{special_code}/onlineCommission"
     ACCOUNT_INFO: str = "/person-profile/v1/profile/current"
     FETCH_STATISTICS: str = "/payment-history/v2/persons/{stripped_number}/payments/total"

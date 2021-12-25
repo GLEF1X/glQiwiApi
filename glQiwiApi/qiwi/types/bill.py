@@ -6,11 +6,11 @@ import hmac
 from datetime import datetime
 from typing import Any, Dict, Optional, Union
 
-from pydantic import Extra, Field
+from pydantic import Extra, Field, PrivateAttr
 
-from glQiwiApi.types.amount import HashableOptionalSum, PlainAmount
-from glQiwiApi.types.base import Base, HashableBase
-from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.base_types.amount import HashableOptionalSum, PlainAmount
+from glQiwiApi.base_types.base import Base, HashableBase
+from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
 
 
 class Customer(HashableBase):
@@ -52,26 +52,42 @@ class Bill(HashableBase):
     amount: HashableOptionalSum
     status: BillStatus
     site_id: str = Field(..., alias="siteId")
-    bill_id: str = Field(..., alias="billId")
+    id: str = Field(..., alias="billId")
     creation_date_time: datetime = Field(..., alias="creationDateTime")
     expiration_date_time: datetime = Field(..., alias="expirationDateTime")
     pay_url: str = Field(..., alias="payUrl")
     customer: Optional[Customer] = None
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
+    _raw_shim_url: str = PrivateAttr(default="")
+
+    def __init__(self, **kw: Any) -> None:
+        super().__init__(**kw)
+        try:
+            if self.client._shim_server_url is not None:
+                self._raw_shim_url = self.client._shim_server_url  # noqa
+        except RuntimeError:
+            pass
 
     @property
     def invoice_uid(self) -> str:
         return self.pay_url[-36:]
+
+    @property
+    def shim_url(self) -> str:
+        return self._raw_shim_url.format(self.invoice_uid)
 
     class Config:
         extra = Extra.allow
         allow_mutation = True
 
     async def check(self) -> bool:
-        return (await self.client.check_p2p_bill_status(bill_id=self.bill_id)) == "PAID"
+        return (await self.client.get_bill_status(bill_id=self.id)) == "PAID"
 
     async def reject(self) -> Bill:
-        return await self.client.reject_p2p_bill(bill_id=self.bill_id)
+        return await self.client.reject_p2p_bill(bill_id=self.id)
+
+    async def reload(self) -> Bill:
+        return await self.client.get_bill_by_id(self.id)
 
 
 class RefundBill(Base):
@@ -100,13 +116,13 @@ class BillWebhook(HashableBase):
     bill: BillWebhookPayload = Field(..., alias="bill")
 
     def __repr__(self) -> str:
-        return f"#{self.bill.bill_id} {self.bill.amount} {self.bill.status} "
+        return f"#{self.bill.id} {self.bill.amount} {self.bill.status} "
 
     def verify_signature(self, sha256_signature: str, secret_p2p_key: str) -> None:
         webhook_key = base64.b64decode(bytes(secret_p2p_key, "utf-8"))
         bill = self.bill
 
-        invoice_params = f"{bill.amount.currency}|{bill.amount.value}|{bill.bill_id}|{bill.site_id}|{bill.status.value}"
+        invoice_params = f"{bill.amount.currency}|{bill.amount.value}|{bill.id}|{bill.site_id}|{bill.status.value}"
         generated_signature = hmac.new(
             webhook_key, invoice_params.encode("utf-8"), hashlib.sha256
         ).hexdigest()

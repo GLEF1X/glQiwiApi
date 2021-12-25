@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Hashable
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, Extra, BaseConfig
+from glQiwiApi.utils.compat import json
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.client import QiwiWrapper
@@ -24,9 +25,14 @@ class Base(BaseModel):
             )
         return instance
 
+    class Config(BaseConfig):
+        json_dumps = json.dumps  # type: ignore
+        json_loads = json.loads
+        orm_mode = True
+
 
 class HashableBase(Base):
-    class Config:
+    class Config(BaseConfig):
         allow_mutation = False
 
     def __hash__(self) -> int:
@@ -37,5 +43,5 @@ class HashableBase(Base):
 
 
 class ExtraBase(Base):
-    class Config:  # pragma: no cover
+    class Config(BaseConfig):  # pragma: no cover
         extra = Extra.allow

@@ -12,7 +12,7 @@ async def main():
     # new versions
     new_status = await bill.check()  # or bill.paid
     # old version(0.x)
-    old_status = (await wallet.check_p2p_bill_status(bill.bill_id)) == "PAID"
+    old_status = (await wallet.get_bill_status(bill.id)) == "PAID"
     assert new_status == old_status
     await wallet.close()
 

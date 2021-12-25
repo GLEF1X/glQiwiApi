@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import abc
 
-from glQiwiApi.types import CurrencyAmount, Transaction
+from glQiwiApi.base_types import AmountWithCurrency
+from glQiwiApi.qiwi.types import Transaction
 
 from .base import ClientMixin, Handler
 
@@ -13,5 +14,5 @@ class AbstractTransactionHandler(Handler[Transaction], ClientMixin[Transaction],
         return self.event.id
 
     @property
-    def transaction_sum(self) -> CurrencyAmount:
+    def transaction_sum(self) -> AmountWithCurrency:
         return self.event.sum

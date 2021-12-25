@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, BaseConfig
 
-from glQiwiApi.types.base import HashableBase
+from glQiwiApi.base_types.base import HashableBase
 
 
 class CurrencyModel(HashableBase):
@@ -17,8 +17,15 @@ class CurrencyModel(HashableBase):
     symbol_native: str
     iso_format: Optional[str] = Field(..., alias="isoformat")
 
+    def __str__(self) -> str:
+        return self.code
 
-class CurrencyAmount(BaseModel):
+    class Config(BaseConfig):
+        frozen = True
+        allow_mutation = False
+
+
+class AmountWithCurrency(BaseModel):
     amount: float
     currency: Union[CurrencyModel, str]  # string if currency util couldn't parse it
 
@@ -34,7 +41,7 @@ class CurrencyAmount(BaseModel):
         return Currency.get(str(v))
 
 
-class HashableSum(HashableBase, CurrencyAmount):
+class HashableSum(HashableBase, AmountWithCurrency):
     ...
 
 

@@ -2,7 +2,7 @@ import logging
 
 from aiogram import Bot
 
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import QiwiWrapper, base_types
 from glQiwiApi.core.dispatcher.webhooks.config import Path
 from glQiwiApi.utils import executor
 
@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 
 # There is a lambda expression for "cutting off" test payments
 @wallet.transaction_handler(lambda event: event.payment is not None)
-async def main(event: types.TransactionWebhook):
+async def main(event: base_types.TransactionWebhook):
     logger.info("New transaction: {}", event)
     await bot.send_message(chat_id="1219185039", text=event.id)
 
 
 @wallet.bill_handler()
-async def main2(event: types.BillWebhook):
+async def main2(event: base_types.BillWebhook):
     logger.info("P2P EVENT {}", event)
 
 
@@ -37,7 +37,7 @@ async def main2(event: types.BillWebhook):
 # default bill_path = /webhooks/qiwi/bills/
 # So, if you dont pass on paths
 # you need to register webhook with url like
-# on this example: http://your_ip:port/web_hooks/qiwi/ - for transactions
+# on this example: http://your_ip:port/web_hooks/qiwi/ - for operation_history
 # or http://your_ip:port/webhooks/qiwi/bills/ - for bills
 path = Path(transaction_path="/dispatcher/qiwi", bill_path="/my_webhook/")
 

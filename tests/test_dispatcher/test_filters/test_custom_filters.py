@@ -5,7 +5,7 @@ from pytest_mock import MockerFixture
 
 from glQiwiApi import BaseFilter
 from glQiwiApi.core.dispatcher import filters
-from glQiwiApi.types import Transaction
+from glQiwiApi.qiwi.types import Transaction
 
 pytestmark = pytest.mark.asyncio
 

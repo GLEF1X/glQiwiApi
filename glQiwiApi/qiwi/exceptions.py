@@ -6,15 +6,13 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from aiohttp import RequestInfo
 from pydantic import BaseModel
 
+from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
+
 if TYPE_CHECKING:
-    from glQiwiApi.types.errors import QiwiErrorAnswer
+    from glQiwiApi.base_types.errors import QiwiErrorAnswer
 
 
 class CantParseUrl(Exception):
-    pass
-
-
-class InvalidPayload(TypeError):
     pass
 
 
@@ -101,9 +99,9 @@ class APIError(Exception):
 
 
 __all__ = (
-    "InvalidPayload",
     "CantParseUrl",
     "APIError",
     "ChequeIsNotAvailable",
     "SecretP2PTokenIsEmpty",
+    "WebhookSignatureUnverifiedError",
 )

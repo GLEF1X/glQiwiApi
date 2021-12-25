@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi.plugins.telegram.polling import TelegramPollingPlugin
-from glQiwiApi.types import Transaction
+from glQiwiApi.base_types import Transaction
 from glQiwiApi.utils import executor
 
 api_access_token = "your token"

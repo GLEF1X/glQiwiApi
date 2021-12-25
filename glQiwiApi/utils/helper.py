@@ -107,10 +107,8 @@ class require:
         return wrapper
 
     def check_is_object_contains_required_attrs(self, c, func):
-        from glQiwiApi import InvalidPayload
-
         for required_attr_name in self._required_attrs:
             if getattr(c, required_attr_name, None) is None:
-                raise InvalidPayload(
+                raise RuntimeError(
                     f"Method {func.__name__} requires {required_attr_name} not to be empty"
                 )

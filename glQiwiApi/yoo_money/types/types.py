@@ -1,13 +1,29 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Generator
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator, ValidationError
 
 
-class BalanceDetails(BaseModel):
+class JsonErr(BaseModel):
+    error_code: str = Field(..., alias="error")
+
+
+class Response(BaseModel):
+    @root_validator(pre=True)
+    def _check_error(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        from glQiwiApi.yoo_money.exceptions import match_error
+
+        try:
+            err = JsonErr.parse_obj(values)
+        except ValidationError:
+            return values
+        match_error(err.error_code)
+        return values
+
+
+class BalanceDetails(Response):
     """object: BalanceDetails"""
 
     total: float
@@ -18,14 +34,14 @@ class BalanceDetails(BaseModel):
     hold: Optional[float] = None
 
 
-class CardsLinked(BaseModel):
+class CardsLinked(Response):
     """object: CardsLinked"""
 
     pan_fragment: str
     type: str
 
 
-class AccountInfo(BaseModel):
+class AccountInfo(Response):
     """object: AccountInfo"""
 
     account: str
@@ -82,37 +98,7 @@ class AccountInfo(BaseModel):
     """
 
 
-class OperationType(Enum):
-    """
-    Типы операций YooMoney
-
-    deposition — пополнение счета (приход);
-    payment — платежи со счета (расход);
-    incoming_transfers_unaccepted —
-    непринятые входящие P2P-переводы любого типа.
-
-    """
-
-    DEPOSITION = "deposition"
-    """Пополнение счета (приход);"""
-
-    PAYMENT = "payment"
-    """Платежи со счета (расход)"""
-
-    TRANSFERS = "incoming-transfers-unaccepted"
-    """непринятые входящие P2P-переводы любого типа."""
-
-    @classmethod
-    def from_input(cls, op_type: str) -> OperationType:
-        if op_type.lower() == "in":
-            return cls.DEPOSITION
-        elif op_type.lower() == "out":
-            return cls.PAYMENT
-        else:
-            return cls.TRANSFERS
-
-
-class DigitalGoods(BaseModel):
+class DigitalGoods(Response):
     """
     Данные о цифровом товаре (пин-коды и бонусы игр, iTunes, Xbox, etc.)
     Поле присутствует при успешном платеже в магазины цифровых товаров.
@@ -125,7 +111,7 @@ class DigitalGoods(BaseModel):
     secret: str
 
 
-class Operation(BaseModel):
+class Operation(Response):
     """object: Operation"""
 
     id: str = Field(..., alias="operation_id")
@@ -185,25 +171,35 @@ class Operation(BaseModel):
     details: Optional[Any] = None
 
 
-class OperationDetails(BaseModel):
+class OperationHistory(Response):
+    next_record: int
+    operations: List[Operation]
+    error: Optional[str] = None
+
+    def __iter__(self) -> Generator[Operation, None, None]:
+        for operation in self.operations:
+            yield operation
+
+
+class OperationDetails(Response):
     """object: OperationDetails"""
 
     id: str = Field(..., alias="operation_id")
     """Идентификатор операции. Можно получить при вызове метода history()"""
 
-    status: Optional[str] = None
+    status: str
     """Статус платежа (перевода). Можно получить при вызове метода history()"""
 
-    amount: Optional[float] = None
+    amount: float
     """Сумма операции (сумма списания со счета)."""
 
-    operation_date: Optional[datetime] = Field(default=None, alias="datetime")
+    operation_date: datetime = Field(default=None, alias="datetime")
     """
     Дата и время совершения операции в формате строки
     в ISO формате с часовым поясом UTC.
     """
 
-    operation_type: Optional[str] = Field(default=None, alias="type")
+    operation_type: str = Field(default=None, alias="type")
     """Тип операции. Возможные значения:
     payment-shop — исходящий платеж в магазин;
     outgoing-transfer — исходящий P2P-перевод любого типа;
@@ -212,14 +208,14 @@ class OperationDetails(BaseModel):
     incoming-transfer-protected — входящий перевод с кодом протекции.
     """
 
-    direction: Optional[str] = None
+    direction: str
     """
     направление движения средств. может принимать значения:
     - in (приход);
     - out (расход).
     """
 
-    comment: Optional[str] = None
+    comment: str
     """
     Комментарий к переводу или пополнению.
     Присутствует в истории отправителя перевода или получателя пополнения.
@@ -233,7 +229,7 @@ class OperationDetails(BaseModel):
     https://yoomoney.ru/docs/wallet/process-payments/process-payment#digital-goods
     """
 
-    details: Optional[str] = None
+    details: str
     """
     Детальное описание платежа. Строка произвольного формата,
     может содержать любые символы и переводы строк
@@ -298,7 +294,7 @@ class OperationDetails(BaseModel):
     Присутствует для входящих переводов от других пользователей.
     """
 
-    title: Optional[str] = None
+    title: str
     """
     Краткое описание операции (название магазина или источник пополнения).
     """
@@ -309,7 +305,7 @@ class OperationDetails(BaseModel):
     Присутствует для исходящих переводов другим пользователям.
     """
 
-    amount_due: Optional[float] = None
+    amount_due: Optional[float] = None  # TODO make it human usable
     """
     Сумма к получению.
     Присутствует для исходящих переводов другим пользователям.
@@ -330,13 +326,13 @@ class OperationDetails(BaseModel):
     """
 
 
-class Wallet(BaseModel):
+class Wallet(Response):
     """object: Wallet"""
 
     allowed: bool
 
 
-class Item(BaseModel):
+class Item(Response):
     """object: Item"""
 
     item_id: str = Field(..., alias="id")
@@ -361,7 +357,7 @@ class Item(BaseModel):
     """
 
 
-class Card(BaseModel):
+class Card(Response):
     """object: Card"""
 
     allowed: bool
@@ -369,7 +365,7 @@ class Card(BaseModel):
     items: List[Item]
 
 
-class MoneySource(BaseModel):
+class MoneySource(Response):
     """
     Список доступных методов для проведения данного платежа.
     Каждый метод содержит набор атрибутов.
@@ -381,7 +377,7 @@ class MoneySource(BaseModel):
     """платеж с банковских карт, привязанных к счету"""
 
 
-class PreProcessPaymentResponse(BaseModel):
+class PreProcessPaymentResponse(Response):
     """
     Объект, который вы получаете при вызове _pre_process_payment.
     При вызове данного метода вы не списываете деньги со своего счёта,
@@ -406,7 +402,7 @@ class PreProcessPaymentResponse(BaseModel):
     ext_action_uri: Optional[str] = None
 
 
-class Payment(BaseModel):  # lgtm [py/missing-equals #
+class Payment(Response):
     """object: Payment"""
 
     status: str
@@ -507,22 +503,10 @@ class Payment(BaseModel):  # lgtm [py/missing-equals #
         return self
 
 
-class IncomingTransaction(BaseModel):
+class IncomingTransaction(Response):
     """object: IncomingTransaction"""
 
     status: str
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None
     error: Optional[str] = None
-
-
-__all__ = (
-    "AccountInfo",
-    "OperationType",
-    "Operation",
-    "OperationDetails",
-    "PreProcessPaymentResponse",
-    "Payment",
-    "IncomingTransaction",
-    "Card",
-)

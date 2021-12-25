@@ -57,7 +57,7 @@ class InMemoryCacheStorage(CacheStorage):
         self._data.clear()
 
     def retrieve_all(self) -> List[Optional[Any]]:
-        return [self.retrieve(key) for key in self._data.keys()]
+        return [self.retrieve(key) for key in list(self._data.keys())]
 
     def update(self, **kwargs: Any) -> None:
         try:
@@ -83,3 +83,6 @@ class InMemoryCacheStorage(CacheStorage):
 
     def contains_similar(self, item: Any) -> bool:
         return self._invalidate_strategy.check_is_contains_similar(self, item)
+
+    def __del__(self) -> None:
+        del self._data

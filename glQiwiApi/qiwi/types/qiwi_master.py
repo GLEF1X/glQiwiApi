@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from glQiwiApi.types import CurrencyAmount
-from glQiwiApi.types.base import Base
+from glQiwiApi.base_types import AmountWithCurrency
+from glQiwiApi.base_types.base import Base
 
 
 class OrderDetails(Base):
@@ -13,7 +13,7 @@ class OrderDetails(Base):
     order_id: str = Field(..., alias="id")
     card_alias: str = Field(..., alias="cardAlias")
     status: str
-    price: Optional[CurrencyAmount] = None
+    price: Optional[AmountWithCurrency] = None
     card_id: Optional[str] = Field(alias="cardId", default=None)
 
 
@@ -60,7 +60,7 @@ class CardInfo(Base):
     id_: int = Field(..., alias="id")
     name: str
     alias: str
-    price: CurrencyAmount
+    price: AmountWithCurrency
     period: str
     type_: str = Field(..., alias="type")
     details: Details
@@ -73,7 +73,7 @@ class Card(Base):
     """
 
     details: CardCredentials = Field(..., alias="qvx")
-    balance: Optional[CurrencyAmount] = None
+    balance: Optional[AmountWithCurrency] = None
     info: CardInfo
 
 

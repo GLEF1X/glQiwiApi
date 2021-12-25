@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar, Union
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.client import QiwiWrapper  # NOQA  # pragma: no cover
-    from glQiwiApi.types.base import Base  # NOQA # pragma: no cover
+    from glQiwiApi.base_types.base import Base  # NOQA # pragma: no cover
 
 T = TypeVar("T", bound=Union[Exception, "Base"])
 

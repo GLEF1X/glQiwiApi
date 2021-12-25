@@ -19,8 +19,8 @@ async def initialized_app() -> AsyncGenerator[FastAPI, Any]:
 @pytest.fixture()
 async def client(initialized_app: FastAPI) -> AsyncGenerator[AsyncClient, Any]:
     async with AsyncClient(
-            app=initialized_app,
-            base_url="http://test",
-            headers={"Content-Type": "application/json"},
+        app=initialized_app,
+        base_url="http://test",
+        headers={"Content-Type": "application/json"},
     ) as client:  # type: AsyncClient
         yield client

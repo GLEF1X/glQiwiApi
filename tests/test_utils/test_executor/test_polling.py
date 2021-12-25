@@ -5,10 +5,9 @@ from typing import List, Optional
 import pytest
 import timeout_decorator
 
-from glQiwiApi import QiwiWrapper, types
+from glQiwiApi import QiwiWrapper
 from glQiwiApi.core.dispatcher.implementation import Dispatcher, Event
-from glQiwiApi.types import Transaction
-from glQiwiApi.types.qiwi.transaction import Source, TransactionType
+from glQiwiApi.qiwi.types import Transaction, TransactionType, Source
 from glQiwiApi.utils import executor
 from tests.types.dataset import WRONG_API_DATA
 
@@ -33,7 +32,7 @@ class StubQiwiWrapper(QiwiWrapper):
     def __new__(cls, *args, **kwargs):
         return object().__new__(cls)
 
-    async def transactions(
+    async def history(
         self,
         rows: int = 50,
         operation: TransactionType = TransactionType.ALL,
@@ -68,14 +67,14 @@ class TestPolling:
         # Also, without decorators, you can do like this
         # api.dispatcher.register_transaction_handler(my_handler)
         @api.transaction_handler()
-        async def my_first_handler(event: types.Transaction):
+        async def my_first_handler(event: Transaction):
             self._handled_first.set()
-            assert isinstance(event, types.Transaction)
+            assert isinstance(event, Transaction)
 
         @api.transaction_handler()
-        async def my_second_handler(event: types.Transaction):
+        async def my_second_handler(event: Transaction):
             self._handled_second.set()
-            assert isinstance(event, types.Transaction)
+            assert isinstance(event, Transaction)
 
         executor.start_polling(api, on_startup=_on_startup_callback)
 

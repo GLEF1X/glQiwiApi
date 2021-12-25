@@ -12,7 +12,7 @@ from glQiwiApi.core.dispatcher.webhooks.services.security.ip import IPFilter
 from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
 from glQiwiApi.core.dispatcher.webhooks.views.bill_view import QiwiBillWebhookView
 from glQiwiApi.core.dispatcher.webhooks.views.transaction_view import QiwiTransactionWebhookView
-from glQiwiApi.types import BillWebhook, TransactionWebhook
+from glQiwiApi.qiwi.types import BillWebhook, TransactionWebhook
 
 
 def configure_app(

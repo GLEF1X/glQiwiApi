@@ -22,18 +22,18 @@ from typing import (
 from aiohttp import RequestInfo
 from pydantic import BaseModel
 
-from glQiwiApi import types
+from glQiwiApi import base_types
+from glQiwiApi.qiwi.exceptions import APIError
+from glQiwiApi.qiwi.types import TransactionType, Limit
+from glQiwiApi.qiwi.types.transaction import History
 from glQiwiApi.utils.dates_conversion import (
     datetime_to_iso8601_with_moscow_timezone,
-    datetime_to_utc,
 )
 
 try:
     import orjson
 except (ModuleNotFoundError, ImportError):  # pragma: no cover # type: ignore
     import json as orjson  # type: ignore
-
-from glQiwiApi.utils import exceptions
 
 Model = TypeVar("Model", bound=BaseModel)
 DEFAULT_EXCLUDE = ("cls", "self", "__class__")
@@ -84,7 +84,7 @@ def get_decoded_result(
     if status_code == HTTPStatus.OK:
         return result_json
 
-    raise exceptions.APIError(
+    raise APIError(
         message=error_messages.get(status_code),
         status_code=status_code,
         request_data=request_info,
@@ -123,15 +123,12 @@ def format_dates(
     return payload_data
 
 
-FuncT = TypeVar("FuncT", bound=Callable[..., Any])
-
-
 def parse_commission_request_payload(
-    default_data: types.WrappedRequestPayload,
-    auth_maker: FuncT,
+    default_data: base_types.WrappedRequestPayload,
+    auth_maker: Callable[..., Any],
     pay_sum: Union[int, float],
     to_account: str,
-) -> Tuple[types.WrappedRequestPayload, Union[str, None]]:
+) -> Tuple[base_types.WrappedRequestPayload, Union[str, None]]:
     """Set calc_commission payload"""
     payload = deepcopy(default_data)
     payload.headers = auth_maker(payload.headers)
@@ -141,11 +138,11 @@ def parse_commission_request_payload(
 
 
 def retrieve_card_data(
-    default_data: types.WrappedRequestPayload,
+    default_data: base_types.WrappedRequestPayload,
     trans_sum: Union[int, float, str],
     to_card: str,
-    auth_maker: FuncT,
-) -> types.WrappedRequestPayload:
+    auth_maker: Callable[..., Any],
+) -> base_types.WrappedRequestPayload:
     """Set card data payload"""
     data = deepcopy(default_data)
     data.json["sum"]["amount"] = trans_sum
@@ -154,38 +151,23 @@ def retrieve_card_data(
     return data
 
 
-def retrieve_base_headers_for_yoomoney(
-    is_content_json: bool = False, auth: bool = False
-) -> Dict[Any, Any]:
-    headers = {
-        "Host": "yoomoney.ru",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    if is_content_json:
-        headers.update({"Accept": "application/json"})
-    if auth:
-        headers.update({"Authorization": "Bearer {token}"})
-    return headers
-
-
 def set_data_to_wallet(
-    data: types.WrappedRequestPayload,
+    data: base_types.WrappedRequestPayload,
     to_number: str,
     trans_sum: Union[str, int, float],
     comment: Optional[str] = None,
-    currency: str = "643",
-) -> types.WrappedRequestPayload:
+    currency: Any = "643",
+) -> base_types.WrappedRequestPayload:
     data.json["sum"]["amount"] = str(trans_sum)
-    data.json["sum"]["currency"] = currency
+    data.json["sum"]["currency"] = str(currency)
     data.json["fields"]["account"] = to_number
     if comment is not None:
         data.json["comment"] = comment
-    data.headers.update({"User-Agent": "Android v3.2.0 MKT"})
     return data
 
 
 def patch_p2p_create_payload(
-    wrapped_data: types.WrappedRequestPayload,
+    wrapped_data: base_types.WrappedRequestPayload,
     amount: Union[str, int, float],
     life_time: str,
     comment: Optional[str] = None,
@@ -208,6 +190,32 @@ def patch_p2p_create_payload(
     ]:
         wrapped_data.json.pop("customFields")
     return wrapped_data.json
+
+
+def is_transaction_exists_in_history(
+    history: History,
+    amount: Union[int, float],
+    transaction_type: TransactionType = TransactionType.IN,
+    sender: Optional[str] = None,
+    comment: Optional[str] = None,
+) -> bool:
+    for txn in history:
+        if txn.sum.amount < amount or txn.type != transaction_type.value:
+            continue
+        if txn.comment == comment and txn.to_account == sender:
+            return True
+        elif comment and sender:
+            continue
+        elif txn.to_account == sender:
+            return True
+        elif sender:
+            continue
+        elif txn.comment == comment:
+            return True
+        elif comment:
+            continue
+        return True
+    return False
 
 
 def parse_iterable_to_list_of_objects(iterable: Iterable[Any], model: Type[Model]) -> List[Model]:
@@ -234,103 +242,12 @@ def get_new_card_data(ph_number: str, order_id: str, data: Dict[Any, Any]) -> Di
     return payload
 
 
-def parse_amount(txn_type: str, txn: types.OperationDetails) -> Tuple[Union[int, float], str]:
-    transaction_type_in_lower = types.OperationType.DEPOSITION.value.lower()  # type: str
-    if txn_type == transaction_type_in_lower:
-        return txn.amount, txn.comment  # type: ignore
-    else:
-        return txn.amount_due, txn.message  # type: ignore
-
-
-def check_params(
-    amount_: Union[int, float],
-    amount: Union[int, float],
-    txn: types.OperationDetails,
-    transaction_type: str,
-) -> bool:
-    return amount is not None and amount <= amount_ and txn.direction == transaction_type
-
-
-def check_transaction(
-    transactions: List[types.Transaction],
-    amount: Union[int, float],
-    transaction_type: types.TransactionType = types.TransactionType.IN,
-    sender: Optional[str] = None,
-    comment: Optional[str] = None,
-) -> bool:
-    for txn in transactions:
-        if txn.sum.amount < amount or txn.type != transaction_type.value:
-            continue
-        if txn.comment == comment and txn.to_account == sender:
-            return True
-        elif comment and sender:
-            continue
-        elif txn.to_account == sender:
-            return True
-        elif sender:
-            continue
-        elif txn.comment == comment:
-            return True
-        elif comment:
-            continue
-        return True
-    return False
-
-
-def parse_limits(response: Dict[Any, Any]) -> Dict[str, types.Limit]:
+def parse_limits(response: Dict[Any, Any]) -> Dict[str, Limit]:
     resp_limits = cast(Dict[str, List[Dict[Any, Any]]], response["limits"])
     return {
-        code: [types.Limit.parse_obj(limit) for limit in limits]  # type: ignore
+        code: [Limit.parse_obj(limit) for limit in limits]  # type: ignore
         for code, limits in resp_limits.items()
     }
-
-
-def check_api_method(api_method: str) -> None:
-    if not isinstance(api_method, str):
-        raise RuntimeError(
-            f"Invalid type of api_method(must  be string)." f" Passed {type(api_method)}"
-        )
-
-
-def format_transactions_payload(
-    data: Dict[Any, Any],
-    records: int,
-    operation_types: Optional[
-        Union[List[types.OperationType], Tuple[types.OperationType, ...]]
-    ] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    start_record: Optional[int] = None,
-) -> Dict[Any, Any]:
-    from glQiwiApi import InvalidPayload
-
-    if records <= 0 or records > 100:
-        raise InvalidPayload(
-            "Invalid number of records."
-            "The number of records that can be requested,"
-            "be in the range from 1 to 100 inclusive"
-        )
-    if operation_types and all(
-        isinstance(operation_type, types.OperationType) for operation_type in operation_types
-    ):
-        op_types = [operation_type.value for operation_type in operation_types]
-        data.update({"type": " ".join(op_types)})
-
-    if isinstance(start_record, int):
-        if start_record < 0:
-            raise InvalidPayload("start_record must be positive")
-        data.update({"start_record": start_record})
-
-    if start_date:
-        if not isinstance(start_date, datetime):
-            raise InvalidPayload("start_date must be datetime instance")
-        data.update({"from": datetime_to_utc(start_date)})
-
-    if end_date:
-        if not isinstance(end_date, datetime):
-            raise InvalidPayload("end_date must be datetime instance")
-        data.update({"till": datetime_to_utc(end_date)})
-    return data
 
 
 def check_dates_for_statistic_request(start_date: datetime, end_date: datetime) -> None:

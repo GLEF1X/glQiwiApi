@@ -5,7 +5,7 @@ from concurrent import futures as futures
 from concurrent.futures import Future
 from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar
 
-from glQiwiApi import types
+from glQiwiApi import base_types
 
 N = TypeVar("N")
 
