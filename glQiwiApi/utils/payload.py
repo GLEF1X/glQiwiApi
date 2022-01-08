@@ -56,10 +56,10 @@ def make_payload(**kwargs: Any) -> Dict[Any, Any]:
 
 
 def get_decoded_result(
-        error_messages: Dict[int, str],
-        status_code: int,
-        request_info: RequestInfo,
-        body: str,
+    error_messages: Dict[int, str],
+    status_code: int,
+    request_info: RequestInfo,
+    body: str,
 ) -> Dict[Any, Any]:
     """
     Checks whether `result` is a valid API response.
@@ -103,9 +103,9 @@ def parse_auth_link(response_data: str) -> str:
 
 
 def format_dates(
-        start_date: Optional[datetime],
-        end_date: Optional[datetime],
-        payload_data: Dict[Any, Any],
+    start_date: Optional[datetime],
+    end_date: Optional[datetime],
+    payload_data: Dict[Any, Any],
 ) -> Dict[Any, Any]:
     """Check correctness of transferred dates and add it to request"""
     if isinstance(start_date, datetime) and isinstance(end_date, datetime):
@@ -122,10 +122,10 @@ def format_dates(
 
 
 def parse_commission_request_payload(
-        default_data: base_types.WrappedRequestPayload,
-        auth_maker: Callable[..., Any],
-        pay_sum: Union[int, float],
-        to_account: str,
+    default_data: base_types.WrappedRequestPayload,
+    auth_maker: Callable[..., Any],
+    pay_sum: Union[int, float],
+    to_account: str,
 ) -> Tuple[base_types.WrappedRequestPayload, Union[str, None]]:
     """Set calc_commission payload"""
     payload = deepcopy(default_data)
@@ -136,10 +136,10 @@ def parse_commission_request_payload(
 
 
 def retrieve_card_data(
-        default_data: base_types.WrappedRequestPayload,
-        trans_sum: Union[int, float, str],
-        to_card: str,
-        auth_maker: Callable[..., Any],
+    default_data: base_types.WrappedRequestPayload,
+    trans_sum: Union[int, float, str],
+    to_card: str,
+    auth_maker: Callable[..., Any],
 ) -> base_types.WrappedRequestPayload:
     """Set card data payload"""
     data = deepcopy(default_data)
@@ -150,11 +150,11 @@ def retrieve_card_data(
 
 
 def set_data_to_wallet(
-        data: base_types.WrappedRequestPayload,
-        to_number: str,
-        trans_sum: Union[str, int, float],
-        comment: Optional[str] = None,
-        currency: Any = "643",
+    data: base_types.WrappedRequestPayload,
+    to_number: str,
+    trans_sum: Union[str, int, float],
+    comment: Optional[str] = None,
+    currency: Any = "643",
 ) -> base_types.WrappedRequestPayload:
     data.json["sum"]["amount"] = str(trans_sum)
     data.json["sum"]["currency"] = str(currency)
@@ -165,12 +165,12 @@ def set_data_to_wallet(
 
 
 def patch_p2p_create_payload(
-        wrapped_data: base_types.WrappedRequestPayload,
-        amount: Union[str, int, float],
-        life_time: str,
-        comment: Optional[str] = None,
-        theme_code: Optional[str] = None,
-        pay_source_filter: Optional[List[str]] = None,
+    wrapped_data: base_types.WrappedRequestPayload,
+    amount: Union[str, int, float],
+    life_time: str,
+    comment: Optional[str] = None,
+    theme_code: Optional[str] = None,
+    pay_source_filter: Optional[List[str]] = None,
 ) -> Dict[MutableMapping[Any, Any], Any]:
     """Setting data for p2p form creation transfer"""
     wrapped_data.json["amount"]["value"] = str(amount)
@@ -191,11 +191,11 @@ def patch_p2p_create_payload(
 
 
 def is_transaction_exists_in_history(
-        history: History,
-        amount: Union[int, float],
-        transaction_type: TransactionType = TransactionType.IN,
-        sender: Optional[str] = None,
-        comment: Optional[str] = None,
+    history: History,
+    amount: Union[int, float],
+    transaction_type: TransactionType = TransactionType.IN,
+    sender: Optional[str] = None,
+    comment: Optional[str] = None,
 ) -> bool:
     for txn in history:
         if txn.sum.amount < amount or txn.type != transaction_type.value:

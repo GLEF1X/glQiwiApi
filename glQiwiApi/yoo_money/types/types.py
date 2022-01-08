@@ -192,7 +192,7 @@ class OperationDetails(Response):
 
     @root_validator(pre=True)
     def _extract_amount_and_comment_by_operation_type(
-            cls, values: Dict[str, Any]
+        cls, values: Dict[str, Any]
     ) -> Dict[str, Any]:
         operation_type: str = values["type"]
         if operation_type == "payment":

@@ -5,13 +5,9 @@ QIWI_WALLET_CREDENTIALS = {
     "api_access_token": os.getenv("API_ACCESS_TOKEN"),
 }
 
-SECRET_P2P_CREDENTIALS = {
-    "secret_p2p": os.getenv("SECRET_P2P")
-}
+SECRET_P2P_CREDENTIALS = {"secret_p2p": os.getenv("SECRET_P2P")}
 
-YOO_MONEY_DATA = {
-    "api_access_token": os.getenv("YOO_API_TOKEN")
-}
+YOO_MONEY_DATA = {"api_access_token": os.getenv("YOO_API_TOKEN")}
 
 YOO_MONEY_TEST_CLIENT_ID = os.getenv("YOO_TEST_CLIENT_ID")
 
