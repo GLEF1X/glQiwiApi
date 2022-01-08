@@ -3,25 +3,20 @@
 
 import datetime
 
-import glQiwiApi
-
 project = "glQiwiApi"
 author = "GLEF1X"
 copyright = f"{datetime.date.today().year}, {author}"
-release = glQiwiApi.__version__
+release = "2.0.0b1"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
-
 
 html_theme = "furo"
 html_logo = "_static/logo.png"
 html_static_path = ["_static"]
 todo_include_todos = True
 
-
 extensions = [
-    "notfound.extension",
     "sphinx.ext.autodoc",
     "sphinx.ext.autodoc.typehints",
     "sphinx.ext.doctest",
@@ -36,7 +31,6 @@ html_theme_options = {}
 html_css_files = [
     "stylesheets/extra.css",
 ]
-
 
 rst_prolog = f"""
 .. role:: pycode(code)
