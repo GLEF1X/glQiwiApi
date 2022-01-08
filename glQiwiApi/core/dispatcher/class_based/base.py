@@ -4,7 +4,7 @@ import abc
 from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar, Union
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.client import QiwiWrapper  # NOQA  # pragma: no cover
+    from glQiwiApi.qiwi.clients.wallet import QiwiWallet  # NOQA  # pragma: no cover
     from glQiwiApi.base_types.base import Base  # NOQA # pragma: no cover
 
 T = TypeVar("T", bound=Union[Exception, "Base"])
@@ -20,14 +20,14 @@ class ClientMixin(Generic[T]):
         event: T
 
     @property
-    def client(self) -> "QiwiWrapper":
+    def client(self) -> "QiwiWallet":
         if isinstance(self.event, Exception):
-            return QiwiWrapper.get_current()  # type: ignore
+            return QiwiWallet.get_current()  # type: ignore
         return self.event.client  # type: ignore
 
     @property
     def client_data(self) -> Dict[Any, Any]:
-        return self.client.config_data
+        return self.client.ctx
 
 
 class Handler(abc.ABC, BaseHandlerMixin[T]):

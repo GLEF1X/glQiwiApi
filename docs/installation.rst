@@ -30,7 +30,7 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone -b dev-1.x git://github.com/GLEF1X/glQiwiApi
+    $ git clone -b dev-2.x git://github.com/GLEF1X/glQiwiApi
 
 Once you get a copy of the source files, you can install them with:
 

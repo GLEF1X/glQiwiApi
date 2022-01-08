@@ -3,8 +3,8 @@ from __future__ import annotations
 import abc
 from typing import Optional
 
-from glQiwiApi.core.dispatcher.class_based.base import ClientMixin, Handler
 from glQiwiApi.base_types.amount import PlainAmount
+from glQiwiApi.core.dispatcher.class_based.base import ClientMixin, Handler
 from glQiwiApi.qiwi.types.bill import Bill
 
 

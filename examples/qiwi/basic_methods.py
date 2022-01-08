@@ -1,8 +1,9 @@
 import asyncio
 import datetime
 
-from glQiwiApi import APIError, QiwiWrapper
-from glQiwiApi.base_types import TransactionType
+from glQiwiApi import QiwiWallet
+from glQiwiApi.qiwi import APIError
+from glQiwiApi.qiwi.types import TransactionType
 
 TOKEN = "YOUR_API_ACCESS_TOKEN"
 WALLET = "+NUMBER"
@@ -10,7 +11,7 @@ SECRET_KEY = "YOUR_SECRET_P2P_TOKEN"
 
 
 async def basic_usage():
-    async with QiwiWrapper(
+    async with QiwiWallet(
         api_access_token=TOKEN, phone_number=WALLET, secret_p2p=SECRET_KEY
     ) as wallet:
         # So you can get information on a transaction, knowing its ID and type

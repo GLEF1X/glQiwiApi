@@ -1,13 +1,13 @@
 import asyncio
 
-from glQiwiApi import QiwiWrapper
+from glQiwiApi import QiwiWallet
 
 # Caching is disabled by default because
 # this feature is still in beta testing and
 # constant DEFAULT_CACHE_TIME = 0 to fix this and enable caching
 # you need to pass cache_time to the constructor of the QiwiWrapper class
 # or YooMoneyAPI
-wallet = QiwiWrapper(
+wallet = QiwiWallet(
     # QIWI API token from https://qiwi.com/api
     api_access_token="token",
     # phone number startswith "+"

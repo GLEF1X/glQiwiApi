@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Generator
+from typing import Any, Dict, List, Optional, Union, Iterator, TYPE_CHECKING
 
 from pydantic import BaseModel, Field, root_validator, ValidationError
+
+from glQiwiApi.base_types.base import BaseWithClient
+
+if TYPE_CHECKING:
+    from glQiwiApi import YooMoneyAPI  # noqa
 
 
 class JsonErr(BaseModel):
     error_code: str = Field(..., alias="error")
 
 
-class Response(BaseModel):
+class Response(BaseWithClient["YooMoneyAPI"]):
+    error: Optional[str] = None
+
     @root_validator(pre=True)
     def _check_error(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         from glQiwiApi.yoo_money.exceptions import match_error
@@ -34,7 +41,7 @@ class BalanceDetails(Response):
     hold: Optional[float] = None
 
 
-class CardsLinked(Response):
+class CardsLinked(BaseModel):
     """object: CardsLinked"""
 
     pan_fragment: str
@@ -168,15 +175,14 @@ class Operation(Response):
     Присутствует только для платежей.
     """
 
-    details: Optional[Any] = None
+    details: Optional[str] = None
 
 
 class OperationHistory(Response):
-    next_record: int
+    next_record: Optional[int]
     operations: List[Operation]
-    error: Optional[str] = None
 
-    def __iter__(self) -> Generator[Operation, None, None]:
+    def __iter__(self) -> Iterator[Operation]:  # type: ignore
         for operation in self.operations:
             yield operation
 
@@ -184,149 +190,41 @@ class OperationHistory(Response):
 class OperationDetails(Response):
     """object: OperationDetails"""
 
+    @root_validator(pre=True)
+    def _extract_amount_and_comment_by_operation_type(
+            cls, values: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        operation_type: str = values["type"]
+        if operation_type == "payment":
+            values["amount"] = values["amount_due"]
+            values["comment"] = values["message"]
+        return values
+
     id: str = Field(..., alias="operation_id")
-    """Идентификатор операции. Можно получить при вызове метода history()"""
-
     status: str
-    """Статус платежа (перевода). Можно получить при вызове метода history()"""
-
     amount: float
-    """Сумма операции (сумма списания со счета)."""
-
-    operation_date: datetime = Field(default=None, alias="datetime")
-    """
-    Дата и время совершения операции в формате строки
-    в ISO формате с часовым поясом UTC.
-    """
-
-    operation_type: str = Field(default=None, alias="type")
-    """Тип операции. Возможные значения:
-    payment-shop — исходящий платеж в магазин;
-    outgoing-transfer — исходящий P2P-перевод любого типа;
-    deposition — зачисление;
-    incoming-transfer — входящий перевод или перевод до востребования;
-    incoming-transfer-protected — входящий перевод с кодом протекции.
-    """
-
+    currency: str = Field(..., alias="amount_currency")
+    available_operations: List[str]
+    operation_date: datetime = Field(..., alias="datetime")
+    operation_type: str = Field(..., alias="type")
     direction: str
-    """
-    направление движения средств. может принимать значения:
-    - in (приход);
-    - out (расход).
-    """
-
-    comment: str
-    """
-    Комментарий к переводу или пополнению.
-    Присутствует в истории отправителя перевода или получателя пополнения.
-    """
-
-    digital_goods: Optional[Dict[str, DigitalGoods]] = None
-    """
-    Данные о цифровом товаре (пин-коды и бонусы игр, iTunes, Xbox, etc.)
-    Поле присутствует при успешном платеже в магазины цифровых товаров.
-    Описание формата:
-    https://yoomoney.ru/docs/wallet/process-payments/process-payment#digital-goods
-    """
-
-    details: str
-    """
-    Детальное описание платежа. Строка произвольного формата,
-    может содержать любые символы и переводы строк
-    Необязательный параметр.
-    """
-
-    label: Optional[str] = None
-    """Метка платежа."""
-
-    answer_datetime: Optional[str] = None
-    """
-    Дата и время приема или отмены перевода, защищенного кодом протекции.
-    Присутствует для входящих и исходящих переводов, защищенных кодом протекции
-    если при вызове transfer_money вы указали protect=True при передаче аргументов.
-    Если перевод еще не принят или не отвергнут получателем, поле отсутствует.
-    """
-
-    expires: Optional[str] = None
-    """
-    Дата и время истечения срока действия кода протекции.
-    Присутствует для входящих и исходящих переводов (от/другим) пользователям,
-    защищенных кодом протекции,
-    если при вызове transfer_money вы указали protect=True при передаче аргументов.
-    """
-
-    protection_code: Optional[str] = None
-    """
-    Код протекции.
-    Присутствует для исходящих переводов, защищенных кодом протекции.
-    """
-
-    codepro: Optional[bool] = None
-    """
-    Перевод защищен кодом протекции.
-    Присутствует для переводов другим пользователям.
-    """
-
-    message: Optional[str] = None
-    """
-    Сообщение получателю перевода.
-    Присутствует для переводов другим пользователям.
-    """
-
-    recipient_type: Optional[str] = None
-    """
-    Тип идентификатора получателя перевода. Возможные значения:
-    account — номер счета получателя в сервисе ЮMoney;
-    phone — номер привязанного мобильного телефона получателя;
-    email — электронная почта получателя перевода.
-    Присутствует для исходящих переводов другим пользователям.
-    """
-
-    recipient: Optional[str] = None
-    """
-    Идентификатор получателя перевода.
-    Присутствует для исходящих переводов другим пользователям.
-    """
-
-    sender: Optional[str] = None
-    """
-    Номер счета отправителя перевода.
-    Присутствует для входящих переводов от других пользователей.
-    """
-
     title: str
-    """
-    Краткое описание операции (название магазина или источник пополнения).
-    """
-
+    details: Optional[str] = None
+    digital_goods: Optional[Dict[str, DigitalGoods]] = None
+    comment: Optional[str] = None
+    label: Optional[str] = None
+    answer_datetime: Optional[str] = None
+    expires: Optional[datetime] = None
+    protection_code: Optional[str] = None
+    is_secure: bool = Field(default=False, alias="codepro")
+    recipient_type: Optional[str] = None
+    recipient: Optional[str] = None
+    sender: Optional[str] = None
     fee: Optional[float] = None
-    """
-    Сумма комиссии.
-    Присутствует для исходящих переводов другим пользователям.
-    """
-
-    amount_due: Optional[float] = None  # TODO make it human usable
-    """
-    Сумма к получению.
-    Присутствует для исходящих переводов другим пользователям.
-    """
-
     pattern_id: Optional[str] = None
-    """
-    Идентификатор шаблона платежа, по которому совершен платеж.
-    Присутствует только для платежей.
-    """
-
-    error: Optional[str] = None
-    """
-    Код ошибки, присутствует при ошибке выполнения запрос
-    Возможные ошибки:
-    illegal_param_operation_id - неверное значение параметра operation_id
-    Все прочие значения - техническая ошибка, повторите вызов метода позднее.
-    """
 
 
-class Wallet(Response):
+class Wallet(BaseModel):
     """object: Wallet"""
 
     allowed: bool
@@ -357,7 +255,7 @@ class Item(Response):
     """
 
 
-class Card(Response):
+class Card(BaseModel):
     """object: Card"""
 
     allowed: bool
@@ -365,7 +263,7 @@ class Card(Response):
     items: List[Item]
 
 
-class MoneySource(Response):
+class MoneySource(BaseModel):
     """
     Список доступных методов для проведения данного платежа.
     Каждый метод содержит набор атрибутов.
@@ -395,7 +293,6 @@ class PreProcessPaymentResponse(Response):
     recipient_masked_account: Optional[str] = None
     multiple_recipients_found: Optional[str] = None
     contract_amount: Optional[float] = None
-    error: Optional[str] = None
     money_source: Optional[MoneySource] = None
     protection_code: Optional[str] = None
     account_unblock_uri: Optional[str] = None
@@ -467,11 +364,6 @@ class Payment(Response):
     - токен авторизации обладает правом account-info.
     """
 
-    error: Optional[str] = None
-    """
-    Код ошибки при проведении платежа (пояснение к полю status).
-    Присутствует только при ошибках.
-    """
     account_unblock_uri: Optional[str] = None
     """
     Адрес, на который необходимо отправить пользователя для разблокировки счета
@@ -509,4 +401,3 @@ class IncomingTransaction(Response):
     status: str
     protection_code_attempts_available: int
     ext_action_uri: Optional[str] = None
-    error: Optional[str] = None

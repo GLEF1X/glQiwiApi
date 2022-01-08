@@ -5,11 +5,10 @@ from typing import List, Optional
 import pytest
 import timeout_decorator
 
-from glQiwiApi import QiwiWrapper
+from glQiwiApi import QiwiWallet
 from glQiwiApi.core.dispatcher.implementation import Dispatcher, Event
 from glQiwiApi.qiwi.types import Transaction, TransactionType, Source
 from glQiwiApi.utils import executor
-from tests.types.dataset import WRONG_API_DATA
 
 pytestmark = pytest.mark.asyncio
 
@@ -23,7 +22,7 @@ class StubDispatcher(Dispatcher):
         await super().process_event(self._fake_event)
 
 
-class StubQiwiWrapper(QiwiWrapper):
+class StubQiwiWrapper(QiwiWallet):
     def __init__(self, fake_event: Transaction, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._fake_transaction = fake_event
@@ -46,19 +45,19 @@ class StubQiwiWrapper(QiwiWrapper):
 @pytest.fixture(name="api")
 async def api_fixture(transaction: Transaction):
     """Api fixture"""
-    _wrapper = StubQiwiWrapper(fake_event=transaction, **WRONG_API_DATA)
+    _wrapper = StubQiwiWrapper(fake_event=transaction, api_access_token="hello")
     yield _wrapper
     await _wrapper.close()
 
 
-async def _on_startup_callback(api: QiwiWrapper):
+async def _on_startup_callback(api: QiwiWallet):
     await asyncio.sleep(1)
     await api.dispatcher.process_event()  # type: ignore  # noqa
 
 
 class TestPolling:
     @timeout_decorator.timeout(2)
-    def _start_polling(self, api: QiwiWrapper):
+    def _start_polling(self, api: QiwiWallet):
 
         self._handled_first = asyncio.Event()
         self._handled_second = asyncio.Event()
@@ -79,7 +78,7 @@ class TestPolling:
         executor.start_polling(api, on_startup=_on_startup_callback)
 
     @pytest.mark.skipif("sys.platform in ['cygwin', 'msys', 'win32']")
-    def test_as_if_used_by_a_user(self, api: QiwiWrapper):
+    def test_as_if_used_by_a_user(self, api: QiwiWallet):
         try:
             self._start_polling(api)
         except timeout_decorator.TimeoutError:

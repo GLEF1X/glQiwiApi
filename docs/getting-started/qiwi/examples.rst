@@ -1,23 +1,22 @@
 This section covers the most popular use cases of glQiwiApi.
 
-How can I retrieve transactions?
+How can I retrieve history?
 --------------------------------
 
 
 .. code-block:: python
-
     import asyncio
 
-    from glQiwiApi import QiwiWrapper
+    from glQiwiApi import QiwiWallet
 
 
-    async def get_transactions(qiwi_token: str, phone_number: str) -> None:
-        async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
-            bunch_of_transactions = await wallet.transactions()
+    async def get_history(qiwi_token: str, phone_number: str) -> None:
+        async with QiwiWallet(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
+            for transaction in await wallet.history():
+                # handle
 
 
-    asyncio.run(get_transactions(qiwi_token="qiwi api token", phone_number="+phone number"))
-
+    asyncio.run(get_history(qiwi_token="qiwi api token", phone_number="+phone number"))
 
 
 How can I transfer money to other wallet?
@@ -27,11 +26,11 @@ How can I transfer money to other wallet?
 
     import asyncio
 
-    from glQiwiApi import QiwiWrapper
+    from glQiwiApi import QiwiWallet
 
 
     async def transfer_money_to_another_wallet(qiwi_token: str, phone_number: str) -> None:
-        async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
+        async with QiwiWallet(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
             await wallet.transfer_money(to_number="+754545343", amount=1)
 
 
@@ -44,11 +43,11 @@ How can I transfer money to other card?
 
     import asyncio
 
-    from glQiwiApi import QiwiWrapper
+    from glQiwiApi import QiwiWallet
 
 
     async def transfer_money_to_card(qiwi_token: str, phone_number: str) -> None:
-        async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
+        async with QiwiWallet(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
             await wallet.transfer_money_to_card(card_number="desired card number", amount=50)
 
 
@@ -63,11 +62,12 @@ and log it
 
 .. code-block:: python
 
-    from glQiwiApi import QiwiWrapper, APIError
+    from glQiwiApi import QiwiWallet
+    from glQiwiApi.qiwi import APIError
 
     # missing asyncio details...
 
-    async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
+    async with QiwiWallet(api_access_token=qiwi_token, phone_number=phone_number) as wallet:
         try:
             await wallet.transfer_money(to_phone_number="wrong number", amount=-1)
         except APIError as ex:
@@ -82,18 +82,18 @@ To create p2p bill you have to utilize `create_p2p_bill` method.
 
 .. code-block:: python
 
-   import asyncio
+    import asyncio
 
-   from glQiwiApi import QiwiWrapper
-
-
-   async def create_p2p_bill():
-       async with QiwiWrapper(secret_p2p="your p2p token") as wallet:
-           bill = await wallet.create_p2p_bill(amount=1)
-           print(f"Link to pay bill with {bill.bill_id} id = {bill.pay_url}")
+    from glQiwiApi import QiwiP2PClient
 
 
-   asyncio.run(create_p2p_bill())
+    async def create_p2p_bill():
+        async with QiwiP2PClient(secret_p2p="your p2p token") as wallet:
+            bill = await wallet.create_p2p_bill(amount=1)
+            print(f"Link to pay bill with {bill.id} id = {bill.pay_url}")
+
+
+    asyncio.run(create_p2p_bill())
 
 If you go to the created link, you will see this:
 
@@ -110,26 +110,73 @@ and then check that status equals appropriate value.
 
 .. code-block:: python
 
-   import asyncio
-
-   from glQiwiApi import QiwiWrapper
+    from glQiwiApi import QiwiP2PClient
 
 
-   async def brief_example_with_label():
-       async with QiwiWrapper(secret_p2p="your p2p token") as wallet:
-           bill = await wallet.create_p2p_bill(amount=777)
-       if await bill.check():
-          print("It's ok")
+    async def brief_example_with_label():
+        async with QiwiP2PClient(secret_p2p="your p2p token") as wallet:
+            bill = await wallet.create_p2p_bill(amount=777)
+        if await bill.check():
+            print("It's ok")
 
-   async def sloppy_version():
-       async with QiwiWrapper(secret_p2p="your p2p token") as wallet:
-           bill = await wallet.create_p2p_bill(amount=777)
-       status = await wallet.check_p2p_bill_status(bill.bill_id)
-       if status == "PAID":
-           print("It's ok")
-       else:
-           print("Bill was not paid")
 
+    async def sloppy_version():
+        async with QiwiP2PClient(secret_p2p="your p2p token") as wallet:
+            bill = await wallet.create_p2p_bill(amount=777)
+        status = await wallet.get_bill_status(bill.id)
+        if status == "PAID":
+            print("It's ok")
+        else:
+            print("Bill was not paid")
+
+
+Issue with referrer
+-------------------
+
+> QIWI block wallets users of which go to p2p pages from messengers, email and other services.
+
+Currently, It's solved by reverse proxy, that deployed directly to AWS beanstalk.
+
+`Bill.shim_url` property is a proxy url, that can be used to add `referrer` and try to avoid of blocking wallet.
+
+.. code-block:: python
+
+    import asyncio
+
+    from glQiwiApi import QiwiP2PClient
+
+
+    async def main():
+        async with QiwiP2PClient(
+                secret_p2p="Your secret p2p api key",
+                shim_server_url="qiwi-proxy.us-east-2.elasticbeanstalk.com/proxy/p2p/{0}"
+            ) as client:
+            bill = await client.create_p2p_bill(amount=1)
+            print(bill.shim_url)  # url to proxy
+
+
+    asyncio.run(main())
+
+
+But also you can transmit your own shim url directly to QiwiP2PClient constructor:
+
+.. code-block:: python
+
+    import asyncio
+
+    from glQiwiApi import QiwiP2PClient
+
+    async def main():
+        async with QiwiP2PClient(
+                secret_p2p="Your secret p2p api key",
+                shim_server_url="https://some.url/proxy/p2p/{0}"
+        ) as client:
+            bill = await client.create_p2p_bill(amount=1)
+            print(bill.shim_url)  # url to your proxy
+
+
+    asyncio.run(main())
 
 
 More methods you can figure out in  :doc:`autogenerated API docs <API/index>`
+

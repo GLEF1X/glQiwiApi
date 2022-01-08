@@ -4,18 +4,18 @@ from typing import Union
 from pydantic import Field, validator
 
 from glQiwiApi.base_types.amount import CurrencyModel
-from glQiwiApi.base_types.base import Base
 from glQiwiApi.utils.currency_util import Currency
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Interval(Base):
+class Interval(QiwiWalletResultBaseWithClient):
     """object: Interval"""
 
     date_from: datetime = Field(alias="dateFrom")
     date_till: datetime = Field(alias="dateTill")
 
 
-class Limit(Base):
+class Limit(QiwiWalletResultBaseWithClient):
     """object: Limit"""
 
     currency: CurrencyModel

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar, NoReturn, Optional
+from typing import TypeVar, NoReturn, Optional, List, Any
 
 
 class YooMoneyError(Exception):
@@ -17,17 +17,17 @@ def match_error(err_code: str) -> NoReturn:
 
 class _MatchErrorMixin:
     match = ""
-    explanation: Optional[str] = None
+    explanation: str
 
-    __subclasses = []
+    __subclasses: List[Any] = []
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         super(_MatchErrorMixin, cls).__init_subclass__(**kwargs)
         if not hasattr(cls, f"_{cls.__name__}__group"):
             cls.__subclasses.append(cls)
 
     @classmethod
-    def check(cls, message) -> bool:
+    def check(cls, message: str) -> bool:
         """
         Compare pattern with message
         :param message: always must be in lowercase
@@ -65,13 +65,13 @@ class IllegalParam(BadRequest):
 
     @classmethod
     def on_match(cls, err_code: str, explanation: Optional[str] = None) -> Optional[str]:
-        param_name = err_code.removeprefix(cls.match)
+        param_name = err_code.removeprefix(cls.match)  # type: ignore
         param_name_without_underscore = param_name[1:]
-        return explanation.format(param=param_name_without_underscore)
+        return explanation.format(param=param_name_without_underscore)  # type: ignore
 
 
 class ProcessPaymentError(PaymentError):
-    pass
+    explanation = "Something went wrong while processing payment"
 
 
 class ContractNotFound(ProcessPaymentError):

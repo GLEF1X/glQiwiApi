@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "1.2.0"
+version = "2.0.0b1"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Gleb Garanin <glebgar567@gmail.com>"
@@ -14,10 +14,18 @@ readme = 'README.md'
 maintainers = [
     "GLEF1X <glebgar567@gmail.com>",
 ]
+keywords = [
+    "qiwi",
+    "yoomoney",
+    "api",
+    "yoo_money",
+    "wrapper",
+    "asyncio",
+]
 license = "MIT"
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Natural Language :: Russian",
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
@@ -36,15 +44,16 @@ python = "^3.7"
 pytz = "2021.3"
 aiohttp = "^3.8.0"
 wheel = "^0.36.2"
-pydantic = "1.8.2"
+pydantic = "^1.9.0"
 typing_extensions = { version = "^3.10.0.2", python = "<=3.7" }
+
 # Fast
 uvloop = { version = "^0.16.0", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
 aiofiles = { version = "^0.8.0", optional = true}
 
 # integrations
-aiogram = { version = "^2.16", optional = true}
-blacksheep = "^1.2.2"
+aiogram = { version = "^2.18", optional = true}
+cryptography = { version = "^36.0.1", optional = true}  # for self-signed certificates
 
 
 [tool.poetry.dev-dependencies]
@@ -62,11 +71,11 @@ Sphinx = { version = "^4.2.0" }
 sphinx-intl = { version = "^2.0.1" }
 sphinx-autobuild = { version = "^2021.3.14" }
 sphinx-copybutton = { version = "^0.4.0" }
-furo = { version = "^2021.11.16" }
+furo = { version = "^2022.1.2" }
 sphinx-prompt = { version = "^1.5.0" }
 Sphinx-Substitution-Extensions = { version = "^2020.9.30" }
 towncrier = { version = "^21.3.0" }
-pygments = { version = "^2.4" }
+pygments = { version = "^2.11.2" }
 pymdown-extensions = { version = "^9.1" }
 markdown-include = { version = "^0.6" }
 sphinxemoji = "^0.2.0"
@@ -77,24 +86,19 @@ sphinx-notfound-page = "^0.8"
 # development
 black = { version = "^21.11b1", python = ">=3.6" }
 isort = "^5.8.0"
-mypy = "^0.920"
+mypy = "^0.931"
 flake8 = "^4.0.1"
 asynctest = "^0.13.0"
-async-timeout = "^4.0.1"
-
-# optional
-aiogram = "^2.16"
-aiofiles = "^0.8.0"
+async-timeout = "^4.0.2"
 
 # For CI and mypy
-types-orjson = "^3.6.1"
-types-aiofiles = "^0.7.0"
+types-orjson = "^3.6.2"
+types-aiofiles = "^0.8.2"
 types-pytz = "^2021.3.3"
-cryptography = "^36.0.1"
 
 [tool.black]
 line-length = 99
-target-version = ['py37', 'py38']
+target-version = ['py37', 'py38', 'py39']
 exclude = '''
 (
     \.eggs
@@ -124,6 +128,40 @@ known_third_party = [
     "pytest"
 ]
 
+[tool.towncrier]
+package = "aiogram"
+filename = "CHANGES.rst"
+directory = "CHANGES/"
+template = "CHANGES/.template.rst.jinja2"
+issue_format = "`#{issue} <https://github.com/aiogram/aiogram/issues/{issue}>`_"
+
+[[tool.towncrier.section]]
+path = ""
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bugfixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Improved Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Deprecations and Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Misc"
+showcontent = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

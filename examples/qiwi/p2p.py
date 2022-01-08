@@ -1,12 +1,12 @@
 import asyncio
 
-from glQiwiApi import QiwiWrapper
-from glQiwiApi.base_types import TransactionStatus
+from glQiwiApi import QiwiP2PClient
+from glQiwiApi.qiwi.types import TransactionStatus
 
 
 async def main():
     # You can pass on only p2p tokens, if you want to use only p2p api
-    async with QiwiWrapper(secret_p2p="") as w:
+    async with QiwiP2PClient(secret_p2p="") as w:
         # This way you can create P2P bill using QIWI p2p API
         bill = await w.create_p2p_bill(amount=1, comment="my_comm")
         # This way you can check status of transaction(exactly is transaction was paid)

@@ -5,6 +5,7 @@ import pytest
 
 from glQiwiApi import YooMoneyAPI
 from glQiwiApi.yoo_money.types import Operation, AccountInfo, OperationDetails
+from tests.types.dataset import YOO_MONEY_TEST_CLIENT_ID
 
 pytestmark = pytest.mark.asyncio
 
@@ -47,6 +48,14 @@ async def test_get_transactions(api: YooMoneyAPI, payload: dict):
     assert all(isinstance(txn, Operation) for txn in transactions)
 
 
+async def test_build_url_for_auth():
+    link = await YooMoneyAPI.build_url_for_auth(
+        scope=["account-info", "operation-history", "operation-details", "payment-p2p"],
+        client_id=YOO_MONEY_TEST_CLIENT_ID,
+    )
+    assert isinstance(link, str)
+
+
 async def test_account_info(api: YooMoneyAPI):
     info = await api.retrieve_account_info()
     assert isinstance(info, AccountInfo)
@@ -54,7 +63,7 @@ async def test_account_info(api: YooMoneyAPI):
 
 @pytest.mark.parametrize("operation_id", ["672180330623679897", "671568515431002412"])
 async def test_get_transaction_info(api: YooMoneyAPI, operation_id: str):
-    transaction = await api.operation_info(operation_id)
+    transaction = await api.operation_details(operation_id)
     assert isinstance(transaction, OperationDetails)
 
 
@@ -78,6 +87,7 @@ async def test_check_transaction(api: YooMoneyAPI, payload: dict):
     assert isinstance(result, bool)
 
 
+@pytest.mark.skip
 async def test_send_and_check_txn(api: YooMoneyAPI):
     payload = {"amount": 2, "comment": "unit_test"}
     await api.send(to_account="4100116633099701", **payload)

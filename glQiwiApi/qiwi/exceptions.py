@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from glQiwiApi.base_types.errors import QiwiErrorAnswer
 
 
-class CantParseUrl(Exception):
+class AuthURLIsInvalidError(Exception):
     pass
 
 
@@ -99,7 +99,7 @@ class APIError(Exception):
 
 
 __all__ = (
-    "CantParseUrl",
+    "AuthURLIsInvalidError",
     "APIError",
     "ChequeIsNotAvailable",
     "SecretP2PTokenIsEmpty",

@@ -3,9 +3,8 @@ from typing import cast
 
 from aiohttp import web
 
-from glQiwiApi import base_types
-from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
 from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.core.dispatcher.webhooks.views.base import BaseWebhookView
 from glQiwiApi.qiwi.types import BillWebhook
 
 logger = logging.getLogger("glQiwiApi.webhooks.p2p")

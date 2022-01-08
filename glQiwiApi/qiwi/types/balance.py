@@ -1,11 +1,11 @@
 from pydantic import validator
 
 from glQiwiApi.base_types.amount import CurrencyModel
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.base_types.base import HashableBase
 from glQiwiApi.utils.currency_util import Currency
 
 
-class Balance(Base):
+class Balance(HashableBase):
     """object: Balance"""
 
     alias: str

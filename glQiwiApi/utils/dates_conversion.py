@@ -5,9 +5,7 @@ from typing import Optional
 
 import pytz
 
-from glQiwiApi.utils.compat import Final
-
-DEFAULT_QIWI_TIMEZONE: Final[str] = "Europe/Moscow"
+DEFAULT_QIWI_TIMEZONE = "Europe/Moscow"
 
 
 def datetime_to_utc(obj: datetime) -> str:

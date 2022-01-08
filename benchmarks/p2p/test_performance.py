@@ -3,11 +3,15 @@
 import pytest
 from pyqiwip2p.AioQiwip2p import AioQiwiP2P
 
-from glQiwiApi import QiwiWrapper
+from glQiwiApi import QiwiP2PClient
 
-wrapper = QiwiWrapper(secret_p2p="")
+wrapper = QiwiP2PClient(
+    secret_p2p="eyJ2ZXJzaW9uIjoiUDJQIiwiZGF0YSI6eyJwYXlpbl9tZXJjaGFudF9zaXRlX3VpZCI6ImJuMXZmNy0wMCIsInVzZXJfaWQiOiIzODA5NjgzMTc0NTkiLCJzZWNyZXQiOiJjOGY0YjQ4Y2ZiZDIwMzU1YTJjOTE0ZmRiNmUwM2M1ODU4ODFlNTliNjk0ZjlmZjdiOGRiYzJjNDI4MTliOThiIn19"
+)
 
-c = AioQiwiP2P(auth_key="")
+c = AioQiwiP2P(
+    auth_key="eyJ2ZXJzaW9uIjoiUDJQIiwiZGF0YSI6eyJwYXlpbl9tZXJjaGFudF9zaXRlX3VpZCI6ImJuMXZmNy0wMCIsInVzZXJfaWQiOiIzODA5NjgzMTc0NTkiLCJzZWNyZXQiOiJjOGY0YjQ4Y2ZiZDIwMzU1YTJjOTE0ZmRiNmUwM2M1ODU4ODFlNTliNjk0ZjlmZjdiOGRiYzJjNDI4MTliOThiIn19"
+)
 
 
 # Results on my machine (smaller is better)

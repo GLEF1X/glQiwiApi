@@ -74,7 +74,7 @@ Dive-in example.
 
     async def main():
         async with YooMoneyAPI(api_access_token=TOKEN) as w:
-            print(await w.transactions(records=50))
+            print(await w.operation_history(records=50))
 
 
     asyncio.run(main())

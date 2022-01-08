@@ -13,13 +13,11 @@ from .dispatcher.webhooks import (
     QiwiTransactionWebhookView,
     app,
 )
-from .mixins import ContextInstanceMixin
 from .request_service import RequestService
 from .synchronous import async_as_sync, execute_async_as_sync
 
 __all__ = (
     "RequestService",
-    "ContextInstanceMixin",
     "BaseFilter",
     "LambdaBasedFilter",
     # class-based handlers

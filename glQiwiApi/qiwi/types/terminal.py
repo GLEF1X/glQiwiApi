@@ -3,10 +3,10 @@ from typing import Optional
 
 from pydantic import Field
 
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Coordinate(Base):
+class Coordinate(QiwiWalletResultBaseWithClient):
     """Object: coordinate"""
 
     latitude: float = Field(..., alias="latitude")
@@ -14,7 +14,7 @@ class Coordinate(Base):
     precision: int = Field(..., alias="precision")
 
 
-class Terminal(Base):
+class Terminal(QiwiWalletResultBaseWithClient):
     """Object: Terminal"""
 
     terminal_id: int = Field(..., alias="terminalId")

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ssl
-from copy import copy, deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
@@ -48,10 +47,10 @@ class RoutesConfig:
 
 @dataclass()
 class EncryptionConfig:
-    secret_p2p_key: Optional[str] = None  # taken from QiwiWrapper instance by default
+    secret_p2p_key: str
     base64_encryption_key: Optional[
         str
-    ] = None  # taken from QIWI API using QiwiWrapper instance by default
+    ] = None  # taken from QIWI API using QiwiWallet instance by default
 
 
 @dataclass()
@@ -66,13 +65,8 @@ class HookRegistrationConfig:
 
 @dataclass
 class WebhookConfig:
+    encryption: EncryptionConfig
     hook_registration: HookRegistrationConfig = HookRegistrationConfig()
     app: ApplicationConfig = ApplicationConfig()
     routes: RoutesConfig = RoutesConfig()
-    encryption: EncryptionConfig = EncryptionConfig()
     security: SecurityConfig = SecurityConfig()
-
-    def clone(self, deep: bool = False) -> "WebhookConfig":
-        if deep:
-            return deepcopy(self)
-        return copy(self)

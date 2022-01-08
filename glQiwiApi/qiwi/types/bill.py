@@ -4,16 +4,19 @@ import base64
 import hashlib
 import hmac
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, TYPE_CHECKING, cast
 
 from pydantic import Extra, Field, PrivateAttr
 
 from glQiwiApi.base_types.amount import HashableOptionalSum, PlainAmount
-from glQiwiApi.base_types.base import Base, HashableBase
 from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.qiwi.types.base import P2PBase, QiwiWalletResultBaseWithClient
+
+if TYPE_CHECKING:
+    from glQiwiApi.qiwi.clients.p2p import QiwiP2PClient  # noqa
 
 
-class Customer(HashableBase):
+class Customer(P2PBase):
     """Object: Customer"""
 
     phone: Optional[str] = None
@@ -21,21 +24,21 @@ class Customer(HashableBase):
     account: Optional[str] = None
 
 
-class BillStatus(HashableBase):
+class BillStatus(P2PBase):
     """Object: BillStatus"""
 
     value: str
     changed_datetime: Optional[datetime] = Field(None, alias="changedDateTime")
 
 
-class CustomFields(HashableBase):
+class CustomFields(P2PBase):
     """Object: CustomFields"""
 
     pay_sources_filter: Optional[str] = Field(None, alias="paySourcesFilter")
     theme_code: Optional[str] = Field(None, alias="themeCode")
 
 
-class BillError(HashableBase):
+class BillError(P2PBase):
     """Object: BillError"""
 
     service_name: str = Field(..., alias="serviceName")
@@ -46,7 +49,7 @@ class BillError(HashableBase):
     trace_id: str = Field(..., alias="traceId")
 
 
-class Bill(HashableBase):
+class Bill(P2PBase):
     """Object: Bill"""
 
     amount: HashableOptionalSum
@@ -60,21 +63,16 @@ class Bill(HashableBase):
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
     _raw_shim_url: str = PrivateAttr(default="")
 
-    def __init__(self, **kw: Any) -> None:
-        super().__init__(**kw)
-        try:
-            if self.client._shim_server_url is not None:
-                self._raw_shim_url = self.client._shim_server_url  # noqa
-        except RuntimeError:
-            pass
-
     @property
     def invoice_uid(self) -> str:
         return self.pay_url[-36:]
 
     @property
     def shim_url(self) -> str:
-        return self._raw_shim_url.format(self.invoice_uid)
+        if self.client._shim_server_url is None:
+            raise Exception("QiwiP2PClient has no shim url -> can't create shim url for bill")
+
+        return self.client._shim_server_url.format(self.invoice_uid)
 
     class Config:
         extra = Extra.allow
@@ -90,7 +88,7 @@ class Bill(HashableBase):
         return await self.client.get_bill_by_id(self.id)
 
 
-class RefundBill(Base):
+class RefundBill(P2PBase):
     """object: RefundBill"""
 
     amount: PlainAmount
@@ -109,7 +107,7 @@ class BillWebhookPayload(Bill):
     pay_url: None = Field(None, exclude=True)  # type: ignore
 
 
-class BillWebhook(HashableBase):
+class BillWebhook(P2PBase):
     """Object: BillWebhook"""
 
     version: str = Field(..., alias="version")
@@ -131,12 +129,12 @@ class BillWebhook(HashableBase):
             raise WebhookSignatureUnverifiedError()
 
 
-class P2PKeys(Base):
+class PairOfP2PKeys(P2PBase):
     public_key: str = Field(..., alias="PublicKey")
     secret_key: str = Field(..., alias="SecretKey")
 
 
-class InvoiceStatus(Base):
+class InvoiceStatus(QiwiWalletResultBaseWithClient):
     invoice_status: str
     is_sms_confirm: bool
     pay_results: Dict[Any, Any] = Field(..., alias="WALLET_ACCEPT_PAY_RESULT")
@@ -147,7 +145,7 @@ __all__ = (
     "BillError",
     "RefundBill",
     "BillWebhook",
-    "P2PKeys",
+    "PairOfP2PKeys",
     "InvoiceStatus",
     "BillStatus",
 )

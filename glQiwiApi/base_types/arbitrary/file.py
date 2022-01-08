@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import logging
 import pathlib
 from typing import Any, BinaryIO, Union
 

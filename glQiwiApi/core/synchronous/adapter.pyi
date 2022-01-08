@@ -5,8 +5,6 @@ from concurrent import futures as futures
 from concurrent.futures import Future
 from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar
 
-from glQiwiApi import base_types
-
 N = TypeVar("N")
 
 def run_forever_safe(

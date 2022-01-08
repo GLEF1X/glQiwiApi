@@ -1,14 +1,12 @@
-"""
-Managing polling and webhooks
-"""
 from __future__ import annotations
 
 import abc
 import asyncio
 import inspect
 import logging
+from copy import deepcopy
 from datetime import datetime
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 from aiohttp import web
 from aiohttp.web import _run_app
@@ -19,13 +17,13 @@ from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.core.synchronous.adapter import run_forever_safe
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
-from glQiwiApi.qiwi.client import MAX_HISTORY_LIMIT, QiwiWrapper
-from glQiwiApi.base_types.qiwi.transaction import History
-from glQiwiApi.utils.exceptions import SecretP2PTokenIsEmpty
+from glQiwiApi.qiwi.clients.wallet import MAX_HISTORY_LIMIT, QiwiWallet
 
 __all__ = ["start_webhook", "start_polling"]
 
-T = TypeVar("T")
+from glQiwiApi.qiwi.exceptions import SecretP2PTokenIsEmpty
+
+from glQiwiApi.qiwi.types.transaction import History
 
 logger = logging.getLogger("glQiwiApi.executor")
 
@@ -76,9 +74,9 @@ class ExecutorEvent:
 
 
 def start_webhook(
-    client: QiwiWrapper,
+    client: QiwiWallet,
     *plugins: Pluggable,
-    webhook_config: WebhookConfig = WebhookConfig(),
+    webhook_config: WebhookConfig,
     on_startup: Optional[Callable[..., Any]] = None,
     on_shutdown: Optional[Callable[..., Any]] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -104,7 +102,7 @@ def start_webhook(
 
 
 def start_polling(
-    client: QiwiWrapper,
+    client: QiwiWallet,
     *plugins: Pluggable,
     skip_updates: bool = False,
     timeout: float = DEFAULT_TIMEOUT,
@@ -144,7 +142,7 @@ def start_polling(
 class BaseExecutor(abc.ABC):
     def __init__(
         self,
-        client: QiwiWrapper,
+        client: QiwiWallet,
         *plugins: Pluggable,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         on_startup: Optional[Callable[..., Any]] = None,
@@ -208,7 +206,7 @@ class BaseExecutor(abc.ABC):
 class PollingExecutor(BaseExecutor):
     def __init__(
         self,
-        client: QiwiWrapper,
+        client: QiwiWallet,
         *plugins: Pluggable,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         timeout: Union[float, int] = DEFAULT_TIMEOUT,
@@ -294,7 +292,7 @@ class PollingExecutor(BaseExecutor):
 class WebhookExecutor(BaseExecutor):
     def __init__(
         self,
-        client: QiwiWrapper,
+        client: QiwiWallet,
         *plugins: Pluggable,
         on_startup: Optional[Callable[..., Any]] = None,
         on_shutdown: Optional[Callable[..., Any]] = None,
@@ -333,21 +331,18 @@ class WebhookExecutor(BaseExecutor):
             self.loop.run_until_complete(self.goodbye())
 
     async def _supplement_configuration(self, config: WebhookConfig) -> WebhookConfig:
-        config = config.clone(deep=True)
+        config = deepcopy(config)
         if config.app.base_app is not None:
             self._application = config.app.base_app
-        self._set_secret_p2p_for_config(config)
+
+        if config.encryption.secret_p2p_key is None:
+            raise SecretP2PTokenIsEmpty(
+                "Secret p2p token is empty, cannot setup webhook without it. "
+                "Please, provide token to work with webhooks."
+            )
+
         await self._set_base64_encryption_key_for_config(config)
         return config
-
-    def _set_secret_p2p_for_config(self, config: WebhookConfig) -> None:
-        if self._client._secret_p2p is None:
-            if config.encryption.secret_p2p_key is None:
-                raise SecretP2PTokenIsEmpty(
-                    "Secret p2p token is empty, cannot setup webhook without it. "
-                    "Please, provide token to work with webhooks."
-                )
-            config.encryption.secret_p2p_key = self._client._secret_p2p
 
     async def _set_base64_encryption_key_for_config(self, config: WebhookConfig) -> None:
         if config.encryption.base64_encryption_key is None:

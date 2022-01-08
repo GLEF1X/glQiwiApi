@@ -1,29 +1,20 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Hashable
+from typing import TYPE_CHECKING, Hashable, Any, TypeVar, Type, Generic, Dict, cast
 
-from pydantic import BaseModel, Extra, BaseConfig
+from pydantic import BaseModel, BaseConfig, PrivateAttr
+
 from glQiwiApi.utils.compat import json
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.client import QiwiWrapper
+    from glQiwiApi.core.abc.wrapper import Wrapper  # noqa
+
+_Client = TypeVar("_Client", bound="Wrapper")
+T = TypeVar("T", bound="BaseWithClient[Any]")
 
 
 class Base(BaseModel):
-    @property
-    def client(self) -> "QiwiWrapper":
-        """Returning an instance of :class:`QiwiWrapper`"""
-        from glQiwiApi.qiwi.client import QiwiWrapper
-
-        instance = QiwiWrapper.get_current()
-
-        if instance is None:
-            raise RuntimeError(
-                "Can't get client instance from context. "
-                "You can fix this by setting the current instance: "
-                "`QiwiWrapper.set_current(...)`"
-            )
-        return instance
+    _client_ctx: Dict[str, Any] = PrivateAttr(default_factory=dict)
 
     class Config(BaseConfig):
         json_dumps = json.dumps  # type: ignore
@@ -42,6 +33,17 @@ class HashableBase(Base):
         return self.__hash__() == other.__hash__()
 
 
-class ExtraBase(Base):
-    class Config(BaseConfig):  # pragma: no cover
-        extra = Extra.allow
+class BaseWithClient(Base, Generic[_Client]):
+    @classmethod
+    def from_obj(cls: Type[T], c: _Client, obj: Any) -> T:
+        result = super().parse_obj(obj)
+        result._client_ctx["client"] = c  # hack with faux immutability(described in pydantic docs)
+        return result
+
+    @property
+    def client(self) -> _Client:
+        return cast(_Client, self._client_ctx["client"])
+
+
+class HashableBaseWithClient(HashableBase, BaseWithClient[_Client], Generic[_Client]):
+    pass

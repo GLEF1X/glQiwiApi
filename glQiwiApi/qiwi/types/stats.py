@@ -3,10 +3,10 @@ from typing import List
 from pydantic import Field
 
 from glQiwiApi.base_types.amount import AmountWithCurrency
-from glQiwiApi.base_types.base import ExtraBase
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Statistic(ExtraBase):
+class Statistic(QiwiWalletResultBaseWithClient):
     """object: Statistic"""
 
     incoming: List[AmountWithCurrency] = Field(alias="incomingTotal")

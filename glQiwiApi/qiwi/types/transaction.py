@@ -7,7 +7,9 @@ from typing import Any, Dict, List, Optional, Union, Iterator, SupportsIndex
 from pydantic import Field
 
 from glQiwiApi.base_types.amount import AmountWithCurrency
-from glQiwiApi.base_types.base import Base, ExtraBase
+from glQiwiApi.qiwi.types.base import (
+    QiwiWalletResultBaseWithClient,
+)
 
 
 class TransactionType(str, enum.Enum):
@@ -31,7 +33,7 @@ class Source(str, enum.Enum):
     MK = "MK"
 
 
-class Provider(Base):
+class Provider(QiwiWalletResultBaseWithClient):
     """object: Provider"""
 
     id: Optional[int] = None
@@ -56,7 +58,7 @@ class Provider(Base):
     """сайт провайдера"""
 
 
-class Transaction(ExtraBase):
+class Transaction(QiwiWalletResultBaseWithClient):
     """object: Transaction"""
 
     id: int = Field(alias="txnId")
@@ -149,10 +151,10 @@ class Transaction(ExtraBase):
         use_enum_values = True
 
 
-class History(Base):
+class History(QiwiWalletResultBaseWithClient):
     transactions: List[Transaction] = Field(..., alias="data")
-    next_transaction_date: Optional[datetime] = Field(..., alias="nextTxnDate")
-    next_transaction_id: Optional[int] = Field(..., alias="nextTxnId")
+    next_transaction_date: Optional[datetime] = Field(None, alias="nextTxnDate")
+    next_transaction_id: Optional[int] = Field(None, alias="nextTxnId")
 
     def __iter__(self) -> Iterator[Transaction]:  # type: ignore
         for t in self.transactions:
@@ -175,7 +177,12 @@ class History(Base):
     def sorted_by_id(self) -> History:
         return self.copy(
             exclude={"transactions"},
-            update=dict(transactions=sorted(self.transactions, key=lambda txn: txn.id)),
+            update=dict(
+                transactions=sorted(
+                    self.transactions,
+                    key=lambda txn: txn.id  # type: ignore
+                )
+            ),
         )
 
     def sorted_by_date(self, *, from_later_to_earliest: bool = False) -> History:
@@ -183,7 +190,9 @@ class History(Base):
             exclude={"transactions"},
             update=dict(
                 transactions=sorted(
-                    self.transactions, key=lambda txn: txn.date, reverse=from_later_to_earliest
+                    self.transactions,
+                    key=lambda txn: txn.date,  # type: ignore
+                    reverse=from_later_to_earliest
                 )
             ),
         )

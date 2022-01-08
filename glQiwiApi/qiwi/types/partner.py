@@ -1,10 +1,10 @@
 """Main model: Partner"""
 from typing import List, Optional
 
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Partner(Base):
+class Partner(QiwiWalletResultBaseWithClient):
     """Base partner class"""
 
     title: str

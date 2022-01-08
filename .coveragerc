@@ -14,7 +14,6 @@ exclude_lines =
     pass
 omit =
     glQiwiApi/ext/*
-    glQiwiApi/yoo_money/*
     */site-packages/*
     */tests/*
     */.eggs/*

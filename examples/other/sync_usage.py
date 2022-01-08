@@ -1,13 +1,13 @@
 import datetime
 
-from glQiwiApi import QiwiWrapper, execute_async_as_sync
+from glQiwiApi import QiwiWallet, execute_async_as_sync
 
 TOKEN = "Api token from https://qiwi.com/api"
 WALLET = "+phone_number"
 
 # As always, we create an instance of the class,
 # but pass on "without_context" as True
-wallet = QiwiWrapper(api_access_token=TOKEN, phone_number=WALLET)
+wallet = QiwiWallet(api_access_token=TOKEN, phone_number=WALLET)
 
 
 def sync_function() -> None:

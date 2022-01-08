@@ -4,7 +4,6 @@ import abc
 
 from glQiwiApi.base_types import AmountWithCurrency
 from glQiwiApi.qiwi.types import Transaction
-
 from .base import ClientMixin, Handler
 
 

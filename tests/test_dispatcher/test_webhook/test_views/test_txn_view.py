@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from asyncio import AbstractEventLoop
 
@@ -96,7 +97,9 @@ class TestTxnWebhookView:
         )
 
         with caplog.at_level(logging.DEBUG, logger="glQiwiApi.webhooks.transaction"):
-            response = await client.post("/webhook", json=fake_transaction.json(by_alias=True))
+            response = await client.post(
+                "/webhook", json=fake_transaction.json(by_alias=True, encoder=json.dumps)
+            )
             assert "Request has being blocked due to invalid signature" in caplog.text
 
         assert response.status == 400

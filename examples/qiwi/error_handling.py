@@ -1,13 +1,13 @@
 import logging
 from typing import Any
 
-from glQiwiApi import QiwiWrapper
+from glQiwiApi import QiwiWallet
 from glQiwiApi.utils import executor
 
 api_access_token = "your token"
 phone_number = "your number"
 
-wallet = QiwiWrapper(api_access_token=api_access_token, phone_number=phone_number)
+wallet = QiwiWallet(api_access_token=api_access_token, phone_number=phone_number)
 logger = logging.getLogger(__name__)
 
 

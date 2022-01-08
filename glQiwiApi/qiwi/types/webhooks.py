@@ -8,11 +8,12 @@ from typing import Any, Dict, List, Optional, cast
 from pydantic import Field, root_validator
 
 from glQiwiApi.base_types.amount import HashableSum
-from glQiwiApi.base_types.base import Base, HashableBase
 from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
+from glQiwiApi.qiwi.types.base import QiwiWalletResultHashableBaseWithClient
 
 
-class WebhookPayment(HashableBase):
+class WebhookPayment(QiwiWalletResultHashableBaseWithClient):
     """Scheme of webhook payment object"""
 
     account: str = Field(..., alias="account")
@@ -30,7 +31,7 @@ class WebhookPayment(HashableBase):
     total: HashableSum = Field(..., alias="total")
 
 
-class TransactionWebhook(HashableBase):
+class TransactionWebhook(QiwiWalletResultHashableBaseWithClient):
     """Object: TransactionWebhook"""
 
     hash: Optional[str] = Field(default=None, alias="hash")
@@ -106,7 +107,7 @@ def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> 
         return current
 
 
-class HookParameters(Base):
+class HookParameters(QiwiWalletResultBaseWithClient):
     url: str = Field(..., alias="url")
 
 
@@ -116,7 +117,7 @@ class WebhookTransactionType(str, enum.Enum):
     BOTH = "BOTH"
 
 
-class WebhookInfo(Base):
+class WebhookInfo(QiwiWalletResultBaseWithClient):
     id: str = Field(..., alias="hookId")
     type: str = Field(..., alias="hookType")
     txn_type: WebhookTransactionType = Field(..., alias="txnType")

@@ -9,14 +9,6 @@ from glQiwiApi.qiwi.types.transaction import Provider, TransactionType
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(name="credentials", scope="module")
-def credentials():
-    from .types.dataset import API_DATA
-
-    """ credentials fixture """
-    yield API_DATA
-
-
 @pytest.fixture(name="yoo_credentials")
 def credentials_fixture():
     from .types.dataset import YOO_MONEY_DATA

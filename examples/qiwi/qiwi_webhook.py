@@ -2,14 +2,20 @@ import logging
 
 from aiogram import Bot
 
-from glQiwiApi import QiwiWrapper, base_types
-from glQiwiApi.core.dispatcher.webhooks.config import Path
+from glQiwiApi import QiwiWallet
+from glQiwiApi.core.dispatcher.webhooks.config import (
+    WebhookConfig,
+    EncryptionConfig,
+    ApplicationConfig,
+    RoutesConfig,
+)
+from glQiwiApi.qiwi.types import BillWebhook, TransactionWebhook
 from glQiwiApi.utils import executor
 
 TOKEN = "token from https://qiwi.com/api/"
 QIWI_SECRET = "secret token from https://qiwi.com/p2p-admin/"
 
-wallet = QiwiWrapper(api_access_token=TOKEN, secret_p2p=QIWI_SECRET)
+wallet = QiwiWallet(api_access_token=TOKEN)
 
 bot = Bot(token="BOT_TOKEN")
 
@@ -18,33 +24,21 @@ logger = logging.getLogger(__name__)
 
 # There is a lambda expression for "cutting off" test payments
 @wallet.transaction_handler(lambda event: event.payment is not None)
-async def main(event: base_types.TransactionWebhook):
+async def main(event: TransactionWebhook):
     logger.info("New transaction: {}", event)
     await bot.send_message(chat_id="1219185039", text=event.id)
 
 
 @wallet.bill_handler()
-async def main2(event: base_types.BillWebhook):
+async def main2(event: BillWebhook):
     logger.info("P2P EVENT {}", event)
 
 
-# Also, you can specify a path for webhook
-# Example: http://127.0.0.1/your_path/
-# If you don't pass path in `start_webhook`
-# or dont pass on transaction_path or bill_path
-# Its ok, because it will take a default paths
-# default transaction_path = /dispatcher/qiwi/
-# default bill_path = /webhooks/qiwi/bills/
-# So, if you dont pass on paths
-# you need to register webhook with url like
-# on this example: http://your_ip:port/web_hooks/qiwi/ - for operation_history
-# or http://your_ip:port/webhooks/qiwi/bills/ - for bills
-path = Path(transaction_path="/dispatcher/qiwi", bill_path="/my_webhook/")
-
 executor.start_webhook(
     wallet,
-    # You can pass on any port, but it must be open for web
-    # You can use any VPS server to catching webhook or
-    # your configured local machine
-    path=path,
+    webhook_config=WebhookConfig(
+        encryption=EncryptionConfig(secret_p2p_key=QIWI_SECRET),
+        app=ApplicationConfig(port=80, host="your host"),
+        routes=RoutesConfig(p2p_path="/qiwi/api/p2p", standard_qiwi_hook_path="/qiwi/api/default"),
+    ),
 )

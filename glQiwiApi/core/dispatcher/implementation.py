@@ -23,14 +23,10 @@ from typing import (
 )
 
 from glQiwiApi.core.dispatcher._builtin_filters import BillFilter, ErrorFilter, TransactionFilter
-
 from .filters import BaseFilter, LambdaBasedFilter
 
 if TYPE_CHECKING:
     from .class_based import (
-        AbstractBillHandler,
-        AbstractTransactionHandler,
-        ExceptionHandler,
         Handler,
     )
     from glQiwiApi.qiwi.types import (
@@ -39,6 +35,11 @@ if TYPE_CHECKING:
         TransactionWebhook,
     )  # pragma: no cover
     from glQiwiApi.base_types.base import Base, HashableBase  # noqa  # pragma: no cover
+    from glQiwiApi.core.dispatcher.class_based import (  # noqa
+        AbstractBillHandler,
+        AbstractTransactionHandler,
+        ExceptionHandler,
+    )
 
 Event = TypeVar("Event", bound=Union["HashableBase", Exception, "Base"])
 _T = TypeVar("_T")

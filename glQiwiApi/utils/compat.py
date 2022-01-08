@@ -39,7 +39,7 @@ except (ModuleNotFoundError, ImportError):
     InputFile = EmptyCls
 
 if sys.version_info >= (3, 8):
-    from typing import Final as Final
-    from typing import Literal as Literal
+    from typing import Final as Final  # noqa
+    from typing import Literal as Literal  # noqa
 else:
-    from typing_extensions import Final, Literal
+    from typing_extensions import Final, Literal  # noqa

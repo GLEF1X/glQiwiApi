@@ -1,10 +1,8 @@
 import asyncio
 
-from glQiwiApi import QiwiWrapper
+from glQiwiApi import QiwiP2PClient
 
-wallet = QiwiWrapper(
-    api_access_token="token", phone_number="+number", secret_p2p="your secret p2p"
-)
+wallet = QiwiP2PClient(secret_p2p="your secret p2p")
 
 
 async def main():

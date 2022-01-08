@@ -1,9 +1,9 @@
 from pydantic import Field
 
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.base_types.base import HashableBase
 
 
-class Restriction(Base):
+class Restriction(HashableBase):
     code: str = Field(..., alias="restrictionCode")
     description: str = Field(..., alias="restrictionDescription")
 

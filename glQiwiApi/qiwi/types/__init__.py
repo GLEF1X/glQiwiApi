@@ -1,7 +1,7 @@
 from .account import Account
 from .account_info import QiwiAccountInfo
 from .balance import Balance
-from .bill import Bill, BillError, BillWebhook, InvoiceStatus, P2PKeys, RefundBill
+from .bill import Bill, BillError, BillWebhook, InvoiceStatus, PairOfP2PKeys, RefundBill
 from .commission import Commission
 from .identification import Identification
 from .limit import Limit
@@ -35,7 +35,7 @@ __all__ = (
     "TransactionWebhook",
     "WebhookInfo",
     "BillWebhook",
-    "P2PKeys",
+    "PairOfP2PKeys",
     "CrossRate",
     "FreePaymentDetailsFields",
     "PaymentMethod",

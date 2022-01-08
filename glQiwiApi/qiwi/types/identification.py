@@ -3,10 +3,10 @@ from typing import Optional
 
 from pydantic import Field
 
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Identification(Base):
+class Identification(QiwiWalletResultBaseWithClient):
     """object: Identification"""
 
     identification_id: int = Field(..., alias="id")

@@ -4,10 +4,11 @@ from typing import List, Optional
 from pydantic import Field
 
 from glQiwiApi.base_types import AmountWithCurrency
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.base_types.base import HashableBase
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class OrderDetails(Base):
+class OrderDetails(QiwiWalletResultBaseWithClient):
     """object: OrderDetails"""
 
     order_id: str = Field(..., alias="id")
@@ -17,7 +18,7 @@ class OrderDetails(Base):
     card_id: Optional[str] = Field(alias="cardId", default=None)
 
 
-class CardCredentials(Base):
+class CardCredentials(QiwiWalletResultBaseWithClient):
     """object: CardCredentials"""
 
     qvx_id: int = Field(..., alias="id")
@@ -36,14 +37,14 @@ class CardCredentials(Base):
     card_expire_year: str = Field(..., alias="cardExpireYear")
 
 
-class Requisite(Base):
+class Requisite(QiwiWalletResultBaseWithClient):
     """object: Requisite"""
 
     name: str
     value: str
 
 
-class Details(Base):
+class Details(QiwiWalletResultBaseWithClient):
     """object: Details"""
 
     info: str
@@ -54,7 +55,7 @@ class Details(Base):
     requisites: List[Requisite]
 
 
-class CardInfo(Base):
+class CardInfo(QiwiWalletResultBaseWithClient):
     """object: CardInfo"""
 
     id_: int = Field(..., alias="id")
@@ -66,7 +67,7 @@ class CardInfo(Base):
     details: Details
 
 
-class Card(Base):
+class Card(HashableBase):
     """
     object: Card
     description: Данные выпущенных карт

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
         pass
 
 try:
-    from aiogram.types import InputFile  # NOQA
+    from aiogram.types import InputFile  # NOQA  # type: ignore
 except ImportError:  # pragma: no cover
     pass
 

@@ -3,29 +3,29 @@ from typing import Any, Dict, Optional
 from pydantic import Field
 
 from glQiwiApi.base_types import AmountWithCurrency
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Fields(Base):
+class Fields(QiwiWalletResultBaseWithClient):
     """object: Fields"""
 
     account: str
 
 
-class State(Base):
+class State(QiwiWalletResultBaseWithClient):
     """object: State"""
 
     code: str
 
 
-class TransactionInfo(Base):
+class TransactionInfo(QiwiWalletResultBaseWithClient):
     """object: TransactionInfo"""
 
     txn_id: int = Field(..., alias="id")
     state: State
 
 
-class PaymentInfo(Base):
+class PaymentInfo(QiwiWalletResultBaseWithClient):
     """object: PaymentInfo"""
 
     payment_id: int = Field(..., alias="id")
@@ -37,12 +37,12 @@ class PaymentInfo(Base):
     comment: Optional[str] = None
 
 
-class PaymentMethod(Base):
+class PaymentMethod(QiwiWalletResultBaseWithClient):
     type: str = "Account"
     account_id: int = Field(643, alias="accountId")
 
 
-class QiwiPayment(Base):
+class QiwiPayment(QiwiWalletResultBaseWithClient):
     id: int
     sum: AmountWithCurrency
     method: PaymentMethod = Field(..., alias="paymentMethod")

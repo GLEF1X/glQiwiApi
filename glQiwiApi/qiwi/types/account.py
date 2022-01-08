@@ -3,11 +3,11 @@ from typing import Optional
 from pydantic import Field, validator
 
 from glQiwiApi.base_types.amount import AmountWithCurrency, CurrencyModel, Type
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.base_types.base import HashableBase
 from glQiwiApi.utils.currency_util import Currency
 
 
-class Account(Base):
+class Account(HashableBase):
     """object: Account"""
 
     alias: str

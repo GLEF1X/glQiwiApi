@@ -5,11 +5,13 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field, validator
 
 from glQiwiApi.base_types.amount import AmountWithCurrency, CurrencyModel
-from glQiwiApi.base_types.base import Base, ExtraBase
+from glQiwiApi.qiwi.types.base import (
+    QiwiWalletResultBaseWithClient,
+)
 from glQiwiApi.utils.currency_util import Currency
 
 
-class PassInfo(Base):
+class PassInfo(QiwiWalletResultBaseWithClient):
     """object: PassInfo"""
 
     last_pass_change: str = Field(alias="lastPassChange")
@@ -17,7 +19,7 @@ class PassInfo(Base):
     password_used: bool = Field(alias="passwordUsed")
 
 
-class MobilePinInfo(Base):
+class MobilePinInfo(QiwiWalletResultBaseWithClient):
     """object: MobilePinInfo"""
 
     last_mobile_pin_change: Optional[datetime] = Field(alias="lastMobilePinChange")
@@ -25,13 +27,13 @@ class MobilePinInfo(Base):
     next_mobile_pin_change: str = Field(alias="nextMobilePinChange")
 
 
-class PinInfo(Base):
+class PinInfo(QiwiWalletResultBaseWithClient):
     """object: PinInfo"""
 
     pin_used: bool = Field(alias="pinUsed")
 
 
-class AuthInfo(Base):
+class AuthInfo(QiwiWalletResultBaseWithClient):
     """object: AuthInfo"""
 
     ip: ipaddress.IPv4Address
@@ -45,7 +47,7 @@ class AuthInfo(Base):
     registration_date: datetime = Field(alias="registrationDate")
 
 
-class SmsNotification(Base):
+class SmsNotification(QiwiWalletResultBaseWithClient):
     """object: SmsNotification"""
 
     price: AmountWithCurrency
@@ -54,7 +56,7 @@ class SmsNotification(Base):
     end_date: Optional[datetime] = Field(None, alias="endDate")
 
 
-class IdentificationInfo(Base):
+class IdentificationInfo(QiwiWalletResultBaseWithClient):
     """object: IdentificationInfo"""
 
     bank_alias: Optional[str] = Field(None, alias="bankAlias")
@@ -62,7 +64,7 @@ class IdentificationInfo(Base):
     passport_expired: Optional[bool] = Field(None, alias="passportExpired")
 
 
-class NickName(Base):
+class NickName(QiwiWalletResultBaseWithClient):
     """object: NickName"""
 
     nickname: Optional[str] = None
@@ -71,7 +73,7 @@ class NickName(Base):
     description: str = ""
 
 
-class Feature(Base):
+class Feature(QiwiWalletResultBaseWithClient):
     """object: Feature"""
 
     feature_id: int = Field(alias="featureId")
@@ -80,7 +82,7 @@ class Feature(Base):
     end_date: str = Field(alias="endDate")
 
 
-class ContractInfo(Base):
+class ContractInfo(QiwiWalletResultBaseWithClient):
     """object: ContractInfo"""
 
     blocked: bool = False
@@ -92,7 +94,7 @@ class ContractInfo(Base):
     features: Optional[List[Feature]] = None
 
 
-class UserInfo(Base):
+class UserInfo(QiwiWalletResultBaseWithClient):
     """object: UserInfo"""
 
     default_pay_currency: CurrencyModel = Field(..., alias="defaultPayCurrency")
@@ -112,7 +114,7 @@ class UserInfo(Base):
         return Currency.get(str(v))
 
 
-class QiwiAccountInfo(ExtraBase):
+class QiwiAccountInfo(QiwiWalletResultBaseWithClient):
     auth_info: Optional[AuthInfo] = Field(None, alias="authInfo")
     contract_info: Optional[ContractInfo] = Field(None, alias="contractInfo")
     user_info: Optional[UserInfo] = Field(None, alias="userInfo")

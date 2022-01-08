@@ -1,10 +1,10 @@
 from pydantic import Field
 
 from glQiwiApi.base_types.amount import AmountWithCurrency
-from glQiwiApi.base_types.base import ExtraBase
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 
 
-class Commission(ExtraBase):
+class Commission(QiwiWalletResultBaseWithClient):
     provider_id: int = Field(alias="providerId")
     withdraw_sum: AmountWithCurrency = Field(alias="withdrawSum")
     enrollment_sum: AmountWithCurrency = Field(alias="enrollmentSum")

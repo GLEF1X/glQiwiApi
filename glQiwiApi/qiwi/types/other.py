@@ -3,11 +3,12 @@ from typing import Union
 from pydantic import Field, validator
 
 from glQiwiApi.base_types.amount import CurrencyModel
-from glQiwiApi.base_types.base import Base
+from glQiwiApi.base_types.base import HashableBase
+from glQiwiApi.qiwi.types.base import QiwiWalletResultBaseWithClient
 from glQiwiApi.utils.currency_util import Currency
 
 
-class CrossRate(Base):
+class CrossRate(HashableBase):
     """Курс валюты"""
 
     rate_from: Union[str, CurrencyModel] = Field(..., alias="from")
@@ -24,12 +25,12 @@ class CrossRate(Base):
         return cur
 
 
-class PaymentMethod(Base):
+class PaymentMethod(QiwiWalletResultBaseWithClient):
     payment_type: str
     account_id: str
 
 
-class FreePaymentDetailsFields(Base):
+class FreePaymentDetailsFields(QiwiWalletResultBaseWithClient):
     """Набор реквизитов платежа"""
 
     name: str

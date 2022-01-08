@@ -27,11 +27,13 @@ Welcome to the glQiwiApi documentation!
 ..  image:: https://github.com/GLEF1X/glQiwiApi/actions/workflows/tests.yml/badge.svg
     :alt: CI
 
+.. danger:: glQiwiApi 2.x has breaking changes. It breaks backwards compatibility by introducing new breaking changes!
+
 =========
 Features:
 =========
 
-    * It's working faster than other async wrappers for qiwi and yoomoney |:boom:|
+    * It's working faster than other async wrappers for qiwi and yoomoney `see here <https://github.com/GLEF1X/glQiwiApi/blob/dev-2.x/benchmarks/p2p/test_performance.py>`_
     * Obviously, it's asynchronous
     * Fully supports `qiwi <https://qiwi.com>`_ apis: `qiwi-maps <https://github.com/QIWI-API/qiwi-map>`_, `bills <https://developer.qiwi.com/en/bill-payments/>`_, `wallet <https://developer.qiwi.com/en/qiwi-wallet-personal/>`_ and also `yoomoney <https://yoomoney.ru/docs/wallet>`_
     * Provides support of polling and webhooks for QIWI as well as possible
@@ -47,14 +49,15 @@ Quick example
 
     import asyncio
 
-    from glQiwiApi import QiwiWrapper, APIError
+    from glQiwiApi import QiwiWallet
+    from glQiwiApi.qiwi import APIError
 
 
     async def print_balance(qiwi_token: str, phone_number: str) -> None:
         """
         This function allows you to get balance of your wallet using glQiwiApi library
         """
-        async with QiwiWrapper(api_access_token=qiwi_token, phone_number=phone_number) as w:
+        async with QiwiWallet(api_access_token=qiwi_token, phone_number=phone_number) as w:
             try:
                 balance = await w.get_balance()
             # handle exception if wrong credentials or really API return error
@@ -65,10 +68,6 @@ Quick example
 
 
     asyncio.run(print_balance(qiwi_token="qiwi api token", phone_number="+phone_number"))
-
-
-
-
 
 
 Contents

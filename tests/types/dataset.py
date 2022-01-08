@@ -1,23 +1,21 @@
 import os
-from typing import Any, Dict
 
-API_DATA = {
-    "api_access_token": os.getenv("API_ACCESS_TOKEN"),
-    "secret_p2p": os.getenv("SECRET_P2P"),
+QIWI_WALLET_CREDENTIALS = {
     "phone_number": os.getenv("PHONE_NUMBER"),
+    "api_access_token": os.getenv("API_ACCESS_TOKEN"),
 }
 
-YOO_MONEY_DATA = {"api_access_token": os.getenv("YOO_API_TOKEN")}
-
-WRONG_API_DATA = {
-    "api_access_token": "sdfsdfs",
-    "secret_p2p": "5454",
+SECRET_P2P_CREDENTIALS = {
+    "secret_p2p": os.getenv("SECRET_P2P")
 }
 
-EMPTY_DATA: Dict[Any, Any] = {}
+YOO_MONEY_DATA = {
+    "api_access_token": os.getenv("YOO_API_TOKEN")
+}
+
+YOO_MONEY_TEST_CLIENT_ID = os.getenv("YOO_TEST_CLIENT_ID")
 
 TO_WALLET_DATA = {"to_number": "+380985272064", "trans_sum": 1, "comment": "unit_test"}
-
 
 TXN_RAW_DATA = """{
     "txnId":9309,
@@ -58,5 +56,3 @@ TXN_RAW_DATA = """{
     "regularPaymentEnabled": true
    }
 """
-
-TEMP_DIRECTORY_NAME: str = "temp"

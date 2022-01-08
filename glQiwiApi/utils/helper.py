@@ -6,7 +6,7 @@ import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from glQiwiApi import QiwiWrapper
+    pass
 
 
 class measure_time(object):  # NOQA
@@ -54,7 +54,7 @@ class allow_response_code:  # NOQA
 
         @ft.wraps(func)
         async def wrapper(*args, **kwargs):
-            from glQiwiApi import APIError
+            from glQiwiApi.qiwi.exceptions import APIError
 
             try:
                 await func(*args, **kwargs)
@@ -76,7 +76,7 @@ class override_error_message:  # NOQA
 
         @ft.wraps(func)
         async def wrapper(*args, **kwargs):
-            from glQiwiApi import APIError
+            from glQiwiApi.qiwi.exceptions import APIError
 
             try:
                 return await func(*args, **kwargs)
@@ -92,23 +92,3 @@ class override_error_message:  # NOQA
                 raise ex from None
 
         return wrapper
-
-
-class require:
-    def __init__(self, *params):
-        self._required_attrs = params
-
-    def __call__(self, func):
-        @ft.wraps(func)
-        async def wrapper(c: QiwiWrapper, *args, **kwargs):
-            self.check_is_object_contains_required_attrs(c, func)
-            return await func(c, *args, **kwargs)
-
-        return wrapper
-
-    def check_is_object_contains_required_attrs(self, c, func):
-        for required_attr_name in self._required_attrs:
-            if getattr(c, required_attr_name, None) is None:
-                raise RuntimeError(
-                    f"Method {func.__name__} requires {required_attr_name} not to be empty"
-                )

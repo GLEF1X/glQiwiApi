@@ -44,10 +44,11 @@ class YooMoneyMethods:
     BUILD_URL_FOR_AUTH: str = "/oauth/authorize"
     GET_ACCESS_TOKEN: str = "/oauth/token"
     REVOKE_API_TOKEN: str = "/api/revoke"
+
     ACCOUNT_INFO: str = "/api/account-info"
     # Transactions
-    TRANSACTIONS: str = "/api/operation-history"
-    TRANSACTION_INFO: str = "/api/operation-details"
+    OPERATION_HISTORY: str = "/api/operation-history"
+    OPERATION_DETAILS: str = "/api/operation-details"
     # Payments
     PRE_PROCESS_PAYMENT: str = "/api/request-payment"
     PROCESS_PAYMENT: str = "/api/process-payment"
@@ -56,3 +57,5 @@ class YooMoneyMethods:
 
     # Forms
     QUICK_PAY_FORM: str = "/quickpay/confirm.xml?"
+
+    MAKE_REQUEST_PAYMENT = "/api/request-payment"

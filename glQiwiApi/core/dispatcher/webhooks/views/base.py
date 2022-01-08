@@ -1,11 +1,10 @@
 import abc
 import logging
-from typing import TYPE_CHECKING as MYPY
 from typing import Any, Generic, Type, TypeVar
+from typing import TYPE_CHECKING as MYPY
 
 from aiohttp import web
 from aiohttp.web_request import Request
-from pydantic import ValidationError
 
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError

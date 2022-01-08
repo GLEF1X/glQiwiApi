@@ -5,10 +5,11 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.utils import executor
 
-from glQiwiApi import QiwiWrapper
+from glQiwiApi import QiwiP2PClient
 from glQiwiApi import base_types as qiwi_types
+from glQiwiApi.qiwi.types import Bill
 
-wallet = QiwiWrapper(secret_p2p="YOUR_SECRET_P2P_TOKEN")
+client = QiwiP2PClient(secret_p2p="YOUR_SECRET_P2P_TOKEN")
 
 BOT_TOKEN = "BOT_TOKEN"
 
@@ -17,9 +18,9 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 
-async def create_payment(amount: Union[float, int] = 1) -> qiwi_types.Bill:
-    async with wallet:
-        return await wallet.create_p2p_bill(amount=amount)
+async def create_payment(amount: Union[float, int] = 1) -> Bill:
+    async with client:
+        return await client.create_p2p_bill(amount=amount)
 
 
 @dp.message_handler(text="I want to pay")
@@ -33,7 +34,7 @@ async def payment(message: types.Message, state: FSMContext):
 @dp.message_handler(state="payment", text="I have paid this invoice")
 async def successful_payment(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        bill: qiwi_types.Bill = data.get("bill")
+        bill: Bill = data.get("bill")
     status = await bill.check()
     if status:
         await message.answer("You have successfully paid your invoice")
