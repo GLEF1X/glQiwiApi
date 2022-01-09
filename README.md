@@ -15,7 +15,7 @@
 ## 🌎Official api resources:
 
 * 🎓 __Documentation 2.x: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
-* 🎓 __Documentation 1.x: [here]( glqiwiapi.readthedocs.io/en/1.1.4/)__
+* 🎓 __Documentation 1.x: [here](glqiwiapi.readthedocs.io/en/1.1.4/)__
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
