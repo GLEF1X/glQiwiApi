@@ -1,5 +1,5 @@
 <h2 align="center">
-<img src="https://github.com/GLEF1X/glQiwiApi/blob/master/docs/_static/logo.png" width="200"></img>
+<img src="https://github.com/GLEF1X/glQiwiApi/blob/dev-2.x/docs/_static/logo.png?raw=true" width="200"></img>
 
 
 [![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Code Quality Score](https://www.code-inspector.com/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Code Grade](https://www.code-inspector.com/project/20780/status/svg) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi) ![docs](https://readthedocs.org/projects/pip/badge/?version=latest)
