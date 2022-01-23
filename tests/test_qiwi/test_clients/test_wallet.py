@@ -4,8 +4,8 @@ import datetime
 import pytest
 
 from glQiwiApi import QiwiWallet
-from glQiwiApi.base_types import AmountWithCurrency
-from glQiwiApi.base_types.arbitrary.file import File
+from glQiwiApi.base import AmountWithCurrency
+from glQiwiApi.base import File
 from glQiwiApi.qiwi.types import (
     TransactionType,
     Transaction,
@@ -13,7 +13,7 @@ from glQiwiApi.qiwi.types import (
     Card,
     QiwiAccountInfo,
     Statistic,
-    Account,
+    Balance,
     Bill,
     Restriction,
     CrossRate,
@@ -41,7 +41,7 @@ async def api_fixture():
 
 
 async def test_get_balance(api: QiwiWallet):
-    from glQiwiApi.base_types.amount import CurrencyModel
+    from glQiwiApi.base import CurrencyModel
 
     result = await api.get_balance()
     assert isinstance(result, AmountWithCurrency)
@@ -164,7 +164,7 @@ async def test_fetch_statistic(api: QiwiWallet, payload: dict):
 
 async def test_list_of_balances(api: QiwiWallet):
     balances = await api.list_of_balances()
-    assert all(isinstance(b, Account) for b in balances)
+    assert all(isinstance(b, Balance) for b in balances)
 
 
 async def test_fail_fetch_statistic(api: QiwiWallet):

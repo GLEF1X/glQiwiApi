@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import abc
 import asyncio
 import functools
+import inspect
 import logging
 import operator
-import types
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -14,27 +15,25 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
     Type,
     TypeVar,
     Union,
     cast,
-    no_type_check,
+    no_type_check, Sequence,
 )
 
-from glQiwiApi.core.dispatcher._builtin_filters import BillFilter, ErrorFilter, TransactionFilter
+from glQiwiApi.qiwi.clients.p2p.types import (
+    BillWebhook,
+)
 from .filters import BaseFilter, LambdaBasedFilter
+from ...qiwi.clients.wallet.types.transaction import Transaction
+from ...qiwi.clients.wallet.types.webhooks import TransactionWebhook
 
 if TYPE_CHECKING:
     from .class_based import (
         Handler,
-    )
-    from glQiwiApi.qiwi.types import (
-        BillWebhook,
-        Transaction,
-        TransactionWebhook,
     )  # pragma: no cover
-    from glQiwiApi.base_types.base import Base, HashableBase  # noqa  # pragma: no cover
+    from glQiwiApi.base import Base, HashableBase  # noqa  # pragma: no cover
     from glQiwiApi.core.dispatcher.class_based import (  # noqa
         AbstractBillHandler,
         AbstractTransactionHandler,
@@ -71,75 +70,13 @@ class CancelHandler(Exception):
     pass
 
 
-class EventHandler(Generic[Event]):
-    """
-    Event handler, which executing and working with handlers
-
-    """
-
-    def __init__(
-        self,
-        handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        *filters: BaseFilter[Event],
-    ) -> None:
-        self._handler = handler
-        self._filters = list(filter(lambda f: operator.not_(operator.eq(f, None)), filters))
-
-    async def check_then_execute(self, event: Event, *args: Any) -> Optional[Any]:
-        """Check event, apply all filters and then pass on to handler"""
-        for f in self._filters:
-            if not await f.check(event):
-                break
-        else:
-            return await self._handler(event, *args)
-        return None  # hint for mypy
+TxnWrappedHandler = Union["EventHandler[Transaction]", "EventHandler[BillWebhook]"]
 
 
-TxnWrappedHandler = Union[EventHandler["Transaction"], EventHandler["BillWebhook"]]
-
-
-class HandlerCollection(Generic[Event]):
-    def __init__(self, once: bool = True) -> None:
-        self.handlers: List[EventHandler[Event]] = []
-        self.once = once
-
-    async def notify(self, event: Event, *args: Any) -> None:
-        for handler in self.handlers:
-            try:
-                await handler.check_then_execute(event, *args)
-                if self.once:
-                    break
-            except SkipHandler:
-                continue
-            except CancelHandler:
-                break
-
-    def subscribe(self, handler: EventHandler[Event]) -> None:
-        self.handlers.append(handler)
-
-    def unsubscribe(self, handler: EventHandler[Event]) -> None:
-        self.handlers.remove(handler)
-
-    def __iter__(self) -> Iterable[EventHandler[Event]]:
-        return iter(self.handlers)
-
-    @property
-    def is_empty(self) -> bool:
-        return len(self.handlers) == 0
-
-
-class Dispatcher:
-    """
-    Class, which managing all handlers
-
-    """
+class BaseDispatcher(abc.ABC):
 
     def __init__(self) -> None:
-        self.transaction_handlers: HandlerCollection[
-            Union["Transaction", "TransactionWebhook"]
-        ] = HandlerCollection()
-        self.bill_handlers: HandlerCollection["BillWebhook"] = HandlerCollection()
-        self.error_handlers: HandlerCollection[Exception] = HandlerCollection()
+        self.error_handler = HandlerCollection(Exception)
 
     @no_type_check
     def _wrap_callback_for_error_handling(self, callback):
@@ -152,58 +89,78 @@ class Dispatcher:
                 # and skip or break processing current event
                 raise ex
             except Exception as e:
-                if not self.error_handlers.is_empty:
-                    return await self.error_handlers.notify(e, *args)
+                if not self.error_handler.is_empty:
+                    return await self.error_handler.notify(e, *args)
                 raise e
 
         return wrapper
 
-    def register_transaction_handler(
-        self, event_handler: TxnRawHandler, *filters: TxnFilters
-    ) -> None:
-        self.transaction_handlers.subscribe(
-            cast(  # type: ignore
-                TxnWrappedHandler,
-                self.wrap_handler(
-                    self._wrap_callback_for_error_handling(event_handler),
-                    filters,
-                    default_filter=TransactionFilter(),
-                ),
-            )
-        )
+    async def process_event(self, event: Event, *args: Any) -> None:
+        """
+        Feed handlers with event.
 
-    def register_bill_handler(self, event_handler: BillRawHandler, *filters: BillFilters) -> None:
-        self.bill_handlers.subscribe(
-            self.wrap_handler(
-                self._wrap_callback_for_error_handling(event_handler),
-                filters,
-                default_filter=BillFilter(),
-            )
-        )
-
-    def register_error_handler(
-        self,
-        event_handler: ErrorRawHandler,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
-    ) -> None:
-        self.error_handlers.subscribe(
-            self.wrap_handler(
-                event_handler, filters=filters, default_filter=ErrorFilter(exception)
-            )
-        )
+        :param event: any object that will be translated to handlers
+        """
+        coroutines = [h.notify(event, *args) for h in self.__all_handlers__]
+        await asyncio.gather(*coroutines)
 
     @property
-    def __all_handlers__(self):  # type: ignore
-        """Return all registered handlers except error handlers"""
-        return self.bill_handlers, self.transaction_handlers
+    @abc.abstractmethod
+    def __all_handlers__(self) -> Sequence[HandlerCollection[Any]]:
+        pass
 
-    @staticmethod
-    def wrap_handler(
-        event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        filters: Optional[Tuple[Union[Callable[[Event], bool], BaseFilter[Event]], ...]] = None,
-        default_filter: Optional[BaseFilter[Event]] = None,
-    ) -> EventHandler[Event]:
+
+class Dispatcher(BaseDispatcher):
+    """
+    Class, which managing all handlers
+
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.transaction_handler = HandlerCollection(Transaction, TransactionWebhook)
+        self.bill_handler = HandlerCollection(BillWebhook)
+
+    @property
+    def __all_handlers__(self) -> Sequence[HandlerCollection[Any]]:
+        """Return all registered handlers except error handlers"""
+        return self.bill_handler, self.transaction_handler
+
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+class HandlerCollection(Generic[Event]):
+    def __init__(self, *event_types: Type[Event], once: bool = True) -> None:
+        self._handlers: List[EventHandler[Event]] = []
+        self._once = once
+        self._event_filter = lambda e: isinstance(e, event_types)
+
+    async def notify(self, event: Event, *args: Any) -> None:
+        if not self._event_filter(event):
+            return None
+        for handler in self._handlers:
+            try:
+                await handler.check_then_execute(event, *args)
+                if self._once:
+                    break
+            except SkipHandler:
+                continue
+            except CancelHandler:
+                break
+
+    def __call__(self, *filters: BaseFilter[Event]) -> Callable[[F], F]:
+        def decorator(callback: F) -> F:
+            self.register_handler(callback, *filters)
+            return callback
+
+        return decorator
+
+    def register_handler(
+            self,
+            event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            *filters: Union[Callable[[Event], bool], BaseFilter[Event]]
+    ) -> None:
         """
         Add new event handler.
         (!) Allows chain addition.
@@ -211,59 +168,46 @@ class Dispatcher:
         :param event_handler: event handler, low order function
          which works with events
         :param filters: filter for low order function execution
-        :param default_filter: default filter for the handler to determine type
-         of update and accurately split handlers by the type of update
-
-        :return: instance of EventHandler
         """
         generated_filters: List[BaseFilter[Event]] = []
-        if filters:
-            for filter_ in filters:
-                if isinstance(filter_, types.FunctionType):
-                    generated_filters.append(LambdaBasedFilter(filter_))
-                else:
-                    generated_filters.append(cast(BaseFilter[Event], filter_))
-            if default_filter is not None:
-                generated_filters.insert(0, default_filter)
+        for filter_ in filters:
+            if inspect.isfunction(filter_):
+                generated_filters.append(LambdaBasedFilter(filter_))
+            else:
+                generated_filters.append(cast(BaseFilter[Event], filter_))
+
+        self._handlers.append(EventHandler(event_handler, *generated_filters))
+
+    def remove_handler(self, handler: EventHandler[Event]) -> None:
+        self._handlers.remove(handler)
+
+    def __iter__(self) -> Iterable[EventHandler[Event]]:
+        return iter(self._handlers)
+
+    @property
+    def is_empty(self) -> bool:
+        return len(self._handlers) == 0
+
+
+class EventHandler(Generic[Event]):
+    """
+    Event handler, which executing and working with handlers
+
+    """
+
+    def __init__(
+            self,
+            handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            *filters: BaseFilter[Event],
+    ) -> None:
+        self._handler = handler
+        self._filters = list(filter(lambda f: operator.not_(operator.eq(f, None)), filters))
+
+    async def check_then_execute(self, event: Event, *args: Any) -> Optional[Any]:
+        """Check event, apply all filters and then pass on to handler"""
+        for f in self._filters:
+            if not await f.check(event):
+                break
         else:
-            generated_filters = [default_filter]  # type: ignore
-
-        return EventHandler(event_handler, *generated_filters)
-
-    def transaction_handler(
-        self, *filters: TxnFilters
-    ) -> Callable[[TxnRawHandler], TxnRawHandler]:
-        def decorator(callback: TxnRawHandler) -> TxnRawHandler:
-            self.register_transaction_handler(callback, *filters)
-            return callback
-
-        return decorator
-
-    def bill_handler(self, *filters: BillFilters) -> Callable[[BillRawHandler], BillRawHandler]:
-        def decorator(callback: BillRawHandler) -> BillRawHandler:
-            self.register_bill_handler(callback, *filters)
-            return callback
-
-        return decorator
-
-    def error_handler(
-        self,
-        exception: Optional[Union[Type[Exception], Exception]] = None,
-        *filters: BaseFilter[Exception],
-    ) -> Callable[[ErrorRawHandler], ErrorRawHandler]:
-        def decorator(callback: ErrorRawHandler) -> ErrorRawHandler:
-            self.register_error_handler(callback, exception, *filters)
-            return callback
-
-        return decorator
-
-    async def process_event(self, event: Event) -> None:
-        """
-        Feed handlers with event.
-
-        :param event: any object that will be translated to handlers
-        """
-        coroutines = [
-            handler_collection.notify(event=event) for handler_collection in self.__all_handlers__
-        ]
-        await asyncio.gather(*coroutines)
+            return await self._handler(event, *args)
+        return None  # hint for mypy

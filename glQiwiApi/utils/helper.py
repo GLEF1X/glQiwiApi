@@ -1,48 +1,6 @@
 from __future__ import annotations
 
 import functools as ft
-import inspect
-import time
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
-
-class measure_time(object):  # NOQA
-    def __init__(self, logger=None):
-        self._logger = logger
-
-    def __call__(self, func):
-        if inspect.iscoroutinefunction(func) or inspect.iscoroutine(func):
-
-            @ft.wraps(func)
-            async def wrapper(*args, **kwargs):
-                start_time = time.monotonic()
-                result = await func(*args, **kwargs)
-                execute_time = time.monotonic() - start_time
-                msg = "Function `%s` executed for %s secs"
-                self._log(msg, func.__name__, execute_time)
-                return result
-
-        else:
-
-            @ft.wraps(func)
-            def wrapper(*args, **kwargs):
-                start_time = time.monotonic()
-                result = func(*args, **kwargs)
-                execute_time = time.monotonic() - start_time
-                msg = "Function `%s` executed for %s secs"
-                self._log(msg, func.__name__, execute_time)
-                return result
-
-        return wrapper
-
-    def _log(self, msg, *args):
-        if self._logger is not None:
-            self._logger.info(msg, *args)
-        else:
-            print(msg % args)
 
 
 class allow_response_code:  # NOQA

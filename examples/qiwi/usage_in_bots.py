@@ -6,7 +6,6 @@ from aiogram.dispatcher import FSMContext
 from aiogram.utils import executor
 
 from glQiwiApi import QiwiP2PClient
-from glQiwiApi import base_types as qiwi_types
 from glQiwiApi.qiwi.types import Bill
 
 client = QiwiP2PClient(secret_p2p="YOUR_SECRET_P2P_TOKEN")

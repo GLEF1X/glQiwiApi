@@ -14,14 +14,6 @@ class UnhashableObjectError(TypeError):
     pass
 
 
-def _is_object_unhashable(obj: Any) -> bool:
-    try:
-        hash(obj)
-        return False
-    except TypeError:
-        return True
-
-
 class AbstractCollisionDetector(abc.ABC, Generic[T]):
     """
     QIWI API can transfer_money the same update twice or more, so we need to avoid this problem anyway.
@@ -57,3 +49,11 @@ class HashBasedCollisionDetector(AbstractCollisionDetector[T]):
         return any(
             hash(obj) == processed_hash for processed_hash in self.already_processed_object_hashes
         )
+
+
+def _is_object_unhashable(obj: Any) -> bool:
+    try:
+        hash(obj)
+        return False
+    except TypeError:
+        return True

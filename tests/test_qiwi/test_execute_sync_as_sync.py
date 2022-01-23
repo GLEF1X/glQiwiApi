@@ -1,6 +1,6 @@
 import pytest
 
-from glQiwiApi import QiwiWallet, base_types
+from glQiwiApi import QiwiWallet, base
 from glQiwiApi.core.synchronous.adapter import execute_async_as_sync
 from tests.types.dataset import QIWI_WALLET_CREDENTIALS
 
@@ -14,4 +14,4 @@ async def sync_api_fixture():
 
 def test_sync_get_balance(api_stub: QiwiWallet):
     result = execute_async_as_sync(api_stub.get_balance)
-    assert isinstance(result, base_types.AmountWithCurrency)
+    assert isinstance(result, base.AmountWithCurrency)

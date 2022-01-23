@@ -1,6 +1,6 @@
 import pytest
 
-from glQiwiApi import QiwiMaps, base_types
+from glQiwiApi import QiwiMaps
 from glQiwiApi.qiwi.types import Partner, Terminal, Polygon
 
 pytestmark = pytest.mark.asyncio

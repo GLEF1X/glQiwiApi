@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from glQiwiApi import QiwiMaps, base_types
+from glQiwiApi import QiwiMaps
 from glQiwiApi.core.synchronous.adapter import async_as_sync
 from glQiwiApi.qiwi.types import Partner
 from glQiwiApi.utils.helper import measure_time

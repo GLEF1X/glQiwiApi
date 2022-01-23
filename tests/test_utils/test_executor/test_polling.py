@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 
 import pytest
 import timeout_decorator
@@ -18,7 +18,7 @@ class StubDispatcher(Dispatcher):
         super().__init__()
         self._fake_event = fake_event
 
-    async def process_event(self, event: Event = None) -> None:
+    async def process_event(self, event: Event = None, *args: Any) -> None:
         await super().process_event(self._fake_event)
 
 
@@ -34,7 +34,7 @@ class StubQiwiWrapper(QiwiWallet):
     async def history(
         self,
         rows: int = 50,
-        operation: TransactionType = TransactionType.ALL,
+        transaction_type: TransactionType = TransactionType.ALL,
         sources: Optional[List[Source]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,

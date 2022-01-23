@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from glQiwiApi.base_types import AmountWithCurrency
+from glQiwiApi.base import AmountWithCurrency
 from glQiwiApi.qiwi.types import Transaction, TransactionStatus, TransactionWebhook
 from glQiwiApi.qiwi.types.transaction import Provider, TransactionType
 

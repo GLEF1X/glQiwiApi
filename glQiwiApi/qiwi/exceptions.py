@@ -6,10 +6,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from aiohttp import RequestInfo
 from pydantic import BaseModel
 
-from glQiwiApi.base_types.exceptions import WebhookSignatureUnverifiedError
-
 if TYPE_CHECKING:
-    from glQiwiApi.base_types.errors import QiwiErrorAnswer
+    from glQiwiApi.base.types.errors import QiwiErrorAnswer
 
 
 class AuthURLIsInvalidError(Exception):
@@ -40,11 +38,11 @@ class ChequeIsNotAvailable(Exception):
 
 class APIError(Exception):
     def __init__(
-        self,
-        message: Optional[str],
-        status_code: Union[str, int],
-        additional_info: Optional[str] = None,
-        request_data: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
+            self,
+            message: Optional[str],
+            status_code: Union[str, int],
+            additional_info: Optional[str] = None,
+            request_data: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
     ) -> None:
         super(APIError, self).__init__()
         self.message = message
@@ -102,6 +100,5 @@ __all__ = (
     "AuthURLIsInvalidError",
     "APIError",
     "ChequeIsNotAvailable",
-    "SecretP2PTokenIsEmpty",
-    "WebhookSignatureUnverifiedError",
+    "SecretP2PTokenIsEmpty"
 )

@@ -13,25 +13,22 @@ W = TypeVar("W", bound="Wrapper")
 
 class Wrapper(abc.ABC):
     __slots__ = ()
+    _request_service: RequestService
 
     async def __aenter__(self):  # type: ignore
-        await self.get_request_service().warmup()
+        await self._request_service.warmup()
         return self
 
     async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 
     async def close(self) -> None:
-        await self.get_request_service().shutdown()
-
-    @abc.abstractmethod
-    def get_request_service(self) -> RequestService:
-        pass
+        await self._request_service.shutdown()
 
     def __deepcopy__(self: W, memo: Dict[Any, Any]) -> W:
         cls = self.__class__

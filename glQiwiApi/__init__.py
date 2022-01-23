@@ -1,12 +1,6 @@
-from .core import (
-    AbstractBillHandler,
-    AbstractTransactionHandler,
-    AbstractTransactionWebhookHandler,
-    BaseFilter,
-    Handler,
-    LambdaBasedFilter,
-)
-from .qiwi import QiwiMaps, QiwiWallet, QiwiP2PClient
+from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
+from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
+from glQiwiApi.qiwi.clients.maps.client import QiwiMaps
 from .yoo_money import YooMoneyAPI
 
 try:
@@ -20,17 +14,10 @@ __version__ = "2.0.0b1"
 
 __all__ = (
     # clients
-    "QiwiWallet",
     "YooMoneyAPI",
-    "QiwiP2PClient",
     "QiwiMaps",
-    # class-based handlers and filters
-    "AbstractBillHandler",
-    "AbstractTransactionHandler",
-    "AbstractTransactionWebhookHandler",
-    "Handler",
-    "LambdaBasedFilter",
-    "BaseFilter",
+    "QiwiWallet",
+    "QiwiP2PClient",
     # other
     "__version__",
 )

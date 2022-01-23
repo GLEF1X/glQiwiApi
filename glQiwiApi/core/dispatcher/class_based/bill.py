@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import abc
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from glQiwiApi.base_types.amount import PlainAmount
-from glQiwiApi.core.dispatcher.class_based.base import ClientMixin, Handler
-from glQiwiApi.qiwi.types.bill import Bill
+from glQiwiApi.base.types.amount import PlainAmount
+from glQiwiApi.core.dispatcher.class_based.base import Handler
+from glQiwiApi.qiwi.clients.p2p.types import Bill
+
+if TYPE_CHECKING:
+    from glQiwiApi.qiwi.clients.p2p import QiwiP2PClient
 
 
-class AbstractBillHandler(Handler[Bill], ClientMixin[Bill], abc.ABC):
+class AbstractBillHandler(Handler[Bill], abc.ABC):
+
+    @property
+    def wallet(self) -> QiwiP2PClient:
+        return self.context["wallet"]
+
     @property
     def bill_id(self) -> str:
         return self.event.id
@@ -18,5 +26,9 @@ class AbstractBillHandler(Handler[Bill], ClientMixin[Bill], abc.ABC):
         return self.event.amount
 
     @property
-    def pay_url(self) -> Optional[str]:
+    def pay_url(self) -> str:
         return self.event.pay_url
+
+    @property
+    def shim_url(self) -> str:
+        return self.event.shim_url

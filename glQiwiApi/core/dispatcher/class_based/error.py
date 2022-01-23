@@ -3,10 +3,10 @@ from __future__ import annotations
 import abc
 from typing import Any
 
-from .base import ClientMixin, Handler
+from .base import Handler
 
 
-class ExceptionHandler(Handler[Exception], ClientMixin[Exception], abc.ABC):
+class ExceptionHandler(Handler[Exception], abc.ABC):
     def __init__(self, event: Exception, *args: Any) -> None:
         super().__init__(event)
         self.args = args

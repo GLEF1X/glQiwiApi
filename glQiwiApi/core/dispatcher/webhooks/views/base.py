@@ -14,7 +14,7 @@ from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
 )
 
 if MYPY:
-    from glQiwiApi.base_types.base import HashableBase  # pragma: no cover  # noqa
+    from glQiwiApi.base import HashableBase  # pragma: no cover  # noqa
 
 try:
     import orjson as json

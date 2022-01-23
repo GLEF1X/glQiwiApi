@@ -6,8 +6,8 @@ import pytest
 from _pytest.fixtures import SubRequest
 from _pytest.tmpdir import TempdirFactory
 
-from glQiwiApi.base_types.arbitrary.file import File
-from glQiwiApi.base_types.arbitrary.inputs import BinaryIOInput, PathlibPathInput, PlainPathInput
+from glQiwiApi.base import File
+from glQiwiApi.base import BinaryIOInput, PathlibPathInput, PlainPathInput
 
 # spike for mypy
 lazy_fixture: Callable[..., Any] = pytest.lazy_fixture  # type: ignore  # noqa

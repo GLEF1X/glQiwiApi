@@ -6,7 +6,6 @@ from aiohttp.pytest_plugin import AiohttpClient
 from aiohttp.test_utils import TestClient
 from aiohttp.web_app import Application
 
-from glQiwiApi import base_types
 from glQiwiApi.core import QiwiBillWebhookView
 from glQiwiApi.core.dispatcher.implementation import Dispatcher
 from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (

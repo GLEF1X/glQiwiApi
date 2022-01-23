@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast, TypeVar
 
 from aiohttp import (
     ClientConnectionError,
@@ -13,8 +13,9 @@ from aiohttp import (
     ServerDisconnectedError,
 )
 from aiohttp.typedefs import LooseCookies
+from pydantic import BaseModel
 
-from glQiwiApi.core.abc.router import AbstractRouter
+from glQiwiApi.base.api_method import APIMethod
 from glQiwiApi.core.cache import APIResponsesCacheInvalidationStrategy, InMemoryCacheStorage
 from glQiwiApi.core.cache.cached_types import CachedAPIRequest, Payload
 from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder
@@ -32,6 +33,9 @@ class EmptyMessages(Dict[Any, Any]):
         return ""  # pragma: no cover
 
 
+R = TypeVar("R")
+
+
 class RequestService:
     """
     Deal with :class:`Storage`,
@@ -40,17 +44,15 @@ class RequestService:
     """
 
     def __init__(
-        self,
-        error_messages: Optional[Dict[int, str]] = None,
-        cache_time: Union[float, int] = 0,
-        session_holder: Optional[AbstractSessionHolder[Any]] = None,
-        base_headers: Optional[Dict[str, Any]] = None,
+            self,
+            error_messages: Optional[Dict[int, str]] = None,
+            cache_time: Union[float, int] = 0,
+            session_holder: Optional[AbstractSessionHolder[Any]] = None,
+            base_headers: Optional[Dict[str, Any]] = None,
+            **session_holder_kw: Any
     ) -> None:
         if session_holder is None:
-            session_holder = AiohttpSessionHolder(
-                timeout=ClientTimeout(total=5, connect=None, sock_connect=5, sock_read=None),
-                headers=base_headers,
-            )
+            session_holder = AiohttpSessionHolder(headers=base_headers)
         self._error_messages = error_messages or EmptyMessages()
         self._cache = InMemoryCacheStorage(
             invalidate_strategy=APIResponsesCacheInvalidationStrategy(
@@ -59,42 +61,31 @@ class RequestService:
         )
         self._session_holder: AbstractSessionHolder[Any] = session_holder
 
-    async def api_request(
-        self,
-        http_method: str,
-        api_method: str,
-        router: AbstractRouter,
-        set_timeout: bool = True,
-        cookies: Optional[LooseCookies] = None,
-        json: Optional[Any] = None,
-        data: Optional[Dict[Any, Any]] = None,
-        headers: Optional[Dict[Any, Any]] = None,
-        params: Optional[Dict[Any, Any]] = None,
-        **kwargs: Any,
-    ) -> Dict[Any, Any]:
-        url = router.build_url(api_method, **kwargs)
-        return await self.raw_request(
-            url,
-            http_method,
-            set_timeout=set_timeout,
-            headers=headers,
-            json=json,
-            data=data,
-            params=params,
-            cookies=cookies,
+        self._session_holder.update_session_kwargs(**session_holder_kw)
+
+    async def emit_request_to_api(self, method: APIMethod[R], **url_kw: Any) -> R:
+        request = method.build_request(**url_kw)
+        return method.parse_response(
+            await self.emit_request(
+                request.endpoint,
+                request.http_method,
+                params=request.params,
+                data=request.data,
+                headers=request.headers
+            )
         )
 
-    async def raw_request(
-        self,
-        url: str,
-        method: str,
-        set_timeout: bool = True,
-        cookies: Optional[LooseCookies] = None,
-        json: Optional[Any] = None,
-        data: Optional[Any] = None,
-        headers: Optional[Any] = None,
-        params: Optional[Any] = None,
-        **kwargs: Any,
+    async def emit_request(
+            self,
+            url: str,
+            method: str,
+            set_timeout: bool = True,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[Any] = None,
+            data: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            params: Optional[Any] = None,
+            **kwargs: Any,
     ) -> Dict[Any, Any]:
         request_args = {k: v for k, v in locals().items() if not isinstance(v, type(self))}
         if self._storage_has_similar_cached_response(**request_args):
@@ -116,7 +107,7 @@ class RequestService:
                 url=url,
                 data=data,
                 headers=headers,
-                json=json if isinstance(json, dict) else None,
+                json=json,
                 cookies=cookies,
                 params=params,
                 **kwargs,
@@ -128,9 +119,9 @@ class RequestService:
                 await http_response.text(),
             )
         except (
-            ClientProxyConnectionError,
-            ServerDisconnectedError,
-            ClientConnectionError,
+                ClientProxyConnectionError,
+                ServerDisconnectedError,
+                ClientConnectionError,
         ):
             raise self.api_exception(status_code=500)
         else:
@@ -144,14 +135,14 @@ class RequestService:
             return decoded_response
 
     async def text_content(
-        self,
-        url: str,
-        method: str,
-        cookies: Optional[LooseCookies] = None,
-        json: Optional[Any] = None,
-        data: Optional[Any] = None,
-        headers: Optional[Any] = None,
-        params: Optional[Any] = None,
+            self,
+            url: str,
+            method: str,
+            cookies: Optional[LooseCookies] = None,
+            json: Optional[Any] = None,
+            data: Optional[Any] = None,
+            headers: Optional[Any] = None,
+            params: Optional[Any] = None,
     ) -> str:
         logger.debug(
             "Get text content from %s method = %s json = %s body = %d headers = %s params = %s ",
@@ -186,10 +177,10 @@ class RequestService:
         )
 
     def api_exception(
-        self,
-        status_code: int,
-        traceback_info: Optional[Union[RequestInfo, Dict[Any, Any], str, bytes]] = None,
-        message: Optional[str] = None,
+            self,
+            status_code: int,
+            traceback_info: Optional[Union[RequestInfo, Dict[Any, Any], str, bytes]] = None,
+            message: Optional[str] = None,
     ) -> APIError:
         """Raise :class:`APIError` exception with pretty explanation"""
         from glQiwiApi import __version__

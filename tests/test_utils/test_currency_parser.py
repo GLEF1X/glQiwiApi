@@ -1,6 +1,6 @@
 import pytest
 
-from glQiwiApi.base_types._currencies import described
+from glQiwiApi.base import described
 from glQiwiApi.utils.currency_util import Currency
 
 pytestmark = pytest.mark.asyncio
@@ -14,7 +14,7 @@ def currency_fixture():
 
 
 async def test_currency_parser(_: Currency):
-    from glQiwiApi.base_types.amount import CurrencyModel
+    from glQiwiApi.base import CurrencyModel
 
     condition = all(isinstance(_.get(key), CurrencyModel) for key in described.keys())
     assert condition

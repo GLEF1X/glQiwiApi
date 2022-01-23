@@ -41,15 +41,12 @@ class NotFilter(BaseFilter[Event]):
 
 
 class LambdaBasedFilter(BaseFilter[Event]):
-    __name__: str
 
-    def __init__(self, function: Callable[[Event], Union[bool, Awaitable[bool]]]) -> None:
-        self.__name__ = f"Filter around <{function!r}>"
+    def __init__(self, func: Callable[[Event], Union[bool, Awaitable[bool]]]) -> None:
+        self.name = f"Filter around <{func!r}>"
 
-        self.function = function
-        self.awaitable: bool = inspect.iscoroutinefunction(function) or inspect.isawaitable(
-            function
-        )
+        self.function = func
+        self.awaitable: bool = inspect.iscoroutinefunction(func) or inspect.isawaitable(func)
 
     async def check(self, update: Event) -> bool:
         if self.awaitable:

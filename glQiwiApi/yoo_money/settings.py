@@ -3,12 +3,10 @@ from __future__ import annotations
 import functools
 from typing import Any
 
-from glQiwiApi.core.abc.router import AbstractRouter
-
 __all__ = ("YooMoneyRouter", "YooMoneyMethods")
 
 
-class YooMoneyRouter(AbstractRouter):
+class YooMoneyRouter:
     __head__ = "https://yoomoney.ru"
 
     def setup_routes(self) -> Any:

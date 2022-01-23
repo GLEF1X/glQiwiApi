@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union, Dict
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.clients.wallet import QiwiWallet  # NOQA  # pragma: no cover
-    from glQiwiApi.base_types.base import Base  # NOQA # pragma: no cover
+    from glQiwiApi.base import Base  # NOQA # pragma: no cover
 
 T = TypeVar("T", bound=Union[Exception, "Base"])
 
@@ -15,26 +14,14 @@ class BaseHandlerMixin(Generic[T]):
         event: T
 
 
-class ClientMixin(Generic[T]):
-    if TYPE_CHECKING:  # pragma: no cover
-        event: T
-
-    @property
-    def client(self) -> "QiwiWallet":
-        if isinstance(self.event, Exception):
-            return QiwiWallet.get_current()  # type: ignore
-        return self.event.client  # type: ignore
-
-    @property
-    def client_data(self) -> Dict[Any, Any]:
-        return self.client.ctx
-
-
 class Handler(abc.ABC, BaseHandlerMixin[T]):
     """Base class for all class-based handlers"""
 
-    def __init__(self, event: T) -> None:
+    def __init__(self, event: T, *args: Any) -> None:
         self.event: T = event
+        self._args = args
+        if args:
+            self.context: Dict[str, Any] = args[0].context
 
     @abc.abstractmethod
     async def process_event(self) -> Any:  # pragma: no cover  # type: ignore
