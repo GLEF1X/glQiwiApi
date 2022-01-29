@@ -12,14 +12,17 @@ from typing import Any, Dict, List, Optional, Union, cast, Iterable
 from glQiwiApi.core.abc.wrapper import Wrapper
 from glQiwiApi.core.request_service import RequestService
 from glQiwiApi.core.session.holder import AbstractSessionHolder
-from glQiwiApi.qiwi.exceptions import AuthURLIsInvalidError
-from glQiwiApi.utils.dates_conversion import datetime_to_utc
 from glQiwiApi.utils.payload import (
-    filter_dictionary_none_values,
     make_payload,
-    parse_auth_link,
 )
 from glQiwiApi.utils.validators import String
+from glQiwiApi.yoo_money.methods.build_auth_url import BuildAuthURL
+from glQiwiApi.yoo_money.methods.get_access_token import GetAccessToken
+from glQiwiApi.yoo_money.methods.make_cellular_payment import MakeCellularPayment
+from glQiwiApi.yoo_money.methods.operation_details import OperationDetailsMethod
+from glQiwiApi.yoo_money.methods.operation_history import OperationHistoryMethod
+from glQiwiApi.yoo_money.methods.retrieve_account_info import RetrieveAccountInfo
+from glQiwiApi.yoo_money.methods.revoke_api_token import RevokeAPIToken
 from glQiwiApi.yoo_money.settings import YooMoneyMethods, YooMoneyRouter
 from glQiwiApi.yoo_money.types import AccountInfo
 from glQiwiApi.yoo_money.types.types import (
@@ -30,6 +33,14 @@ from glQiwiApi.yoo_money.types.types import (
     Payment,
     Card,
 )
+
+ERROR_CODE_MATCHES = {
+    400: "An error related to the type of request to the api,"
+         "you may have passed an invalid API token",
+    401: "A non-existent, expired, or revoked token is specified",
+    403: "An operation has been requested for which the token has no rights",
+    0: "Proxy error or unexpected server errors",
+}
 
 
 class YooMoneyAPI(Wrapper):
@@ -63,30 +74,24 @@ class YooMoneyAPI(Wrapper):
         self.api_access_token = api_access_token
         self._router = YooMoneyRouter()
         self._request_service = RequestService(
-            self._router.config.ERROR_CODE_MATCHES,
+            ERROR_CODE_MATCHES,
             cache_time,
             session_holder=session_holder,
             base_headers={
                 "Host": "yoomoney.ru",
                 "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": f"Bearer {self.api_access_token}"
             },
         )
 
-    def get_request_service(self) -> RequestService:
-        return self._request_service
-
-    def _attach_authorization_header(self, to_headers: Dict[Any, Any]) -> Dict[Any, Any]:
-        to_headers["Authorization"] = f"Bearer {self.api_access_token}"
-        return to_headers
-
     @classmethod
     async def build_url_for_auth(
-            cls, scope: List[str], client_id: str, redirect_uri: str = "https://example.com"
+            cls, scopes: List[str], client_id: str, redirect_uri: str = "https://example.com"
     ) -> str:
         """
         Method to get the link for further authorization and obtaining a token
 
-        :param scope: OAuth2 authorization of the application by the user,
+        :param scopes: OAuth2 authorization of the application by the user,
          the rights are transferred by the list.
         :param client_id: application id, type string
         :param redirect_uri: a funnel where the temporary code that you need will go to
@@ -94,22 +99,17 @@ class YooMoneyAPI(Wrapper):
         :return: the link to follow
          and make authorization via login / password
         """
-        router = YooMoneyRouter()
-        params = {
-            "client_id": client_id,
-            "response_type": "code",
-            "redirect_uri": redirect_uri,
-            "scope": " ".join(scope),
-        }
-        url = router.build_url(YooMoneyMethods.BUILD_URL_FOR_AUTH)
-        request_service = RequestService(error_messages=router.config.ERROR_CODE_MATCHES)
-        response = await request_service.text_content(url, "POST", data=params)
+        request_service = RequestService(error_messages=ERROR_CODE_MATCHES)
+        request = BuildAuthURL(client_id=client_id, scopes=scopes, redirect_uri=redirect_uri).build_request()
         try:
-            return parse_auth_link(response)
-        except IndexError:
-            raise AuthURLIsInvalidError(
-                "Could not find the authorization link in the response from "
-                "the api, check the client_id value"
+            return BuildAuthURL.parse_response(
+                await request_service.text_content(
+                    request.endpoint,
+                    request.http_method,
+                    params=request.params,
+                    data=request.data,
+                    headers=request.headers
+                )
             )
         finally:
             await request_service.shutdown()
@@ -133,36 +133,24 @@ class YooMoneyAPI(Wrapper):
          Specified if the service is registered with authentication.
         :return: YooMoney API TOKEN
         """
-        router = YooMoneyRouter()
-        params = {
-            "code": code,
-            "client_id": client_id,
-            "grant_type": "authorization_code",
-            "redirect_uri": redirect_uri,
-            "client_secret": client_secret,
-        }
-        rs = RequestService(error_messages=router.config.ERROR_CODE_MATCHES)
+        rs = RequestService(error_messages=ERROR_CODE_MATCHES)
         try:
-            response = await rs.emit_request_to_api(
-                "POST",
-                YooMoneyMethods.GET_ACCESS_TOKEN,
-                router,
-                data=params,
-            )
+            return await rs.emit_request_to_api(GetAccessToken(
+                code=code,
+                client_id=client_id,
+                redirect_uri=redirect_uri,
+                client_secret=client_secret
+            ))
         finally:
             await rs.shutdown()
-        return cast(str, response["access_token"])
 
-    async def revoke_api_token(self) -> Optional[Dict[str, bool]]:
+    async def revoke_api_token(self) -> None:
         """
         Method for revoking the rights of a token, while all its rights also disappear
         Documentation:
         https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
         """
-        headers = self._attach_authorization_header(to_headers={})
-        return await self._request_service.emit_request_to_api(
-            "POST", YooMoneyMethods.REVOKE_API_TOKEN, self._router, headers=headers
-        )
+        return await self._request_service.emit_request_to_api(RevokeAPIToken())
 
     @classmethod
     def create_pay_form(
@@ -234,10 +222,8 @@ class YooMoneyAPI(Wrapper):
                 "need-address": need_address,
             }
         )
-        router = YooMoneyRouter()
-        base_url = router.build_url(YooMoneyMethods.QUICK_PAY_FORM)
+        base_url = "https://yoomoney.ru/quickpay/confirm.xml?"
         params = "".join(f"&{key}={value}" for key, value in payload.items())
-        # TODO use urlencode
         return base_url + params
 
     async def retrieve_account_info(self) -> AccountInfo:
@@ -248,11 +234,7 @@ class YooMoneyAPI(Wrapper):
 
         :return: объект AccountInfo
         """
-        headers = self._attach_authorization_header(to_headers={})
-        response = await self._request_service.emit_request_to_api(
-            "POST", YooMoneyMethods.ACCOUNT_INFO, self._router, headers=headers
-        )
-        return AccountInfo.from_obj(self, response)
+        return await self._request_service.emit_request_to_api(RetrieveAccountInfo())
 
     async def operation_history(
             self,
@@ -293,28 +275,16 @@ class YooMoneyAPI(Wrapper):
          Valid values are from 1 to 100, the default is 30.
         :param in_detail:
         """
-        headers = self._attach_authorization_header(to_headers={})
-        payload = {
-            "records": records,
-            "label": label,
-            "start_record": start_record,
-            "details": str(in_detail).lower(),
-        }
-        if operation_types is not None:
-            payload["type"] = " ".join([op_type.lower() for op_type in operation_types])
-        if start_date:
-            payload["from"] = datetime_to_utc(start_date)
-        if end_date:
-            payload["till"] = datetime_to_utc(end_date)
-        return OperationHistory.from_obj(
-            self,
-            await self._request_service.emit_request_to_api(
-                "POST",
-                YooMoneyMethods.OPERATION_HISTORY,
-                self._router,
-                headers=headers,
-                data=filter_dictionary_none_values(payload),
-            ),
+        return await self._request_service.emit_request_to_api(
+            OperationHistoryMethod(
+                operation_types=operation_types,
+                start_record=start_record,
+                start_date=start_date,
+                records=records,
+                label=label,
+                in_detail=in_detail,
+                end_date=end_date
+            )
         )
 
     async def operation_details(self, operation_id: Union[int, str]) -> OperationDetails:
@@ -326,28 +296,15 @@ class YooMoneyAPI(Wrapper):
 
         :param operation_id: Operation ID
         """
-        headers = self._attach_authorization_header(to_headers={})
-        return OperationDetails.from_obj(
-            self,
-            await self._request_service.emit_request_to_api(
-                "POST",
-                YooMoneyMethods.OPERATION_DETAILS,
-                self._router,
-                data={"operation_id": str(operation_id)},
-                headers=headers,
-            ),
+        return await self._request_service.emit_request_to_api(
+            OperationDetailsMethod(operation_id=operation_id)
         )
 
     async def make_cellular_payment(
             self, pattern_id: str, phone_number: str, amount: typing.SupportsFloat
     ) -> Dict[str, Any]:
-        headers = self._attach_authorization_header(to_headers={})
         return await self._request_service.emit_request_to_api(
-            "POST",
-            YooMoneyMethods.MAKE_REQUEST_PAYMENT,
-            self._router,
-            headers=headers,
-            params={"pattern_id": pattern_id, "phone-number": phone_number, "amount": amount},
+            MakeCellularPayment(pattern_id=pattern_id, phone_number=phone_number, amount=amount)
         )
 
     async def send(
@@ -577,10 +534,10 @@ class YooMoneyAPI(Wrapper):
         :param comment: comment by which the transaction will be verified
         :return: bool, is there such a transaction in the payment history
         """
-        transactions = await self.operation_history(
+        operation_history = await self.operation_history(
             operation_types=operation_types, records=max_records
         )
-        get_transaction_info_coroutines = [self.operation_details(txn.id) for txn in transactions]
+        get_transaction_info_coroutines = [self.operation_details(op.id) for op in operation_history]
 
         for future in asyncio.as_completed(get_transaction_info_coroutines):
             transaction_detail: OperationDetails = await future  # noqa

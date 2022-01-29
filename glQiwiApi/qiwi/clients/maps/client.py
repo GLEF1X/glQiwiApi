@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import typing
 
-
 from pydantic import parse_obj_as
 
 from glQiwiApi.core.abc.wrapper import Wrapper
@@ -29,9 +28,6 @@ class QiwiMaps(Wrapper):
         self._request_service = RequestService(
             cache_time=cache_time, session_holder=session_holder
         )
-
-    def get_request_service(self) -> RequestService:
-        return self._request_service
 
     async def terminals(
             self,

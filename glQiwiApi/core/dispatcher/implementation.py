@@ -134,7 +134,7 @@ class HandlerCollection(Generic[Event]):
     def __init__(self, *event_types: Type[Event], once: bool = True) -> None:
         self._handlers: List[EventHandler[Event]] = []
         self._once = once
-        self._event_filter = lambda e: isinstance(e, event_types)
+        self._event_filter: Callable[[Event], bool] = lambda e: isinstance(e, event_types)
 
     async def notify(self, event: Event, *args: Any) -> None:
         if not self._event_filter(event):

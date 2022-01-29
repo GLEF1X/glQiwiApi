@@ -164,6 +164,3 @@ class QiwiP2PClient(Wrapper):
         return await self._request_service.emit_request_to_api(
             RefundBill(bill_id=bill_id, refund_id=refund_id, json_bill_data=json_bill_data)
         )
-
-    def get_request_service(self) -> RequestService:
-        return self._request_service

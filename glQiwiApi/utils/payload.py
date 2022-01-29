@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import re
 from http import HTTPStatus
 from typing import (
@@ -29,7 +27,6 @@ DEFAULT_EXCLUDE = ("cls", "self", "__class__")
 def filter_dictionary_none_values(dictionary: Dict[Any, Any]) -> Dict[Any, Any]:
     """
     Pop NoneType values and convert everything to str, designed?for=params
-
     :param dictionary: source dict
     :return: filtered dict
     """
@@ -54,7 +51,6 @@ def get_decoded_result(
     Checks whether `result` is a valid API response.
     A result is considered invalid if:
         - The server returned an HTTP response code other than 200
-
     :param error_messages:
     :param status_code: status code
     :param body: body of response
@@ -75,6 +71,7 @@ def get_decoded_result(
         message=error_messages.get(status_code),
         status_code=status_code,
         request_data=request_info,
+        additional_info=body
     )
 
 
@@ -82,7 +79,6 @@ def parse_auth_link(response_data: str) -> str:
     """
     Parse link for getting code, which needs to be entered in the method
     get_access_token
-
     :param response_data:
     """
     regexp = re.compile(

@@ -8,7 +8,7 @@ from glQiwiApi.core.dispatcher.class_based.base import Handler
 from glQiwiApi.qiwi.clients.p2p.types import Bill
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.clients.p2p import QiwiP2PClient
+    from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
 
 
 class AbstractBillHandler(Handler[Bill], abc.ABC):

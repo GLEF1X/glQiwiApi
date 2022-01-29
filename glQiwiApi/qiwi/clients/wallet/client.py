@@ -654,22 +654,6 @@ class QiwiWallet(Wrapper):
         """
         return await self._request_service.emit_request_to_api(BuyQIWIMaster(phone_number=self.phone_number))
 
-    async def _pre_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
-        """Method for Issuing QIWI Master Virtual Card"""
-        return await self._request_service.emit_request_to_api(PreQIWIMasterRequest(
-            card_alias=card_alias
-        ), phone_number=self.phone_number_without_plus_sign)
-
-    async def _confirm_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
-        """Confirmation of the card issue order"""
-        details = await self._pre_qiwi_master_request(card_alias)
-        return await self._request_service.emit_request_to_api(
-            ConfirmQiwiMasterRequest(order_id=details.order_id)
-        )
-
-    async def _buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
-        return await self._request_service.emit_request_to_api(BuyQiwiCard(**kwargs))
-
     async def issue_qiwi_master_card(self, card_alias: str = "qvc-cpa") -> Optional[OrderDetails]:
         """
         Issuing a new card using the Qiwi Master API
@@ -689,6 +673,22 @@ class QiwiWallet(Wrapper):
         return await self._buy_new_qiwi_card(
             ph_number=self.phone_number, order_id=pre_response.order_id
         )
+
+    async def _pre_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
+        """Method for Issuing QIWI Master Virtual Card"""
+        return await self._request_service.emit_request_to_api(PreQIWIMasterRequest(
+            card_alias=card_alias
+        ), phone_number=self.phone_number_without_plus_sign)
+
+    async def _confirm_qiwi_master_request(self, card_alias: str = "qvc-cpa") -> OrderDetails:
+        """Confirmation of the card issue order"""
+        details = await self._pre_qiwi_master_request(card_alias)
+        return await self._request_service.emit_request_to_api(
+            ConfirmQiwiMasterRequest(order_id=details.order_id)
+        )
+
+    async def _buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
+        return await self._request_service.emit_request_to_api(BuyQiwiCard(**kwargs))
 
     async def list_of_invoices(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
         """

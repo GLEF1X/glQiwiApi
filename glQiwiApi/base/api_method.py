@@ -146,11 +146,11 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
     @classmethod
     @no_type_check
     def parse_response(cls, obj: Any) -> ReturningType:
-        if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:
+        if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:  # type: ignore
             raise RuntimeError(f"{cls.__qualname__}: __returning_type__ is missing")
 
         try:
-            if issubclass(cls.__returning_type__, BaseModel):
+            if issubclass(cls.__returning_type__, BaseModel):  # type: ignore  # noqa
                 return cls.__returning_type__.parse_obj(obj)
         except TypeError:  # issubclass() arg 1 must be a class
             pass
