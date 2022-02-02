@@ -29,4 +29,4 @@ class TransferMoneyToCard(APIMethod[PaymentInfo]):
 
     private_card_id: str = Field(..., path_runtime_value=True)
     amount: Union[int, float]
-    card_number: PaymentCardNumber
+    card_number: str

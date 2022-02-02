@@ -2,7 +2,6 @@ import re
 from typing import List, Any, cast, ClassVar
 
 from glQiwiApi.base.api_method import APIMethod, Request, ReturningType
-from glQiwiApi.qiwi.exceptions import AuthURLIsInvalidError
 
 YOO_MONEY_LINK_REGEXP = re.compile(r"https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+")
 
@@ -33,7 +32,7 @@ class BuildAuthURL(APIMethod[str]):
         try:
             return cast(str, re.findall(YOO_MONEY_LINK_REGEXP, obj)[0])  # pragma: no cover
         except IndexError:
-            raise AuthURLIsInvalidError(
+            raise Exception(
                 "Could not find the authorization link in the response from "
                 "the api, check the client_id value"
             )

@@ -13,9 +13,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from glQiwiApi.base.types.amount import AmountWithCurrency
 from glQiwiApi.base.types.arbitrary import File
-from glQiwiApi.core.abc.wrapper import Wrapper
-from glQiwiApi.core.request_service import RequestService
-from glQiwiApi.core.session.holder import AbstractSessionHolder
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient
+from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.wallet.methods.authenticate_wallet import AuthenticateWallet
 from glQiwiApi.qiwi.clients.wallet.methods.buy_qiwi_card import BuyQiwiCard
@@ -51,7 +51,6 @@ from glQiwiApi.qiwi.clients.wallet.methods.webhook.get_current_webhook import Ge
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.get_webhook_secret import GetWebhookSecret
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.register_webhook import RegisterWebhook
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.send_test_notification import SendTestWebhookNotification
-from glQiwiApi.qiwi.exceptions import APIError
 from glQiwiApi.utils.helper import allow_response_code, override_error_message
 from glQiwiApi.utils.payload import (
     is_transaction_exists_in_history,
@@ -63,6 +62,7 @@ from .types import (
     Commission, History, Source
 )
 from ..p2p.types import Bill, InvoiceStatus
+from ...exceptions import QiwiAPIError
 
 AmountType = Union[int, float]
 
@@ -83,7 +83,7 @@ ERROR_CODE_MATCHES = {
 }
 
 
-class QiwiWallet(Wrapper):
+class QiwiWallet(BaseAPIClient):
     # declarative validators for fields
     phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)
     _api_access_token = String(optional=False)
@@ -92,31 +92,29 @@ class QiwiWallet(Wrapper):
             self,
             api_access_token: str,
             phone_number: Optional[str] = None,
-            cache_time_in_seconds: Union[float, int] = 0,
-            session_holder: Optional[AbstractSessionHolder[Any]] = None
+            request_service: Optional[RequestServiceProto] = None,
+            cache_storage: Optional[CacheStorage] = None,
     ) -> None:
         """
         :param api_access_token: QIWI API token received from https://qiwi.com/api
         :param phone_number: your phone number starting with +
-        :param cache_time_in_seconds: Time to cache requests in seconds,
-                           default 0, respectively the request will not use the cache by default
-        :param session_holder: obtains session and helps to manage session lifecycle. You can pass
-                               your own session holder, for example using httpx lib and use it
         """
-        self.phone_number = phone_number
         self._api_access_token = api_access_token
+        self.phone_number = phone_number
 
-        self._request_service = RequestService(
-            error_messages=ERROR_CODE_MATCHES,
-            cache_time=cache_time_in_seconds,
-            session_holder=session_holder,
-            base_headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "Authorization": f"Bearer {self._api_access_token}",
-                "Host": "edge.qiwi.com",
-            }
-        )
+        BaseAPIClient.__init__(self, request_service, cache_storage)
+
+    def _create_request_service(self) -> RequestServiceProto:
+        rs: RequestServiceProto = RequestService(base_headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self._api_access_token}",
+            "Host": "edge.qiwi.com",
+        })
+        if self._cache_storage is not None:
+            rs = RequestServiceCacheDecorator(rs, self._cache_storage)
+
+        return rs
 
     async def register_webhook(self, url: str, txn_type: int = 2) -> WebhookInfo:
         """
@@ -155,16 +153,9 @@ class QiwiWallet(Wrapper):
         return await self._request_service.emit_request_to_api(GetWebhookSecret(hook_id=hook_id))
 
     async def delete_current_webhook(self) -> Dict[Any, Any]:
-        """Method to delete webhook"""
-        try:
-            hook = await self.get_current_webhook()
-        except APIError as ex:
-            raise APIError(
-                message=" You didn't register any webhook to delete ",
-                status_code="422",
-                request_data=ex.request_data,
-            ) from None
-        return await self._request_service.emit_request_to_api(DeleteWebhook(hook_id=hook.id))
+        """Method to delete по webhook"""
+        webhook = await self.get_current_webhook()
+        return await self._request_service.emit_request_to_api(DeleteWebhook(hook_id=webhook.id))
 
     async def generate_new_webhook_secret(self, hook_id: str) -> str:
         """
@@ -198,7 +189,7 @@ class QiwiWallet(Wrapper):
             url = url.render()
 
         if delete_old:
-            with suppress(APIError):
+            with suppress(QiwiAPIError):
                 await self.delete_current_webhook()
 
         webhook = await self.register_webhook(url, transactions_type)
@@ -226,7 +217,7 @@ class QiwiWallet(Wrapper):
             GetBalance(account_number=account_number),
             phone_number=self.phone_number,
         )
-        return resp[account_number - 1].balance
+        return resp[account_number - 1].balance  # type: ignore
 
     async def history(
             self,
@@ -354,11 +345,9 @@ class QiwiWallet(Wrapper):
 
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#limits
         """
-        phone_number_without_plus_sign = self.phone_number[1:]
-
         return await self._request_service.emit_request_to_api(
             GetLimits(limit_types=limit_types),
-            phone_number=phone_number_without_plus_sign
+            phone_number=self.phone_number_without_plus_sign
         )
 
     async def get_list_of_cards(self) -> List[Card]:
@@ -687,7 +676,7 @@ class QiwiWallet(Wrapper):
             ConfirmQiwiMasterRequest(order_id=details.order_id)
         )
 
-    async def _buy_new_qiwi_card(self, **kwargs: Any) -> Optional[OrderDetails]:
+    async def _buy_new_qiwi_card(self, **kwargs: Any) -> OrderDetails:
         return await self._request_service.emit_request_to_api(BuyQiwiCard(**kwargs))
 
     async def list_of_invoices(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:

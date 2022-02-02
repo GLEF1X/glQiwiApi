@@ -9,11 +9,11 @@ from typing import (
     cast,
 )
 
-from aiohttp import RequestInfo
 from pydantic import BaseModel
 
+from glQiwiApi.core.session.holder import Response
 from glQiwiApi.qiwi.clients.wallet.types.transaction import TransactionType, History
-from glQiwiApi.qiwi.exceptions import APIError
+from glQiwiApi.qiwi.exceptions import QiwiAPIError
 
 try:
     import orjson
@@ -34,45 +34,29 @@ def filter_dictionary_none_values(dictionary: Dict[Any, Any]) -> Dict[Any, Any]:
 
 
 def make_payload(**kwargs: Any) -> Dict[Any, Any]:
+    exclude_list = kwargs.pop("exclude", ())
     return {
         key: value
         for key, value in kwargs.items()
-        if key not in DEFAULT_EXCLUDE and value is not None
+        if key not in DEFAULT_EXCLUDE + exclude_list and value is not None
     }
 
 
-def get_decoded_result(
-        error_messages: Dict[int, str],
-        status_code: int,
-        request_info: RequestInfo,
-        body: str,
-) -> Dict[Any, Any]:
+def decode_response_as_json(response: Response) -> Dict[Any, Any]:
     """
     Checks whether `result` is a valid API response.
     A result is considered invalid if:
         - The server returned an HTTP response code other than 200
-    :param error_messages:
-    :param status_code: status code
-    :param body: body of response
-    :param request_info:
-    :return: The result parsed to a JSON dictionary
-    :raises ApiException: if one of the above listed cases is applicable
     """
-
     try:
-        result_json = cast(Dict[Any, Any], orjson.loads(body))
+        result_json = cast(Dict[Any, Any], orjson.loads(response.body))
     except ValueError:
         result_json = {}
 
-    if status_code == HTTPStatus.OK:
+    if response.status_code == HTTPStatus.OK:
         return result_json
 
-    raise APIError(
-        message=error_messages.get(status_code),
-        status_code=status_code,
-        request_data=request_info,
-        additional_info=body
-    )
+    raise QiwiAPIError(response)
 
 
 def parse_auth_link(response_data: str) -> str:

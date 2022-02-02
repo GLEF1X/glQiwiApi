@@ -14,6 +14,11 @@ class EmptyCls(object):
 
 
 try:
+    import orjson as json
+except ImportError:
+    import json
+
+try:
     import aiofiles
 except ImportError:
 
@@ -23,6 +28,7 @@ except ImportError:
                 "Module aiofiles not installed and you can't use it's "
                 "functionality till you install this module."
             )
+
 
     aiofiles = aiofiles_compat()  # type: ignore
 

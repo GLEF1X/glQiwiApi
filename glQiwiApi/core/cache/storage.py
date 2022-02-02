@@ -17,24 +17,27 @@ class CacheStorage(abc.ABC):
         self._invalidate_strategy: CacheInvalidationStrategy = invalidate_strategy
 
     @abc.abstractmethod
-    def clear(self) -> None:
+    async def clear(self) -> None:
         pass
 
     @abc.abstractmethod
-    def update(self, **kwargs: Any) -> None:
+    async def update(self, **kwargs: Any) -> None:
         pass
 
     @abc.abstractmethod
-    def retrieve(self, key: str) -> Any:
+    async def retrieve(self, key: str) -> Any:
         pass
 
     @abc.abstractmethod
-    def delete(self, key: str) -> None:
+    async def delete(self, key: str) -> None:
         pass
 
     @abc.abstractmethod
-    def retrieve_all(self) -> List[Any]:
+    async def retrieve_all(self) -> List[Any]:
         ...
+
+    @abc.abstractmethod
+    async def contains_similar(self, item: Any) -> bool: ...
 
     def __getitem__(self, item: Any) -> Any:
         return self.retrieve(item)
@@ -50,14 +53,14 @@ class InMemoryCacheStorage(CacheStorage):
         CacheStorage.__init__(self, invalidate_strategy)
         self._data: Dict[Any, Any] = {}
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         self._invalidate_strategy.process_delete()
         self._data.clear()
 
-    def retrieve_all(self) -> List[Optional[Any]]:
+    async def retrieve_all(self) -> List[Optional[Any]]:
         return [self.retrieve(key) for key in list(self._data.keys())]
 
-    def update(self, **kwargs: Any) -> None:
+    async def update(self, **kwargs: Any) -> None:
         try:
             self._invalidate_strategy.process_update(**kwargs)
         except CacheValidationError:
@@ -65,7 +68,7 @@ class InMemoryCacheStorage(CacheStorage):
         embedded_data: Dict[Any, Any] = embed_cache_time(**kwargs)
         self._data.update(embedded_data)
 
-    def retrieve(self, key: str) -> Optional[Any]:
+    async def retrieve(self, key: str) -> Optional[Any]:
         obj = self._data.get(key)
         if obj is None:
             return obj
@@ -73,13 +76,13 @@ class InMemoryCacheStorage(CacheStorage):
             self._invalidate_strategy.process_retrieve(obj=obj)
             return obj[VALUE_PLACEHOLDER]
         except CacheExpiredError:
-            self.delete(key)
+            await self.delete(key)
             return None
 
-    def delete(self, key: str) -> None:
+    async def delete(self, key: str) -> None:
         del self._data[key]
 
-    def contains_similar(self, item: Any) -> bool:
+    async def contains_similar(self, item: Any) -> bool:
         return self._invalidate_strategy.check_is_contains_similar(self, item)
 
     def __del__(self) -> None:

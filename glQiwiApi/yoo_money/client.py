@@ -9,9 +9,9 @@ import typing
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union, cast, Iterable
 
-from glQiwiApi.core.abc.wrapper import Wrapper
-from glQiwiApi.core.request_service import RequestService
-from glQiwiApi.core.session.holder import AbstractSessionHolder
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient
+from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
 from glQiwiApi.utils.payload import (
     make_payload,
 )
@@ -23,7 +23,7 @@ from glQiwiApi.yoo_money.methods.operation_details import OperationDetailsMethod
 from glQiwiApi.yoo_money.methods.operation_history import OperationHistoryMethod
 from glQiwiApi.yoo_money.methods.retrieve_account_info import RetrieveAccountInfo
 from glQiwiApi.yoo_money.methods.revoke_api_token import RevokeAPIToken
-from glQiwiApi.yoo_money.settings import YooMoneyMethods, YooMoneyRouter
+from glQiwiApi.yoo_money.settings import YooMoneyMethods
 from glQiwiApi.yoo_money.types import AccountInfo
 from glQiwiApi.yoo_money.types.types import (
     OperationHistory,
@@ -39,11 +39,10 @@ ERROR_CODE_MATCHES = {
          "you may have passed an invalid API token",
     401: "A non-existent, expired, or revoked token is specified",
     403: "An operation has been requested for which the token has no rights",
-    0: "Proxy error or unexpected server errors",
 }
 
 
-class YooMoneyAPI(Wrapper):
+class YooMoneyAPI(BaseAPIClient):
     """
     That class implements processing requests to YooMoney
     It is convenient in that it does not just give json such objects,
@@ -52,37 +51,33 @@ class YooMoneyAPI(Wrapper):
     using the guide on the official github of the project
 
     """
-
-    api_access_token = String(optional=False)
+    _api_access_token = String(optional=False)
 
     def __init__(
             self,
             api_access_token: str,
-            cache_time: Union[float, int] = 0,
-            session_holder: Optional[AbstractSessionHolder[Any]] = None,
+            request_service: Optional[RequestServiceProto] = None,
+            cache_storage: Optional[CacheStorage] = None
     ) -> None:
         """
         The constructor accepts a token obtained from the method class get_access_token
          and the special attribute without_context
 
         :param api_access_token: api token for requests
-        :param cache_time: Time to cache requests in seconds,
-         default 0, respectively the request will not use the cache by default
-        :param session_holder: obtains session and helps to manage session lifecycle. You can pass
-                               your own session holder, for example using httpx lib and use it
         """
-        self.api_access_token = api_access_token
-        self._router = YooMoneyRouter()
-        self._request_service = RequestService(
-            ERROR_CODE_MATCHES,
-            cache_time,
-            session_holder=session_holder,
-            base_headers={
-                "Host": "yoomoney.ru",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Authorization": f"Bearer {self.api_access_token}"
-            },
-        )
+        BaseAPIClient.__init__(self, request_service, cache_storage)
+        self._api_access_token = api_access_token
+
+    def _create_request_service(self) -> RequestServiceProto:
+        rs: RequestServiceProto = RequestService(base_headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Bearer {self._api_access_token}",
+            "Host": "yoomoney.ru",
+        })
+        if self._cache_storage is not None:
+            rs = RequestServiceCacheDecorator(rs, self._cache_storage)
+
+        return rs
 
     @classmethod
     async def build_url_for_auth(
@@ -99,11 +94,11 @@ class YooMoneyAPI(Wrapper):
         :return: the link to follow
          and make authorization via login / password
         """
-        request_service = RequestService(error_messages=ERROR_CODE_MATCHES)
+        request_service = RequestService()
         request = BuildAuthURL(client_id=client_id, scopes=scopes, redirect_uri=redirect_uri).build_request()
         try:
             return BuildAuthURL.parse_response(
-                await request_service.text_content(
+                await request_service.get_text_content(
                     request.endpoint,
                     request.http_method,
                     params=request.params,

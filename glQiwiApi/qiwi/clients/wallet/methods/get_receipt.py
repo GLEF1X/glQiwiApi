@@ -6,7 +6,6 @@ from glQiwiApi.base.api_method import APIMethod, Request, ReturningType
 from glQiwiApi.base.types.arbitrary import File, BinaryIOInput
 from glQiwiApi.base.types.errors import QiwiErrorAnswer
 from glQiwiApi.qiwi.clients.wallet.types import TransactionType
-from glQiwiApi.qiwi.exceptions import ChequeIsNotAvailable
 
 
 class GetReceipt(APIMethod[File]):
@@ -28,6 +27,6 @@ class GetReceipt(APIMethod[File]):
     def parse_response(cls, obj: Any) -> ReturningType:
         try:
             err_model = QiwiErrorAnswer.parse_raw(obj)
-            raise ChequeIsNotAvailable(err_model)
+            # raise ChequeIsNotAvailable(err_model)
         except ValidationError:
             return File(BinaryIOInput.from_bytes(obj))

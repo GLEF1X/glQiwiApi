@@ -5,15 +5,23 @@ from copy import deepcopy
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Dict
 
+from glQiwiApi.core.cache.storage import CacheStorage
+
 if TYPE_CHECKING:
-    from glQiwiApi.core.request_service import RequestService  # pragma: no cover
+    from glQiwiApi.core.request_service import RequestServiceProto  # pragma: no cover
 
-W = TypeVar("W", bound="Wrapper")
+W = TypeVar("W", bound="BaseAPIClient")
 
 
-class Wrapper(abc.ABC):
-    __slots__ = ()
-    _request_service: RequestService
+class BaseAPIClient(abc.ABC):
+    def __init__(self, request_service: Optional[RequestServiceProto] = None,
+                 cache_storage: Optional[CacheStorage] = None):
+        self._cache_storage = cache_storage
+        self._request_service: RequestServiceProto = request_service or self._create_request_service()
+
+    @abc.abstractmethod
+    def _create_request_service(self) -> RequestServiceProto:
+        pass
 
     async def __aenter__(self):  # type: ignore
         await self._request_service.warmup()

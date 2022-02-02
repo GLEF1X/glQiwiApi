@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import http
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple, Union

@@ -1,104 +1,71 @@
-from __future__ import annotations
+from json import JSONDecodeError
+from typing import Dict, Any, Optional
 
-import json
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+try:
+    from orjson import JSONDecodeError as OrjsonJSONDecodeError
+except ImportError:
+    OrjsonJSONDecodeError = JSONDecodeError  # noqa  # type: ignore
 
-from aiohttp import RequestInfo
-from pydantic import BaseModel
+from glQiwiApi.core.session.holder import Response
+from glQiwiApi.utils.compat import json
 
-if TYPE_CHECKING:
-    from glQiwiApi.base.types.errors import QiwiErrorAnswer
-
-
-class AuthURLIsInvalidError(Exception):
-    pass
-
-
-class RequestInfoModel(BaseModel):
-    method: str
-    url: str
-    real_url: str
-
-
-class SecretP2PTokenIsEmpty(Exception):
-    pass
-
-
-class ExceptionTraceback(BaseModel):
-    status_code: int
-    msg: Optional[str] = None
-    additional_info: Optional[str] = None
-    request_info: Optional[RequestInfoModel] = None
+HTTP_STATUS_MATCH_TO_ERROR = {
+    400: "Query syntax error (invalid data format). Can be related to wrong arguments,"
+         " that you have passed to method",
+    401: "Wrong API token or token expired",
+    403: "No permission for this request(API token has insufficient permissions)",
+    404: "Object was not found or there are no objects with the specified characteristics",
+    423: "Too many requests, the service is temporarily unavailable",
+    422: "The domain / subnet / host is incorrectly specified"
+         "webhook (in the new_url parameter for the webhook URL),"
+         "the hook type or transaction type is incorrectly specified,"
+         "an attempt to create a hook if there is one already created",
+    405: "Error related to the type of API request, contact the developer or open an issue",
+    500: "Internal service error",
+}
 
 
-class ChequeIsNotAvailable(Exception):
-    def __init__(self, err_model: QiwiErrorAnswer):
-        self.error_model = err_model
+class QiwiAPIError(Exception):
+    __slots__ = "_http_response", "_custom_message"
 
-
-class APIError(Exception):
-    def __init__(
-            self,
-            message: Optional[str],
-            status_code: Union[str, int],
-            additional_info: Optional[str] = None,
-            request_data: Optional[Union[RequestInfo, str, bytes, Dict[Any, Any]]] = None,
-    ) -> None:
-        super(APIError, self).__init__()
-        self.message = message
-        self.status_code = status_code
-        self.additional_info = additional_info
-        self.request_data = request_data
+    def __init__(self, http_response: Response, custom_message: Optional[str] = None):
+        self._http_response = http_response
+        self._custom_message = custom_message
 
     def __str__(self) -> str:
         resp = (
-            "code={sc} doc(for specific cases may be deceiving)={msg}, additional_info={info}" ""
+            "HTTP status code={sc} description=`{msg}`, additional_info={info}" ""
         )
-        return resp.format(sc=self.status_code, msg=self.message, info=self.additional_info)
-
-    def to_model(self) -> ExceptionTraceback:
-        """Convert exception to :class:`ExceptionTraceback`"""
-        if not isinstance(self.request_data, RequestInfo):
-            raise TypeError(
-                "Cannot convert exception to `ExceptionTraceback`, because "
-                "this method require `RequestInfo` object"
-            )
-        return ExceptionTraceback(
-            status_code=self.status_code,
-            msg=self.message,
-            additional_info=self.additional_info,
-            request_info=RequestInfoModel(
-                method=self.request_data.method,
-                url=self.request_data.url.__str__(),
-                real_url=self.request_data.real_url.__str__(),
-            ),
+        return resp.format(
+            sc=self._http_response.status_code,
+            msg=self._custom_message or self._match_message(),
+            info={"raw_response": self._try_deserialize_response()}
         )
 
-    def json(self, indent: int = 4, **dump_kw: Any) -> str:
+    def json(self) -> Dict[str, Any]:
+        return self._try_deserialize_response()
+
+    def _match_message(self) -> str:
         """
-        Method, that makes json format from traceback
+        Matching exception message(-s) executes in two steps
 
-        :param indent:
-        :param dump_kw:
+        1) Search error message in dictionary with predefined error messages
+        2) Deserialize response and try to know whether there is errorCode,
+         that can be interpreted as error message
+
+        If there are two messages founded, then it will be concatenated
         """
-        if isinstance(self.request_data, RequestInfo):
-            info = self.to_model().dict(exclude_none=True)
-        else:
-            info = self._make_dict()
-        return json.dumps(info, indent=indent, ensure_ascii=False, **dump_kw)
+        error_message = HTTP_STATUS_MATCH_TO_ERROR.get(self._http_response.status_code, "")
+        json_response = self._try_deserialize_response()
+        err_code = json_response.get("errorCode", "")
 
-    def _make_dict(self) -> Dict[str, Any]:
-        return {
-            "code": self.status_code,
-            "msg": self.message,
-            "additional_info": self.additional_info,
-            "traceback_info": self.request_data,
-        }
+        if err_code != "":
+            error_message += f", error code = {err_code}"
 
+        return error_message
 
-__all__ = (
-    "AuthURLIsInvalidError",
-    "APIError",
-    "ChequeIsNotAvailable",
-    "SecretP2PTokenIsEmpty"
-)
+    def _try_deserialize_response(self) -> Dict[str, Any]:
+        try:
+            return json.loads(self._http_response.body)
+        except (JSONDecodeError, TypeError, OrjsonJSONDecodeError):
+            return {}

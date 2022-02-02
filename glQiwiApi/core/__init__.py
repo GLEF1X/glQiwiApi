@@ -1,4 +1,4 @@
-from .abc.wrapper import Wrapper
+from .abc.base_api_client import BaseAPIClient
 from .dispatcher.class_based import (
     AbstractBillHandler,
     AbstractTransactionHandler,

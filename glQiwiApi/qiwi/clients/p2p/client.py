@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Optional, Union, Any, Dict, List
+from typing import Optional, Union, Dict, List
 
 from glQiwiApi.base.types.amount import PlainAmount
-from glQiwiApi.core.abc.wrapper import Wrapper
-from glQiwiApi.core.request_service import RequestService
-from glQiwiApi.core.session import AbstractSessionHolder
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient
+from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_bill import CreateP2PBill
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_key_pair import CreateP2PKeyPair
 from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
@@ -14,35 +14,35 @@ from glQiwiApi.qiwi.clients.p2p.types import Bill, PairOfP2PKeys, RefundedBill
 from glQiwiApi.utils.validators import String
 
 
-class QiwiP2PClient(Wrapper):
+class QiwiP2PClient(BaseAPIClient):
     _api_access_token = String(optional=False)
 
     def __init__(
             self,
             secret_p2p: str,
-            cache_time_in_seconds: Union[float, int] = 0,
-            session_holder: Optional[AbstractSessionHolder[Any]] = None,
+            request_service: Optional[RequestServiceProto] = None,
+            cache_storage: Optional[CacheStorage] = None,
             shim_server_url: Optional[str] = None,
     ) -> None:
         """
         :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
-        :param cache_time_in_seconds: Time to cache requests in seconds,
-                           default 0, respectively the request will not use the cache by default
-        :param session_holder: obtains session and helps to manage session lifecycle. You can pass
-                               your own session holder, for example using httpx lib and use it
         :param shim_server_url:
         """
-        self._request_service = RequestService(
-            cache_time=cache_time_in_seconds,
-            session_holder=session_holder,
-            base_headers={
-                "Authorization": f"Bearer {secret_p2p}",
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            }
-        )
         self._api_access_token = secret_p2p
         self._shim_server_url = shim_server_url
+
+        BaseAPIClient.__init__(self, request_service, cache_storage)
+
+    def _create_request_service(self) -> RequestServiceProto:
+        rs: RequestServiceProto = RequestService(base_headers={
+            "Authorization": f"Bearer {self._api_access_token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+        if self._cache_storage is not None:
+            rs = RequestServiceCacheDecorator(rs, self._cache_storage)
+
+        return rs
 
     async def get_bill_by_id(self, bill_id: str) -> Bill:
         """

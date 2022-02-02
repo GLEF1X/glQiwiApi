@@ -1,13 +1,23 @@
 from __future__ import annotations
 
 import abc
+from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Generic, Optional, Type, TypeVar, cast
+from typing import Any, Generic, Optional, Type, TypeVar, cast, Dict, Mapping
 
 import aiohttp
+from aiohttp import ClientResponse
 
 _SessionType = TypeVar("_SessionType", bound=Any)
 _SessionHolderType = TypeVar("_SessionHolderType", bound="AbstractSessionHolder[Any]")
+
+
+@dataclass
+class Response:
+    status_code: int
+    body: bytes
+    headers: Mapping[str, Any]
+    content_type: str
 
 
 class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
@@ -22,10 +32,16 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
         self._session: Optional[_SessionType] = None
         self._session_kwargs = kwargs
 
+    @abc.abstractmethod
     async def close(self) -> None:
         raise NotImplementedError
 
+    @abc.abstractmethod
     async def get_session(self) -> _SessionType:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def parse_response(self, response: Any) -> Response:
         raise NotImplementedError
 
     def update_session_kwargs(self, **kwargs: Any) -> None:
@@ -36,10 +52,10 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
         return self._session
 
     async def __aexit__(
-        self: AbstractSessionHolder[_SessionType],
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+            self: AbstractSessionHolder[_SessionType],
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 
@@ -51,6 +67,14 @@ class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
     async def close(self) -> None:
         if self._session_in_working_order():
             await self._session.close()
+
+    async def parse_response(self, response: ClientResponse) -> Response:
+        return Response(
+            status_code=response.status,
+            body=await response.read(),
+            headers=response.headers,
+            content_type=response.content_type
+        )
 
     async def get_session(self) -> _SessionType:
         if self._session_in_working_order():

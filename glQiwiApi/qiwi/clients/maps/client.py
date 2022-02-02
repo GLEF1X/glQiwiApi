@@ -4,7 +4,7 @@ import typing
 
 from pydantic import parse_obj_as
 
-from glQiwiApi.core.abc.wrapper import Wrapper
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient
 from glQiwiApi.core.request_service import RequestService
 from glQiwiApi.core.session.holder import AbstractSessionHolder
 from glQiwiApi.qiwi.clients.maps.types.polygon import Polygon
@@ -13,7 +13,7 @@ from glQiwiApi.qiwi.clients.wallet.types import Partner
 from glQiwiApi.utils.payload import filter_dictionary_none_values
 
 
-class QiwiMaps(Wrapper):
+class QiwiMaps(BaseAPIClient):
     """
     QIWI Terminal Maps API allows you to locate
     QIWI terminals on the territory of the Russian Federation
