@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from concurrent import futures as futures
 from concurrent.futures import Future
-from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar, Union
 
 N = TypeVar("N")
 
@@ -16,12 +16,11 @@ def safe_cancel(
     callback: Optional[Callable[..., Awaitable[N]]],
 ) -> None: ...
 
-AnyExecutor = TypeVar(
-    "AnyExecutor",
+AnyExecutor = Union[
     futures.ThreadPoolExecutor,
     futures.ProcessPoolExecutor,
-    Optional[None],
-)
+    Optional[None]
+]
 
 def _cancel_future(
     loop: asyncio.AbstractEventLoop,

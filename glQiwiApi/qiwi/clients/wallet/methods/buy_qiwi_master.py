@@ -3,11 +3,12 @@ from typing import ClassVar, Any, Dict
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod, RuntimeValue
+from glQiwiApi.base.api_method import RuntimeValue
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types.payment_info import PaymentInfo
 
 
-class BuyQIWIMaster(APIMethod[PaymentInfo]):
+class BuyQIWIMaster(QiwiAPIMethod[PaymentInfo]):
     url: ClassVar[str] = "https://edge.qiwi.com/person-profile/v1/persons/{phone_number}/status/restrictions"
     http_method: ClassVar[str] = "POST"
 

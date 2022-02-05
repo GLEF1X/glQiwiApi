@@ -1,15 +1,16 @@
-from typing import List, ClassVar, Any
+from typing import List, ClassVar
 
+from pydantic import conint, parse_obj_as
 
-from pydantic import conint
-
-from glQiwiApi.base.api_method import APIMethod, ReturningType
+from glQiwiApi.base.api_method import ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.p2p.types import Bill
 
 MAX_INVOICES_LIMIT = 50
 
 
-class GetListOfInvoices(APIMethod[List[Bill]]):
+class GetListOfInvoices(QiwiAPIMethod[List[Bill]]):
     url: ClassVar[str] = "https://edge.qiwi.com/checkout-api/api/bill/search"
     http_method: ClassVar[str] = "GET"
 
@@ -17,5 +18,5 @@ class GetListOfInvoices(APIMethod[List[Bill]]):
     statuses: str = 'READY_FOR_PAY'
 
     @classmethod
-    def parse_response(cls, obj: Any) -> ReturningType:
-        return super().parse_response(obj["bills"])
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+        return parse_obj_as(List[Bill], response.json()["bills"])

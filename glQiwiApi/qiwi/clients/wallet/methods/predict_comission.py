@@ -1,13 +1,12 @@
 from typing import ClassVar, Dict, Any, Union, Optional
 
-
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import Commission
 
 
-class PredictCommission(APIMethod[Commission]):
+class PredictCommission(QiwiAPIMethod[Commission]):
     http_method: ClassVar[str] = "POST"
     url: ClassVar[str] = "https://edge.qiwi.com/sinap/providers/{private_card_id}/onlineCommission"
 

@@ -2,10 +2,10 @@ from typing import Any, Dict, ClassVar, Optional
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
-class AuthenticateWallet(APIMethod[Dict[Any, Any]]):
+class AuthenticateWallet(QiwiAPIMethod[Dict[Any, Any]]):
     url: ClassVar[str] = "https://edge.qiwi.com/identification/v1/persons/{phone_number}/identification"
     http_method: ClassVar[str] = "POST"
 

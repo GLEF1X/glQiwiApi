@@ -2,12 +2,13 @@ from typing import ClassVar, Union, Dict, Any
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod, Request
+from glQiwiApi.base.api_method import Request
 from glQiwiApi.base.types.amount import PlainAmount
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.p2p.types import RefundedBill
 
 
-class RefundBill(APIMethod[RefundedBill]):
+class RefundBill(QiwiAPIMethod[RefundedBill]):
     http_method: ClassVar[str] = "POST"
     url: ClassVar[str] = "https://api.qiwi.com/partner/bill/v1/bills/{bill_id}/refunds/{refund_id}"
 

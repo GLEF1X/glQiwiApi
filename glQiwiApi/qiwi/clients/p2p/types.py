@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class Customer(HashableBase):
     """Object: Customer"""
 
-    phone: Optional[str] = None
+    phone_number: Optional[str] = Field(None, alias="phone")
     email: Optional[str] = None
     account: Optional[str] = None
 
@@ -56,8 +56,8 @@ class Bill(HashableBase):
     status: BillStatus
     site_id: str = Field(..., alias="siteId")
     id: str = Field(..., alias="billId")
-    creation_date_time: datetime = Field(..., alias="creationDateTime")
-    expiration_date_time: datetime = Field(..., alias="expirationDateTime")
+    created_at: datetime = Field(..., alias="creationDateTime")
+    expire_at: datetime = Field(..., alias="expirationDateTime")
     pay_url: str = Field(..., alias="payUrl")
     customer: Optional[Customer] = None
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
@@ -77,7 +77,7 @@ class Bill(HashableBase):
     @property
     def shim_url(self) -> str:
         if self._client._shim_server_url is None:
-            raise Exception("QiwiP2PClient has no shim url -> can't create shim url for bill")
+            raise Exception("QiwiP2PClient has no shim endpoint -> can't create shim endpoint for bill")
 
         return self._client._shim_server_url.format(self.invoice_uid)
 
@@ -90,11 +90,8 @@ class RefundedBill(HashableBase):
     refund_id: str = Field(..., alias="refundId")
     status: str
 
-    def as_str(self) -> str:
+    def __str__(self) -> str:
         return f"№{self.refund_id} {self.status} {self.amount} {self.datetime}"
-
-    def get_value(self) -> Union[float, int]:
-        return self.amount.value
 
 
 class BillWebhookPayload(Bill):
@@ -142,4 +139,5 @@ __all__ = (
     "PairOfP2PKeys",
     "InvoiceStatus",
     "BillStatus",
+    "Customer"
 )

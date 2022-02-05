@@ -75,7 +75,7 @@ class WebhookURL(
         host = self.host
         if self.webhook_path is None:
             # Here we use `DEFAULT_QIWI_WEBHOOK_PATH` instead of DEFAULT_QIWI_BILLS_WEBHOOK_PATH
-            # because the second you need to register directly in QIWI P2P API and it's no need to build url to it
+            # because the second you need to register directly in QIWI P2P API and it's no need to build endpoint to it
             self.webhook_path = DEFAULT_QIWI_WEBHOOK_PATH
         if self.port is not None:
             host += f":{self.port}"

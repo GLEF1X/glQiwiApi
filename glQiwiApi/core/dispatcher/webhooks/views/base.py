@@ -1,25 +1,20 @@
 import abc
 import logging
-from typing import Any, Generic, Type, TypeVar
-from typing import TYPE_CHECKING as MYPY
+from typing import Any, Generic, Type, TypeVar, TYPE_CHECKING as MYPY
 
 from aiohttp import web
 from aiohttp.web_request import Request
 
-from glQiwiApi.core.dispatcher.implementation import Dispatcher
+from glQiwiApi.core.dispatcher.implementation import BaseDispatcher
 from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
 from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
     AbstractCollisionDetector,
-    UnexpectedCollision,
+    UnexpectedCollision
 )
+from glQiwiApi.utils.compat import json
 
 if MYPY:
-    from glQiwiApi.base import HashableBase  # pragma: no cover  # noqa
-
-try:
-    import orjson as json
-except ImportError:
-    import json  # type: ignore
+    from glQiwiApi.base.types.base import HashableBase  # noqa
 
 Event = TypeVar("Event", bound="HashableBase")
 
@@ -34,12 +29,12 @@ class BaseWebhookView(web.View, Generic[Event]):
     """
 
     def __init__(
-        self,
-        request: Request,
-        dispatcher: Dispatcher,
-        collision_detector: AbstractCollisionDetector[Any],
-        event_cls: Type[Event],
-        encryption_key: str,
+            self,
+            request: Request,
+            dispatcher: BaseDispatcher,
+            collision_detector: AbstractCollisionDetector[Any],
+            event_cls: Type[Event],
+            encryption_key: str,
     ) -> None:
         super().__init__(request)
         self._dispatcher = dispatcher

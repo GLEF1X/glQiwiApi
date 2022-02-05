@@ -107,7 +107,7 @@ def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> 
 
 
 class HookParameters(Base):
-    url: str = Field(..., alias="url")
+    url: str = Field(..., alias="endpoint")
 
 
 class WebhookTransactionType(str, enum.Enum):

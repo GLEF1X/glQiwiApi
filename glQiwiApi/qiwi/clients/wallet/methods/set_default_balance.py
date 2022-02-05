@@ -1,13 +1,13 @@
 from typing import Any, Dict, ClassVar
 
-from glQiwiApi.base.api_method import APIMethod, Request
+from pydantic import Field
+
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
-class SetDefaultBalance(APIMethod[Dict[Any, Any]]):
+class SetDefaultBalance(QiwiAPIMethod[Dict[Any, Any]]):
     http_method: ClassVar[str] = "PATCH"
-    url: ClassVar[str] = "https://edge.qiwi.com/funding-sources/v2/persons/{stripped_number}/accounts/{c_alias}"
+    url: ClassVar[
+        str] = "https://edge.qiwi.com/funding-sources/v2/persons/{phone_number}/accounts/{currency_alias}"
 
-    currency_alias: str
-
-    def build_request(self, **url_format_kw: Any) -> Request:
-        return super().build_request(**url_format_kw, c_alias=self.currency_alias)
+    currency_alias: str = Field(..., path_runtime_value=True)

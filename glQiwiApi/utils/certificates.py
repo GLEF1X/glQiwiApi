@@ -24,21 +24,6 @@ except ImportError:  # pragma: no cover
     pass
 
 
-@dataclass
-class SSLCertificate:
-    _cert_path: Union[str, PathLike[Any]]
-    _pkey_path: Union[str, PathLike[Any]]
-
-    def as_ssl_context(self) -> ssl.SSLContext:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-        context.load_cert_chain(self._cert_path, self._pkey_path)
-        return context
-
-    def as_input_file(self) -> "InputFile":
-        with open(self._cert_path, "rb") as file:
-            return InputFile(BytesIO(file.read()))
-
-
 def get_or_generate_self_signed_certificate(
     hostname: str,  # your host machine ip address
     cert_path: Union[str, PathLike[Any]] = "cert.pem",
@@ -51,7 +36,7 @@ def get_or_generate_self_signed_certificate(
     serial_number: int = 1000,
     expire_days: int = 3650,
     *name_attributes: "x509.NameAttribute",
-) -> SSLCertificate:
+) -> "SSLCertificate":
     """
     Generates self signed certificate for a hostname, and optional IP addresses.
 
@@ -125,3 +110,19 @@ def get_or_generate_self_signed_certificate(
         f1.write(cert_pem)
         f2.write(key_pem)
     return SSLCertificate(_cert_path=cert_path, _pkey_path=pkey_path)
+
+
+
+@dataclass
+class SSLCertificate:
+    _cert_path: Union[str, PathLike[Any]]
+    _pkey_path: Union[str, PathLike[Any]]
+
+    def as_ssl_context(self) -> ssl.SSLContext:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        context.load_cert_chain(self._cert_path, self._pkey_path)
+        return context
+
+    def as_input_file(self) -> "InputFile":
+        with open(self._cert_path, "rb") as file:
+            return InputFile(BytesIO(file.read()))

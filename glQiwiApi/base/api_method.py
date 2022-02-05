@@ -1,12 +1,12 @@
 import abc
-import copy
-from typing import Dict, Optional, Any, TypeVar, Generic, Type, Union, Tuple, ClassVar, no_type_check, \
-    Callable, List
+from typing import Dict, Optional, Any, TypeVar, Generic, ClassVar, Callable, List, Set, \
+    cast, Union, Type, Tuple
 
 from pydantic import BaseModel, BaseConfig, Extra, parse_obj_as
 from pydantic.fields import ModelField
 from pydantic.generics import GenericModel
 
+from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.utils.compat import json
 
 ReturningType = TypeVar("ReturningType")
@@ -16,6 +16,13 @@ _sentinel = object()
 
 class RuntimeValueIsMissing(Exception):
     pass
+
+
+def _filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:
+    return {k: v for k, v in d.items() if v}
+
+
+DEFAULT_EXCLUDE = {"request_schema", "endpoint", "http_method"}
 
 
 class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
@@ -30,11 +37,14 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
         orm_mode = True
         underscore_attrs_are_private = True
         json_loads = json.loads
-        json_dumps = json.dumps
+        json_dumps = json.dumps  # type: ignore
 
     __returning_type__: ClassVar[Any] = _sentinel
 
     request_schema: ClassVar[Dict[str, Any]] = {}
+
+    def __init__(self, **data: Any) -> None:
+        super().__init__(**_filter_none_values(data))
 
     def __class_getitem__(cls, params: Union[Type[Any], Tuple[Type[Any], ...]]) -> Type[Any]:
         """
@@ -52,7 +62,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
         key = params  # just alias
 
-        if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:
+        if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:  # type: ignore
             cls.__returning_type__ = key
         else:
             try:
@@ -63,11 +73,29 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
         return super().__class_getitem__(params)
 
     def __init_subclass__(cls) -> None:
-        if APIMethod.__returning_type__ is not _sentinel:
-            cls.__returning_type__, APIMethod.__returning_type__ = APIMethod.__returning_type__, _sentinel
+        if cls.__returning_type__ is not _sentinel:
+            cls.__returning_type__ = cls.__returning_type__
+
+    @classmethod
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+        if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:  # type: ignore
+            raise RuntimeError(f"{cls.__qualname__}: __returning_type__ is missing")
+
+        json_response = response.json()
+
+        try:
+            if issubclass(cls.__returning_type__, BaseModel):
+                return cast(ReturningType, cls.__returning_type__.parse_obj(json_response))
+        except TypeError:  # issubclass() arg 1 must be a class
+            pass
+
+        return cast(ReturningType, parse_obj_as(cls.__returning_type__, json_response))
 
     def build_request(self, **url_format_kw: Any) -> "Request":
-        request_kw: Dict[str, Any] = {}
+        request_kw: Dict[str, Any] = {
+            "endpoint": self.url.format(**url_format_kw, **self._get_runtime_path_values()),
+            "http_method": self.http_method
+        }
 
         if self.http_method == 'GET' and self.request_schema:
             raise TypeError(
@@ -76,64 +104,72 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
             )
 
         if self.http_method == "GET":
-            request_kw["params"] = self.dict(exclude_none=True, by_alias=True)
+            request_kw["params"] = self.dict(exclude_none=True, by_alias=True,
+                                             exclude=self._get_exclude_set())
 
         if self.request_schema:
-            request_kw["json_payload"] = self.Config.json_dumps(self._fill_runtime_values_in_request_schema(
-                request_schema=self.request_schema,
-                values=self.dict(by_alias=True)
-            ))
+            request_kw["json_payload"] = self._get_filled_request_schema()
         else:
-            request_kw["data"] = self.dict(exclude_none=True, by_alias=True)
+            request_kw["data"] = self.dict(exclude_none=True, by_alias=True, exclude=self._get_exclude_set())
 
-        return Request(
-            endpoint=self.url.format(**url_format_kw, **self._get_runtime_path_values()),
-            http_method=self.http_method,
-            **request_kw
-        )
+        return Request(**_filter_none_values(request_kw))
 
-    def _fill_runtime_values_in_request_schema(
-            self,
-            request_schema: Dict[str, Any],
-            values: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _get_exclude_set(self) -> Set[str]:
+        to_exclude: Set[str] = DEFAULT_EXCLUDE.copy()
+        for key, field in self.__fields__.items():
+            if field.field_info.extra.get("path_runtime_value", False):
+                to_exclude.add(key)
+
+        return to_exclude
+
+    def _get_filled_request_schema(self) -> Dict[str, Any]:
         """
         Algorithm of this function firstly takes care of default values,
         if field has no default value for schema it checks values, that were transmitted to method
 
-        @param request_schema:
-        @param values:
         @return:
         """
-        self._apply_default_values(request_schema, values)
+        request_schema = self._get_schema_with_filled_runtime_values_with_default()
+        schema_values = self.dict(exclude_none=True, by_alias=True, exclude=self._get_exclude_set())
 
         for key, field in self.__fields__.items():
             scheme_path: str = field.field_info.extra.get("scheme_path", field.name)
             path_list = scheme_path.split(".")
-            field_value = values.get(key)
-            _substitute_runtime_value_by_path(request_schema, *path_list, value=field_value)
+            try:
+                field_value = schema_values[key]
+            except KeyError:
+                continue
+            _substitute_nested_value_in_dictionary(request_schema, path_list, value=field_value)
 
         return request_schema
 
-    def _apply_default_values(self, schema: Dict[str, Any], values: Dict[str, Any]) -> None:
-        scheme = copy.copy(schema)
+    def _get_schema_with_filled_runtime_values_with_default(self) -> Dict[str, Any]:
         scheme_paths: List[str] = [
             field.field_info.extra.get("scheme_path", field.name)
             for field in self.__fields__.values()
+            if field.name in self.dict(exclude_none=True)
         ]
+        schema = self.request_schema.copy()
 
-        for k, v in list(scheme.items()):
-            if isinstance(v, dict):
-                self._apply_default_values(v, values)
-            elif isinstance(v, RuntimeValue):
-                if v.has_default() and k not in scheme_paths:
-                    scheme[k] = v.get_default()
-                    continue
+        def apply_runtime_values_to_schema(d: Dict[str, Any]) -> None:
+            for k, v in list(d.items()):
+                if isinstance(v, dict):
+                    apply_runtime_values_to_schema(v)
+                elif isinstance(v, RuntimeValue):
+                    if v.has_default() and k not in scheme_paths:
+                        d[k] = v.get_default()
+                        continue
+                    elif v.is_mandatory is False:
+                        d.pop(k)
+
+        apply_runtime_values_to_schema(schema)
+
+        return schema
 
     def _get_runtime_path_values(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
 
-        for field_name, value in self.dict(exclude_none=True).items():
+        for field_name, value in self.dict().items():
             field: ModelField = self.__fields__[field_name]
             is_path_runtime_value = field.field_info.extra.get("path_runtime_value", False)
             if not is_path_runtime_value:
@@ -142,20 +178,6 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
             result[field_name] = value
 
         return result
-
-    @classmethod
-    @no_type_check
-    def parse_response(cls, obj: Any) -> ReturningType:
-        if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:  # type: ignore
-            raise RuntimeError(f"{cls.__qualname__}: __returning_type__ is missing")
-
-        try:
-            if issubclass(cls.__returning_type__, BaseModel):  # type: ignore  # noqa
-                return cls.__returning_type__.parse_obj(obj)
-        except TypeError:  # issubclass() arg 1 must be a class
-            pass
-
-        return parse_obj_as(cls.__returning_type__, obj)
 
     @property
     @abc.abstractmethod
@@ -173,7 +195,7 @@ class Request(BaseModel):
 
     data: Optional[Dict[str, Optional[Any]]] = None
     params: Optional[Dict[str, Optional[Any]]] = None
-    json_payload: Optional[Any] = None
+    json_payload: Optional[Dict[str, Any]] = None
     headers: Optional[Dict[str, Any]] = None
 
     http_method: str = "GET"
@@ -183,14 +205,20 @@ class Request(BaseModel):
 
 
 class RuntimeValue:
-    __slots__ = ('_default', '_default_factory')
+    __slots__ = ('_default', '_default_factory', "is_mandatory")
 
-    def __init__(self, default: Optional[Any] = None, default_factory: Optional[Callable[..., Any]] = None):
+    def __init__(self, default: Optional[Any] = None, default_factory: Optional[Callable[..., Any]] = None,
+                 mandatory: bool = True):
         self._default = default
         self._default_factory = default_factory
+        self.is_mandatory = mandatory
 
     def has_default(self) -> bool:
-        return self._default is not None or self._default_factory is not None
+        return (
+                self._default is not None
+                or
+                self._default_factory is not None
+        )
 
     def get_default(self) -> Any:
         if self._default is not None:
@@ -199,13 +227,20 @@ class RuntimeValue:
             return self._default_factory()
 
 
-def _substitute_runtime_value_by_path(d: Dict[str, _T], *keys: str, value: Any) -> None:
-    if not keys:
+def _substitute_nested_value_in_dictionary(d: Dict[str, _T], path: List[str],
+                                           value: Any) -> None:  # pragma: no cover
+    if not path:
         return
 
-    if len(keys) == 1:
-        d[keys[0]] = value
+    if len(path) == 1:
+        d[path[0]] = value
 
     for k, v in d.items():
-        if isinstance(v, dict):
-            _substitute_runtime_value_by_path(v, *keys[1:], value=value)
+        if not isinstance(v, dict):
+            continue
+        schema_key = path[0]
+
+        if k != schema_key:
+            continue
+
+        _substitute_nested_value_in_dictionary(v, path[1:], value=value)

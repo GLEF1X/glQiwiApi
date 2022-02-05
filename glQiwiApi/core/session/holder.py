@@ -3,21 +3,26 @@ from __future__ import annotations
 import abc
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Generic, Optional, Type, TypeVar, cast, Dict, Mapping
+from typing import Any, Generic, Optional, Type, TypeVar, cast, Mapping, Dict, Set
 
 import aiohttp
 from aiohttp import ClientResponse
+
+from glQiwiApi.utils.compat import json
 
 _SessionType = TypeVar("_SessionType", bound=Any)
 _SessionHolderType = TypeVar("_SessionHolderType", bound="AbstractSessionHolder[Any]")
 
 
 @dataclass
-class Response:
+class HTTPResponse:
     status_code: int
     body: bytes
     headers: Mapping[str, Any]
     content_type: str
+
+    def json(self) -> Dict[str, Any]:
+        return cast(Dict[str, Any], json.loads(self.body))
 
 
 class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
@@ -33,15 +38,7 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
         self._session_kwargs = kwargs
 
     @abc.abstractmethod
-    async def close(self) -> None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def get_session(self) -> _SessionType:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def parse_response(self, response: Any) -> Response:
+    async def convert_third_party_lib_response_to_http_response(self, response: Any) -> HTTPResponse:
         raise NotImplementedError
 
     def update_session_kwargs(self, **kwargs: Any) -> None:
@@ -51,6 +48,10 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
         self._session = await self.get_session()
         return self._session
 
+    @abc.abstractmethod
+    async def get_session(self) -> _SessionType:
+        raise NotImplementedError
+
     async def __aexit__(
             self: AbstractSessionHolder[_SessionType],
             exc_type: Optional[Type[BaseException]],
@@ -58,6 +59,10 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
             traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
+
+    @abc.abstractmethod
+    async def close(self) -> None:
+        raise NotImplementedError
 
 
 class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
@@ -68,8 +73,10 @@ class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
         if self._session_in_working_order():
             await self._session.close()
 
-    async def parse_response(self, response: ClientResponse) -> Response:
-        return Response(
+    async def convert_third_party_lib_response_to_http_response(
+            self, response: ClientResponse
+    ) -> HTTPResponse:
+        return HTTPResponse(
             status_code=response.status,
             body=await response.read(),
             headers=response.headers,
@@ -82,7 +89,11 @@ class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
         return await self._instantiate_new_session()
 
     def _session_in_working_order(self) -> bool:
-        return self._session is not None and self._session.closed is False
+        return (
+                self._session is not None
+                and
+                self._session.closed is False
+        )
 
     async def _instantiate_new_session(self) -> _SessionType:
         self._session: _SessionType = cast(

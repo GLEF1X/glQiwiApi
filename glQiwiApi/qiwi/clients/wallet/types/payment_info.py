@@ -21,15 +21,15 @@ class State(Base):
 class TransactionInfo(Base):
     """object: TransactionInfo"""
 
-    txn_id: int = Field(..., alias="id")
+    id: int
     state: State
 
 
 class PaymentInfo(Base):
     """object: PaymentInfo"""
 
-    payment_id: int = Field(..., alias="id")
-    payment_sum: AmountWithCurrency = Field(..., alias="sum")
+    id: int
+    amount: AmountWithCurrency = Field(..., alias="sum")
     terms: str
     fields: Fields
     source: str

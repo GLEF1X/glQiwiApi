@@ -2,7 +2,7 @@ import typing as t
 
 from aiohttp import web
 
-from glQiwiApi.core.dispatcher.implementation import Dispatcher
+from glQiwiApi.core.dispatcher.implementation import BaseDispatcher
 from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
 from glQiwiApi.core.dispatcher.webhooks.middlewares.ip import ip_filter_middleware
 from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
@@ -17,7 +17,7 @@ from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook
 
 
 def configure_app(
-    dispatcher: Dispatcher, app: web.Application, webhook_config: WebhookConfig
+    dispatcher: BaseDispatcher, app: web.Application, webhook_config: WebhookConfig
 ) -> web.Application:
     """
     Entirely configures the web app for webhooks.

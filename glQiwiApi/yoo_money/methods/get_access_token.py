@@ -1,6 +1,7 @@
-from typing import ClassVar, Optional, Any
+from typing import ClassVar, Optional
 
 from glQiwiApi.base.api_method import APIMethod, ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
 
 
 class GetAccessToken(APIMethod[str]):
@@ -14,5 +15,5 @@ class GetAccessToken(APIMethod[str]):
     client_secret: Optional[str] = None
 
     @classmethod
-    def parse_response(cls, obj: Any) -> ReturningType:
-        return obj["access_token"]
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+        return response.json()["access_token"]

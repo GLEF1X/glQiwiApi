@@ -1,12 +1,12 @@
 from json import JSONDecodeError
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, ClassVar, NoReturn, Union, List, cast
 
 try:
     from orjson import JSONDecodeError as OrjsonJSONDecodeError
 except ImportError:
     OrjsonJSONDecodeError = JSONDecodeError  # noqa  # type: ignore
 
-from glQiwiApi.core.session.holder import Response
+from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.utils.compat import json
 
 HTTP_STATUS_MATCH_TO_ERROR = {
@@ -26,28 +26,57 @@ HTTP_STATUS_MATCH_TO_ERROR = {
 
 
 class QiwiAPIError(Exception):
-    __slots__ = "_http_response", "_custom_message"
+    __slots__ = "http_response", "_custom_message", "_deserialize_cache", "error_code", "message"
 
-    def __init__(self, http_response: Response, custom_message: Optional[str] = None):
-        self._http_response = http_response
+    description_en: ClassVar[Optional[str]] = None
+    description_ru: ClassVar[Optional[str]] = None
+    
+    _error_code_match: ClassVar[Optional[Union[str, int, List[Union[str, int]]]]] = None
+    _error_code_contains: ClassVar[Union[str, List[str], None]] = None
+
+    def __init__(self, http_response: HTTPResponse, custom_message: Optional[str] = None):
+        self._deserialize_cache: Dict[int, Any] = {}
         self._custom_message = custom_message
-
-    def __str__(self) -> str:
-        resp = (
-            "HTTP status code={sc} description=`{msg}`, additional_info={info}" ""
-        )
-        return resp.format(
-            sc=self._http_response.status_code,
-            msg=self._custom_message or self._match_message(),
-            info={"raw_response": self._try_deserialize_response()}
-        )
+        self.http_response = http_response
+        self.error_code = str(self._scaffold_error_code())
+        self.message = self._scaffold_error_message()
 
     def json(self) -> Dict[str, Any]:
-        return self._try_deserialize_response()
+        return self._deserialize_response()
 
-    def _match_message(self) -> str:
+    def raise_exception_matching_error_code(self) -> NoReturn:
+        if self.error_code is None:
+            raise self
+
+        for ex in self.__class__.__subclasses__():
+            err_code_matches: List[Union[int, str]] = ex._error_code_match or []
+            if not isinstance(ex._error_code_match, list):
+                err_code_matches = [ex._error_code_match]
+
+            err_codes_contains: List[Union[str, int]] = ex._error_code_contains or []
+            if not isinstance(err_codes_contains, list):
+                err_codes_contains = [err_codes_contains]
+
+            err_code_matches = [str(c) for c in err_code_matches]
+
+            if self.error_code in err_code_matches:
+                raise ex(self.http_response, self._custom_message)
+            elif any(c in self.error_code.lower() for c in err_codes_contains):
+                raise ex(self.http_response, self._custom_message)
+
+        raise self
+
+    def __str__(self) -> str:
+        representation = "{sc} HTTP status | description: {msg}, raw_response={raw_response}"
+        return representation.format(
+            sc=self.http_response.status_code,
+            msg=self._custom_message or self._compose_error_message(),
+            raw_response=self._deserialize_response()
+        )
+
+    def _compose_error_message(self) -> str:
         """
-        Matching exception message(-s) executes in two steps
+        Composing error message(-s) executes in two steps
 
         1) Search error message in dictionary with predefined error messages
         2) Deserialize response and try to know whether there is errorCode,
@@ -55,17 +84,104 @@ class QiwiAPIError(Exception):
 
         If there are two messages founded, then it will be concatenated
         """
-        error_message = HTTP_STATUS_MATCH_TO_ERROR.get(self._http_response.status_code, "")
-        json_response = self._try_deserialize_response()
+        error_message = HTTP_STATUS_MATCH_TO_ERROR.get(self.http_response.status_code, "")
+        json_response = self._deserialize_response()
         err_code = json_response.get("errorCode", "")
 
         if err_code != "":
-            error_message += f", error code = {err_code}"
+            error_message += f", error code={err_code}"
 
         return error_message
 
-    def _try_deserialize_response(self) -> Dict[str, Any]:
+    def _scaffold_error_code(self) -> Optional[str]:
+        r = self._deserialize_response()
+        err_code: Optional[str] = r.get("errorCode")
+        if err_code is not None:
+            return err_code
+
+        err_code = r.get("code")
+        if err_code is not None:
+            return err_code.replace("QWPRC-", "")  # type: ignore
+
+        return None
+
+    def _scaffold_error_message(self) -> Optional[str]:
+        r = self._deserialize_response()
+        return r.get("message") or r.get("description")
+
+    def _deserialize_response(self) -> Dict[str, Any]:
+        """
+        Deserializing of response many times is practically zero-cost call,
+        because response is being cached after the first deserializing
+        """
+        if self._deserialize_cache.get(id(self.http_response)) is not None:
+            return cast(Dict[str, Any], self._deserialize_cache[id(self.http_response)])
+
         try:
-            return json.loads(self._http_response.body)
+            content: Dict[str, Any] = json.loads(self.http_response.body)
         except (JSONDecodeError, TypeError, OrjsonJSONDecodeError):
-            return {}
+            content = {}
+
+        self._deserialize_cache[id(self.http_response)] = content
+        return content
+
+
+class InternalQIWIError(QiwiAPIError):
+    _error_code_match = [3, 749, 750]
+    description_en = "Technical error. Repeat the request later"
+    description_ru = "Техническая ошибка. Повторите платеж позже."
+
+
+class IncorrectDataFormat(QiwiAPIError):
+    _error_code_match = 4
+    description_en = "Incorrect format of phone or account number. Check the data"
+    description_ru = "Некорректный формат телефона или счета. Проверьте данные."
+
+
+class NoSuchNumber(QiwiAPIError):
+    _error_code_match = 5
+    description_en = "No such number. Check the data and try again"
+    description_ru = "Данного номера не существует. Проверьте данные и попробуйте еще раз."
+
+
+class BankSideReceiptError(QiwiAPIError):
+    _error_code_match = 8
+    description_en = "Technical problem on the recipient's bank side. Try again later"
+    description_ru = "Техническая проблема на стороне банка-получателя. Попробуйте позже."
+
+
+class PaymentUnavailableInYourCountry(QiwiAPIError):
+    _error_code_match = 131
+    description_en = "Payment type unavailable for your country"
+    description_ru = "Платеж недоступен для вашей страны"
+
+
+class NotEnoughFundsError(QiwiAPIError):
+    _error_code_match = [220, 407]
+    description_en = "Not enough funds. Replenish your wallet"
+    description_ru = "Недостаточно средств. Пополните кошелек"
+
+
+class PaymentRejected(QiwiAPIError):
+    _error_code_match = [7000, 7600]
+    description_en = "Payment rejected. Check card's details and repeat the payment or try to contact the bank that issued the card"
+    description_ru = "Платеж отклонен. Проверьте реквизиты карты и повторите платеж или обратитесь в банк, выпустивший карту"
+
+
+class ValidationError(QiwiAPIError):
+    _error_code_match = [303, 254, 241, "validation.error", 558, "internal.invoicing.error"]
+
+
+class ObjectNotFound(QiwiAPIError):
+    _error_code_contains = "not.found"
+
+
+class ReceiptNotAvailable(QiwiAPIError):
+    _error_code_contains = "cheque.not.available"
+    description_en = ("It is impossible to receive a check due to the fact that "
+                      "the transaction for this ID has not been completed,"
+                      "that is, an error occurred during the transaction")
+
+
+class OperationLimitExceeded(QiwiAPIError):
+    _error_code_match = [705, 704, 700, 716, 717]

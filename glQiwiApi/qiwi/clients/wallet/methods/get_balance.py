@@ -1,16 +1,17 @@
-from typing import ClassVar, List, Any
+from typing import ClassVar, List
 
-
-from glQiwiApi.base.api_method import APIMethod, ReturningType
+from glQiwiApi.base.api_method import ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import Balance
 
 
-class GetBalance(APIMethod[List[Balance]]):
+class GetBalance(QiwiAPIMethod[List[Balance]]):
     http_method: ClassVar[str] = "GET"
     url: ClassVar[str] = "https://edge.qiwi.com/funding-sources/v2/persons/{phone_number}/accounts"
 
     account_number: int = 1
 
     @classmethod
-    def parse_response(cls, obj: Any) -> ReturningType:
-        return super().parse_response(obj['accounts'])
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+        return cls.__returning_type__.parse_obj(response.json()["accounts"])

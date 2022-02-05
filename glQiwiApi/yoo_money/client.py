@@ -97,7 +97,7 @@ class YooMoneyAPI(BaseAPIClient):
         request_service = RequestService()
         request = BuildAuthURL(client_id=client_id, scopes=scopes, redirect_uri=redirect_uri).build_request()
         try:
-            return BuildAuthURL.parse_response(
+            return BuildAuthURL.parse_http_response(
                 await request_service.get_text_content(
                     request.endpoint,
                     request.http_method,

@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 import typing
 
-from pydantic import parse_obj_as
-
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient
-from glQiwiApi.core.request_service import RequestService
-from glQiwiApi.core.session.holder import AbstractSessionHolder
+from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.request_service import RequestService, RequestServiceProto
+from glQiwiApi.qiwi.clients.maps.methods.get_partners import GetPartners
+from glQiwiApi.qiwi.clients.maps.methods.get_terminals import GetTerminals
 from glQiwiApi.qiwi.clients.maps.types.polygon import Polygon
 from glQiwiApi.qiwi.clients.maps.types.terminal import Terminal
 from glQiwiApi.qiwi.clients.wallet.types import Partner
-from glQiwiApi.utils.payload import filter_dictionary_none_values
 
 
 class QiwiMaps(BaseAPIClient):
@@ -22,12 +19,15 @@ class QiwiMaps(BaseAPIClient):
 
     def __init__(
             self,
-            cache_time: int = 0,
-            session_holder: typing.Optional[AbstractSessionHolder[typing.Any]] = None,
+            request_service: typing.Optional[RequestServiceProto] = None,
+            cache_storage: typing.Optional[CacheStorage] = None
     ) -> None:
-        self._request_service = RequestService(
-            cache_time=cache_time, session_holder=session_holder
-        )
+        super().__init__(request_service, cache_storage)
+
+    def _create_request_service(self) -> RequestServiceProto:
+        return RequestService(base_headers={
+            "Content-type": "application/json"
+        })
 
     async def terminals(
             self,
@@ -60,30 +60,23 @@ class QiwiMaps(BaseAPIClient):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        params = filter_dictionary_none_values(
-            {
-                **polygon.dict,
-                "zoom": zoom,
-                "activeWithinMinutes": pop_if_inactive_x_mins,
-                "withRefillWallet": include_partners,
-                "ttpIds": partners_ids,
-                "cacheAllowed": cache_terminals,
-                "cardAllowed": card_terminals,
-                "identificationTypes": identification_types,
-                "ttpGroups": terminal_groups,
-            }
+        return await self._request_service.emit_request_to_api(
+            GetTerminals(
+                polygon=polygon,
+                zoom=zoom,
+                pop_if_inactive_x_mins=pop_if_inactive_x_mins,
+                include_partners=include_partners,
+                partners_ids=partners_ids,
+                cache_terminals=cache_terminals,
+                card_terminals=card_terminals,
+                identification_types=identification_types,
+                terminal_groups=terminal_groups
+            )
         )
-        url = "http://edge.qiwi.com/locator/v3/nearest/clusters?parameters"
-        response = await self._request_service.emit_request(url, "GET", params=params)
-        return parse_obj_as(typing.List[Terminal], response)
 
     async def partners(self) -> typing.List[Partner]:
         """
         Get terminal partners for ttpGroups
         :return: list of TTPGroups
         """
-        url = "http://edge.qiwi.com/locator/v3/ttp-groups"
-        response = await self._request_service.emit_request(
-            url, "GET", headers={"Content-type": "text/json"}
-        )
-        return parse_obj_as(typing.List[Partner], response)
+        return await self._request_service.emit_request_to_api(GetPartners())

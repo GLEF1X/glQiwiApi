@@ -51,10 +51,8 @@ from glQiwiApi.qiwi.clients.wallet.methods.webhook.get_current_webhook import Ge
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.get_webhook_secret import GetWebhookSecret
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.register_webhook import RegisterWebhook
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.send_test_notification import SendTestWebhookNotification
-from glQiwiApi.utils.helper import allow_response_code, override_error_message
-from glQiwiApi.utils.payload import (
-    is_transaction_exists_in_history,
-)
+from glQiwiApi.utils.helper import allow_response_code
+from ...utils import is_transaction_exists_in_history
 from glQiwiApi.utils.validators import PhoneNumber, String
 from .types import (
     CrossRate, PaymentDetails, OrderDetails, PaymentInfo, PaymentMethod, QiwiAccountInfo,
@@ -120,7 +118,7 @@ class QiwiWallet(BaseAPIClient):
         """
         This method register a new webhook
 
-        :param url: service url
+        :param url: service endpoint
         :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
         :return: Active Hooks
         """
@@ -177,7 +175,7 @@ class QiwiWallet(BaseAPIClient):
         """
         [NON-API] EXCLUSIVE method to register new webhook or get old
 
-        :param url: service url
+        :param url: service endpoint
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
         :param send_test_notification:  test_qiwi will transfer_money
          you test webhook update
@@ -200,14 +198,6 @@ class QiwiWallet(BaseAPIClient):
 
         return webhook, key
 
-    @override_error_message(
-        {
-            404: {
-                "message": "Wrong card number entered, possibly"
-                           "the card to which you transfer is blocked"
-            }
-        }
-    )
     async def _detect_mobile_number(self, phone_number: str) -> str:
         """https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#search-providers"""
         return await self._request_service.emit_request_to_api(DetectMobileNumber(phone_number=phone_number))
@@ -249,7 +239,7 @@ class QiwiWallet(BaseAPIClient):
             phone_number=self.phone_number_without_plus_sign
         )
 
-    async def transaction_info(
+    async def get_transaction_info(
             self, transaction_id: Union[str, int], transaction_type: TransactionType
     ) -> Transaction:
         """
@@ -396,15 +386,6 @@ class QiwiWallet(BaseAPIClient):
             )
         )
 
-    @override_error_message(
-        {
-            422: {
-                "message": "It is impossible to receive a check due to the fact that "
-                           "the transaction for this ID has not been completed,"
-                           "that is, an error occurred during the transaction"
-            }
-        }
-    )
     async def get_receipt(
             self,
             transaction_id: Union[str, int],
@@ -530,7 +511,6 @@ class QiwiWallet(BaseAPIClient):
             )
         )
 
-    @override_error_message({400: {"message": "Not enough funds to execute this operation"}})
     async def transfer_money(
             self,
             to_phone_number: str,

@@ -72,12 +72,6 @@ class Transaction(Base):
     Для запросов данных о транзакции - Дата/время платежа, время московское
     """
 
-    error_code: Optional[int] = Field(alias="errorCode", default=None)
-    """Код ошибки платежа"""
-
-    error: Optional[str] = None
-    """Описание ошибки"""
-
     status: TransactionStatus
     """
     Статус платежа. Возможные значения:

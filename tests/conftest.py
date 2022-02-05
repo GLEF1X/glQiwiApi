@@ -2,18 +2,9 @@ from datetime import datetime
 
 import pytest
 
-from glQiwiApi.base import AmountWithCurrency
-from glQiwiApi.qiwi.types import Transaction, TransactionStatus, TransactionWebhook
-from glQiwiApi.qiwi.types.transaction import Provider, TransactionType
-
-pytestmark = pytest.mark.asyncio
-
-
-@pytest.fixture(name="yoo_credentials")
-def credentials_fixture():
-    from .types.dataset import YOO_MONEY_DATA
-
-    yield YOO_MONEY_DATA
+from glQiwiApi.base.types.amount import AmountWithCurrency
+from glQiwiApi.qiwi.clients.wallet.types import Transaction, TransactionStatus, TransactionWebhook
+from glQiwiApi.qiwi.clients.wallet.types.transaction import Provider, TransactionType
 
 
 @pytest.fixture()

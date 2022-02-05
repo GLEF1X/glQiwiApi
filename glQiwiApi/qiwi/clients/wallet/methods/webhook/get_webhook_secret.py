@@ -1,9 +1,10 @@
 from typing import ClassVar, Any
 
-from glQiwiApi.base.api_method import APIMethod, Request
+from glQiwiApi.base.api_method import Request
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
-class GetWebhookSecret(APIMethod[str]):
+class GetWebhookSecret(QiwiAPIMethod[str]):
     http_method: ClassVar[str] = "GET"
     url: ClassVar[str] = "https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}/key"
 

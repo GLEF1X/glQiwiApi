@@ -1,14 +1,14 @@
 import time
 from typing import ClassVar, Dict, Any, Union
 
+from pydantic import Field
 
-from pydantic import Field, PaymentCardNumber
-
-from glQiwiApi.base.api_method import APIMethod, RuntimeValue
+from glQiwiApi.base.api_method import RuntimeValue
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo
 
 
-class TransferMoneyToCard(APIMethod[PaymentInfo]):
+class TransferMoneyToCard(QiwiAPIMethod[PaymentInfo]):
     http_method: ClassVar[str] = "POST"
     url: ClassVar[str] = "https://edge.qiwi.com/sinap/api/v2/terms/{private_card_id}"
 

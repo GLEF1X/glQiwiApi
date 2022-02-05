@@ -1,9 +1,10 @@
 from typing import ClassVar, Any, Dict
 
-from glQiwiApi.base.api_method import APIMethod, Request
+from glQiwiApi.base.api_method import Request
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
-class DeleteWebhook(APIMethod[Dict[Any, Any]]):
+class DeleteWebhook(QiwiAPIMethod[Dict[Any, Any]]):
     url: ClassVar[str] = "https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}"
     http_method: ClassVar[str] = "DELETE"
 

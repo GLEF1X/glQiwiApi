@@ -1,24 +1,24 @@
 from datetime import datetime
-from typing import Optional, Union, Any, Type, TypeVar, Dict, List, Tuple
+from typing import Optional, Union, Any, Type, TypeVar, Dict, List, Tuple, TYPE_CHECKING
 
 from glQiwiApi.base.types.amount import PlainAmount, AmountWithCurrency
 from glQiwiApi.base.types.arbitrary import File
-from glQiwiApi.core.cache.storage import CacheStorage
-from glQiwiApi.core.mixins import DispatcherShortcutsMixin
-from glQiwiApi.core.request_service import RequestServiceProto
-from glQiwiApi.ext.webhook_url import WebhookURL
-from glQiwiApi.qiwi import PaymentInfo, OrderDetails, PaymentDetails, PaymentMethod, CrossRate, Balance, \
-    TransactionType, Statistic, QiwiAccountInfo, Card, Limit, Identification, Restriction, Transaction, \
-    Source, History, WebhookInfo, Commission
 from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
-from glQiwiApi.qiwi.clients.p2p.types import PairOfP2PKeys, Bill, RefundedBill, InvoiceStatus
+from glQiwiApi.qiwi.clients.p2p.types import PairOfP2PKeys, Bill, RefundedBill, InvoiceStatus, Customer
 from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet, AmountType
 from glQiwiApi.qiwi.clients.wallet.methods.get_limits import ALL_LIMIT_TYPES
+from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo, OrderDetails, PaymentDetails, PaymentMethod, \
+    CrossRate, Balance, \
+    TransactionType, Statistic, QiwiAccountInfo, Card, Limit, Identification, Restriction, Transaction, \
+    Source, History, WebhookInfo, Commission
 
-_T = TypeVar("_T")
+if TYPE_CHECKING:
+    from glQiwiApi.ext.webhook_url import WebhookURL
+
+_T = TypeVar("_T", bound="QiwiWrapper")
 
 
-class QiwiWrapper(DispatcherShortcutsMixin):
+class QiwiWrapper:
     """For backward compatibility with glQiwiApi <= 1.1.4"""
 
     def __init__(
@@ -26,44 +26,16 @@ class QiwiWrapper(DispatcherShortcutsMixin):
             api_access_token: Optional[str] = None,
             phone_number: Optional[str] = None,
             secret_p2p: Optional[str] = None,
-            cache_storage: Optional[CacheStorage] = None,
-            request_service: Optional[RequestServiceProto] = None,
             shim_server_url: Optional[str] = None
     ) -> None:
-        self._qiwi_wallet = QiwiWallet(api_access_token or "", phone_number, request_service, cache_storage)
-        self._p2p_client = QiwiP2PClient(secret_p2p or "", request_service, cache_storage, shim_server_url)
-
-    async def __aenter__(self) -> "QiwiWrapper":
-        await self._qiwi_wallet.__aenter__()
-        await self._p2p_client.__aenter__()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self._qiwi_wallet.__aexit__(exc_type, exc_val, exc_tb)
-        await self._p2p_client.__aexit__(exc_type, exc_val, exc_tb)
-
-    def __new__(
-            cls: Type[_T],
-            api_access_token: Optional[str] = None,
-            phone_number: Optional[str] = None,
-            secret_p2p: Optional[str] = None,
-            cache_time_in_seconds: Union[float, int] = 0,
-            *args: Any,
-            **kwargs: Any,
-    ) -> _T:
-        if (
-                not isinstance(api_access_token, str)
-                and not isinstance(secret_p2p, str)  # noqa: W503
-        ):
-            raise RuntimeError("Unable to initialize instance without tokens")
-
-        return super().__new__(cls)  # type: ignore
+        self._qiwi_wallet = QiwiWallet(api_access_token or "", phone_number)
+        self._p2p_client = QiwiP2PClient(secret_p2p or "", shim_server_url=shim_server_url)
 
     async def register_webhook(self, url: str, txn_type: int = 2) -> WebhookInfo:
         """
         This method register a new webhook
 
-        :param url: service url
+        :param url: service endpoint
         :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
         :return: Active Hooks
         """
@@ -108,7 +80,7 @@ class QiwiWrapper(DispatcherShortcutsMixin):
 
     async def bind_webhook(
             self,
-            url: Union[str, WebhookURL],
+            url: Union[str, "WebhookURL"],
             transactions_type: int = 2,
             *,
             send_test_notification: bool = False,
@@ -117,7 +89,7 @@ class QiwiWrapper(DispatcherShortcutsMixin):
         """
         [NON-API] EXCLUSIVE method to register new webhook or get old
 
-        :param url: service url
+        :param url: service endpoint
         :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
         :param send_test_notification:  test_qiwi will transfer_money
          you test webhook update
@@ -382,7 +354,7 @@ class QiwiWrapper(DispatcherShortcutsMixin):
         """
         return await self._qiwi_wallet.transfer_money(to_phone_number, amount, comment)
 
-    async def transfer_money_to_card(self, amount: AmountType, card_number: str) -> PaymentInfo:
+    async def transfer_money_to_card(self, card_number: str, *, amount: AmountType) -> PaymentInfo:
         """
         Method for sending funds to the card.
 
@@ -455,9 +427,12 @@ class QiwiWrapper(DispatcherShortcutsMixin):
         """
         return await self._qiwi_wallet.issue_qiwi_master_card(card_alias)
 
-    async def reject_p2p_bill(self, bill_id: str) -> Bill:
+    async def reject_bill_by_id(self, bill_id: str) -> Bill:
         """Use this method to cancel unpaid invoice."""
         return await self._p2p_client.reject_p2p_bill(bill_id)
+
+    async def reject_bill(self, bill: Bill) -> None:
+        return await self._p2p_client.reject_bill(bill)
 
     async def check_p2p_bill_status(self, bill_id: str) -> str:
         """
@@ -475,6 +450,9 @@ class QiwiWrapper(DispatcherShortcutsMixin):
         """
         return await self._p2p_client.get_bill_status(bill_id)
 
+    async def check_if_bill_was_paid(self, bill: Bill) -> bool:
+        return await self._p2p_client.check_if_bill_was_paid(bill)
+
     async def create_p2p_bill(
             self,
             amount: AmountType,
@@ -483,6 +461,7 @@ class QiwiWrapper(DispatcherShortcutsMixin):
             life_time: Optional[datetime] = None,
             theme_code: Optional[str] = None,
             pay_source_filter: Optional[List[str]] = None,
+            customer: Optional[Customer] = None
     ) -> Bill:
         """
         It is the reliable method for integration.
@@ -502,10 +481,11 @@ class QiwiWrapper(DispatcherShortcutsMixin):
         :param theme_code:
         :param pay_source_filter: When you open the form, the following will be displayed
          only the translation methods specified in this parameter
+        :param customer:
         """
         return await self._p2p_client.create_p2p_bill(
             amount, bill_id, comment, life_time,
-            theme_code, pay_source_filter
+            theme_code, pay_source_filter, customer
         )
 
     async def retrieve_bills(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
@@ -568,6 +548,36 @@ class QiwiWrapper(DispatcherShortcutsMixin):
         Creates a new pair of P2P keys to interact with P2P QIWI API
 
         :param key_pair_name: P2P token pair name
-        :param server_notification_url: url for webhooks
+        :param server_notification_url: endpoint for webhooks
         """
         return await self._p2p_client.create_pair_of_p2p_keys(key_pair_name, server_notification_url)
+
+    async def __aenter__(self) -> "QiwiWrapper":
+        await self._qiwi_wallet.__aenter__()
+        await self._p2p_client.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await self._qiwi_wallet.__aexit__(exc_type, exc_val, exc_tb)
+        await self._p2p_client.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def close(self) -> None:
+        await self._qiwi_wallet.close()
+        await self._p2p_client.close()
+
+    def __new__(
+            cls: Type[_T],
+            api_access_token: Optional[str] = None,
+            phone_number: Optional[str] = None,
+            secret_p2p: Optional[str] = None,
+            cache_time_in_seconds: Union[float, int] = 0,
+            *args: Any,
+            **kwargs: Any,
+    ) -> _T:
+        if (
+                not isinstance(api_access_token, str)
+                and not isinstance(secret_p2p, str)  # noqa: W503
+        ):
+            raise RuntimeError("Unable to initialize QiwiWrapper instance without any tokens")
+
+        return super().__new__(cls)  # type: ignore

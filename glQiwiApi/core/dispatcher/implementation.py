@@ -7,7 +7,6 @@ import inspect
 import logging
 import operator
 from typing import (
-    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -26,38 +25,9 @@ from glQiwiApi.qiwi.clients.p2p.types import (
     BillWebhook,
 )
 from .filters import BaseFilter, LambdaBasedFilter
+from .. import Handler
 from ...qiwi.clients.wallet.types.transaction import Transaction
 from ...qiwi.clients.wallet.types.webhooks import TransactionWebhook
-
-if TYPE_CHECKING:
-    from .class_based import (
-        Handler,
-    )  # pragma: no cover
-    from glQiwiApi.base import Base, HashableBase  # noqa  # pragma: no cover
-    from glQiwiApi.core.dispatcher.class_based import (  # noqa
-        AbstractBillHandler,
-        AbstractTransactionHandler,
-        ExceptionHandler,
-    )
-
-Event = TypeVar("Event", bound=Union["HashableBase", Exception, "Base"])
-_T = TypeVar("_T")
-EventFilter = Callable[[Event], bool]
-TxnFilters = Union[
-    BaseFilter["Transaction"],
-    BaseFilter["TransactionWebhook"],
-    Callable[["TransactionWebhook"], bool],
-    Callable[["Transaction"], bool],
-]
-
-BillFilters = Union[Callable[["BillWebhook"], bool], BaseFilter["BillWebhook"]]
-
-HandlerType = TypeVar("HandlerType", bound="EventHandler[Any]")
-
-# handlers
-TxnRawHandler = Union[Type["AbstractTransactionHandler"], Callable[..., Awaitable[Any]]]
-BillRawHandler = Union[Type["AbstractBillHandler"], Callable[..., Awaitable[Any]]]
-ErrorRawHandler = Union[Type["ExceptionHandler"], Callable[..., Awaitable[Any]]]
 
 logger = logging.getLogger("glQiwiApi.dispatcher")
 
@@ -70,7 +40,7 @@ class CancelHandler(Exception):
     pass
 
 
-TxnWrappedHandler = Union["EventHandler[Transaction]", "EventHandler[BillWebhook]"]
+Event = TypeVar("Event")
 
 
 class BaseDispatcher(abc.ABC):
@@ -110,7 +80,7 @@ class BaseDispatcher(abc.ABC):
         pass
 
 
-class Dispatcher(BaseDispatcher):
+class QiwiDispatcher(BaseDispatcher):
     """
     Class, which managing all handlers
 

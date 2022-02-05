@@ -54,7 +54,7 @@ class InMemoryCacheStorage(CacheStorage):
         self._data: Dict[Any, Any] = {}
 
     async def clear(self) -> None:
-        self._invalidate_strategy.process_delete()
+        await self._invalidate_strategy.process_delete()
         self._data.clear()
 
     async def retrieve_all(self) -> List[Optional[Any]]:
@@ -62,7 +62,7 @@ class InMemoryCacheStorage(CacheStorage):
 
     async def update(self, **kwargs: Any) -> None:
         try:
-            self._invalidate_strategy.process_update(**kwargs)
+            await self._invalidate_strategy.process_update(**kwargs)
         except CacheValidationError:
             return None
         embedded_data: Dict[Any, Any] = embed_cache_time(**kwargs)
@@ -73,7 +73,7 @@ class InMemoryCacheStorage(CacheStorage):
         if obj is None:
             return obj
         try:
-            self._invalidate_strategy.process_retrieve(obj=obj)
+            await self._invalidate_strategy.process_retrieve(obj=obj)
             return obj[VALUE_PLACEHOLDER]
         except CacheExpiredError:
             await self.delete(key)
@@ -83,7 +83,7 @@ class InMemoryCacheStorage(CacheStorage):
         del self._data[key]
 
     async def contains_similar(self, item: Any) -> bool:
-        return self._invalidate_strategy.check_is_contains_similar(self, item)
+        return await self._invalidate_strategy.check_is_contains_similar(self, item)
 
     def __del__(self) -> None:
         del self._data

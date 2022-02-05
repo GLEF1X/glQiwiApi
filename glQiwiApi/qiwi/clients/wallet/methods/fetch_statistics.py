@@ -4,12 +4,13 @@ from typing import ClassVar, List, Optional, Dict, Any
 
 from pydantic import root_validator, Field
 
-from glQiwiApi.base.api_method import APIMethod, Request
+from glQiwiApi.base.api_method import Request
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import Statistic, TransactionType
-from glQiwiApi.utils.dates_conversion import datetime_to_iso8601_with_moscow_timezone
+from glQiwiApi.utils.date_conversion import datetime_to_iso8601_with_moscow_timezone
 
 
-class FetchStatistics(APIMethod[Statistic]):
+class FetchStatistics(QiwiAPIMethod[Statistic]):
     url: ClassVar[str] = "https://edge.qiwi.com/payment-history/v2/persons/{phone_number}/payments/total"
     http_method: ClassVar[str] = "GET"
 

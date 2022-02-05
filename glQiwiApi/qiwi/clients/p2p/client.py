@@ -10,7 +10,7 @@ from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_key_pair import CreateP2PKeyP
 from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
 from glQiwiApi.qiwi.clients.p2p.methods.refund_bill import RefundBill
 from glQiwiApi.qiwi.clients.p2p.methods.reject_p2p_bill import RejectP2PBill
-from glQiwiApi.qiwi.clients.p2p.types import Bill, PairOfP2PKeys, RefundedBill
+from glQiwiApi.qiwi.clients.p2p.types import Bill, PairOfP2PKeys, RefundedBill, Customer
 from glQiwiApi.utils.validators import String
 
 
@@ -60,6 +60,10 @@ class QiwiP2PClient(BaseAPIClient):
         """
         return await self._request_service.emit_request_to_api(GetBillByID(bill_id=bill_id))
 
+    async def check_if_bill_was_paid(self, bill: Bill) -> bool:
+        bill_status = await self.get_bill_status(bill.id)
+        return bill_status == "PAID"
+
     async def get_bill_status(self, bill_id: str) -> str:
         """
         Method for checking the status of a p2p transaction.\n
@@ -84,6 +88,7 @@ class QiwiP2PClient(BaseAPIClient):
             expire_at: Optional[datetime] = None,
             theme_code: Optional[str] = None,
             pay_source_filter: Optional[List[str]] = None,
+            customer: Optional[Customer] = None
     ) -> Bill:
         """
         It is the reliable method for integration.
@@ -103,6 +108,7 @@ class QiwiP2PClient(BaseAPIClient):
         :param theme_code:
         :param pay_source_filter: When you open the form, the following will be displayed
          only the translation methods specified in this parameter
+        :param customer:
         """
         return await self._request_service.emit_request_to_api(
             CreateP2PBill(
@@ -111,9 +117,13 @@ class QiwiP2PClient(BaseAPIClient):
                 amount=amount,
                 comment=comment,
                 theme_code=theme_code,
-                pay_source_filter=pay_source_filter
+                pay_source_filter=pay_source_filter,
+                customer=customer
             )
         )
+
+    async def reject_bill(self, bill: Bill) -> Bill:
+        return await self.reject_p2p_bill(bill.id)
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
         """Use this method to cancel unpaid invoice."""
@@ -128,7 +138,7 @@ class QiwiP2PClient(BaseAPIClient):
         Creates a new pair of P2P keys to interact with P2P QIWI API
 
         :param key_pair_name: P2P token pair name
-        :param server_notification_url: url for webhooks
+        :param server_notification_url: endpoint for webhooks
         """
         return await self._request_service.emit_request_to_api(
             CreateP2PKeyPair(

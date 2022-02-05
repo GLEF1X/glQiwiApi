@@ -11,17 +11,16 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union, 
 from aiohttp import web
 from aiohttp.web import _run_app  # noqa
 
-from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
-from glQiwiApi.core.dispatcher.implementation import Dispatcher
+from glQiwiApi import QiwiWrapper
+from glQiwiApi.core.dispatcher.implementation import BaseDispatcher
 from glQiwiApi.core.dispatcher.webhooks.app import configure_app
 from glQiwiApi.core.dispatcher.webhooks.config import WebhookConfig
 from glQiwiApi.core.synchronous import adapter
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
+from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
 from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT
 from glQiwiApi.qiwi.clients.wallet.types import History
-
-from glQiwiApi.qiwi.exceptions import SecretP2PTokenIsEmpty
 
 logger = logging.getLogger("glQiwiApi.executor")
 
@@ -77,8 +76,8 @@ class ExecutorEvent:
 
 
 def start_webhook(
-        wallet: QiwiWallet,
-        dispatcher: Dispatcher,
+        wallet: Union[QiwiWallet, QiwiWrapper],
+        dispatcher: BaseDispatcher,
         *plugins: Pluggable,
         webhook_config: WebhookConfig,
         on_startup: Optional[_EventHandlerType] = None,
@@ -117,8 +116,8 @@ def start_webhook(
 
 
 def start_polling(
-        wallet: QiwiWallet,
-        dispatcher: Dispatcher,
+        wallet: Union[QiwiWallet, QiwiWrapper],
+        dispatcher: BaseDispatcher,
         *plugins: Pluggable,
         skip_updates: bool = False,
         timeout_in_seconds: float = DEFAULT_TIMEOUT,
@@ -162,6 +161,38 @@ def start_polling(
     executor.start_polling()
 
 
+async def start_non_blocking_qiwi_api_polling(
+        wallet: Union[QiwiWallet, QiwiWrapper],
+        dispatcher: BaseDispatcher,
+        skip_updates: bool = False,
+        timeout_in_seconds: float = DEFAULT_TIMEOUT,
+        on_startup: Optional[_EventHandlerType] = None,
+        on_shutdown: Optional[_EventHandlerType] = None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        context: Union[Dict[str, Any], Context, None] = None
+) -> None:
+    if context is None:
+        context = {}
+    executor = PollingExecutor(
+        wallet,
+        dispatcher,
+        timeout=timeout_in_seconds,
+        skip_updates=skip_updates,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        loop=loop,
+        context=Context(context)
+    )
+    await executor.start_non_blocking_polling()
+
+
+def configure_app_for_qiwi_webhooks(wallet: Union[QiwiWallet, QiwiWrapper],
+                                    dispatcher: BaseDispatcher, app: web.Application,
+                                    cfg: WebhookConfig) -> web.Application:
+    executor = WebhookExecutor(wallet, dispatcher, context=Context({}))
+    return executor.add_routes_for_webhook(app, cfg)
+
+
 class Context(Dict[str, Any]):
     def __getattr__(self, item: str) -> Any:
         return self[item]
@@ -174,7 +205,7 @@ class Context(Dict[str, Any]):
 class BaseExecutor(abc.ABC):
     def __init__(
             self,
-            dispatcher: Dispatcher,
+            dispatcher: BaseDispatcher,
             *plugins: Pluggable,
             context: Context,
             loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -239,8 +270,8 @@ class BaseExecutor(abc.ABC):
 class PollingExecutor(BaseExecutor):
     def __init__(
             self,
-            wallet: QiwiWallet,
-            dispatcher: Dispatcher,
+            wallet: Union[QiwiWallet, QiwiWrapper],
+            dispatcher: BaseDispatcher,
             *plugins: Pluggable,
             context: Context,
             loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -263,14 +294,18 @@ class PollingExecutor(BaseExecutor):
 
     def start_polling(self) -> None:
         try:
-            self.loop.run_until_complete(asyncio.gather(self.welcome(), self._install_plugins()))
-            asyncio.ensure_future(self._run_infinite_polling(), loop=self.loop)
+            asyncio.ensure_future(asyncio.gather(self._install_plugins(), self._run_infinite_polling()))
             adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # allow graceful shutdown
             pass
+
+    async def start_non_blocking_polling(self) -> None:
+        try:
+            await self.welcome()
+            asyncio.ensure_future(self._run_infinite_polling())
         finally:
-            self.loop.run_until_complete(self.goodbye())
+            await self.goodbye()
 
     async def _run_infinite_polling(self) -> None:
         default_timeout = self._timeout
@@ -295,9 +330,14 @@ class PollingExecutor(BaseExecutor):
         await self.process_updates(history)
 
     async def _fetch_history(self) -> History:
-        history = (
-            await self._wallet.history(start_date=self.get_updates_from, end_date=datetime.now())
-        ).sorted_by_date()
+        if isinstance(self._wallet, QiwiWallet):
+            history = (
+                await self._wallet.history(start_date=self.get_updates_from, end_date=datetime.now())
+            ).sorted_by_date()
+        else:
+            history = (
+                await self._wallet.transactions(start_date=self.get_updates_from, end_date=datetime.now())
+            ).sorted_by_date()
 
         if len(history) == MAX_HISTORY_LIMIT:
             logger.debug("History is out of max history transaction limit")
@@ -332,8 +372,8 @@ class PollingExecutor(BaseExecutor):
 class WebhookExecutor(BaseExecutor):
     def __init__(
             self,
-            wallet: QiwiWallet,
-            dispatcher: Dispatcher,
+            wallet: Union[QiwiWallet, QiwiWrapper],
+            dispatcher: BaseDispatcher,
             *plugins: Pluggable,
             context: Context,
             on_startup: Optional[Callable[..., Any]] = None,
@@ -348,6 +388,14 @@ class WebhookExecutor(BaseExecutor):
         self._wallet = wallet
 
         self._context[WALLET_CTX_KEY] = self._wallet
+
+    def add_routes_for_webhook(self, app: web.Application, config: WebhookConfig) -> web.Application:
+        supplemented_configuration = self.loop.run_until_complete(self._supplement_configuration(config))
+        return configure_app(
+            dispatcher=self._dispatcher,
+            app=app,
+            webhook_config=supplemented_configuration,
+        )
 
     def start_webhook(self, config: WebhookConfig) -> None:
         supplemented_configuration = self.loop.run_until_complete(
@@ -382,7 +430,7 @@ class WebhookExecutor(BaseExecutor):
             self._application = config.app.base_app
 
         if config.encryption.secret_p2p_key is None:
-            raise SecretP2PTokenIsEmpty(
+            raise RuntimeError(
                 "Secret p2p token is empty, cannot setup webhook without it. "
                 "Please, provide token to work with webhooks."
             )
@@ -393,8 +441,8 @@ class WebhookExecutor(BaseExecutor):
     async def _set_base64_encryption_key_for_config(self, config: WebhookConfig) -> None:
         if config.encryption.base64_encryption_key is None:
             if config.hook_registration.host_or_ip_address is None:
-                raise ValueError(
-                    "You have transmit neither base64 "
+                raise RuntimeError(
+                    "You didn't transmit neither base64 "
                     "encryption key to WebhookConfig nor host or ip address to bind new webhook."
                     "To fix it, pass on WebhookConfig.hook_registration.host_or_ip_address or "
                     "WebhookConfig.encryption.base64_encryption_key to executor.start_webhook(...)"

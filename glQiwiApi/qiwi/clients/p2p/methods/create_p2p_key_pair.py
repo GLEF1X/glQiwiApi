@@ -2,11 +2,12 @@ from typing import ClassVar, Optional, Dict, Any
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod, RuntimeValue
+from glQiwiApi.base.api_method import RuntimeValue
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.p2p.types import PairOfP2PKeys
 
 
-class CreateP2PKeyPair(APIMethod[PairOfP2PKeys]):
+class CreateP2PKeyPair(QiwiAPIMethod[PairOfP2PKeys]):
     http_method: ClassVar[str] = "POST"
     url: ClassVar[str] = "https://api.qiwi.com/partner/bill/v1/bills/widgets-api/api/p2p/protected/keys/create"
 

@@ -1,17 +1,16 @@
 import logging
-from typing import Any, Dict, Optional, TypeVar, Protocol
+from typing import Any, Dict, Optional, TypeVar, cast
 
 from aiohttp.typedefs import LooseCookies
-from pydantic import BaseModel
 
 from glQiwiApi.base.api_method import APIMethod
 from glQiwiApi.core.cache.cached_types import CachedAPIRequest, Payload
 from glQiwiApi.core.cache.storage import CacheStorage
-from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder, Response
-from glQiwiApi.utils.payload import make_payload, decode_response_as_json
+from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder, HTTPResponse
+from glQiwiApi.utils.compat import Protocol
+from glQiwiApi.utils.payload import make_payload
 
 logger = logging.getLogger("glQiwiApi.RequestService")
-
 
 T = TypeVar("T")
 
@@ -60,17 +59,17 @@ class RequestService:
 
         self._session_holder.update_session_kwargs(**session_holder_kw)
 
-    async def emit_request_to_api(self, method: APIMethod[R], **url_kw: Any) -> R:
+    async def emit_request_to_api(self, method: APIMethod[T], **url_kw: Any) -> T:
         request = method.build_request(**url_kw)
-        return method.parse_response(
-            await self.get_json_content(
-                request.endpoint,
-                request.http_method,
-                params=request.params,
-                data=request.data,
-                headers=request.headers
-            )
+        raw_http_response = await self._send_request(
+            request.endpoint,
+            request.http_method,
+            params=request.params,
+            data=request.data,
+            headers=request.headers,
+            json=request.json_payload
         )
+        return cast(T, method.parse_http_response(raw_http_response))
 
     async def get_text_content(
             self,
@@ -96,10 +95,10 @@ class RequestService:
                                data: Optional[Any] = None,
                                headers: Optional[Any] = None,
                                params: Optional[Any] = None,
-                               **kwargs: Any) -> Dict[Any, Any]:
-        prepared_payload = make_payload(**locals(), exclude=("kwargs", ))
+                               **kwargs: Any) -> Dict[str, Any]:
+        prepared_payload = make_payload(**locals(), exclude=("kwargs",))
         response = await self._send_request(**prepared_payload)
-        return decode_response_as_json(response)
+        return response.json()
 
     async def warmup(self) -> Any:
         return await self._session_holder.get_session()
@@ -117,18 +116,20 @@ class RequestService:
             headers: Optional[Any] = None,
             params: Optional[Any] = None,
             **kwargs: Any,
-    ) -> Response:
+    ) -> HTTPResponse:
         session = await self._session_holder.get_session()
-        return await self._session_holder.parse_response(await session.request(
-            method=method,
-            url=url,
-            data=data,
-            headers=headers,
-            json=json,
-            cookies=cookies,
-            params=params,
-            **kwargs,
-        ))
+        return await self._session_holder.convert_third_party_lib_response_to_http_response(
+            await session.request(
+                method=method,
+                url=url,
+                data=data,
+                headers=headers,
+                json=json,
+                cookies=cookies,
+                params=params,
+                **kwargs,
+            )
+        )
 
 
 class RequestServiceCacheDecorator(RequestServiceProto):
@@ -163,7 +164,7 @@ class RequestServiceCacheDecorator(RequestServiceProto):
         request_args = make_payload(**locals())
 
         if await self._cache.contains_similar(Payload(**request_args)):
-            return (await self._cache.retrieve(url)).response
+            return cast(Dict[Any, Any], (await self._cache.retrieve(url)).response)
 
         response = await self._request_service.get_json_content(**request_args)
         await self._cache_response(response, **request_args)
@@ -181,7 +182,7 @@ class RequestServiceCacheDecorator(RequestServiceProto):
     async def _cache_response(self, response: Any, method: str, **kwargs: Any) -> None:
         await self._cache.update(
             **{
-                kwargs["url"]: CachedAPIRequest(
+                kwargs["endpoint"]: CachedAPIRequest(
                     payload=Payload(**kwargs), response=response, method=method
                 )
             }

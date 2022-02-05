@@ -1287,8 +1287,8 @@ described = {
         name="Venezuelan Bolívar",
         name_plural="Venezuelan bolívars",
         rounding=0,
-        symbol="Bs.F.",
-        symbol_native="Bs.F.",
+        symbol="Bs.raise_exception_matching_error_code.",
+        symbol_native="Bs.raise_exception_matching_error_code.",
         isoformat="937",
     ),
     "VND": CurrencyModel(

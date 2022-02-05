@@ -16,17 +16,17 @@ INFINITE = float("inf")
 
 class CacheInvalidationStrategy(abc.ABC):
     @abc.abstractmethod
-    def process_update(self, **kwargs: Any) -> None:
+    async def process_update(self, **kwargs: Any) -> None:
         pass
 
-    def process_delete(self) -> None:
+    async def process_delete(self) -> None:
         pass
 
     @abc.abstractmethod
-    def process_retrieve(self, **kwargs: Any) -> None:
+    async def process_retrieve(self, **kwargs: Any) -> None:
         pass
 
-    def check_is_contains_similar(self, cached_storage: CacheStorage, item: Any) -> bool:
+    async def check_is_contains_similar(self, cache_storage: CacheStorage, item: Any) -> bool:
         raise TypeError
 
     @property
@@ -35,10 +35,10 @@ class CacheInvalidationStrategy(abc.ABC):
 
 
 class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
-    def process_update(self, **kwargs: Any) -> None:
+    async def process_update(self, **kwargs: Any) -> None:
         pass
 
-    def process_retrieve(self, **kwargs: Any) -> None:
+    async def process_retrieve(self, **kwargs: Any) -> None:
         pass
 
     @property
@@ -54,11 +54,11 @@ class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
     def is_cache_disabled(self) -> bool:
         return self._cache_time == 0
 
-    def process_update(self, **kwargs: Any) -> None:
+    async def process_update(self, **kwargs: Any) -> None:
         if self.is_cache_disabled:
             raise CacheValidationError()
 
-    def process_retrieve(self, **kwargs: Any) -> None:
+    async def process_retrieve(self, **kwargs: Any) -> None:
         self._is_cache_expired(**kwargs)
 
     def _is_cache_expired(self, **kwargs: Dict[str, Union[Any, float]]) -> None:
@@ -80,14 +80,14 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
     def is_cache_disabled(self) -> bool:
         return self._cache_time == 0
 
-    def process_update(self, **kwargs: Any) -> None:
+    async def process_update(self, **kwargs: Any) -> None:
         super().process_update(**kwargs)
         for key in kwargs.keys():
             if any(key.startswith(coincidence) for coincidence in self._uncached):
                 raise CacheValidationError()
 
-    def check_is_contains_similar(self, storage: CacheStorage, item: Any) -> bool:
-        values = storage.retrieve_all()
+    async def check_is_contains_similar(self, storage: CacheStorage, item: Any) -> bool:
+        values = await storage.retrieve_all()
         if not isinstance(item, Payload):
             return item in values
         for value in values:

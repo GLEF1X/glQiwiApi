@@ -1,15 +1,15 @@
 import uuid
 from typing import ClassVar, Dict, Any, Optional
 
-
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod, RuntimeValue
+from glQiwiApi.base.api_method import RuntimeValue
 from glQiwiApi.base.types.amount import AmountWithCurrency
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo, PaymentMethod, PaymentDetails
 
 
-class MakePaymentByDetails(APIMethod[PaymentInfo]):
+class MakePaymentByDetails(QiwiAPIMethod[PaymentInfo]):
     url: ClassVar[str] = "https://edge.qiwi.com/sinap/api/v2/terms/1717/payments"
     http_method: ClassVar[str] = "POST"
 

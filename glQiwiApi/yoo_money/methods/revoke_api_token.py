@@ -1,6 +1,7 @@
 from typing import Any, Dict, ClassVar
 
 from glQiwiApi.base.api_method import APIMethod, ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
 
 
 class RevokeAPIToken(APIMethod[Dict[Any, Any]]):
@@ -8,5 +9,5 @@ class RevokeAPIToken(APIMethod[Dict[Any, Any]]):
     url: ClassVar[str] = "https://yoomoney.ru/api/revoke"
 
     @classmethod
-    def parse_response(cls, obj: Any) -> ReturningType:
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
         return {}

@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import abc
-from typing import Any, Generic, List, TypeVar
+from typing import Any, Generic, TypeVar, Set
 
 T = TypeVar("T")
 
@@ -36,12 +34,12 @@ class AbstractCollisionDetector(abc.ABC, Generic[T]):
 
 class HashBasedCollisionDetector(AbstractCollisionDetector[T]):
     def __init__(self) -> None:
-        self.already_processed_object_hashes: List[int] = []
+        self.already_processed_object_hashes: Set[int] = set()
 
     def add_already_processed_event(self, obj: T) -> None:
         if _is_object_unhashable(obj):
             raise UnhashableObjectError(f"Object {obj!r} is unhashable")
-        self.already_processed_object_hashes.append(hash(obj))
+        self.already_processed_object_hashes.add(hash(obj))
 
     def has_collision(self, obj: T) -> bool:
         if _is_object_unhashable(obj):

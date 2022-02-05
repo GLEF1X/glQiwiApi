@@ -2,6 +2,7 @@ import re
 from typing import List, Any, cast, ClassVar
 
 from glQiwiApi.base.api_method import APIMethod, Request, ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
 
 YOO_MONEY_LINK_REGEXP = re.compile(r"https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+")
 
@@ -28,9 +29,9 @@ class BuildAuthURL(APIMethod[str]):
         )
 
     @classmethod
-    def parse_response(cls, obj: Any) -> ReturningType:
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
         try:
-            return cast(str, re.findall(YOO_MONEY_LINK_REGEXP, obj)[0])  # pragma: no cover
+            return cast(str, re.findall(YOO_MONEY_LINK_REGEXP, response.body.decode("utf-8"))[0])  # pragma: no cover
         except IndexError:
             raise Exception(
                 "Could not find the authorization link in the response from "

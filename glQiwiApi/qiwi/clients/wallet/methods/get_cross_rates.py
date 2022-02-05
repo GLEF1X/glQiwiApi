@@ -1,14 +1,17 @@
-from typing import List, ClassVar, Any
+from typing import List, ClassVar
 
+from pydantic import parse_obj_as
 
-from glQiwiApi.base.api_method import APIMethod, ReturningType
+from glQiwiApi.base.api_method import ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
+from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import CrossRate
 
 
-class GetCrossRates(APIMethod[List[CrossRate]]):
+class GetCrossRates(QiwiAPIMethod[List[CrossRate]]):
     url: ClassVar[str] = "https://edge.qiwi.com/sinap/crossRates"
     http_method: ClassVar[str] = "GET"
 
     @classmethod
-    def parse_response(cls, obj: Any) -> ReturningType:
-        return super().parse_response(obj["result"])
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+        return parse_obj_as(List[CrossRate], response.json()["result"])

@@ -26,6 +26,7 @@ __all__ = (
     "QiwiMaps",
     "QiwiWallet",
     "QiwiP2PClient",
+    "QiwiWrapper",
     # other
     "__version__",
     "default_cache_storage"
