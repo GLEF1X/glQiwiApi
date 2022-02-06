@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from glQiwiApi.base.api_method import RuntimeValue
+from glQiwiApi.core.abc.api_method import RuntimeValue
 
 
 @pytest.mark.parametrize(

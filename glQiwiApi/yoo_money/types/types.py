@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union, Iterator, TYPE_CHECKING
 
 from pydantic import BaseModel, Field, root_validator, ValidationError
 
-from glQiwiApi.base.types.base import Base
+from glQiwiApi.types.base import Base
 
 if TYPE_CHECKING:
     from glQiwiApi import YooMoneyAPI  # noqa

@@ -1,6 +1,9 @@
-from typing import ClassVar, Any
+from typing import ClassVar
 
-from glQiwiApi.base.api_method import Request
+from pydantic import Field
+
+from glQiwiApi.core.abc.api_method import ReturningType
+from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
@@ -8,7 +11,8 @@ class GetWebhookSecret(QiwiAPIMethod[str]):
     http_method: ClassVar[str] = "GET"
     url: ClassVar[str] = "https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}/key"
 
-    hook_id: str
+    hook_id: str = Field(..., path_runtime_value=True)
 
-    def build_request(self, **url_format_kw: Any) -> Request:
-        return super().build_request(**url_format_kw, hook_id=self.hook_id)
+    @classmethod
+    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+        return response.json()["key"]

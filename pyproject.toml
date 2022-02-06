@@ -95,6 +95,7 @@ async-timeout = "^4.0.2"
 types-orjson = "^3.6.2"
 types-aiofiles = "^0.8.2"
 types-pytz = "^2021.3.3"
+pytest-timeout = "^2.1.0"
 
 
 [tool.black]

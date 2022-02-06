@@ -2,8 +2,8 @@ from typing import Any, Dict, Optional
 
 from pydantic import Field
 
-from glQiwiApi.base.types.amount import AmountWithCurrency
-from glQiwiApi.base.types.base import Base
+from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.base import Base
 
 
 class Fields(Base):

@@ -30,7 +30,7 @@ class QiwiAPIError(Exception):
 
     description_en: ClassVar[Optional[str]] = None
     description_ru: ClassVar[Optional[str]] = None
-    
+
     _error_code_match: ClassVar[Optional[Union[str, int, List[Union[str, int]]]]] = None
     _error_code_contains: ClassVar[Union[str, List[str], None]] = None
 
@@ -100,7 +100,7 @@ class QiwiAPIError(Exception):
             return err_code
 
         err_code = r.get("code")
-        if err_code is not None:
+        if isinstance(err_code, str):
             return err_code.replace("QWPRC-", "")  # type: ignore
 
         return None
@@ -185,3 +185,7 @@ class ReceiptNotAvailable(QiwiAPIError):
 
 class OperationLimitExceeded(QiwiAPIError):
     _error_code_match = [705, 704, 700, 716, 717]
+
+
+class MobileOperatorCannotBeDetermined(QiwiAPIError):
+    pass

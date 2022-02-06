@@ -7,7 +7,7 @@ from _pytest.fixtures import SubRequest
 
 
 # spike for mypy
-from glQiwiApi.base.types.arbitrary import PlainPathInput, PathlibPathInput, BinaryIOInput, File
+from glQiwiApi.types.types.arbitrary import PlainPathInput, PathlibPathInput, BinaryIOInput, File
 
 lazy_fixture: Callable[..., Any] = pytest.lazy_fixture  # type: ignore  # noqa
 

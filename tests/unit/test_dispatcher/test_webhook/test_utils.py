@@ -1,7 +1,7 @@
 from aiohttp import web
 from aiohttp.web_request import Request
 
-from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
+from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
 
 
 class A:

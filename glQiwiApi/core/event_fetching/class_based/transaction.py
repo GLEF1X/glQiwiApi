@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from glQiwiApi.base.types.amount import AmountWithCurrency
 from glQiwiApi.qiwi.clients.wallet.types.transaction import Transaction
+from glQiwiApi.types.amount import AmountWithCurrency
 from .base import Handler
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.clients.wallet import QiwiWallet
+    from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
 
 
 class AbstractTransactionHandler(Handler[Transaction], abc.ABC):
 
     @property
     def wallet(self) -> QiwiWallet:
-        return self.context["wallet"]
+        return self.context["wallet"]  # type: QiwiWallet
 
     @property
     def transaction_id(self) -> int:

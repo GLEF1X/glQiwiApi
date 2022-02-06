@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field, validator
 
-from glQiwiApi.base.types.amount import AmountWithCurrency, CurrencyModel
-from glQiwiApi.base.types.base import Base
+from glQiwiApi.types.amount import AmountWithCurrency, CurrencyModel
+from glQiwiApi.types.base import Base
 from glQiwiApi.utils.currency_util import Currency
 
 

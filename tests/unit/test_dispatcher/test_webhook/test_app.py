@@ -4,11 +4,11 @@ from aiohttp.test_utils import TestClient
 from aiohttp.web_app import Application
 from aiohttp.web_request import Request
 
-from glQiwiApi.core.dispatcher.implementation import QiwiDispatcher
-from glQiwiApi.core.dispatcher.webhooks.app import configure_app
-from glQiwiApi.core.dispatcher.webhooks.config import EncryptionConfig, WebhookConfig
-from glQiwiApi.core.dispatcher.webhooks.middlewares.ip import ip_filter_middleware
-from glQiwiApi.core.dispatcher.webhooks.services.security.ip import IPFilter
+from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
+from glQiwiApi.core.event_fetching.webhooks.app import configure_app
+from glQiwiApi.core.event_fetching.webhooks.config import EncryptionConfig, WebhookConfig
+from glQiwiApi.core.event_fetching.webhooks.middlewares.ip import ip_filter_middleware
+from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
 from tests.unit.test_dispatcher.mocks import WebhookTestData
 
 

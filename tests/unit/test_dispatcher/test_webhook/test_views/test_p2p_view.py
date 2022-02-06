@@ -7,11 +7,11 @@ from aiohttp.test_utils import TestClient
 from aiohttp.web_app import Application
 
 from glQiwiApi.core import QiwiBillWebhookView
-from glQiwiApi.core.dispatcher.implementation import QiwiDispatcher
-from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
+from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
+from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
     HashBasedCollisionDetector,
 )
-from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
+from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 from tests.unit.test_dispatcher.mocks import WebhookTestData
 

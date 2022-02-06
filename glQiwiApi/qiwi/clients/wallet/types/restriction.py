@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from glQiwiApi.base.types.base import HashableBase
+from glQiwiApi.types.base import HashableBase
 
 
 class Restriction(HashableBase):

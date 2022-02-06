@@ -4,13 +4,13 @@ import base64
 import hashlib
 import hmac
 from datetime import datetime
-from typing import Any, Dict, Optional, Union, TYPE_CHECKING, cast
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
-from pydantic import Extra, Field, BaseConfig
+from pydantic import Extra, Field, BaseConfig, HttpUrl
 
-from glQiwiApi.base.types.amount import HashableOptionalSum, PlainAmount
-from glQiwiApi.base.types.base import HashableBase
-from glQiwiApi.base.types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.types.amount import HashablePlainAmount, PlainAmount
+from glQiwiApi.types.base import HashableBase
+from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.clients.p2p import QiwiP2PClient  # noqa
@@ -52,13 +52,13 @@ class BillError(HashableBase):
 class Bill(HashableBase):
     """Object: Bill"""
 
-    amount: HashableOptionalSum
+    amount: HashablePlainAmount
     status: BillStatus
     site_id: str = Field(..., alias="siteId")
     id: str = Field(..., alias="billId")
     created_at: datetime = Field(..., alias="creationDateTime")
     expire_at: datetime = Field(..., alias="expirationDateTime")
-    pay_url: str = Field(..., alias="payUrl")
+    pay_url: HttpUrl = Field(..., alias="payUrl")
     customer: Optional[Customer] = None
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
 
@@ -67,19 +67,8 @@ class Bill(HashableBase):
         allow_mutation = True
 
     @property
-    def _client(self) -> QiwiP2PClient:
-        return cast(QiwiP2PClient, self._client_ctx["p2p_client"])
-
-    @property
     def invoice_uid(self) -> str:
         return self.pay_url[-36:]
-
-    @property
-    def shim_url(self) -> str:
-        if self._client._shim_server_url is None:
-            raise Exception("QiwiP2PClient has no shim endpoint -> can't create shim endpoint for bill")
-
-        return self._client._shim_server_url.format(self.invoice_uid)
 
 
 class RefundedBill(HashableBase):

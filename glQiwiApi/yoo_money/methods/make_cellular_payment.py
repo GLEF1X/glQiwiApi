@@ -3,7 +3,7 @@ from typing import Any, Dict, ClassVar
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import APIMethod
+from glQiwiApi.core.abc.api_method import APIMethod
 
 
 class MakeCellularPayment(APIMethod[Dict[str, Any]]):

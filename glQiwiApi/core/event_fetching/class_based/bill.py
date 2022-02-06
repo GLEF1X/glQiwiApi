@@ -3,9 +3,9 @@ from __future__ import annotations
 import abc
 from typing import TYPE_CHECKING
 
-from glQiwiApi.base.types.amount import PlainAmount
-from glQiwiApi.core.dispatcher.class_based.base import Handler
+from glQiwiApi.core.event_fetching.class_based.base import Handler
 from glQiwiApi.qiwi.clients.p2p.types import Bill
+from glQiwiApi.types.amount import PlainAmount
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient

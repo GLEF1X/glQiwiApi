@@ -43,8 +43,8 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
     request_schema: ClassVar[Dict[str, Any]] = {}
 
-    def __init__(self, **data: Any) -> None:
-        super().__init__(**_filter_none_values(data))
+    # def __init__(self, **data: Any) -> None:
+    #     super().__init__(**_filter_none_values(data))
 
     def __class_getitem__(cls, params: Union[Type[Any], Tuple[Type[Any], ...]]) -> Type[Any]:
         """

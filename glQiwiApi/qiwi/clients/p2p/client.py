@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Optional, Union, Dict, List
 
-from glQiwiApi.base.types.amount import PlainAmount
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient
 from glQiwiApi.core.cache.storage import CacheStorage
 from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
@@ -11,7 +10,12 @@ from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
 from glQiwiApi.qiwi.clients.p2p.methods.refund_bill import RefundBill
 from glQiwiApi.qiwi.clients.p2p.methods.reject_p2p_bill import RejectP2PBill
 from glQiwiApi.qiwi.clients.p2p.types import Bill, PairOfP2PKeys, RefundedBill, Customer
+from glQiwiApi.types.amount import PlainAmount
 from glQiwiApi.utils.validators import String
+
+
+class NoShimUrlWasProvidedError(Exception):
+    pass
 
 
 class QiwiP2PClient(BaseAPIClient):
@@ -127,9 +131,7 @@ class QiwiP2PClient(BaseAPIClient):
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
         """Use this method to cancel unpaid invoice."""
-        return await self._request_service.emit_request_to_api(
-            RejectP2PBill(bill_id=bill_id)
-        )
+        return await self._request_service.emit_request_to_api(RejectP2PBill(bill_id=bill_id))
 
     async def create_pair_of_p2p_keys(
             self, key_pair_name: str, server_notification_url: Optional[str] = None
@@ -174,3 +176,11 @@ class QiwiP2PClient(BaseAPIClient):
         return await self._request_service.emit_request_to_api(
             RefundBill(bill_id=bill_id, refund_id=refund_id, json_bill_data=json_bill_data)
         )
+
+    def create_shim_url(self, invoice_uid: str):
+        if self._shim_server_url is None:
+            raise NoShimUrlWasProvidedError(
+                "QiwiP2PClient has no shim endpoint -> can't create shim endpoint for bill"
+            )
+
+        return self._shim_server_url.format(invoice_uid)

@@ -5,7 +5,7 @@ import inspect
 import pathlib
 from typing import Any, BinaryIO, Union
 
-from glQiwiApi.base.types.arbitrary.inputs import AbstractInput
+from glQiwiApi.types.arbitrary.inputs import AbstractInput
 from glQiwiApi.utils.compat import aiofiles
 
 CHUNK_SIZE = 65536
@@ -17,7 +17,7 @@ _OpenFile = Union[StrOrBytesPath, int]
 
 
 class File:
-    def __init__(self, input: AbstractInput[Any]) -> None:  # noqa
+    def __init__(self, input: AbstractInput[Any]) -> None:
         self._input = input
 
     def get_filename(self) -> str:

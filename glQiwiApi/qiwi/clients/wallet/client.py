@@ -11,8 +11,6 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from glQiwiApi.base.types.amount import AmountWithCurrency
-from glQiwiApi.base.types.arbitrary import File
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient
 from glQiwiApi.core.cache.storage import CacheStorage
 from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
@@ -27,7 +25,6 @@ from glQiwiApi.qiwi.clients.wallet.methods.detect_mobile_number import DetectMob
 from glQiwiApi.qiwi.clients.wallet.methods.fetch_statistics import FetchStatistics
 from glQiwiApi.qiwi.clients.wallet.methods.get_account_info import GetAccountInfo
 from glQiwiApi.qiwi.clients.wallet.methods.get_available_balances import GetAvailableBalances
-from glQiwiApi.qiwi.clients.wallet.methods.get_balance import GetBalance
 from glQiwiApi.qiwi.clients.wallet.methods.get_balances import GetBalances
 from glQiwiApi.qiwi.clients.wallet.methods.get_card_id import GetCardID
 from glQiwiApi.qiwi.clients.wallet.methods.get_cards import GetBoundedCards
@@ -51,8 +48,9 @@ from glQiwiApi.qiwi.clients.wallet.methods.webhook.get_current_webhook import Ge
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.get_webhook_secret import GetWebhookSecret
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.register_webhook import RegisterWebhook
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.send_test_notification import SendTestWebhookNotification
+from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.arbitrary import File
 from glQiwiApi.utils.helper import allow_response_code
-from ...utils import is_transaction_exists_in_history
 from glQiwiApi.utils.validators import PhoneNumber, String
 from .types import (
     CrossRate, PaymentDetails, OrderDetails, PaymentInfo, PaymentMethod, QiwiAccountInfo,
@@ -61,6 +59,7 @@ from .types import (
 )
 from ..p2p.types import Bill, InvoiceStatus
 from ...exceptions import QiwiAPIError
+from ...utils import is_transaction_exists_in_history
 
 AmountType = Union[int, float]
 
@@ -198,13 +197,13 @@ class QiwiWallet(BaseAPIClient):
 
         return webhook, key
 
-    async def _detect_mobile_number(self, phone_number: str) -> str:
+    async def detect_mobile_number(self, phone_number: str) -> str:
         """https://developer.qiwi.com/ru/qiwi-wallet-personal/?python#search-providers"""
         return await self._request_service.emit_request_to_api(DetectMobileNumber(phone_number=phone_number))
 
     async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
         resp: List[Balance] = await self._request_service.emit_request_to_api(
-            GetBalance(account_number=account_number),
+            GetBalances(),
             phone_number=self.phone_number,
         )
         return resp[account_number - 1].balance  # type: ignore
@@ -461,7 +460,7 @@ class QiwiWallet(BaseAPIClient):
             phone_number=self.phone_number_without_plus_sign
         )
 
-    async def list_of_balances(self) -> List[Balance]:
+    async def get_list_of_balances(self) -> List[Balance]:
         """
         The request gets the current account balances of your QIWI Wallet.
         More detailed documentation:
@@ -501,7 +500,7 @@ class QiwiWallet(BaseAPIClient):
         The request sets up an account for your QIWI Wallet, whose balance will be used for funding
         all payments by default.
         The account must be contained in the list of accounts, you can get the list by calling
-        list_of_balances method
+        get_list_of_balances method
 
         :param currency_alias:
         """

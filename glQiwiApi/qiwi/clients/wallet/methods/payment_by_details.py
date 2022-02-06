@@ -3,10 +3,10 @@ from typing import ClassVar, Dict, Any, Optional
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import RuntimeValue
-from glQiwiApi.base.types.amount import AmountWithCurrency
+from glQiwiApi.core.abc.api_method import RuntimeValue
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo, PaymentMethod, PaymentDetails
+from glQiwiApi.types.amount import AmountWithCurrency
 
 
 class MakePaymentByDetails(QiwiAPIMethod[PaymentInfo]):

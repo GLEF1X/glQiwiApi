@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Optional, cast
 
 from pydantic import Field, root_validator
 
-from glQiwiApi.base.types.amount import HashableSum
-from glQiwiApi.base.types.base import HashableBase, Base
-from glQiwiApi.base.types.exceptions import WebhookSignatureUnverifiedError
+from glQiwiApi.types.amount import HashableSum
+from glQiwiApi.types.base import HashableBase, Base
+from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
 
 class WebhookPayment(HashableBase):
@@ -107,7 +107,7 @@ def _get_sign_field(dictionary: Dict[Any, Any], nested_keys_list: List[str]) -> 
 
 
 class HookParameters(Base):
-    url: str = Field(..., alias="endpoint")
+    url: str
 
 
 class WebhookTransactionType(str, enum.Enum):

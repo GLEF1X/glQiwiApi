@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from glQiwiApi.base.types.amount import AmountWithCurrency
-from glQiwiApi.base.types.base import Base, HashableBase
+from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.base import Base, HashableBase
 
 
 class OrderDetails(Base):

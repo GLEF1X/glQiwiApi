@@ -2,10 +2,10 @@ from typing import ClassVar, Union
 
 from pydantic import Field
 
-from glQiwiApi.base.types.arbitrary import File, BinaryIOInput
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import TransactionType
+from glQiwiApi.types.arbitrary import BinaryIOInput, File
 
 
 class GetReceipt(QiwiAPIMethod[File]):

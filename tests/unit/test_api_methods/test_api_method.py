@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, Field
 
-from glQiwiApi.base.api_method import APIMethod, Request, RuntimeValue
+from glQiwiApi.core.abc.api_method import APIMethod, Request, RuntimeValue
 from glQiwiApi.core.session.holder import HTTPResponse
 
 

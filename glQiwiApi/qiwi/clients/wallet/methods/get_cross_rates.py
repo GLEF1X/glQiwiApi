@@ -2,7 +2,7 @@ from typing import List, ClassVar
 
 from pydantic import parse_obj_as
 
-from glQiwiApi.base.api_method import ReturningType
+from glQiwiApi.core.abc.api_method import ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import CrossRate

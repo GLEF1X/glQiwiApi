@@ -2,7 +2,7 @@ from typing import ClassVar, Dict, Any
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import RuntimeValue
+from glQiwiApi.core.abc.api_method import RuntimeValue
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import OrderDetails
 

@@ -18,12 +18,10 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    no_type_check, Sequence,
+    Sequence,
 )
 
-from glQiwiApi.qiwi.clients.p2p.types import (
-    BillWebhook,
-)
+from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 from .filters import BaseFilter, LambdaBasedFilter
 from .. import Handler
 from ...qiwi.clients.wallet.types.transaction import Transaction
@@ -41,6 +39,7 @@ class CancelHandler(Exception):
 
 
 Event = TypeVar("Event")
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class BaseDispatcher(abc.ABC):
@@ -48,8 +47,7 @@ class BaseDispatcher(abc.ABC):
     def __init__(self) -> None:
         self.error_handler = HandlerCollection(Exception)
 
-    @no_type_check
-    def _wrap_callback_for_error_handling(self, callback):
+    def _wrap_callback_for_error_handling(self, callback: F) -> F:
         @functools.wraps(callback)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
@@ -95,9 +93,6 @@ class QiwiDispatcher(BaseDispatcher):
     def __all_handlers__(self) -> Sequence[HandlerCollection[Any]]:
         """Return all registered handlers except error handlers"""
         return self.bill_handler, self.transaction_handler
-
-
-F = TypeVar("F", bound=Callable[..., Any])
 
 
 class HandlerCollection(Generic[Event]):
@@ -171,7 +166,7 @@ class EventHandler(Generic[Event]):
             *filters: BaseFilter[Event],
     ) -> None:
         self._handler = handler
-        self._filters = list(filter(lambda f: operator.not_(operator.eq(f, None)), filters))
+        self._filters = tuple(filter(lambda f: operator.not_(operator.eq(f, None)), filters))
 
     async def check_then_execute(self, event: Event, *args: Any) -> Optional[Any]:
         """Check event, apply all filters and then pass on to handler"""

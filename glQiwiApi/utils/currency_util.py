@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
-from glQiwiApi.base.types import _currencies as currencies
-from glQiwiApi.base.types.amount import CurrencyModel
+from glQiwiApi.types import _currencies
+from glQiwiApi.types.amount import CurrencyModel
 
 
 class Currency:
@@ -28,10 +28,7 @@ class Currency:
         :param currency_code: ISO 4217 string or CODE
         :return: Currency object
         """
-        try:
-            if isinstance(currency_code, int) or currency_code.isdigit():
-                return currencies.described.get(currencies.codes_number[str(currency_code)])
-            else:
-                return currencies.described.get(currency_code.upper())
-        except (KeyError, AssertionError):
-            raise RuntimeError(f"Currency code `{currency_code}` was not found")
+        if isinstance(currency_code, int) or currency_code.isdigit():
+            return _currencies.described.get(_currencies.codes_number[str(currency_code)])
+        else:
+            return _currencies.described.get(currency_code.upper())

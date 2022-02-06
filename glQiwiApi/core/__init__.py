@@ -1,13 +1,13 @@
 from .abc.base_api_client import BaseAPIClient
-from .dispatcher.class_based import (
+from .event_fetching.class_based import (
     AbstractBillHandler,
     AbstractTransactionHandler,
     AbstractTransactionWebhookHandler,
     ExceptionHandler,
     Handler,
 )
-from .dispatcher.filters import BaseFilter, LambdaBasedFilter
-from .dispatcher.webhooks import (
+from .event_fetching.filters import BaseFilter, LambdaBasedFilter
+from .event_fetching.webhooks import (
     BaseWebhookView,
     QiwiBillWebhookView,
     QiwiTransactionWebhookView,

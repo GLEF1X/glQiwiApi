@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from glQiwiApi.base.types.base import Base
+from glQiwiApi.types.base import Base
 
 
 class Coordinate(Base):

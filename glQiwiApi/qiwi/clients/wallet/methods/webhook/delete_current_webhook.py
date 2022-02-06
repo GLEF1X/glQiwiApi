@@ -1,6 +1,6 @@
 from typing import ClassVar, Any, Dict
 
-from glQiwiApi.base.api_method import Request
+from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 

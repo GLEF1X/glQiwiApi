@@ -2,7 +2,7 @@ from ipaddress import IPv4Address, IPv4Network
 
 import pytest
 
-from glQiwiApi.core.dispatcher.webhooks.services.security.ip import IPFilter
+from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
 
 
 class TestSecurity:

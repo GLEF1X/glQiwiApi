@@ -2,10 +2,10 @@ from typing import ClassVar, Union, Dict, Any
 
 from pydantic import Field
 
-from glQiwiApi.base.api_method import Request
-from glQiwiApi.base.types.amount import PlainAmount
+from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.p2p.types import RefundedBill
+from glQiwiApi.types.amount import PlainAmount
 
 
 class RefundBill(QiwiAPIMethod[RefundedBill]):

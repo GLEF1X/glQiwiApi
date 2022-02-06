@@ -4,7 +4,7 @@ import re
 from collections import namedtuple
 from typing import Any, Optional, Pattern, Type, TypeVar, cast
 
-from glQiwiApi.core.dispatcher.webhooks.config import DEFAULT_QIWI_WEBHOOK_PATH
+from glQiwiApi.core.event_fetching.webhooks.config import DEFAULT_QIWI_WEBHOOK_PATH
 
 _URL = TypeVar("_URL", bound="WebhookURL")
 

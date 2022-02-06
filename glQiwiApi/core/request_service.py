@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, TypeVar, cast
 
 from aiohttp.typedefs import LooseCookies
 
-from glQiwiApi.base.api_method import APIMethod
+from glQiwiApi.core.abc.api_method import APIMethod
 from glQiwiApi.core.cache.cached_types import CachedAPIRequest, Payload
 from glQiwiApi.core.cache.storage import CacheStorage
 from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionHolder, HTTPResponse

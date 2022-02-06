@@ -3,7 +3,7 @@ from typing import Optional, List, Final, Dict, Any, ClassVar
 
 from pydantic import root_validator, conint, Field
 
-from glQiwiApi.base.api_method import Request
+from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import History, TransactionType, Source
 from glQiwiApi.utils.date_conversion import datetime_to_iso8601_with_moscow_timezone

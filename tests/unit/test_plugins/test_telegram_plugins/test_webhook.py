@@ -4,7 +4,7 @@ import pytest
 from aiogram import Bot, Dispatcher
 from pytest_mock import MockerFixture
 
-from glQiwiApi.core.dispatcher.webhooks.config import ApplicationConfig
+from glQiwiApi.core.event_fetching.webhooks.config import ApplicationConfig
 from glQiwiApi.plugins.telegram.webhook import (
     DEFAULT_TELEGRAM_WEBHOOK_PATH,
     DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX,

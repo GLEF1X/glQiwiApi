@@ -10,12 +10,12 @@ from aiohttp.test_utils import TestClient
 from aiohttp.web_app import Application
 
 from glQiwiApi.core import QiwiTransactionWebhookView
-from glQiwiApi.core.dispatcher.implementation import QiwiDispatcher
-from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
-from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
+from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
+from glQiwiApi.core.event_fetching.webhooks.dto.errors import WebhookAPIError
+from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
     HashBasedCollisionDetector,
 )
-from glQiwiApi.core.dispatcher.webhooks.utils import inject_dependencies
+from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
 from glQiwiApi.qiwi.clients.wallet.types import TransactionWebhook
 from tests.unit.test_dispatcher.mocks import WebhookTestData
 

@@ -1,8 +1,5 @@
 from datetime import datetime
 from typing import Optional, Union, Any, Type, TypeVar, Dict, List, Tuple, TYPE_CHECKING
-
-from glQiwiApi.base.types.amount import PlainAmount, AmountWithCurrency
-from glQiwiApi.base.types.arbitrary import File
 from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
 from glQiwiApi.qiwi.clients.p2p.types import PairOfP2PKeys, Bill, RefundedBill, InvoiceStatus, Customer
 from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet, AmountType
@@ -11,6 +8,8 @@ from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo, OrderDetails, Payme
     CrossRate, Balance, \
     TransactionType, Statistic, QiwiAccountInfo, Card, Limit, Identification, Restriction, Transaction, \
     Source, History, WebhookInfo, Commission
+from glQiwiApi.types.amount import AmountWithCurrency, PlainAmount
+from glQiwiApi.types.arbitrary import File
 
 if TYPE_CHECKING:
     from glQiwiApi.ext.webhook_url import WebhookURL
@@ -308,7 +307,7 @@ class QiwiWrapper:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/?http#balances_list
 
         """
-        return await self._qiwi_wallet.list_of_balances()
+        return await self._qiwi_wallet.get_list_of_balances()
 
     async def create_new_balance(self, currency_alias: str) -> Optional[Dict[str, bool]]:
         """
@@ -330,7 +329,7 @@ class QiwiWrapper:
         The request sets up an account for your QIWI Wallet, whose balance will be used for funding
         all payments by default.
         The account must be contained in the list of accounts, you can get the list by calling
-        list_of_balances method
+        get_list_of_balances method
 
         :param currency_alias:
         """
@@ -431,7 +430,7 @@ class QiwiWrapper:
         """Use this method to cancel unpaid invoice."""
         return await self._p2p_client.reject_p2p_bill(bill_id)
 
-    async def reject_bill(self, bill: Bill) -> None:
+    async def reject_bill(self, bill: Bill) -> Bill:
         return await self._p2p_client.reject_bill(bill)
 
     async def check_p2p_bill_status(self, bill_id: str) -> str:
@@ -552,6 +551,9 @@ class QiwiWrapper:
         """
         return await self._p2p_client.create_pair_of_p2p_keys(key_pair_name, server_notification_url)
 
+    def create_shim_url(self, invoice_uid: str) -> str:
+        return self._p2p_client.create_shim_url(invoice_uid)
+
     async def __aenter__(self) -> "QiwiWrapper":
         await self._qiwi_wallet.__aenter__()
         await self._p2p_client.__aenter__()
@@ -581,3 +583,4 @@ class QiwiWrapper:
             raise RuntimeError("Unable to initialize QiwiWrapper instance without any tokens")
 
         return super().__new__(cls)  # type: ignore
+

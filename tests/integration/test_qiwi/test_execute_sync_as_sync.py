@@ -3,8 +3,8 @@ from typing import AsyncIterator
 import pytest
 
 from glQiwiApi import QiwiWallet
-from glQiwiApi.base.types.amount import AmountWithCurrency
 from glQiwiApi.core.synchronous.adapter import execute_async_as_sync
+from glQiwiApi.types.amount import AmountWithCurrency
 from tests.settings import QIWI_WALLET_CREDENTIALS
 
 

@@ -5,16 +5,16 @@ from typing import Any, Generic, Type, TypeVar, TYPE_CHECKING as MYPY
 from aiohttp import web
 from aiohttp.web_request import Request
 
-from glQiwiApi.core.dispatcher.implementation import BaseDispatcher
-from glQiwiApi.core.dispatcher.webhooks.dto.errors import WebhookAPIError
-from glQiwiApi.core.dispatcher.webhooks.services.collision_detector import (
+from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
+from glQiwiApi.core.event_fetching.webhooks.dto.errors import WebhookAPIError
+from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
     AbstractCollisionDetector,
     UnexpectedCollision
 )
 from glQiwiApi.utils.compat import json
 
 if MYPY:
-    from glQiwiApi.base.types.base import HashableBase  # noqa
+    from glQiwiApi.types.types.base import HashableBase  # noqa
 
 Event = TypeVar("Event", bound="HashableBase")
 
@@ -50,7 +50,7 @@ class BaseWebhookView(web.View, Generic[Event]):
         return web.Response(text="")
 
     async def post(self) -> web.Response:
-        event = await self.parse_raw_request()
+        event = await self._parse_raw_request()
 
         try:
             self._collision_detector.remember_processed_object(event)
@@ -62,7 +62,7 @@ class BaseWebhookView(web.View, Generic[Event]):
         await self.process_event(event)
         return await self.ok_response()
 
-    async def parse_raw_request(self) -> Event:
+    async def _parse_raw_request(self) -> Event:
         """Parse raw update and return pydantic model"""
         try:
             data = await self.request.json(loads=json.loads)

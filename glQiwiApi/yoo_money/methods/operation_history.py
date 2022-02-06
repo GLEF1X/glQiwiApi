@@ -3,7 +3,7 @@ from typing import ClassVar, Union, Optional, Iterable, Any
 
 from pydantic import conint
 
-from glQiwiApi.base.api_method import APIMethod, Request
+from glQiwiApi.core.abc.api_method import APIMethod, Request
 from glQiwiApi.utils.date_conversion import datetime_to_utc
 from glQiwiApi.utils.payload import filter_dictionary_none_values
 from glQiwiApi.yoo_money.types.types import OperationHistory

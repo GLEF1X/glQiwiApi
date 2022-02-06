@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from typing import Optional, Union
 
 from pydantic import BaseModel, Field, validator, BaseConfig
 
-from glQiwiApi.base.types.base import HashableBase, Base
+from glQiwiApi.types.base import Base, HashableBase
 
 
 class CurrencyModel(HashableBase):
@@ -50,7 +48,7 @@ class PlainAmount(BaseModel):
     currency: str
 
 
-class HashableOptionalSum(HashableBase, PlainAmount):
+class HashablePlainAmount(HashableBase, PlainAmount):
     ...
 
 

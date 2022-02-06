@@ -5,7 +5,7 @@ import typing as t
 from aiohttp import web
 from aiohttp.web import _run_app
 
-from glQiwiApi.core.dispatcher.webhooks.config import ApplicationConfig
+from glQiwiApi.core.event_fetching.webhooks.config import ApplicationConfig
 from glQiwiApi.plugins import Pluggable
 
 if t.TYPE_CHECKING:

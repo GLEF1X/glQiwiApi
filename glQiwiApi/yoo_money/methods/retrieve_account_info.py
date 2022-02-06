@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from glQiwiApi.base.api_method import APIMethod
+from glQiwiApi.core.abc.api_method import APIMethod
 from glQiwiApi.yoo_money.types import AccountInfo
 
 

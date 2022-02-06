@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from glQiwiApi.base.types.base import Base
+from glQiwiApi.types.types.base import Base
 
 
 class NickName(Base):
