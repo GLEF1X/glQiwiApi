@@ -1,18 +1,20 @@
 # pip install pytest-benchmark
+import os
 
 import pytest
 from pyqiwip2p.AioQiwip2p import AioQiwiP2P
 
 from glQiwiApi import QiwiP2PClient
 
-wrapper = QiwiP2PClient(secret_p2p="")
+wrapper = QiwiP2PClient(secret_p2p=os.getenv("SECRET_P2P"))
 
-c = AioQiwiP2P(auth_key="")
+c = AioQiwiP2P(auth_key=os.getenv("SECRET_P2P"))
 
 
 # Results on my machine (smaller is better)
-# test_create_bill_with_glQiwiApi      86.0165 (1.0)      114.0327 (1.0)       96.9864 (1.0)      10.9067 (1.0)       92.9798 (1.0)      16.2909 (1.62)          3;0  10.3107 (1.0)           7           1
-# test_create_bill_with_pyQiwiP2P     105.5675 (1.23)     139.7492 (1.23)     118.8386 (1.23)     12.6030 (1.16)     115.7287 (1.24)     10.0607 (1.0)           2;1   8.4148 (0.82)          5           1
+# test_create_bill_with_glQiwiApi      90.9925 (1.0)      103.3993 (1.0)       95.4082 (1.0)      5.3941 (1.0)       92.4023 (1.0)       8.2798 (1.0)           1;0  10.4813 (1.0)           5          11
+# test_create_bill_with_pyQiwiP2P     112.2819 (1.23)     135.0227 (1.31)     123.7498 (1.30)     9.9919 (1.85)     127.5926 (1.38)     17.2723 (2.09)          2;0   8.0808 (0.77)          5          10
+
 
 
 async def create_bill_with_glQiwiApi():
