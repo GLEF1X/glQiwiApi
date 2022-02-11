@@ -11,7 +11,6 @@ from glQiwiApi.utils.compat import aiofiles
 CHUNK_SIZE = 65536
 
 StrOrBytesPath = Union[str, bytes, pathlib.Path]  # stable
-AnyPath = StrOrBytesPath  # obsolete, will be removed soon
 
 _OpenFile = Union[StrOrBytesPath, int]
 
@@ -29,7 +28,7 @@ class File:
     def get_path(self) -> str:
         return self._input.get_path()
 
-    def save(self, path: AnyPath, chunk_size: int = CHUNK_SIZE) -> None:
+    def save(self, path: StrOrBytesPath, chunk_size: int = CHUNK_SIZE) -> None:
         file_descriptor = self.get_underlying_file_descriptor()
         with open(path, "wb") as fp:
             while True:
@@ -42,7 +41,7 @@ class File:
         if file_descriptor.seekable():
             file_descriptor.seek(0)
 
-    async def save_asynchronously(self, path: AnyPath, chunk_size: int = CHUNK_SIZE) -> None:
+    async def save_asynchronously(self, path: StrOrBytesPath, chunk_size: int = CHUNK_SIZE) -> None:
         file_descriptor = self.get_underlying_file_descriptor()
         async with aiofiles.open(path, "wb") as fp:
             while True:
@@ -66,7 +65,7 @@ class File:
             return
 
         if inspect.iscoroutinefunction(self._input.close()):  # type: ignore  # noqa
-            return asyncio.ensure_future(self._file.close())  # type: ignore  # noqa
+            return asyncio.ensure_future(self._input.close())  # type: ignore # noqa
         self._input.close()
 
     __repr__ = __str__
