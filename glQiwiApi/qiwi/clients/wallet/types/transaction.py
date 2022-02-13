@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Iterator, SupportsIndex
+from typing import Any, Dict, List, Optional, Union, Iterator
 
 from pydantic import Field
 
@@ -186,7 +186,7 @@ class History(Base):
             ),
         )
 
-    def __getitem__(self, i: SupportsIndex) -> Transaction:
+    def __getitem__(self, i: Any) -> Transaction:
         return self.transactions.__getitem__(i)
 
     def __bool__(self) -> bool:
