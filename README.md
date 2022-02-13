@@ -18,6 +18,13 @@
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 
+## Benchmarks
+
+```bash
+glQiwiApi      90.9925 (1.0)      103.3993 (1.0)       95.4082 (1.0)      5.3941 (1.0)       92.4023 (1.0)       8.2798 (1.0)           1;0  10.4813 (1.0)           5          11
+pyQiwiP2P     112.2819 (1.23)     135.0227 (1.31)     123.7498 (1.30)     9.9919 (1.85)     127.5926 (1.38)     17.2723 (2.09) 
+```
+
 ## 🐦Dependencies
 
 | Library |                       Description                       |
