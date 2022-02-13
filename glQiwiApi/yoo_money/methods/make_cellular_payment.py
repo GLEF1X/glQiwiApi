@@ -1,4 +1,3 @@
-import typing
 from typing import Any, Dict, ClassVar
 
 from pydantic import Field
@@ -12,4 +11,4 @@ class MakeCellularPayment(APIMethod[Dict[str, Any]]):
 
     pattern_id: str
     phone_number: str = Field(..., alias="phone-number")
-    amount: typing.SupportsFloat
+    amount: float

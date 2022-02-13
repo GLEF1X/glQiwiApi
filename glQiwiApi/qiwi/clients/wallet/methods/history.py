@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Final, Dict, Any, ClassVar
+from typing import Optional, List, Dict, Any, ClassVar
 
 from pydantic import root_validator, conint, Field
 
@@ -8,7 +8,7 @@ from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import History, TransactionType, Source
 from glQiwiApi.utils.date_conversion import datetime_to_iso8601_with_moscow_timezone
 
-MAX_HISTORY_LIMIT: Final[int] = 50
+MAX_HISTORY_LIMIT = 50
 
 
 class GetHistory(QiwiAPIMethod[History]):
