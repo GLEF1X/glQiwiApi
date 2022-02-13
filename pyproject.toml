@@ -49,7 +49,22 @@ typing_extensions = { version = "^4.0.1", python = "<=3.7" }
 
 # Fast
 uvloop = { version = "^0.16.0", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
+aiofiles = { version = "^0.8.0", optional = true}
 
+# Docs
+Sphinx = { version = "^4.2.0", optional = true }
+sphinx-intl = { version = "^2.0.1", optional = true }
+sphinx-autobuild = { version = "^2021.3.14", optional = true }
+sphinx-copybutton = { version = "^0.4.0", optional = true }
+furo = { version = "^2021.11.23", optional = true }
+sphinx-prompt = { version = "^1.5.0", optional = true }
+Sphinx-Substitution-Extensions = { version = "^2020.9.30", optional = true }
+towncrier = { version = "^21.3.0", optional = true }
+pygments = { version = "^2.4", optional = true }
+pymdown-extensions = { version = "^8.2", optional = true }
+markdown-include = { version = "^0.6", optional = true }
+sphinxemoji = { version = "*", optional = true }
+sphinx-notfound-page = { version = "*", optional = true }
 
 
 
@@ -66,23 +81,6 @@ asynctest = "^0.13.0"
 pytest-timeout = "^2.1.0"
 pytest-benchmark = { version = "^3.4.1", extras = ["histogram"] }
 
-# Docs
-Sphinx = { version = "^4.2.0" }
-sphinx-intl = { version = "^2.0.1" }
-sphinx-autobuild = { version = "^2021.3.14" }
-sphinx-copybutton = { version = "^0.5.0" }
-furo = { version = "^2022.1.2" }
-sphinx-prompt = { version = "^1.5.0" }
-Sphinx-Substitution-Extensions = { version = "^2020.9.30" }
-towncrier = { version = "^21.9.0" }
-pygments = { version = "^2.11.2" }
-pymdown-extensions = { version = "^9.2" }
-markdown-include = { version = "^0.6" }
-sphinxemoji = "^0.2.0"
-sphinxcontrib-mermaid = "^0.7.1"
-sphinx-notfound-page = "^0.8"
-
-
 # development
 black = { version = "^22.1.0", python = ">=3.6" }
 isort = "^5.8.0"
@@ -98,8 +96,25 @@ types-aiofiles = "^0.8.2"
 geojson-pydantic = "^0.3.1"
 aiogram = "^2.19"
 cryptography = "^36.0.1"
-aiofiles = "^0.8.0"
 
+[tool.poetry.extras]
+fast = ["uvloop", "aiofiles"]
+docs = [
+    "sphinx",
+    "sphinx-intl",
+    "sphinx-autobuild",
+    "sphinx-copybutton",
+    "furo",
+    "black",
+    "sphinx-prompt",
+    "Sphinx-Substitution-Extensions",
+    "towncrier",
+    "pygments",
+    "pymdown-extensions",
+    "markdown-include",
+    "sphinxemoji",
+    "sphinx-notfound-page",
+]
 
 [tool.black]
 line-length = 99
