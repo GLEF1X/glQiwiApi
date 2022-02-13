@@ -64,7 +64,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          poetry run pytest -p no:warnings --cov=glQiwiApi --cov-config .coveragerc --cov-report=xml
+          poetry run pytest -p no:warnings --cov=glQiwiApi --cov-config .coveragerc --cov-report=xml tests/
         env:
           API_ACCESS_TOKEN: ${{ secrets.QIWI_API_ACCESS_TOKEN }}
           SECRET_P2P: ${{ secrets.QIWI_SECRET_P2P }}
