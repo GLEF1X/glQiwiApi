@@ -1,5 +1,5 @@
 <h2 align="center">
-<img src="https://github.com/GLEF1X/glQiwiApi/blob/dev-1.x/docs/_static/logo.png?raw=true" width="200"></img>
+<img src="https://github.com/GLEF1X/glQiwiApi/blob/dev-2.x/docs/_static/logo.png?raw=true" width="200"></img>
 
 
 [![PyPI version](https://img.shields.io/pypi/v/glQiwiApi.svg)](https://pypi.org/project/glQiwiApi/) [![Code Quality Score](https://api.codiga.io/project/20780/score/svg)](https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard) ![Downloads](https://img.shields.io/pypi/dm/glQiwiApi) ![docs](https://readthedocs.org/projects/pip/badge/?version=latest)
@@ -14,8 +14,7 @@
 
 ## 🌎Official api resources:
 
-* 🎓 __Documentation 2.x: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
-* 🎓 __Documentation 1.x: [here](https://glqiwiapi.readthedocs.io/en/1.1.4/)__
+* 🎓 __Documentation: [here](https://glqiwiapi.readthedocs.io/en/latest/)__
 * 🖱️ __Developer
   contacts: [![Dev-Telegram](https://img.shields.io/badge/Telegram-blue.svg?style=flat-square&logo=telegram)](https://t.me/GLEF1X)__
 

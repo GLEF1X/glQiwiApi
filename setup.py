@@ -6,14 +6,14 @@ PATH = pathlib.Path(__file__).parent
 
 README = (PATH / "README.md").read_text()
 
-REQUIREMENTS = (PATH / "SETUP_REQUIREMENTS.txt").read_text()
+REQUIREMENTS = (PATH / "requirements.txt").read_text()
 
 setuptools.setup(
     packages=setuptools.find_packages(
-        exclude=("tests", "examples", "examples.*", "tests", "tests.*")
+        exclude=("tests", "examples", "examples.*", "tests", "tests.*", "docs", "benchmarks", "referrer")
     ),
     name="glQiwiApi",  # Replace with your own username
-    version="1.1.4",
+    version="2.0.0",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Light and fast wrapper of QIWI and YooMoney api's",

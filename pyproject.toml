@@ -133,13 +133,6 @@ known_third_party = [
     "pytest"
 ]
 
-[tool.towncrier]
-package = "aiogram"
-filename = "CHANGES.rst"
-directory = "CHANGES/"
-template = "CHANGES/.template.rst.jinja2"
-issue_format = "`#{issue} <https://github.com/aiogram/aiogram/issues/{issue}>`_"
-
 [[tool.towncrier.section]]
 path = ""
 
