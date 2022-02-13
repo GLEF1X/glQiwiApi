@@ -50,7 +50,7 @@ Quick example
     import asyncio
 
     from glQiwiApi import QiwiWallet
-    from glQiwiApi.qiwi import APIError
+    from glQiwiApi.qiwi.exceptions import QiwiAPIError
 
 
     async def print_balance(qiwi_token: str, phone_number: str) -> None:
@@ -61,14 +61,13 @@ Quick example
             try:
                 balance = await w.get_balance()
             # handle exception if wrong credentials or really API return error
-            except APIError as err:
+            except QiwiAPIError as err:
                 print(err.json())
                 raise
         print(f"Your current balance is {balance.amount} {balance.currency.name}")
 
 
     asyncio.run(print_balance(qiwi_token="qiwi api token", phone_number="+phone_number"))
-
 
 Contents
 ========

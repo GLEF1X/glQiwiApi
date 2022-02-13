@@ -112,18 +112,19 @@ Send money to another wallet and checking this transaction
 
 
     async def main():
-      w = YooMoneyAPI(TOKEN)
-      async with w:
-        # So you can send funds to another account, in the example this is a transfer to account 4100116602400968
-        # worth 2 rubles with the comment "I LOVE glQiwiApi"
-        payment = await w.send(
-          to_account='4100116602400968',
-          comment='I LOVE glQiwiApi',
-          amount=2
-        )
-        # This way you can check the transaction, whether it was received by the person on the account
-        print(await w.check_transaction(amount=2, comment='I LOVE glQiwiApi',
-                                        operation_type='out'))
+        w = YooMoneyAPI(TOKEN)
+        async with w:
+            # So you can send funds to another account, in the example this is a transfer to account 4100116602400968
+            # worth 2 rubles with the comment "I LOVE glQiwiApi"
+            payment = await w.transfer_money(
+                to_account='4100116602400968',
+                comment='I LOVE glQiwiApi',
+                amount=2
+            )
+            # This way you can check the transaction, whether it was received by the person on the account
+            print(await w.check_if_operation_exists(
+                check_fn=lambda o: o.id == payment.payment_id
+            ))
 
 
     asyncio.run(main())
