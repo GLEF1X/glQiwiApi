@@ -13,7 +13,7 @@ from glQiwiApi.types.base import HashableBase
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
 if TYPE_CHECKING:
-    from glQiwiApi.qiwi.clients.p2p import QiwiP2PClient  # noqa
+    from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient  # noqa
 
 
 class Customer(HashableBase):
@@ -128,5 +128,5 @@ __all__ = (
     "PairOfP2PKeys",
     "InvoiceStatus",
     "BillStatus",
-    "Customer"
+    "Customer",
 )

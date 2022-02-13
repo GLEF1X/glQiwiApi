@@ -6,7 +6,7 @@ import pytz
 DEFAULT_QIWI_TIMEZONE = "Europe/Moscow"
 
 
-def datetime_to_utc(obj: datetime) -> str:
+def datetime_to_utc_in_iso_format(obj: datetime) -> str:
     iso_format_date = pytz.utc.localize(obj).replace(tzinfo=None).isoformat(" ")
     return f'{iso_format_date.replace(" ", "T")}Z'
 

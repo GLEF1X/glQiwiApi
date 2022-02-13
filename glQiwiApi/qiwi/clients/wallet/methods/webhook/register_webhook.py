@@ -22,4 +22,3 @@ class RegisterWebhook(QiwiAPIMethod[WebhookInfo]):
             params=self.dict(by_alias=True),
             http_method=self.http_method,
         )
-

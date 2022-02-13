@@ -9,12 +9,12 @@ from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
 from glQiwiApi.core.event_fetching.webhooks.dto.errors import WebhookAPIError
 from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
     AbstractCollisionDetector,
-    UnexpectedCollision
+    UnexpectedCollision,
 )
 from glQiwiApi.utils.compat import json
 
 if MYPY:
-    from glQiwiApi.types.types.base import HashableBase  # noqa
+    from glQiwiApi.types.base import HashableBase  # noqa
 
 Event = TypeVar("Event", bound="HashableBase")
 
@@ -29,12 +29,12 @@ class BaseWebhookView(web.View, Generic[Event]):
     """
 
     def __init__(
-            self,
-            request: Request,
-            dispatcher: BaseDispatcher,
-            collision_detector: AbstractCollisionDetector[Any],
-            event_cls: Type[Event],
-            encryption_key: str,
+        self,
+        request: Request,
+        dispatcher: BaseDispatcher,
+        collision_detector: AbstractCollisionDetector[Any],
+        event_cls: Type[Event],
+        encryption_key: str,
     ) -> None:
         super().__init__(request)
         self._dispatcher = dispatcher

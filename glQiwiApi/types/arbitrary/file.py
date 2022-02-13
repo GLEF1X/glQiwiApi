@@ -41,7 +41,9 @@ class File:
         if file_descriptor.seekable():
             file_descriptor.seek(0)
 
-    async def save_asynchronously(self, path: StrOrBytesPath, chunk_size: int = CHUNK_SIZE) -> None:
+    async def save_asynchronously(
+        self, path: StrOrBytesPath, chunk_size: int = CHUNK_SIZE
+    ) -> None:
         file_descriptor = self.get_underlying_file_descriptor()
         async with aiofiles.open(path, "wb") as fp:
             while True:

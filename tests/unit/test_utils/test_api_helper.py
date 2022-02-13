@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from glQiwiApi import QiwiMaps
-from glQiwiApi.core.synchronous.adapter import async_as_sync
+from glQiwiApi.utils.synchronous import async_as_sync
 from glQiwiApi.qiwi.clients.wallet.types import Partner
 
 

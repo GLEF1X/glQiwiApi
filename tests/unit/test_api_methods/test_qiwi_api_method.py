@@ -23,12 +23,12 @@ def test_parse_http_response() -> None:
     method = MyQiwiAPIMethod()
     with pytest.raises(QiwiAPIError) as exc_info:
         resp = HTTPResponse(
-            status_code=400, body=json.dumps({
-                "message": "Something went wrong",
-                "code": "QWRPC-303"
-            }).encode("utf-8"),
+            status_code=400,
+            body=json.dumps({"message": "Something went wrong", "code": "QWRPC-303"}).encode(
+                "utf-8"
+            ),
             headers={},
-            content_type=""
+            content_type="",
         )
         method.parse_http_response(resp)
 

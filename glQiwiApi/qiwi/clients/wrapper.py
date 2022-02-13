@@ -1,15 +1,55 @@
 from datetime import datetime
-from typing import Optional, Union, Any, Type, TypeVar, Dict, List, Tuple, TYPE_CHECKING
+from typing import (
+    Optional,
+    Union,
+    Any,
+    Type,
+    TypeVar,
+    Dict,
+    List,
+    Tuple,
+    TYPE_CHECKING,
+    Callable,
+    cast,
+)
+
 from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
-from glQiwiApi.qiwi.clients.p2p.types import PairOfP2PKeys, Bill, RefundedBill, InvoiceStatus, Customer
+from glQiwiApi.qiwi.clients.p2p.types import (
+    PairOfP2PKeys,
+    Bill,
+    RefundedBill,
+    InvoiceStatus,
+    Customer,
+)
 from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet, AmountType
 from glQiwiApi.qiwi.clients.wallet.methods.get_limits import ALL_LIMIT_TYPES
-from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo, OrderDetails, PaymentDetails, PaymentMethod, \
-    CrossRate, Balance, \
-    TransactionType, Statistic, QiwiAccountInfo, Card, Limit, Identification, Restriction, Transaction, \
-    Source, History, WebhookInfo, Commission
+from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT
+from glQiwiApi.qiwi.clients.wallet.types import (
+    PaymentInfo,
+    OrderDetails,
+    PaymentDetails,
+    PaymentMethod,
+    CrossRate,
+    Balance,
+    TransactionType,
+    Statistic,
+    UserProfile,
+    Card,
+    Limit,
+    Identification,
+    Restriction,
+    Transaction,
+    Source,
+    History,
+    WebhookInfo,
+    Commission,
+)
+from glQiwiApi.qiwi.clients.wallet.types.balance import AvailableBalance
+from glQiwiApi.qiwi.clients.wallet.types.mobile_operator import MobileOperator
+from glQiwiApi.qiwi.clients.wallet.types.nickname import NickName
 from glQiwiApi.types.amount import AmountWithCurrency, PlainAmount
 from glQiwiApi.types.arbitrary import File
+from glQiwiApi.utils.deprecated import deprecated
 
 if TYPE_CHECKING:
     from glQiwiApi.ext.webhook_url import WebhookURL
@@ -21,95 +61,30 @@ class QiwiWrapper:
     """For backward compatibility with glQiwiApi <= 1.1.4"""
 
     def __init__(
-            self,
-            api_access_token: Optional[str] = None,
-            phone_number: Optional[str] = None,
-            secret_p2p: Optional[str] = None,
-            shim_server_url: Optional[str] = None
+        self,
+        api_access_token: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        secret_p2p: Optional[str] = None,
+        shim_server_url: Optional[str] = None,
     ) -> None:
         self._qiwi_wallet = QiwiWallet(api_access_token or "", phone_number)
         self._p2p_client = QiwiP2PClient(secret_p2p or "", shim_server_url=shim_server_url)
 
-    async def register_webhook(self, url: str, txn_type: int = 2) -> WebhookInfo:
-        """
-        This method register a new webhook
-
-        :param url: service endpoint
-        :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
-        :return: Active Hooks
-        """
-        return await self._qiwi_wallet.register_webhook(url, txn_type)
-
-    async def get_current_webhook(self) -> WebhookInfo:
-        """
-        List of active (active) notification handlers, associated with your wallet can be obtained with this request.
-        Since now only one type of hook is used - webhook, then the response contains only one data object
-        """
-        return await self._qiwi_wallet.get_current_webhook()
-
-    async def send_test_notification(self) -> Dict[Any, Any]:
-        """
-        Use this request to test your webhooks handler.
-        Test notification is sent to the address specified during the call register_webhook
-        """
-        return await self._qiwi_wallet.send_test_webhook_notification()
-
-    async def get_webhook_secret_key(self, hook_id: str) -> str:
-        """
-        Each notification contains a digital signature of the message, encrypted with a key.
-        To obtain a signature verification key, use this request.
-
-        :param hook_id: UUID of webhook
-        :return: Base64 encoded key
-        """
-        return await self._qiwi_wallet.get_webhook_secret_key(hook_id)
-
-    async def delete_current_webhook(self) -> Optional[Dict[str, str]]:
-        """Method to delete webhook"""
-        return await self._qiwi_wallet.delete_current_webhook()
-
-    async def change_webhook_secret(self, hook_id: str) -> str:
-        """
-        Use this request to change the encryption key for notifications.
-
-        :param hook_id: UUID of webhook
-        :return: Base64 encoded key
-        """
-        return await self._qiwi_wallet.generate_new_webhook_secret(hook_id)
-
-    async def bind_webhook(
-            self,
-            url: Union[str, "WebhookURL"],
-            transactions_type: int = 2,
-            *,
-            send_test_notification: bool = False,
-            delete_old: bool = False,
-    ) -> Tuple[WebhookInfo, str]:
-        """
-        [NON-API] EXCLUSIVE method to register new webhook or get old
-
-        :param url: service endpoint
-        :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
-        :param send_test_notification:  test_qiwi will transfer_money
-         you test webhook update
-        :param delete_old: boolean, if True - delete old webhook
-
-        :return: Tuple of Hook and Base64-encoded key
-        """
-        return await self._qiwi_wallet.bind_webhook(url, transactions_type=transactions_type,
-                                                    send_test_notification=send_test_notification,
-                                                    delete_old=delete_old)
-
     async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
         return await self._qiwi_wallet.get_balance(account_number=account_number)
 
+    async def get_nickname(self) -> NickName:
+        return await self._qiwi_wallet.get_nickname()
+
     async def transactions(
-            self,
-            rows: int = 50,
-            operation: TransactionType = TransactionType.ALL,
-            sources: Optional[List[Source]] = None,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
+        self,
+        rows: int = 50,
+        operation: TransactionType = TransactionType.ALL,
+        sources: Optional[List[Source]] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        next_txn_date: Optional[datetime] = None,
+        next_txn_id: Optional[int] = None,
     ) -> History:
         """
         Method for receiving transactions on the account
@@ -123,11 +98,21 @@ class QiwiWrapper:
                             Used only in conjunction with end_date.
         :param end_date: the end date of the search for payments.
                             Used only in conjunction with start_date.
+        :param next_txn_id:
+        :param next_txn_date:
         """
-        return await self._qiwi_wallet.history(rows, operation, sources, start_date, end_date)
+        return await self._qiwi_wallet.history(
+            rows,
+            operation,
+            sources,
+            start_date,
+            end_date,
+            next_txn_id=next_txn_id,
+            next_txn_date=next_txn_date,
+        )
 
     async def transaction_info(
-            self, transaction_id: Union[str, int], transaction_type: TransactionType
+        self, transaction_id: Union[str, int], transaction_type: TransactionType
     ) -> Transaction:
         """
         Method for obtaining complete information about a transaction
@@ -161,12 +146,12 @@ class QiwiWrapper:
         return await self._qiwi_wallet.get_identification()
 
     async def check_transaction(
-            self,
-            amount: AmountType,
-            transaction_type: TransactionType = TransactionType.IN,
-            sender: Optional[str] = None,
-            rows_num: int = 50,
-            comment: Optional[str] = None,
+        self,
+        amount: AmountType,
+        transaction_type: TransactionType = TransactionType.IN,
+        sender: Optional[str] = None,
+        rows_num: int = 50,
+        comment: Optional[str] = None,
     ) -> bool:
         """
         [ NON API METHOD ]
@@ -189,8 +174,33 @@ class QiwiWrapper:
         :param rows_num: number of payments to be checked
         :param comment: comment by which the transaction will be verified
         """
-        return await self._qiwi_wallet.check_transaction(
-            amount, transaction_type, sender, rows_num, comment
+
+        def obsolete_check_transaction(txn: Transaction) -> bool:
+            if txn.sum.amount < amount or txn.type != transaction_type.value:
+                return False
+            if txn.comment == comment and txn.to_account == sender:
+                return True
+            elif comment and sender:
+                return False
+            elif txn.to_account == sender:
+                return True
+            elif sender:
+                return False
+            elif txn.comment == comment:
+                return True
+            elif comment:
+                return False
+            return False
+
+        return await self._qiwi_wallet.check_whether_transaction_exists(
+            check_fn=obsolete_check_transaction, rows_num=rows_num
+        )
+
+    async def check_whether_transaction_exists(
+        self, check_fn: Callable[[Transaction], bool], rows_num: int = MAX_HISTORY_LIMIT
+    ) -> bool:
+        return await self._qiwi_wallet.check_whether_transaction_exists(
+            check_fn=check_fn, rows_num=rows_num
         )
 
     async def get_limits(self, limit_types: List[str] = ALL_LIMIT_TYPES) -> Dict[str, Limit]:
@@ -208,16 +218,16 @@ class QiwiWrapper:
         return await self._qiwi_wallet.get_list_of_cards()
 
     async def authenticate(
-            self,
-            birth_date: str,
-            first_name: str,
-            last_name: str,
-            middle_name: str,
-            passport: str,
-            oms: Optional[str] = None,
-            inn: Optional[str] = None,
-            snils: Optional[str] = None,
-    ) -> Dict[Any, Any]:
+        self,
+        birth_date: str,
+        first_name: str,
+        last_name: str,
+        middle_name: str,
+        passport: str,
+        oms: Optional[str] = None,
+        inn: Optional[str] = None,
+        snils: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         This request allows you to transfer_money data to identify your QIWI wallet.
         It is allowed to identify no more than 5 wallets per owner
@@ -242,10 +252,10 @@ class QiwiWrapper:
         )
 
     async def get_receipt(
-            self,
-            transaction_id: Union[str, int],
-            transaction_type: TransactionType,
-            file_format: str = "PDF",
+        self,
+        transaction_id: Union[str, int],
+        transaction_type: TransactionType,
+        file_format: str = "PDF",
     ) -> File:
         """
         Method for receiving a receipt in byte format or file. \n
@@ -261,19 +271,15 @@ class QiwiWrapper:
         """
         return await self._qiwi_wallet.get_receipt(transaction_id, transaction_type, file_format)
 
-    async def get_account_info(self) -> QiwiAccountInfo:
-        """
-        Метод для получения информации об аккаунте
-
-        """
-        return await self._qiwi_wallet.get_account_info()
+    async def get_account_info(self) -> UserProfile:
+        return await self._qiwi_wallet.get_profile()
 
     async def fetch_statistics(
-            self,
-            start_date: datetime,
-            end_date: datetime,
-            operation: TransactionType = TransactionType.ALL,
-            sources: Optional[List[str]] = None,
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        operation: TransactionType = TransactionType.ALL,
+        sources: Optional[List[str]] = None,
     ) -> Statistic:
         """
         This query is used to get summary statistics
@@ -309,7 +315,7 @@ class QiwiWrapper:
         """
         return await self._qiwi_wallet.get_list_of_balances()
 
-    async def create_new_balance(self, currency_alias: str) -> Optional[Dict[str, bool]]:
+    async def create_new_balance(self, currency_alias: str) -> Dict[str, bool]:
         """
         The request creates a new account and balance in your QIWI Wallet
 
@@ -317,12 +323,12 @@ class QiwiWrapper:
         """
         return await self._qiwi_wallet.create_new_balance(currency_alias)
 
-    async def available_balances(self) -> List[Balance]:
+    async def available_balances(self) -> List[AvailableBalance]:
         """
         The request displays account aliases, available for creation in your QIWI Wallet
 
         """
-        return await self._qiwi_wallet.available_balances()
+        return await self._qiwi_wallet.get_available_balances()
 
     async def set_default_balance(self, currency_alias: str) -> Dict[Any, Any]:
         """
@@ -335,11 +341,23 @@ class QiwiWrapper:
         """
         return await self._qiwi_wallet.set_default_balance(currency_alias)
 
+    @deprecated(  # type: ignore
+        "QiwiWrapper.to_wallet(...) method is outdated, please use QiwiWrapper.transfer_money(...)"
+    )
+    async def to_wallet(
+        self,
+        to_number: str,
+        amount: Union[AmountType, str],
+        currency: str = "643",
+        comment: Optional[str] = None,
+    ) -> PaymentInfo:
+        return await self.transfer_money(to_phone_number=to_number, amount=amount, comment=comment)
+
     async def transfer_money(
-            self,
-            to_phone_number: str,
-            amount: Union[AmountType, str],
-            comment: Optional[str] = None,
+        self,
+        to_phone_number: str,
+        amount: Union[AmountType, str],
+        comment: Optional[str] = None,
     ) -> PaymentInfo:
         """
         Method for transferring funds to wallet
@@ -352,6 +370,12 @@ class QiwiWrapper:
         :param comment: payment comment
         """
         return await self._qiwi_wallet.transfer_money(to_phone_number, amount, comment)
+
+    @deprecated(  # type: ignore
+        "QiwiWrapper.to_card(...) method is outdated, please use QiwiWrapper.transfer_money_to_card(...)"
+    )
+    async def to_card(self, trans_sum: Union[float, int], to_card: str) -> PaymentInfo:
+        return await self.transfer_money_to_card(card_number=to_card, amount=trans_sum)
 
     async def transfer_money_to_card(self, card_number: str, *, amount: AmountType) -> PaymentInfo:
         """
@@ -381,11 +405,11 @@ class QiwiWrapper:
         return await self._qiwi_wallet.get_cross_rates()
 
     async def payment_by_payment_details(
-            self,
-            payment_sum: AmountWithCurrency,
-            payment_method: PaymentMethod,
-            fields: PaymentDetails,
-            payment_id: Optional[str] = None,
+        self,
+        payment_sum: AmountWithCurrency,
+        payment_method: PaymentMethod,
+        fields: PaymentDetails,
+        payment_id: Optional[str] = None,
     ) -> PaymentInfo:
         """
         Payment for services of commercial organizations according to their bank details.
@@ -409,7 +433,7 @@ class QiwiWrapper:
         4. Making payments without SMS.
         You can choose these rights when creating a new api token, to use api QIWI Master
         """
-        return await self._qiwi_wallet.buy_qiwi_master()
+        return await self._qiwi_wallet.buy_qiwi_master_package()
 
     async def issue_qiwi_master_card(self, card_alias: str = "qvc-cpa") -> Optional[OrderDetails]:
         """
@@ -417,14 +441,90 @@ class QiwiWrapper:
 
         When issuing a card, 3, and possibly 3 requests are made, namely,
         according to the following scheme:
-            - _pre_qiwi_master_request - this method creates a request
-            - _confirm_qiwi_master_request - confirms the issue of the card
-            - _buy_new_qiwi_card - buys a new card,
+            - _create_card_purchase_order - this method creates a request
+            - _confirm_qiwi_master_purchase_order - confirms the issue of the card
+            - _buy_new_qiwi_master_card - buys a new card,
               if such a card is not free
         Detailed documentation:
         https://developer.qiwi.com/ru/qiwi-wallet-personal/#qiwi-master-issue-card
         """
         return await self._qiwi_wallet.issue_qiwi_master_card(card_alias)
+
+    async def register_webhook(self, web_url: str, txn_type: int = 2) -> WebhookInfo:
+        """
+        This method register a new webhook
+
+        :param web_url: service endpoint
+        :param txn_type:  0 => incoming, 1 => outgoing, 2 => all
+        :return: Active Hooks
+        """
+        return await self._qiwi_wallet.register_webhook(web_url, txn_type)
+
+    async def get_current_webhook(self) -> WebhookInfo:
+        """
+        List of active (active) notification handlers, associated with your wallet can be obtained with this request.
+        Since now only one type of hook is used - webhook, then the response contains only one data object
+        """
+        return await self._qiwi_wallet.get_current_webhook()
+
+    async def send_test_notification(self) -> Dict[str, Any]:
+        """
+        Use this request to test your webhooks handler.
+        Test notification is sent to the address specified during the call register_webhook
+        """
+        return await self._qiwi_wallet.send_test_webhook_notification()
+
+    async def get_webhook_secret_key(self, hook_id: str) -> str:
+        """
+        Each notification contains a digital signature of the message, encrypted with a key.
+        To obtain a signature verification key, use this request.
+
+        :param hook_id: UUID of webhook
+        :return: Base64 encoded key
+        """
+        return await self._qiwi_wallet.get_webhook_secret_key(hook_id)
+
+    async def delete_current_webhook(self) -> Dict[str, Any]:
+        """Method to delete webhook"""
+        return await self._qiwi_wallet.delete_current_webhook()
+
+    async def change_webhook_secret(self, hook_id: str) -> str:
+        """
+        Use this request to change the encryption key for notifications.
+
+        :param hook_id: UUID of webhook
+        :return: Base64 encoded key
+        """
+        return await self._qiwi_wallet.generate_new_webhook_secret(hook_id)
+
+    async def bind_webhook(
+        self,
+        url: Union[str, "WebhookURL"],
+        transactions_type: int = 2,
+        *,
+        send_test_notification: bool = False,
+        delete_old: bool = False,
+    ) -> Tuple[WebhookInfo, str]:
+        """
+        [NON-API] EXCLUSIVE method to register new webhook or get old
+
+        :param url: service endpoint
+        :param transactions_type: 0 => incoming, 1 => outgoing, 2 => all
+        :param send_test_notification:  test_qiwi will transfer_money
+         you test webhook update
+        :param delete_old: boolean, if True - delete old webhook
+
+        :return: Tuple of Hook and Base64-encoded key
+        """
+        return await self._qiwi_wallet.bind_webhook(
+            url,
+            transactions_type=transactions_type,
+            send_test_notification=send_test_notification,
+            delete_old=delete_old,
+        )
+
+    async def detect_mobile_operator(self, phone_number: str) -> MobileOperator:
+        return await self._qiwi_wallet.detect_mobile_operator(phone_number=phone_number)
 
     async def reject_bill_by_id(self, bill_id: str) -> Bill:
         """Use this method to cancel unpaid invoice."""
@@ -453,14 +553,14 @@ class QiwiWrapper:
         return await self._p2p_client.check_if_bill_was_paid(bill)
 
     async def create_p2p_bill(
-            self,
-            amount: AmountType,
-            bill_id: Optional[str] = None,
-            comment: Optional[str] = None,
-            life_time: Optional[datetime] = None,
-            theme_code: Optional[str] = None,
-            pay_source_filter: Optional[List[str]] = None,
-            customer: Optional[Customer] = None
+        self,
+        amount: AmountType,
+        bill_id: Optional[str] = None,
+        comment: Optional[str] = None,
+        life_time: Optional[datetime] = None,
+        theme_code: Optional[str] = None,
+        pay_source_filter: Optional[List[str]] = None,
+        customer: Optional[Customer] = None,
     ) -> Bill:
         """
         It is the reliable method for integration.
@@ -483,8 +583,7 @@ class QiwiWrapper:
         :param customer:
         """
         return await self._p2p_client.create_p2p_bill(
-            amount, bill_id, comment, life_time,
-            theme_code, pay_source_filter, customer
+            amount, bill_id, comment, life_time, theme_code, pay_source_filter, customer
         )
 
     async def retrieve_bills(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
@@ -515,10 +614,10 @@ class QiwiWrapper:
         return await self._qiwi_wallet.pay_the_invoice(invoice_uid, currency)
 
     async def refund_bill(
-            self,
-            bill_id: Union[str, int],
-            refund_id: Union[str, int],
-            json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
+        self,
+        bill_id: Union[str, int],
+        refund_id: Union[str, int],
+        json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
     ) -> RefundedBill:
         """
         The method allows you to make a refund on a paid invoice.
@@ -541,7 +640,7 @@ class QiwiWrapper:
         return await self._p2p_client.refund_bill(bill_id, refund_id, json_bill_data)
 
     async def create_p2p_keys(
-            self, key_pair_name: str, server_notification_url: Optional[str] = None
+        self, key_pair_name: str, server_notification_url: Optional[str] = None
     ) -> PairOfP2PKeys:
         """
         Creates a new pair of P2P keys to interact with P2P QIWI API
@@ -549,17 +648,19 @@ class QiwiWrapper:
         :param key_pair_name: P2P token pair name
         :param server_notification_url: endpoint for webhooks
         """
-        return await self._p2p_client.create_pair_of_p2p_keys(key_pair_name, server_notification_url)
+        return await self._p2p_client.create_pair_of_p2p_keys(
+            key_pair_name, server_notification_url
+        )
 
     def create_shim_url(self, invoice_uid: str) -> str:
         return self._p2p_client.create_shim_url(invoice_uid)
 
     async def __aenter__(self) -> "QiwiWrapper":
-        await self._qiwi_wallet.__aenter__()
-        await self._p2p_client.__aenter__()
+        await self._qiwi_wallet.__aenter__()  # type: ignore
+        await self._p2p_client.__aenter__()  # type: ignore
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:  # type: ignore
         await self._qiwi_wallet.__aexit__(exc_type, exc_val, exc_tb)
         await self._p2p_client.__aexit__(exc_type, exc_val, exc_tb)
 
@@ -568,19 +669,15 @@ class QiwiWrapper:
         await self._p2p_client.close()
 
     def __new__(
-            cls: Type[_T],
-            api_access_token: Optional[str] = None,
-            phone_number: Optional[str] = None,
-            secret_p2p: Optional[str] = None,
-            cache_time_in_seconds: Union[float, int] = 0,
-            *args: Any,
-            **kwargs: Any,
+        cls: Type[_T],
+        api_access_token: Optional[str] = None,
+        phone_number: Optional[str] = None,
+        secret_p2p: Optional[str] = None,
+        cache_time_in_seconds: Union[float, int] = 0,
+        *args: Any,
+        **kwargs: Any,
     ) -> _T:
-        if (
-                not isinstance(api_access_token, str)
-                and not isinstance(secret_p2p, str)  # noqa: W503
-        ):
+        if not isinstance(api_access_token, str) and not isinstance(secret_p2p, str):  # noqa: W503
             raise RuntimeError("Unable to initialize QiwiWrapper instance without any tokens")
 
-        return super().__new__(cls)  # type: ignore
-
+        return super().__new__(cls)

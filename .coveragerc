@@ -19,3 +19,8 @@ omit =
     glQiwiApi/utils/mypy_hacks.py
     glQiwiApi/utils/compat.py
     glQiwiApi/utils/payload.py
+    glQiwiApi/qiwi/clients/wrapper.py
+    glQiwiApi/utils/deprecated.py
+    glQiwiApi/utils/date_conversion.py
+    glQiwiApi/utils/synchronous.py
+    glQiwiApi/core/cache

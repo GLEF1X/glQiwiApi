@@ -81,7 +81,7 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
         return self._cache_time == 0
 
     async def process_update(self, **kwargs: Any) -> None:
-        super().process_update(**kwargs)
+        await super().process_update(**kwargs)
         for key in kwargs.keys():
             if any(key.startswith(coincidence) for coincidence in self._uncached):
                 raise CacheValidationError()

@@ -9,7 +9,7 @@ from glQiwiApi.core.event_fetching.webhooks.app import configure_app
 from glQiwiApi.core.event_fetching.webhooks.config import EncryptionConfig, WebhookConfig
 from glQiwiApi.core.event_fetching.webhooks.middlewares.ip import ip_filter_middleware
 from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
-from tests.unit.test_dispatcher.mocks import WebhookTestData
+from tests.unit.test_event_fetching.mocks import WebhookTestData
 
 
 class TestAiohttpServer:

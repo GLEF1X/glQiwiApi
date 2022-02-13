@@ -34,10 +34,10 @@ class IPFilter:
     def default(cls) -> "IPFilter":
         return cls(DEFAULT_QIWI_NETWORKS)
 
+    def __contains__(self, item: Union[str, IPv4Address]) -> bool:
+        return self.check(item)
+
     def check(self, ip: Union[str, IPv4Address]) -> bool:
         if not isinstance(ip, IPv4Address):
             ip = IPv4Address(ip)
         return ip in self._allowed_ips
-
-    def __contains__(self, item: Union[str, IPv4Address]) -> bool:
-        return self.check(item)

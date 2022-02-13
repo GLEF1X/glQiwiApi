@@ -37,7 +37,8 @@ class CacheStorage(abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def contains_similar(self, item: Any) -> bool: ...
+    async def contains_similar(self, item: Any) -> bool:
+        ...
 
     def __getitem__(self, item: Any) -> Any:
         return self.retrieve(item)

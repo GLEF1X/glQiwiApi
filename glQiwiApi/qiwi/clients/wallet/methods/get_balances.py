@@ -13,5 +13,5 @@ class GetBalances(QiwiAPIMethod[List[Balance]]):
     url: ClassVar[str] = "https://edge.qiwi.com/funding-sources/v2/persons/{phone_number}/accounts"
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+    def parse_http_response(cls, response: HTTPResponse) -> List[Balance]:
         return parse_obj_as(List[Balance], response.json()["accounts"])

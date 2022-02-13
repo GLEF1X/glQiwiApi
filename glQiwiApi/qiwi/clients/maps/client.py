@@ -18,28 +18,31 @@ class QiwiMaps(BaseAPIClient):
     """
 
     def __init__(
-            self,
-            request_service: typing.Optional[RequestServiceProto] = None,
-            cache_storage: typing.Optional[CacheStorage] = None
+        self,
+        request_service: typing.Optional[RequestServiceProto] = None,
+        cache_storage: typing.Optional[CacheStorage] = None,
     ) -> None:
         super().__init__(request_service, cache_storage)
 
     def _create_request_service(self) -> RequestServiceProto:
-        return RequestService(base_headers={
-            "Content-type": "application/json"
-        })
+        return RequestService(
+            base_headers={
+                "Content-type": "application/json",
+                "Accept": "application/json",
+            }
+        )
 
     async def terminals(
-            self,
-            polygon: Polygon,
-            zoom: typing.Optional[int] = None,
-            pop_if_inactive_x_mins: int = 30,
-            include_partners: typing.Optional[bool] = None,
-            partners_ids: typing.Optional[typing.List[typing.Any]] = None,
-            cache_terminals: typing.Optional[bool] = None,
-            card_terminals: typing.Optional[bool] = None,
-            identification_types: typing.Optional[int] = None,
-            terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
+        self,
+        polygon: Polygon,
+        zoom: typing.Optional[int] = None,
+        pop_if_inactive_x_mins: int = 30,
+        include_partners: typing.Optional[bool] = None,
+        partners_ids: typing.Optional[typing.List[typing.Any]] = None,
+        cache_terminals: typing.Optional[bool] = None,
+        card_terminals: typing.Optional[bool] = None,
+        identification_types: typing.Optional[int] = None,
+        terminal_groups: typing.Optional[typing.List[typing.Any]] = None,
     ) -> typing.List[Terminal]:
         """
         Get map of terminals sent for passed polygon with additional params
@@ -60,7 +63,7 @@ class QiwiMaps(BaseAPIClient):
         :param terminal_groups: look at QiwiMaps.partners
         :return: list of Terminal instances
         """
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             GetTerminals(
                 polygon=polygon,
                 zoom=zoom,
@@ -70,7 +73,7 @@ class QiwiMaps(BaseAPIClient):
                 cache_terminals=cache_terminals,
                 card_terminals=card_terminals,
                 identification_types=identification_types,
-                terminal_groups=terminal_groups
+                terminal_groups=terminal_groups,
             )
         )
 
@@ -79,4 +82,4 @@ class QiwiMaps(BaseAPIClient):
         Get terminal partners for ttpGroups
         :return: list of TTPGroups
         """
-        return await self._request_service.emit_request_to_api(GetPartners())
+        return await self._request_service.execute_api_method(GetPartners())

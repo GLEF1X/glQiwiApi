@@ -1,4 +1,3 @@
-"""Main model: Terminal"""
 from typing import Optional
 
 from pydantic import Field
@@ -29,6 +28,3 @@ class Terminal(Base):
     card_allowed: bool = Field(..., alias="cardAllowed")
     identification_type: int = Field(..., alias="identificationType")
     coordinate: Coordinate = Field(..., alias="coordinate")
-
-
-__all__ = ("Terminal",)

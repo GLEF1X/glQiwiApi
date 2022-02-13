@@ -11,15 +11,15 @@ from glQiwiApi.utils.compat import json
 
 HTTP_STATUS_MATCH_TO_ERROR = {
     400: "Query syntax error (invalid data format). Can be related to wrong arguments,"
-         " that you have passed to method",
+    " that you have passed to method",
     401: "Wrong API token or token expired",
     403: "No permission for this request(API token has insufficient permissions)",
     404: "Object was not found or there are no objects with the specified characteristics",
     423: "Too many requests, the service is temporarily unavailable",
     422: "The domain / subnet / host is incorrectly specified"
-         "webhook (in the new_url parameter for the webhook URL),"
-         "the hook type or transaction type is incorrectly specified,"
-         "an attempt to create a hook if there is one already created",
+    "webhook (in the new_url parameter for the webhook URL),"
+    "the hook type or transaction type is incorrectly specified,"
+    "an attempt to create a hook if there is one already created",
     405: "Error related to the type of API request, contact the developer or open an issue",
     500: "Internal service error",
 }
@@ -38,8 +38,9 @@ class QiwiAPIError(Exception):
         self._deserialize_cache: Dict[int, Any] = {}
         self._custom_message = custom_message
         self.http_response = http_response
-        self.error_code = str(self._scaffold_error_code())
+        self.error_code = self._scaffold_error_code()
         self.message = self._scaffold_error_message()
+        self.service_name = self._scaffold_service_name()
 
     def json(self) -> Dict[str, Any]:
         return self._deserialize_response()
@@ -67,12 +68,29 @@ class QiwiAPIError(Exception):
         raise self
 
     def __str__(self) -> str:
-        representation = "{sc} HTTP status | description: {msg}, raw_response={raw_response}"
-        return representation.format(
-            sc=self.http_response.status_code,
-            msg=self._custom_message or self._compose_error_message(),
-            raw_response=self._deserialize_response()
+        representation = (
+            "{message}\n"
+            "    * {status_code} HTTP status code\n"
+            "    * raw response {raw_response}"
         )
+        deserialized_response = self._deserialize_response()
+
+        try:
+            raw_response: str = json.dumps(deserialized_response, indent=4, ensure_ascii=False)  # type: ignore
+        except Exception:
+            raw_response = self.http_response.body.decode("utf-8")
+
+        formatted_representation = representation.format(
+            status_code=self.http_response.status_code,
+            message=self._compose_error_message(),
+            raw_response=raw_response,
+        )
+        if deserialized_response.get("errorCode") is not None:
+            formatted_representation += (
+                f"\n    * error code = {deserialized_response['errorCode']}"
+            )
+
+        return formatted_representation
 
     def _compose_error_message(self) -> str:
         """
@@ -84,19 +102,14 @@ class QiwiAPIError(Exception):
 
         If there are two messages founded, then it will be concatenated
         """
-        error_message = HTTP_STATUS_MATCH_TO_ERROR.get(self.http_response.status_code, "")
-        json_response = self._deserialize_response()
-        err_code = json_response.get("errorCode", "")
-
-        if err_code != "":
-            error_message += f", error code={err_code}"
-
-        return error_message
+        if self._custom_message or self.description_ru or self.description_en:
+            return self._custom_message or self.description_ru or self.description_en  # type: ignore
+        return HTTP_STATUS_MATCH_TO_ERROR.get(self.http_response.status_code, "")
 
     def _scaffold_error_code(self) -> Optional[str]:
         r = self._deserialize_response()
-        err_code: Optional[str] = r.get("errorCode")
-        if err_code is not None:
+        err_code = r.get("errorCode")
+        if isinstance(err_code, str):
             return err_code
 
         err_code = r.get("code")
@@ -108,6 +121,10 @@ class QiwiAPIError(Exception):
     def _scaffold_error_message(self) -> Optional[str]:
         r = self._deserialize_response()
         return r.get("message") or r.get("description")
+
+    def _scaffold_service_name(self) -> Optional[str]:
+        r = self._deserialize_response()
+        return r.get("serviceName")
 
     def _deserialize_response(self) -> Dict[str, Any]:
         """
@@ -172,20 +189,28 @@ class ValidationError(QiwiAPIError):
     _error_code_match = [303, 254, 241, "validation.error", 558, "internal.invoicing.error"]
 
 
-class ObjectNotFound(QiwiAPIError):
+class ObjectNotFoundError(QiwiAPIError):
     _error_code_contains = "not.found"
 
 
 class ReceiptNotAvailable(QiwiAPIError):
     _error_code_contains = "cheque.not.available"
-    description_en = ("It is impossible to receive a check due to the fact that "
-                      "the transaction for this ID has not been completed,"
-                      "that is, an error occurred during the transaction")
+    description_en = (
+        "It is impossible to receive a check due to the fact that "
+        "the transaction for this ID has not been completed,"
+        "that is, an error occurred during the transaction"
+    )
 
 
-class OperationLimitExceeded(QiwiAPIError):
+class OperationLimitExceededError(QiwiAPIError):
     _error_code_match = [705, 704, 700, 716, 717]
 
 
-class MobileOperatorCannotBeDetermined(QiwiAPIError):
+class ObjectAlreadyExistsError(QiwiAPIError):
+    _error_code_contains = ["already.exists"]
+    description_ru = "Объект, который вы хотите создать уже был создан ранее"
+    description_en = "Object that you want to create was have already been created earlier"
+
+
+class MobileOperatorCannotBeDeterminedError(QiwiAPIError):
     pass

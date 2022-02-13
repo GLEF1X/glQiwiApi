@@ -9,7 +9,9 @@ from glQiwiApi.types.arbitrary import BinaryIOInput, File
 
 
 class GetReceipt(QiwiAPIMethod[File]):
-    url: ClassVar[str] = "https://edge.qiwi.com/payment-history/v1/transactions/{transaction_id}/cheque/file"
+    url: ClassVar[
+        str
+    ] = "https://edge.qiwi.com/payment-history/v1/transactions/{transaction_id}/cheque/file"
     http_method: ClassVar[str] = "GET"
 
     transaction_id: Union[str, int] = Field(..., path_runtime_value=True)
@@ -20,5 +22,5 @@ class GetReceipt(QiwiAPIMethod[File]):
         use_enum_values = True
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> File:
+    def parse_http_response(cls, response: HTTPResponse) -> File:  # type: ignore
         return File(BinaryIOInput.from_bytes(response.body))

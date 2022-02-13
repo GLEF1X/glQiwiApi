@@ -14,10 +14,15 @@ W = TypeVar("W", bound="BaseAPIClient")
 
 
 class BaseAPIClient(abc.ABC):
-    def __init__(self, request_service: Optional[RequestServiceProto] = None,
-                 cache_storage: Optional[CacheStorage] = None):
+    def __init__(
+        self,
+        request_service: Optional[RequestServiceProto] = None,
+        cache_storage: Optional[CacheStorage] = None,
+    ):
         self._cache_storage = cache_storage
-        self._request_service: RequestServiceProto = request_service or self._create_request_service()
+        self._request_service: RequestServiceProto = (
+            request_service or self._create_request_service()
+        )
 
     @abc.abstractmethod
     def _create_request_service(self) -> RequestServiceProto:
@@ -28,10 +33,10 @@ class BaseAPIClient(abc.ABC):
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 

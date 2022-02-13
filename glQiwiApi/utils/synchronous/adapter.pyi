@@ -16,11 +16,7 @@ def safe_cancel(
     callback: Optional[Callable[..., Awaitable[N]]],
 ) -> None: ...
 
-AnyExecutor = Union[
-    futures.ThreadPoolExecutor,
-    futures.ProcessPoolExecutor,
-    Optional[None]
-]
+AnyExecutor = Union[futures.ThreadPoolExecutor, futures.ProcessPoolExecutor, Optional[None]]
 
 def _cancel_future(
     loop: asyncio.AbstractEventLoop,
@@ -42,5 +38,5 @@ class async_as_sync:  # NOQA
         async_shutdown_callback: Optional[Callable[..., Awaitable[N]]] = None,
         sync_shutdown_callback: Optional[Callable[[Any], Any]] = None,
     ) -> None: ...
-    def __call__(self, func: Callable[..., Coroutine[Any, Any, N]]) -> Callable[..., N]: ...
+    def __call__(self, func: Callable[..., Awaitable[N]]) -> Callable[..., N]: ...
     def execute_sync_callback(self, result: Any) -> Any: ...

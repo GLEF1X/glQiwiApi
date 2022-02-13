@@ -43,7 +43,6 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 class BaseDispatcher(abc.ABC):
-
     def __init__(self) -> None:
         self.error_handler = HandlerCollection(Exception)
 
@@ -61,7 +60,7 @@ class BaseDispatcher(abc.ABC):
                     return await self.error_handler.notify(e, *args)
                 raise e
 
-        return wrapper
+        return cast(F, wrapper)
 
     async def process_event(self, event: Event, *args: Any) -> None:
         """
@@ -122,9 +121,9 @@ class HandlerCollection(Generic[Event]):
         return decorator
 
     def register_handler(
-            self,
-            event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-            *filters: Union[Callable[[Event], bool], BaseFilter[Event]]
+        self,
+        event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+        *filters: Union[Callable[[Event], bool], BaseFilter[Event]],
     ) -> None:
         """
         Add new event handler.
@@ -161,9 +160,9 @@ class EventHandler(Generic[Event]):
     """
 
     def __init__(
-            self,
-            handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-            *filters: BaseFilter[Event],
+        self,
+        handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+        *filters: BaseFilter[Event],
     ) -> None:
         self._handler = handler
         self._filters = tuple(filter(lambda f: operator.not_(operator.eq(f, None)), filters))

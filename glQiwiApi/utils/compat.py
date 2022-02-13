@@ -27,11 +27,10 @@ except ImportError:
                 "functionality till you install this module."
             )
 
-
     aiofiles = aiofiles_compat()  # type: ignore
 
 try:
-    import orjson as json
+    import orjson as json  # noqa
 except (ImportError, ModuleNotFoundError):
     import json  # type: ignore
 

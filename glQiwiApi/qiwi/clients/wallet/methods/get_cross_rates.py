@@ -13,5 +13,5 @@ class GetCrossRates(QiwiAPIMethod[List[CrossRate]]):
     http_method: ClassVar[str] = "GET"
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+    def parse_http_response(cls, response: HTTPResponse) -> List[CrossRate]:
         return parse_obj_as(List[CrossRate], response.json()["result"])

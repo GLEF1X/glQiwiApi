@@ -3,7 +3,11 @@ from typing import Optional, Union, Dict, List
 
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient
 from glQiwiApi.core.cache.storage import CacheStorage
-from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
+from glQiwiApi.core.request_service import (
+    RequestService,
+    RequestServiceProto,
+    RequestServiceCacheDecorator,
+)
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_bill import CreateP2PBill
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_key_pair import CreateP2PKeyPair
 from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
@@ -22,11 +26,11 @@ class QiwiP2PClient(BaseAPIClient):
     _api_access_token = String(optional=False)
 
     def __init__(
-            self,
-            secret_p2p: str,
-            request_service: Optional[RequestServiceProto] = None,
-            cache_storage: Optional[CacheStorage] = None,
-            shim_server_url: Optional[str] = None,
+        self,
+        secret_p2p: str,
+        request_service: Optional[RequestServiceProto] = None,
+        cache_storage: Optional[CacheStorage] = None,
+        shim_server_url: Optional[str] = None,
     ) -> None:
         """
         :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
@@ -38,11 +42,13 @@ class QiwiP2PClient(BaseAPIClient):
         BaseAPIClient.__init__(self, request_service, cache_storage)
 
     def _create_request_service(self) -> RequestServiceProto:
-        rs: RequestServiceProto = RequestService(base_headers={
-            "Authorization": f"Bearer {self._api_access_token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        rs: RequestServiceProto = RequestService(
+            base_headers={
+                "Authorization": f"Bearer {self._api_access_token}",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
         if self._cache_storage is not None:
             rs = RequestServiceCacheDecorator(rs, self._cache_storage)
 
@@ -62,7 +68,7 @@ class QiwiP2PClient(BaseAPIClient):
         :param bill_id:
         :return: status of bill
         """
-        return await self._request_service.emit_request_to_api(GetBillByID(bill_id=bill_id))
+        return await self._request_service.execute_api_method(GetBillByID(bill_id=bill_id))
 
     async def check_if_bill_was_paid(self, bill: Bill) -> bool:
         bill_status = await self.get_bill_status(bill.id)
@@ -85,14 +91,14 @@ class QiwiP2PClient(BaseAPIClient):
         return (await self.get_bill_by_id(bill_id)).status.value
 
     async def create_p2p_bill(
-            self,
-            amount: Union[int, float, str],
-            bill_id: Optional[str] = None,
-            comment: Optional[str] = None,
-            expire_at: Optional[datetime] = None,
-            theme_code: Optional[str] = None,
-            pay_source_filter: Optional[List[str]] = None,
-            customer: Optional[Customer] = None
+        self,
+        amount: Union[int, float, str],
+        bill_id: Optional[str] = None,
+        comment: Optional[str] = None,
+        expire_at: Optional[datetime] = None,
+        theme_code: Optional[str] = None,
+        pay_source_filter: Optional[List[str]] = None,
+        customer: Optional[Customer] = None,
     ) -> Bill:
         """
         It is the reliable method for integration.
@@ -114,7 +120,7 @@ class QiwiP2PClient(BaseAPIClient):
          only the translation methods specified in this parameter
         :param customer:
         """
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             CreateP2PBill(
                 bill_id=bill_id,
                 expire_at=expire_at,
@@ -122,7 +128,7 @@ class QiwiP2PClient(BaseAPIClient):
                 comment=comment,
                 theme_code=theme_code,
                 pay_source_filter=pay_source_filter,
-                customer=customer
+                customer=customer,
             )
         )
 
@@ -131,10 +137,10 @@ class QiwiP2PClient(BaseAPIClient):
 
     async def reject_p2p_bill(self, bill_id: str) -> Bill:
         """Use this method to cancel unpaid invoice."""
-        return await self._request_service.emit_request_to_api(RejectP2PBill(bill_id=bill_id))
+        return await self._request_service.execute_api_method(RejectP2PBill(bill_id=bill_id))
 
     async def create_pair_of_p2p_keys(
-            self, key_pair_name: str, server_notification_url: Optional[str] = None
+        self, key_pair_name: str, server_notification_url: Optional[str] = None
     ) -> PairOfP2PKeys:
         """
         Creates a new pair of P2P keys to interact with P2P QIWI API
@@ -142,18 +148,17 @@ class QiwiP2PClient(BaseAPIClient):
         :param key_pair_name: P2P token pair name
         :param server_notification_url: endpoint for webhooks
         """
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             CreateP2PKeyPair(
-                key_pair_name=key_pair_name,
-                server_notification_url=server_notification_url
+                key_pair_name=key_pair_name, server_notification_url=server_notification_url
             )
         )
 
     async def refund_bill(
-            self,
-            bill_id: Union[str, int],
-            refund_id: Union[str, int],
-            json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
+        self,
+        bill_id: Union[str, int],
+        refund_id: Union[str, int],
+        json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
     ) -> RefundedBill:
         """
         The method allows you to make a refund on a paid invoice.
@@ -173,11 +178,11 @@ class QiwiP2PClient(BaseAPIClient):
         :param json_bill_data:
         :return: RefundBill object
         """
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             RefundBill(bill_id=bill_id, refund_id=refund_id, json_bill_data=json_bill_data)
         )
 
-    def create_shim_url(self, invoice_uid: str):
+    def create_shim_url(self, invoice_uid: str) -> str:
         if self._shim_server_url is None:
             raise NoShimUrlWasProvidedError(
                 "QiwiP2PClient has no shim endpoint -> can't create shim endpoint for bill"

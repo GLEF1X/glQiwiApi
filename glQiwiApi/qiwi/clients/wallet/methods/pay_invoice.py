@@ -11,9 +11,9 @@ class PayInvoice(QiwiAPIMethod[InvoiceStatus]):
     url: ClassVar[str] = "https://edge.qiwi.com/checkout-api/api/bill/search"
     http_method: ClassVar[str] = "POST"
 
-    request_schema: ClassVar[Dict[str, Any]] = {
+    json_payload_schema: ClassVar[Dict[str, Any]] = {
         "invoice_uid": RuntimeValue(),
-        "currency": RuntimeValue()
+        "currency": RuntimeValue(),
     }
 
     invoice_uid: str = Field(..., schema_path="invoice_uid")

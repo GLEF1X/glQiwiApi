@@ -7,36 +7,42 @@ from __future__ import annotations
 import asyncio
 import typing
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, cast, Iterable
+from typing import Any, Dict, List, Optional, Union, Iterable
 
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient
 from glQiwiApi.core.cache.storage import CacheStorage
-from glQiwiApi.core.request_service import RequestService, RequestServiceProto, RequestServiceCacheDecorator
+from glQiwiApi.core.request_service import (
+    RequestService,
+    RequestServiceProto,
+    RequestServiceCacheDecorator,
+)
 from glQiwiApi.utils.payload import (
     make_payload,
 )
 from glQiwiApi.utils.validators import String
+from glQiwiApi.yoo_money.methods.acccept_incoming_transfer import AcceptIncomingTransfer
 from glQiwiApi.yoo_money.methods.build_auth_url import BuildAuthURL
 from glQiwiApi.yoo_money.methods.get_access_token import GetAccessToken
 from glQiwiApi.yoo_money.methods.make_cellular_payment import MakeCellularPayment
 from glQiwiApi.yoo_money.methods.operation_details import OperationDetailsMethod
 from glQiwiApi.yoo_money.methods.operation_history import OperationHistoryMethod
+from glQiwiApi.yoo_money.methods.process_payment import ProcessPayment
+from glQiwiApi.yoo_money.methods.reject_incoming_transfer import RejectIncomingTransfer
+from glQiwiApi.yoo_money.methods.request_payment import RequestPayment
 from glQiwiApi.yoo_money.methods.retrieve_account_info import RetrieveAccountInfo
 from glQiwiApi.yoo_money.methods.revoke_api_token import RevokeAPIToken
-from glQiwiApi.yoo_money.settings import YooMoneyMethods
 from glQiwiApi.yoo_money.types import AccountInfo
 from glQiwiApi.yoo_money.types.types import (
     OperationHistory,
-    PreProcessPaymentResponse,
+    RequestPaymentResponse,
     OperationDetails,
     IncomingTransaction,
     Payment,
-    Card,
 )
 
-ERROR_CODE_MATCHES = {
+HTTP_STATUS_TO_ERROR_MATCHES = {
     400: "An error related to the type of request to the api,"
-         "you may have passed an invalid API token",
+    "you may have passed an invalid API token",
     401: "A non-existent, expired, or revoked token is specified",
     403: "An operation has been requested for which the token has no rights",
 }
@@ -51,13 +57,14 @@ class YooMoneyAPI(BaseAPIClient):
     using the guide on the official github of the project
 
     """
+
     _api_access_token = String(optional=False)
 
     def __init__(
-            self,
-            api_access_token: str,
-            request_service: Optional[RequestServiceProto] = None,
-            cache_storage: Optional[CacheStorage] = None
+        self,
+        api_access_token: str,
+        request_service: Optional[RequestServiceProto] = None,
+        cache_storage: Optional[CacheStorage] = None,
     ) -> None:
         """
         The constructor accepts a token obtained from the method class get_access_token
@@ -65,15 +72,17 @@ class YooMoneyAPI(BaseAPIClient):
 
         :param api_access_token: api token for requests
         """
-        BaseAPIClient.__init__(self, request_service, cache_storage)
         self._api_access_token = api_access_token
+        BaseAPIClient.__init__(self, request_service, cache_storage)
 
     def _create_request_service(self) -> RequestServiceProto:
-        rs: RequestServiceProto = RequestService(base_headers={
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": f"Bearer {self._api_access_token}",
-            "Host": "yoomoney.ru",
-        })
+        rs: RequestServiceProto = RequestService(
+            base_headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": f"Bearer {self._api_access_token}",
+                "Host": "yoomoney.ru",
+            }
+        )
         if self._cache_storage is not None:
             rs = RequestServiceCacheDecorator(rs, self._cache_storage)
 
@@ -81,7 +90,7 @@ class YooMoneyAPI(BaseAPIClient):
 
     @classmethod
     async def build_url_for_auth(
-            cls, scopes: List[str], client_id: str, redirect_uri: str = "https://example.com"
+        cls, scopes: List[str], client_id: str, redirect_uri: str = "https://example.com"
     ) -> str:
         """
         Method to get the link for further authorization and obtaining a token
@@ -95,15 +104,17 @@ class YooMoneyAPI(BaseAPIClient):
          and make authorization via login / password
         """
         request_service = RequestService()
-        request = BuildAuthURL(client_id=client_id, scopes=scopes, redirect_uri=redirect_uri).build_request()
+        request = BuildAuthURL(
+            client_id=client_id, scopes=scopes, redirect_uri=redirect_uri
+        ).build_request()
         try:
             return BuildAuthURL.parse_http_response(
-                await request_service.get_text_content(
+                await request_service.send_request(
                     request.endpoint,
                     request.http_method,
                     params=request.params,
                     data=request.data,
-                    headers=request.headers
+                    headers=request.headers,
                 )
             )
         finally:
@@ -111,11 +122,11 @@ class YooMoneyAPI(BaseAPIClient):
 
     @classmethod
     async def get_access_token(
-            cls,
-            code: str,
-            client_id: str,
-            redirect_uri: str = "https://example.com",
-            client_secret: Optional[str] = None,
+        cls,
+        code: str,
+        client_id: str,
+        redirect_uri: str = "https://example.com",
+        client_secret: Optional[str] = None,
     ) -> str:
         """
         Method for obtaining a token for requests to the YooMoney API
@@ -128,14 +139,16 @@ class YooMoneyAPI(BaseAPIClient):
          Specified if the service is registered with authentication.
         :return: YooMoney API TOKEN
         """
-        rs = RequestService(error_messages=ERROR_CODE_MATCHES)
+        rs = RequestService()
         try:
-            return await rs.emit_request_to_api(GetAccessToken(
-                code=code,
-                client_id=client_id,
-                redirect_uri=redirect_uri,
-                client_secret=client_secret
-            ))
+            return await rs.execute_api_method(
+                GetAccessToken(
+                    code=code,
+                    client_id=client_id,
+                    redirect_uri=redirect_uri,
+                    client_secret=client_secret,
+                )
+            )
         finally:
             await rs.shutdown()
 
@@ -145,25 +158,25 @@ class YooMoneyAPI(BaseAPIClient):
         Documentation:
         https://yoomoney.ru/docs/wallet/using-api/authorization/revoke-access-token
         """
-        return await self._request_service.emit_request_to_api(RevokeAPIToken())
+        await self._request_service.execute_api_method(RevokeAPIToken())
 
     @classmethod
     def create_pay_form(
-            cls,
-            receiver: str,
-            quick_pay_form: str,
-            targets: str,
-            payment_type: str,
-            amount: Union[int, float],
-            form_comment: Optional[str] = None,
-            short_dest: Optional[str] = None,
-            label: Optional[str] = None,
-            comment: Optional[str] = None,
-            success_url: Optional[str] = None,
-            need_fio: Optional[bool] = None,
-            need_email: Optional[bool] = None,
-            need_phone: Optional[bool] = None,
-            need_address: Optional[bool] = None,
+        cls,
+        receiver: str,
+        quick_pay_form: str,
+        targets: str,
+        payment_type: str,
+        amount: Union[int, float],
+        form_comment: Optional[str] = None,
+        short_dest: Optional[str] = None,
+        label: Optional[str] = None,
+        comment: Optional[str] = None,
+        success_url: Optional[str] = None,
+        need_fio: Optional[bool] = None,
+        need_email: Optional[bool] = None,
+        need_phone: Optional[bool] = None,
+        need_address: Optional[bool] = None,
     ) -> str:
         """
         The YooMoney form is a set of fields with information about a transfer.
@@ -191,7 +204,7 @@ class YooMoneyAPI(BaseAPIClient):
                We recommend using the same name as formcomment
         @param label: The label that a site or app assigns to a certain transfer.
                       For instance, a code or order identifier may be used for this label.
-        @param comment: The field in which you can send sender’s comments.
+        @param comment: The field in which you can transfer_money sender’s comments.
         @param success_url: URL where the user is redirected after the transfer.
         @param need_fio: Sender’s full name required.
         @param need_email: Sender’s email address required.
@@ -229,17 +242,17 @@ class YooMoneyAPI(BaseAPIClient):
 
         :return: объект AccountInfo
         """
-        return await self._request_service.emit_request_to_api(RetrieveAccountInfo())
+        return await self._request_service.execute_api_method(RetrieveAccountInfo())
 
     async def operation_history(
-            self,
-            operation_types: Optional[Iterable[str]] = None,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None,
-            start_record: Optional[int] = None,
-            records: int = 30,
-            label: Optional[Union[str, int]] = None,
-            in_detail: bool = False,
+        self,
+        operation_types: Optional[Iterable[str]] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        start_record: Optional[int] = None,
+        records: int = 30,
+        label: Optional[Union[str, int]] = None,
+        in_detail: bool = False,
     ) -> OperationHistory:
         """
         More details:
@@ -270,7 +283,7 @@ class YooMoneyAPI(BaseAPIClient):
          Valid values are from 1 to 100, the default is 30.
         :param in_detail:
         """
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             OperationHistoryMethod(
                 operation_types=operation_types,
                 start_record=start_record,
@@ -278,7 +291,7 @@ class YooMoneyAPI(BaseAPIClient):
                 records=records,
                 label=label,
                 in_detail=in_detail,
-                end_date=end_date
+                end_date=end_date,
             )
         )
 
@@ -291,35 +304,32 @@ class YooMoneyAPI(BaseAPIClient):
 
         :param operation_id: Operation ID
         """
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             OperationDetailsMethod(operation_id=operation_id)
         )
 
     async def make_cellular_payment(
-            self, pattern_id: str, phone_number: str, amount: typing.SupportsFloat
+        self, pattern_id: str, phone_number: str, amount: typing.SupportsFloat
     ) -> Dict[str, Any]:
-        return await self._request_service.emit_request_to_api(
+        return await self._request_service.execute_api_method(
             MakeCellularPayment(pattern_id=pattern_id, phone_number=phone_number, amount=amount)
         )
 
-    async def send(
-            self,
-            to_account: str,
-            amount: Union[int, float],
-            money_source: str = "wallet",
-            pattern_id: str = "p2p",
-            cvv2_code: str = "",
-            card_type: Optional[str] = None,
-            protect: bool = False,
-            comment_for_history: Optional[str] = None,
-            comment: Optional[str] = None,
-            expire_period: int = 1,
+    async def transfer_money(
+        self,
+        to_account: str,
+        amount: Union[int, float],
+        pattern_id: str = "p2p",
+        protect: bool = False,
+        comment_for_history: Optional[str] = None,
+        comment: Optional[str] = None,
+        expire_period: int = 1,
     ) -> Payment:
         """
         A method for sending money to another person's account or card.
         This function makes 2 requests at once, because of this you may feel a slight loss in performance,
           you can use the method
-        _pre_process_payment and get the PreProcessPaymentResponse object,
+        make_request_payment and get the RequestPaymentResponse object,
         which contains information about a still unconfirmed payment \n
         More detailed documentation:
         https://yoomoney.ru/docs/wallet/process-payments/process-payment
@@ -329,18 +339,11 @@ class YooMoneyAPI(BaseAPIClient):
          (account number, phone number or email).
         :param amount: Amount to be received
          (the invoice will be sent to the recipient's account after payment). MINIMUM AMOUNT 2.
-        :param money_source: The requested payment method.
-         wallet - from the user's account, if you want to use a card,
          then you will need to pass card_type
          to search for a card in the list of your bank cards,
          and also optionally cvv2 code for making a payment
         :param comment_for_history: Comment to the translation,
          displayed in the sender's history.
-        :param card_type: Bank card type, you need to fill in,
-         only if you want to debit funds from your card
-        :param cvv2_code: optional, may not be passed, however
-         if payment by card is required,
-         the parameter should be passed
         :param comment: Comment on the transfer, displayed to the recipient.
         :param protect: The value of the parameter is true - a sign that
          that the transfer is protected by a protection code.
@@ -354,7 +357,7 @@ class YooMoneyAPI(BaseAPIClient):
 
 
         """
-        pre_payment = await self._pre_process_payment(
+        pre_payment = await self.make_request_payment(
             to_account=to_account,
             amount=amount,
             comment_for_history=comment_for_history,
@@ -363,52 +366,27 @@ class YooMoneyAPI(BaseAPIClient):
             protect=protect,
             pattern_id=pattern_id,
         )
-        headers = self._attach_authorization_header(to_headers={})
-        payload = {"request_id": pre_payment.request_id, "money_source": "wallet"}
-        if (
-                money_source == "card"
-                and isinstance(pre_payment, PreProcessPaymentResponse)  # noqa: W503
-                and pre_payment.money_source.cards.allowed == "true"  # type: ignore  # noqa: W503
-        ):
-            if not isinstance(card_type, str):
-                cards = cast(Card, pre_payment.money_source.cards)  # type: ignore
-                payload.update({"money_source": cards.items[0].item_id, "csc": cvv2_code})
-            else:
-                cards = cast(Card, pre_payment.money_source.cards).items  # type: ignore
-                for card in cards:
-                    if card.item_type == card_type:  # type: ignore
-                        payload.update(
-                            {
-                                "money_source": card.item_id,  # type: ignore
-                                "csc": cvv2_code,
-                            },
-                        )
-        response = await self._request_service.emit_request_to_api(
-            "POST",
-            YooMoneyMethods.PROCESS_PAYMENT,
-            self._router,
-            headers=headers,
-            data=payload,
+        return await self._request_service.execute_api_method(
+            ProcessPayment(request_id=pre_payment.request_id)
         )
-        return Payment.from_obj(self, response).initialize(pre_payment.protection_code)
 
-    async def _pre_process_payment(
-            self,
-            to_account: str,
-            amount: Union[int, float],
-            pattern_id: str = "p2p",
-            comment_for_history: Optional[str] = None,
-            comment_for_receiver: Optional[str] = None,
-            protect: bool = False,
-            expire_period: int = 1,
-    ) -> PreProcessPaymentResponse:
+    async def make_request_payment(
+        self,
+        to_account: str,
+        amount: Union[int, float],
+        pattern_id: str = "p2p",
+        comment_for_history: Optional[str] = None,
+        comment_for_receiver: Optional[str] = None,
+        protect: bool = False,
+        expire_period: int = 1,
+    ) -> RequestPaymentResponse:
         """
         More detailed documentation:
         https://yoomoney.ru/docs/wallet/process-payments/request-payment
         Creation of payment, verification of parameters and acceptance
         payment by the store or transfer of funds to the user account of YooMoney.
         This method is not recommended to be used directly, much
-        it's easier to use send.
+        it's easier to use transfer_money.
         Required token rights: to-account ("recipient id", "id type")
 
         :param pattern_id: Payment pattern ID
@@ -430,36 +408,27 @@ class YooMoneyAPI(BaseAPIClient):
             The parameter value must be in the range from 1 to 365.
             Optional parameter. The default is 1.
         """
-        headers = self._attach_authorization_header(to_headers={})
-        payload = {
-            "pattern_id": pattern_id,
-            "to": to_account,
-            "amount_due": amount,
-            "comment": comment_for_history,
-            "message": comment_for_receiver,
-            "expire_period": expire_period,
-            "codepro": protect,
-        }
-        return PreProcessPaymentResponse.from_obj(
-            self,
-            await self._request_service.emit_request_to_api(
-                "POST",
-                YooMoneyMethods.PRE_PROCESS_PAYMENT,
-                self._router,
-                headers=headers,
-                data=payload,
-            ),
+        return await self._request_service.execute_api_method(
+            RequestPayment(
+                to_account=to_account,
+                amount=amount,
+                pattern_id=pattern_id,
+                comment_for_history=comment_for_history,
+                comment_for_receiver=comment_for_receiver,
+                protect=protect,
+                expire_period=expire_period,
+            )
         )
 
     async def get_balance(self) -> float:
         return (await self.retrieve_account_info()).balance
 
     async def accept_incoming_transaction(
-            self, operation_id: str, protection_code: str
+        self, operation_id: str, protection_code: str
     ) -> IncomingTransaction:
         """
         Acceptance of incoming transfers protected by a protection code,
-        if you passed the protect parameter to the send method
+        if you passed the protect parameter to the transfer_money method
         Number of reception attempts
         incoming transfer with a protection code is limited.
         When the number of attempts is exhausted, the transfer is automatically rejected
@@ -473,23 +442,14 @@ class YooMoneyAPI(BaseAPIClient):
          Indicated for an incoming transfer protected by a protection code.
          Not available for on-demand transfers.
         """
-        headers = self._attach_authorization_header(to_headers={})
-        payload = {"operation_id": operation_id, "protection_code": protection_code}
-        return IncomingTransaction.from_obj(
-            self,
-            await self._request_service.emit_request_to_api(
-                "POST",
-                YooMoneyMethods.ACCEPT_INCOMING_TRANSFER,
-                self._router,
-                headers=headers,
-                data=payload,
-            ),
+        return await self._request_service.execute_api_method(
+            AcceptIncomingTransfer(operation_id=operation_id, protection_code=protection_code)
         )
 
-    async def reject_operation(self, operation_id: str) -> Dict[str, str]:
+    async def reject_incoming_transfer(self, operation_id: str) -> Dict[str, str]:
         """
         Cancellation of incoming transfers protected by a protection code if you transferred
-         in the send method the protect parameter,
+         in the transfer_money method the protect parameter,
         and transfers on demand. \n
         If the transfer is canceled, it is returned to the sender. \n
         Required token rights: incoming-transfers
@@ -499,22 +459,16 @@ class YooMoneyAPI(BaseAPIClient):
         :param operation_id: Operation identifier, parameter value
          operation_id of history () method response.
         """
-        headers = self._attach_authorization_header(to_headers={})
-        return await self._request_service.emit_request_to_api(
-            "POST",
-            YooMoneyMethods.INCOMING_TRANSFER_REJECT,
-            self._router,
-            headers=headers,
-            data={"operation_id": operation_id},
+        return await self._request_service.execute_api_method(
+            RejectIncomingTransfer(operation_id=operation_id)
         )
 
-    async def is_exists_transaction_with_similar_properties(
-            self,
-            amount: Union[int, float],
-            operation_types: Optional[Iterable[str]] = None,
-            comment: Optional[str] = None,
-            max_records: int = 100,
-            recipient: Optional[str] = None,
+    async def check_if_operation_exists(
+        self,
+        check_fn: typing.Callable[[OperationDetails], bool],
+        operation_types: Optional[Iterable[str]] = None,
+        max_records: int = 100,
+        check_timeout: Optional[float] = None,
     ) -> bool:
         """
         Method for verifying a transaction.
@@ -522,19 +476,23 @@ class YooMoneyAPI(BaseAPIClient):
         For a little optimization, you can decrease rows by setting it,
         however, this does not guarantee the correct result
 
-        :param amount: payment amount
+        :param check_fn:
         :param operation_types: payment type
-        :param recipient: recipient number
         :param max_records: number of payments to be checked
-        :param comment: comment by which the transaction will be verified
+        :param check_timeout:
         :return: bool, is there such a transaction in the payment history
         """
         operation_history = await self.operation_history(
             operation_types=operation_types, records=max_records
         )
-        get_transaction_info_coroutines = [self.operation_details(op.id) for op in operation_history]
+        get_operation_details_coroutines = [
+            self.operation_details(op.id) for op in operation_history
+        ]
 
-        for future in asyncio.as_completed(get_transaction_info_coroutines):
-            transaction_detail: OperationDetails = await future  # noqa
+        for future in asyncio.as_completed(
+            get_operation_details_coroutines, timeout=check_timeout
+        ):
+            if check_fn(await future):
+                return True
 
         return False

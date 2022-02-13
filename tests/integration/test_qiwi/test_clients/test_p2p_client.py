@@ -6,14 +6,14 @@ import pytest
 
 from glQiwiApi import QiwiP2PClient
 from glQiwiApi.qiwi.clients.p2p.types import Bill
-from tests.settings import P2P_CREDENTIALS
+from tests.settings import QIWI_P2P_CREDENTIALS
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(name="api")
 async def api_fixture() -> AsyncIterator[QiwiP2PClient]:
-    p2p_client = QiwiP2PClient(**P2P_CREDENTIALS)
+    p2p_client = QiwiP2PClient(**QIWI_P2P_CREDENTIALS)
     yield p2p_client
     await p2p_client.close()
 

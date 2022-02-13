@@ -1,14 +1,13 @@
-import allure
 import py.path
 import pytest
 from aiogram import Bot, Dispatcher
 from pytest_mock import MockerFixture
 
 from glQiwiApi.core.event_fetching.webhooks.config import ApplicationConfig
-from glQiwiApi.plugins.telegram.webhook import (
+from glQiwiApi.plugins.aiogram.webhook import (
     DEFAULT_TELEGRAM_WEBHOOK_PATH,
     DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX,
-    TelegramWebhookPlugin,
+    AiogramWebhookPlugin,
 )
 from glQiwiApi.utils.certificates import SSLCertificate, get_or_generate_self_signed_certificate
 
@@ -23,15 +22,13 @@ def self_signed_certificate(tmpdir: py.path.local) -> SSLCertificate:
     )
 
 
-class TestWebhookPlugin:
-
-
+class TestWebhookPlugins:
     @pytest.mark.skipif(
         "sys.version_info <= (3, 8)",
-        reason="required functionality of pytest-mock doesn't work for this test on python <= 3.8"
+        reason="required functionality of pytest-mock doesn't work for this test on python <= 3.8",
     )
     async def test_webhook_plugin_install(
-            self, mocker: MockerFixture, self_signed_certificate: SSLCertificate
+        self, mocker: MockerFixture, self_signed_certificate: SSLCertificate
     ):
         bot = Bot("32423:dfgd", validate_token=False)
 
@@ -42,18 +39,18 @@ class TestWebhookPlugin:
         spy = mocker.spy(bot, "set_webhook")
         dispatcher = Dispatcher(bot)
 
-        plugin = TelegramWebhookPlugin(
+        plugin = AiogramWebhookPlugin(
             dispatcher,
             host="localhost",
             app_config=ApplicationConfig(ssl_certificate=self_signed_certificate),
         )
-        run_app_mock = mocker.patch("glQiwiApi.plugins.telegram.webhook.run_app", autospec=True)
+        run_app_mock = mocker.patch("glQiwiApi.plugins.aiogram.webhook.run_app", autospec=True)
         await plugin.install(ctx={})
 
         expected_webhook_url = (
-                "localhost"  # noqa
-                + DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX  # noqa
-                + DEFAULT_TELEGRAM_WEBHOOK_PATH.format(token="32423:dfgd")  # noqa
+            "localhost"  # noqa
+            + DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX  # noqa
+            + DEFAULT_TELEGRAM_WEBHOOK_PATH.format(token="32423:dfgd")  # noqa
         )
         spy.assert_awaited_once_with(
             url=expected_webhook_url, certificate=self_signed_certificate.as_input_file()

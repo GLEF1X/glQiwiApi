@@ -4,7 +4,7 @@ from typing import ClassVar, Union, Optional, Iterable, Any
 from pydantic import conint
 
 from glQiwiApi.core.abc.api_method import APIMethod, Request
-from glQiwiApi.utils.date_conversion import datetime_to_utc
+from glQiwiApi.utils.date_conversion import datetime_to_utc_in_iso_format
 from glQiwiApi.utils.payload import filter_dictionary_none_values
 from glQiwiApi.yoo_money.types.types import OperationHistory
 
@@ -34,12 +34,12 @@ class OperationHistoryMethod(APIMethod[OperationHistory]):
         if self.operation_types is not None:
             payload["type"] = " ".join([op_type.lower() for op_type in self.operation_types])
         if self.start_date:
-            payload["from"] = datetime_to_utc(self.start_date)
+            payload["from"] = datetime_to_utc_in_iso_format(self.start_date)
         if self.end_date:
-            payload["till"] = datetime_to_utc(self.end_date)
+            payload["till"] = datetime_to_utc_in_iso_format(self.end_date)
 
         return Request(
             endpoint=self.url.format(**url_format_kw, **self._get_runtime_path_values()),
             http_method=self.http_method,
-            data=filter_dictionary_none_values(payload)
+            data=filter_dictionary_none_values(payload),
         )

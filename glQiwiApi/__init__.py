@@ -18,7 +18,7 @@ def default_cache_storage() -> CacheStorage:
     return InMemoryCacheStorage(invalidate_strategy=APIResponsesCacheInvalidationStrategy())
 
 
-__version__ = "1.2.0"
+__version__ = "2.0.0"
 
 __all__ = (
     # clients
@@ -29,5 +29,5 @@ __all__ = (
     "QiwiWrapper",
     # other
     "__version__",
-    "default_cache_storage"
+    "default_cache_storage",
 )

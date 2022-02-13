@@ -5,7 +5,7 @@ from py.path import local
 from glQiwiApi.utils.certificates import get_or_generate_self_signed_certificate
 
 
-def test_generate_self_signed_certificates(tmpdir: local):
+def test_generate_self_signed_certificates(tmpdir: local) -> None:
     tmpdir.mkdir("certificates")
     path_to_cert = tmpdir.join("cert.pem")
     path_to_pkey = tmpdir.join("pkey.pem")
@@ -16,7 +16,7 @@ def test_generate_self_signed_certificates(tmpdir: local):
     assert path_to_pkey.isfile() is True
 
 
-def test_get_ssl_context(tmpdir: local):
+def test_get_ssl_context(tmpdir: local) -> None:
     tmpdir.mkdir("certificates")
     ssl_certificate = get_or_generate_self_signed_certificate(
         hostname="45.138.24.80",
@@ -27,7 +27,7 @@ def test_get_ssl_context(tmpdir: local):
     assert isinstance(context, ssl.SSLContext)
 
 
-def test_get_input_file(tmpdir: local):
+def test_get_input_file(tmpdir: local) -> None:
     tmpdir.mkdir("certificates")
     ssl_certificate = get_or_generate_self_signed_certificate(
         hostname="45.138.24.80",

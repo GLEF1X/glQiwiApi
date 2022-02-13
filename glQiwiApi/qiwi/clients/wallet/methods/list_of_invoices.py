@@ -2,7 +2,6 @@ from typing import List, ClassVar
 
 from pydantic import conint, parse_obj_as
 
-from glQiwiApi.core.abc.api_method import ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.p2p.types import Bill
@@ -15,8 +14,8 @@ class GetListOfInvoices(QiwiAPIMethod[List[Bill]]):
     http_method: ClassVar[str] = "GET"
 
     rows: conint(le=MAX_INVOICES_LIMIT, strict=True, gt=0) = MAX_INVOICES_LIMIT
-    statuses: str = 'READY_FOR_PAY'
+    statuses: str = "READY_FOR_PAY"
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+    def parse_http_response(cls, response: HTTPResponse) -> List[Bill]:
         return parse_obj_as(List[Bill], response.json()["bills"])

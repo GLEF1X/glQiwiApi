@@ -13,7 +13,7 @@ from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
 )
 from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
-from tests.unit.test_dispatcher.mocks import WebhookTestData
+from tests.unit.test_event_fetching.mocks import WebhookTestData
 
 pytestmark = pytest.mark.asyncio
 

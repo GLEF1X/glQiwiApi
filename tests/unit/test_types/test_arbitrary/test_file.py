@@ -5,9 +5,7 @@ from typing import Any, Callable, Generator
 import pytest
 from _pytest.fixtures import SubRequest
 
-
-# spike for mypy
-from glQiwiApi.types.types.arbitrary import PlainPathInput, PathlibPathInput, BinaryIOInput, File
+from glQiwiApi.types.arbitrary import PlainPathInput, PathlibPathInput, BinaryIOInput, File
 
 lazy_fixture: Callable[..., Any] = pytest.lazy_fixture  # type: ignore  # noqa
 
@@ -118,6 +116,6 @@ def test_save(file: File, path_to_test_file: pathlib.Path) -> None:
     indirect=True,
 )
 @pytest.mark.asyncio
-async def test_asynchronously(file: File, path_to_test_file: pathlib.Path) -> None:
+async def test_save_asynchronously(file: File, path_to_test_file: pathlib.Path) -> None:
     await file.save_asynchronously(path_to_test_file)
     assert path_to_test_file.is_file()

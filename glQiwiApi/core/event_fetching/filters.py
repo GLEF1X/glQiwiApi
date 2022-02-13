@@ -41,7 +41,6 @@ class NotFilter(BaseFilter[Event]):
 
 
 class LambdaBasedFilter(BaseFilter[Event]):
-
     def __init__(self, func: Callable[[Event], Union[bool, Awaitable[bool]]]) -> None:
         self.name = f"Filter around <{func!r}>"
 

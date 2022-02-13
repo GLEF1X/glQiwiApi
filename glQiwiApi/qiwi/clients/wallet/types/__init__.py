@@ -1,4 +1,4 @@
-from .account_info import QiwiAccountInfo
+from .account_info import UserProfile
 from .balance import Balance
 from .commission import Commission
 from .identification import Identification
@@ -13,7 +13,7 @@ from .transaction import Source, Transaction, TransactionStatus, TransactionType
 from .webhooks import TransactionWebhook, WebhookInfo
 
 __all__ = (
-    "QiwiAccountInfo",
+    "UserProfile",
     "Transaction",
     "Statistic",
     "Limit",
@@ -34,5 +34,5 @@ __all__ = (
     "TransactionStatus",
     "Source",
     "PaymentDetails",
-    "History"
+    "History",
 )

@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from pydantic import Field
 
@@ -6,7 +6,7 @@ from glQiwiApi.core.abc.api_method import ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types.mobile_operator import MobileOperator
-from glQiwiApi.qiwi.exceptions import MobileOperatorCannotBeDetermined
+from glQiwiApi.qiwi.exceptions import MobileOperatorCannotBeDeterminedError
 
 
 class DetectMobileNumber(QiwiAPIMethod[MobileOperator]):
@@ -19,6 +19,8 @@ class DetectMobileNumber(QiwiAPIMethod[MobileOperator]):
     def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
         mobile_operator: MobileOperator = super().parse_http_response(response)
         if mobile_operator.code.value == "2" or mobile_operator.code.name == "ERROR":
-            raise MobileOperatorCannotBeDetermined(response, custom_message=mobile_operator.message)
+            raise MobileOperatorCannotBeDeterminedError(
+                response, custom_message=mobile_operator.message
+            )
 
-        return mobile_operator
+        return cast(ReturningType, mobile_operator)

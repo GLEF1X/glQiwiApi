@@ -26,7 +26,7 @@ class SSLCertificateIsMissingError(Exception):
     pass
 
 
-class TelegramWebhookPlugin(Pluggable):
+class AiogramWebhookPlugin(Pluggable):
     """
     Managing loading webhooks of aiogram together with QiwiWrapper
 

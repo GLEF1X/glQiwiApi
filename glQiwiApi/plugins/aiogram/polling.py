@@ -8,7 +8,7 @@ if t.TYPE_CHECKING:
     from glQiwiApi.utils.compat import Dispatcher
 
 
-class TelegramPollingPlugin(Pluggable):
+class AiogramPollingPlugin(Pluggable):
     """
     Builtin telegram proxy.
     Allows you to use Telegram and QIWI webhooks together

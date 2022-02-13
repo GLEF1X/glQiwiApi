@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from glQiwiApi.core.event_fetching.class_based.base import Handler
 from glQiwiApi.qiwi.clients.p2p.types import Bill
@@ -12,10 +12,9 @@ if TYPE_CHECKING:
 
 
 class AbstractBillHandler(Handler[Bill], abc.ABC):
-
     @property
     def wallet(self) -> QiwiP2PClient:
-        return self.context["wallet"]
+        return cast(QiwiP2PClient, self.context["wallet"])
 
     @property
     def bill_id(self) -> str:
@@ -31,4 +30,4 @@ class AbstractBillHandler(Handler[Bill], abc.ABC):
 
     @property
     def shim_url(self) -> str:
-        return self.event.shim_url
+        return self.wallet.create_shim_url(self.event.invoice_uid)

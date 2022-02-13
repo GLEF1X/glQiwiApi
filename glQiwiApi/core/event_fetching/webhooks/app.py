@@ -11,7 +11,9 @@ from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
 from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
 from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
 from glQiwiApi.core.event_fetching.webhooks.views.bill_view import QiwiBillWebhookView
-from glQiwiApi.core.event_fetching.webhooks.views.transaction_view import QiwiTransactionWebhookView
+from glQiwiApi.core.event_fetching.webhooks.views.transaction_view import (
+    QiwiTransactionWebhookView,
+)
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook
 

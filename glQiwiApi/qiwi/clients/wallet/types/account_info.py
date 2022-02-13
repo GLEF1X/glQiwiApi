@@ -112,10 +112,10 @@ class UserInfo(Base):
         return Currency.get(str(v))
 
 
-class QiwiAccountInfo(Base):
+class UserProfile(Base):
     auth_info: Optional[AuthInfo] = Field(None, alias="authInfo")
     contract_info: Optional[ContractInfo] = Field(None, alias="contractInfo")
     user_info: Optional[UserInfo] = Field(None, alias="userInfo")
 
 
-__all__ = ["QiwiAccountInfo"]
+__all__ = ["UserProfile"]

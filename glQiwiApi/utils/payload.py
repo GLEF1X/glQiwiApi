@@ -40,5 +40,3 @@ def parse_auth_link(response_data: str) -> str:
         r"https://yoomoney.ru/oauth2/authorize[?]requestid[=]\w+"
     )  # pragma: no cover
     return cast(str, re.findall(regexp, str(response_data))[0])  # pragma: no cover
-
-

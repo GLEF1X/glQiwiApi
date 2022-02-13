@@ -2,9 +2,9 @@ import abc
 import types
 from http import HTTPStatus
 from json import JSONDecodeError
-from typing import TypeVar, Generic, Any
+from typing import TypeVar, Generic, Any, Sequence, ClassVar, cast
 
-from glQiwiApi.core.abc.api_method import APIMethod, ReturningType
+from glQiwiApi.core.abc.api_method import APIMethod, ReturningType, _sentinel
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.exceptions import QiwiAPIError
 
@@ -17,22 +17,33 @@ T = TypeVar("T", bound=Any)
 
 
 class QiwiAPIMethod(APIMethod[T], abc.ABC, Generic[T]):
+    arbitrary_allowed_response_status_codes: ClassVar[Sequence[int]] = ()
 
     @classmethod
     def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
-        response_is_invalid = False
-        if response.status_code != HTTPStatus.OK:
-            response_is_invalid = True
+        response_is_successful = cls.check_if_response_status_success(response)
 
         try:
             json_response = response.json()
         except (JSONDecodeError, TypeError, OrjsonDecodeError):
-            response_is_invalid = True
+            response_is_successful = False
 
-        if response_is_invalid:
-            return QiwiAPIError(response).raise_exception_matching_error_code()
+        if not response_is_successful:
+            QiwiAPIError(response).raise_exception_matching_error_code()
 
         # micro optimization that helps to avoid json re-deserialization
         response.json = types.MethodType(lambda self: json_response, response)  # type: ignore
 
+        manually_parsed_json = cls.on_json_parse(response)
+        if manually_parsed_json is not _sentinel:
+            return cast(ReturningType, manually_parsed_json)
+
         return super().parse_http_response(response)
+
+    @classmethod
+    def check_if_response_status_success(cls, response: HTTPResponse) -> bool:
+        if response.status_code == HTTPStatus.OK:
+            return True
+        elif response.status_code in cls.arbitrary_allowed_response_status_codes:
+            return True
+        return False

@@ -8,6 +8,7 @@ from glQiwiApi.qiwi.base import QiwiAPIMethod
 class SetDefaultBalance(QiwiAPIMethod[Dict[Any, Any]]):
     http_method: ClassVar[str] = "PATCH"
     url: ClassVar[
-        str] = "https://edge.qiwi.com/funding-sources/v2/persons/{phone_number}/accounts/{currency_alias}"
+        str
+    ] = "https://edge.qiwi.com/funding-sources/v2/persons/{phone_number}/accounts/{account_alias}"
 
-    currency_alias: str = Field(..., path_runtime_value=True)
+    account_alias: str = Field(..., path_runtime_value=True)

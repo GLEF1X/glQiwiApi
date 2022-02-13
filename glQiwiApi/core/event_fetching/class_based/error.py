@@ -6,7 +6,7 @@ from typing import Any
 from .base import Handler
 
 
-class ExceptionHandler(Handler[Exception], abc.ABC):
+class ErrorHandler(Handler[Exception], abc.ABC):
     def __init__(self, event: Exception, *args: Any) -> None:
         super().__init__(event)
         self.args = args

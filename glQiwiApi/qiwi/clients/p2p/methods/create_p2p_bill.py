@@ -14,29 +14,32 @@ class CreateP2PBill(QiwiAPIMethod[Bill]):
     http_method: ClassVar[str] = "PUT"
     url: ClassVar[str] = "https://api.qiwi.com/partner/bill/v1/bills/{bill_id}"
 
-    request_schema: ClassVar[Dict[str, Any]] = {
-        "amount": {
-            "currency": "RUB",
-            "value": RuntimeValue()
-        },
+    json_payload_schema: ClassVar[Dict[str, Any]] = {
+        "amount": {"currency": "RUB", "value": RuntimeValue()},
         "expirationDateTime": RuntimeValue(),
         "comment": RuntimeValue(mandatory=False),
         "customFields": {
             "paySourcesFilter": RuntimeValue(default="qw"),
             "themeCode": RuntimeValue(default="Yvan-YKaSh"),
         },
-        "customer": RuntimeValue(mandatory=False)
+        "customer": RuntimeValue(mandatory=False),
     }
 
-    bill_id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), path_runtime_value=True)
+    bill_id: Optional[str] = Field(
+        default_factory=lambda: str(uuid.uuid4()), path_runtime_value=True
+    )
     expire_at: Optional[datetime] = Field(
-        default_factory=lambda: datetime_to_iso8601_with_moscow_timezone(datetime.now() + timedelta(days=2)),
-        scheme_path="expirationDateTime"
+        default_factory=lambda: datetime_to_iso8601_with_moscow_timezone(
+            datetime.now() + timedelta(days=2)
+        ),
+        scheme_path="expirationDateTime",
     )
     amount: Union[int, float, str] = Field(..., scheme_path="amount.value")
     comment: Optional[str] = Field(None, scheme_path="comment")
     theme_code: Optional[str] = Field(None, scheme_path="customFields.themeCode")
-    pay_source_filter: Optional[List[str]] = Field(None, scheme_path="customFields.paySourcesFilter")
+    pay_source_filter: Optional[List[str]] = Field(
+        None, scheme_path="customFields.paySourcesFilter"
+    )
     customer: Optional[Customer] = Field(None, schema_path="customer")
 
     def build_request(self, **url_format_kw: Any) -> "Request":

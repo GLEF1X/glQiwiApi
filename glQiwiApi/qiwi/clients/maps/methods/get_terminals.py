@@ -1,7 +1,8 @@
-from typing import List, ClassVar, Optional, Any
+from typing import List, ClassVar, Optional, Any, Dict
 
 from pydantic import Field
 
+from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.maps.types.polygon import Polygon
 from glQiwiApi.qiwi.clients.maps.types.terminal import Terminal
@@ -19,4 +20,28 @@ class GetTerminals(QiwiAPIMethod[List[Terminal]]):
     cache_terminals: Optional[bool] = Field(None, alias="cacheAllowed")
     card_terminals: Optional[bool] = Field(None, alias="cardAllowed")
     identification_types: Optional[int] = Field(None, alias="identificationTypes")
-    terminal_groups: Optional[List[Any]] = Field(None, alias="ttpGroups")
+    terminal_groups: Optional[List[Any]] = Field(
+        None,
+        alias="ttpGroups",
+    )
+
+    def build_request(self, **url_format_kw: Any) -> "Request":
+        model_dict = self.dict(exclude_none=True, exclude_unset=True, by_alias=True)
+        polygon = model_dict.pop("polygon")
+
+        model_dict = _replace_bool_values_with_strings(model_dict)
+
+        return Request(
+            endpoint=self.url.format(**url_format_kw, **self._get_runtime_path_values()),
+            http_method=self.http_method,
+            params={**model_dict, **polygon},
+        )
+
+
+def _replace_bool_values_with_strings(d: Dict[str, Any]) -> Dict[str, Any]:
+    for k, v in d.items():
+        if not isinstance(v, bool):
+            continue
+
+        d[k] = str(v)
+    return d

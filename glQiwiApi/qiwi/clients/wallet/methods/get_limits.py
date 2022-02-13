@@ -1,4 +1,4 @@
-from typing import Dict, ClassVar, List, Any
+from typing import Dict, ClassVar, List, Any, Sequence
 
 from glQiwiApi.core.abc.api_method import ReturningType, Request
 from glQiwiApi.core.session.holder import HTTPResponse
@@ -19,10 +19,10 @@ class GetLimits(QiwiAPIMethod[Dict[str, Limit]]):
     http_method: ClassVar[str] = "GET"
     url: ClassVar[str] = "https://edge.qiwi.com/qw-limits/v1/persons/{phone_number}/actual-limits"
 
-    limit_types: List[str] = ALL_LIMIT_TYPES
+    limit_types: Sequence[str] = ALL_LIMIT_TYPES
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+    def parse_http_response(cls, response: HTTPResponse) -> Dict[str, Limit]:
         return {
             code: [Limit.parse_obj(limit) for limit in limits]
             for code, limits in response.json()["limits"].items()
@@ -31,6 +31,8 @@ class GetLimits(QiwiAPIMethod[Dict[str, Limit]]):
     def build_request(self, **url_format_kw: Any) -> Request:
         return Request(
             endpoint=self.url.format(**url_format_kw),
-            params={f"types[{index}]": limit_type for index, limit_type in enumerate(self.limit_types)},
-            http_method=self.http_method
+            params={
+                f"types[{index}]": limit_type for index, limit_type in enumerate(self.limit_types)
+            },
+            http_method=self.http_method,
         )

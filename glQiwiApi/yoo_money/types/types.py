@@ -275,9 +275,9 @@ class MoneySource(BaseModel):
     """платеж с банковских карт, привязанных к счету"""
 
 
-class PreProcessPaymentResponse(Response):
+class RequestPaymentResponse(Response):
     """
-    Объект, который вы получаете при вызове _pre_process_payment.
+    Объект, который вы получаете при вызове make_request_payment.
     При вызове данного метода вы не списываете деньги со своего счёта,
     а условно подготавливаете его к отправке.
     Для отправки денег на счёт используйте метод transfer_money()

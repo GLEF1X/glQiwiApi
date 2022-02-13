@@ -11,7 +11,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 3
+      max-parallel: 2
       fail-fast: false
       matrix:
         os:
@@ -62,18 +62,15 @@ jobs:
         run: |
           poetry run black --check --diff glQiwiApi tests
 
-      - name: Mypy check
-        run: |
-          poetry run mypy --strict --implicit-reexport glQiwiApi
-
       - name: Test with pytest
         run: |
           poetry run pytest -p no:warnings --cov=glQiwiApi --cov-config .coveragerc --cov-report=xml
         env:
-          API_ACCESS_TOKEN: ${{ secrets.API_ACCESS_TOKEN }}
-          SECRET_P2P: ${{ secrets.SECRET_P2P }}
-          PHONE_NUMBER: ${{ secrets.PHONE_NUMBER }}
-          YOO_API_TOKEN: ${{ secrets.YOO_API_TOKEN }}
+          API_ACCESS_TOKEN: ${{ secrets.QIWI_API_ACCESS_TOKEN }}
+          SECRET_P2P: ${{ secrets.QIWI_SECRET_P2P }}
+          PHONE_NUMBER: ${{ secrets.QIWI_PHONE_NUMBER }}
+          YOO_API_TOKEN: ${{ secrets.YOOMONEY_API_TOKEN }}
+          YOO_MONEY_TEST_CLIENT_ID: ${{ secrets.YOOMONEY_TEST_CLIENT_ID }}
 
       - uses: codecov/codecov-action@v1
         with:

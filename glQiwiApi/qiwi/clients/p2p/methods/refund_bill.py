@@ -20,10 +20,10 @@ class RefundBill(QiwiAPIMethod[RefundedBill]):
     def build_request(self, **url_format_kw: Any) -> "Request":
         json_payload = self.json_bill_data
         if isinstance(self.json_bill_data, PlainAmount):
-            json_payload = self.json_bill_data.json(encoder=self.Config.json_dumps)
+            json_payload = self.json_bill_data.json(encoder=self.Config.json_dumps)  # type: ignore
 
         return Request(
             endpoint=self.url.format(**url_format_kw, **self._get_runtime_path_values()),
             json_payload=json_payload,
-            http_method=self.http_method
+            http_method=self.http_method,
         )

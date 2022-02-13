@@ -3,6 +3,7 @@ import os
 
 import pytest
 from pyqiwip2p.AioQiwip2p import AioQiwiP2P
+from pytest_benchmark.fixture import BenchmarkFixture
 
 from glQiwiApi import QiwiP2PClient
 
@@ -26,7 +27,7 @@ async def create_bill_with_pyQiwiP2P():
 
 
 @pytest.fixture()
-def aio_benchmark(benchmark):
+def aio_benchmark(benchmark: BenchmarkFixture) -> BenchmarkFixture:
     import asyncio
     import threading
 
@@ -69,14 +70,14 @@ def aio_benchmark(benchmark):
 
 
 @pytest.mark.asyncio
-async def test_create_bill_with_glQiwiApi(aio_benchmark):
+async def test_create_bill_with_glQiwiApi(aio_benchmark: BenchmarkFixture) -> None:
     @aio_benchmark
     async def _():
         await create_bill_with_glQiwiApi()
 
 
 @pytest.mark.asyncio
-async def test_create_bill_with_pyQiwiP2P(aio_benchmark):
+async def test_create_bill_with_pyQiwiP2P(aio_benchmark: BenchmarkFixture) -> None:
     @aio_benchmark
     async def _():
         await create_bill_with_pyQiwiP2P()

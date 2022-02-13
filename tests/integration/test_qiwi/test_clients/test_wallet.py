@@ -8,9 +8,23 @@ import pytest
 from glQiwiApi import QiwiWallet, InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.p2p.types import Bill
-from glQiwiApi.qiwi.clients.wallet.types import TransactionType, Transaction, Identification, Card, \
-    QiwiAccountInfo, Statistic, Balance, Restriction, Commission, CrossRate, WebhookInfo, Source
-from glQiwiApi.qiwi.exceptions import ObjectNotFound, MobileOperatorCannotBeDetermined
+from glQiwiApi.qiwi.clients.wallet.types import (
+    TransactionType,
+    Transaction,
+    Identification,
+    Card,
+    UserProfile,
+    Statistic,
+    Balance,
+    Restriction,
+    Commission,
+    CrossRate,
+    WebhookInfo,
+    Source,
+)
+from glQiwiApi.qiwi.clients.wallet.types.balance import AvailableBalance
+from glQiwiApi.qiwi.clients.wallet.types.nickname import NickName
+from glQiwiApi.qiwi.exceptions import ObjectNotFoundError, MobileOperatorCannotBeDeterminedError
 from glQiwiApi.types.amount import AmountWithCurrency, CurrencyModel
 from glQiwiApi.types.arbitrary import File
 from tests.settings import QIWI_WALLET_CREDENTIALS
@@ -37,8 +51,10 @@ async def test_get_balance(api: QiwiWallet) -> None:
     assert isinstance(result.currency, CurrencyModel)
 
 
-def test_create_request_service():
-    cache_storage = InMemoryCacheStorage(invalidate_strategy=APIResponsesCacheInvalidationStrategy())
+def test_create_request_service() -> None:
+    cache_storage = InMemoryCacheStorage(
+        invalidate_strategy=APIResponsesCacheInvalidationStrategy()
+    )
     wallet = QiwiWallet(**QIWI_WALLET_CREDENTIALS, cache_storage=cache_storage)
     assert wallet._request_service._cache is cache_storage
 
@@ -59,8 +75,8 @@ def test_create_request_service():
             "transaction_type": TransactionType.IN,
             "start_date": datetime.datetime.now() - datetime.timedelta(days=50),
             "end_date": datetime.datetime.now(),
-            "sources": [Source.MK, Source.RUB]
-        }
+            "sources": [Source.MK, Source.RUB],
+        },
     ],
 )
 async def test_history(api: QiwiWallet, payload: Dict[str, Any]) -> None:
@@ -84,20 +100,11 @@ async def test_identification(api: QiwiWallet) -> None:
     assert isinstance(result, Identification)
 
 
-@pytest.mark.parametrize(
-    "payload",
-    [
-        {"transaction_type": TransactionType.OUT, "amount": 1},
-        {
-            "transaction_type": TransactionType.OUT,
-            "amount": 1,
-            "sender": "+380985272064",
-        },
-        {"transaction_type": TransactionType.OUT, "amount": 1, "sender": "+380985272064"},
-    ],
-)
-async def test_check_transaction(api: QiwiWallet, payload: Dict[str, Any]) -> None:
-    r = await api.check_transaction(**payload)
+async def test_check_whether_transaction_exists_using_check_fn_with_id(api: QiwiWallet) -> None:
+    transactions = await api.history()
+
+    test_transaction = transactions[-1]
+    r = await api.check_whether_transaction_exists(check_fn=lambda t: t.id == test_transaction.id)
     assert r is True
 
 
@@ -118,9 +125,9 @@ async def test_get_receipt(api: QiwiWallet) -> None:
     assert isinstance(response, File) is True
 
 
-async def test_account_info(api: QiwiWallet) -> None:
-    result = await api.get_account_info()
-    assert isinstance(result, QiwiAccountInfo) is True
+async def test_get_profile(api: QiwiWallet) -> None:
+    result = await api.get_profile()
+    assert isinstance(result, UserProfile) is True
 
 
 @pytest.mark.parametrize(
@@ -180,6 +187,10 @@ async def test_fail_fetch_statistic(api: QiwiWallet) -> None:
         await api.fetch_statistics(**payload)
 
 
+async def test_get_nickname(api: QiwiWallet) -> None:
+    assert isinstance(await api.get_nickname(), NickName)
+
+
 @pytest.mark.parametrize("rows", [5, 10, 50])
 async def test_get_bills(api: QiwiWallet, rows: int) -> None:
     result = await api.list_of_invoices(rows=rows)
@@ -210,18 +221,20 @@ async def test_get_cross_rates(api: QiwiWallet) -> None:
     assert all(isinstance(r, CrossRate) for r in result)
 
 
+@pytest.mark.skip
 async def test_create_new_balance(api: QiwiWallet) -> None:
-    response = await api.create_new_balance(currency_alias="qw_wallet_eur")
+    response = await api.create_new_balance(currency_alias="qw_wallet_usd")
     assert isinstance(response, dict)
 
 
-async def test_available_balances(api: QiwiWallet) -> None:
-    balances = await api.available_balances()
-    assert all(isinstance(b, Balance) for b in balances)
+async def test_get_available_balances(api: QiwiWallet) -> None:
+    balances = await api.get_available_balances()
+    assert all(isinstance(b, AvailableBalance) for b in balances)
 
 
+@pytest.mark.skip
 async def test_set_default_balance(api: QiwiWallet) -> None:
-    response = await api.set_default_balance(currency_alias="qw_wallet_rub")
+    response = await api.set_default_balance(account_alias="qw_wallet_rub")
     assert isinstance(response, dict)
 
 
@@ -249,41 +262,38 @@ class TestFail:
             await api.fetch_statistics(start_date=start_date, end_date=end_date)
 
 
-def test_raise_runtimeError_if_phone_number_is_empty():
+def test_raise_runtimeError_if_phone_number_is_empty() -> None:
     wallet = QiwiWallet(api_access_token="hello world")
     with pytest.raises(RuntimeError):
         wallet.phone_number_without_plus_sign
 
 
 async def test_detect_mobile_number_fail_if_phone_number_is_ukrainian(api: QiwiWallet):
-    with pytest.raises(MobileOperatorCannotBeDetermined):
-        await api.detect_mobile_number("+380985272064")
+    with pytest.raises(MobileOperatorCannotBeDeterminedError):
+        await api.detect_mobile_operator("+380985272064")
 
 
 class TestWebhooksAPI:
-
     @pytest.mark.parametrize(
         "payload",
         [
             {"url": "https://45.147.178.166:80/webhooks/qiwi"},
-            {"url": WebhookURL.create(host="45.147.178.166", port=80, webhook_path="/webhook/qiwi",
-                                      https=True)},
             {
-                "url": "https://45.147.178.166:80/webhooks/qiwi",
-                "send_test_notification": True
+                "url": WebhookURL.create(
+                    host="45.147.178.166", port=80, webhook_path="/webhook/qiwi", https=True
+                )
             },
+            {"url": "https://45.147.178.166:80/webhooks/qiwi", "send_test_notification": True},
             {
-                "url": WebhookURL.create(host="45.147.178.166", port=80, webhook_path="/webhook/qiwi",
-                                         https=True),
-                "send_test_notification": True
+                "url": WebhookURL.create(
+                    host="45.147.178.166", port=80, webhook_path="/webhook/qiwi", https=True
+                ),
+                "send_test_notification": True,
             },
-            {
-                "url": "https://45.147.178.166:80/webhooks/qiwi",
-                "send_test_notification": True
-            }
-        ]
+            {"url": "https://45.147.178.166:80/webhooks/qiwi", "send_test_notification": True},
+        ],
     )
-    async def test_bind_webhook(self, api: QiwiWallet, payload: Dict[str, Any]):
+    async def test_bind_webhook(self, api: QiwiWallet, payload: Dict[str, Any]) -> None:
         await api.bind_webhook(**payload, delete_old=True)
 
     async def test_register_webhook(self, api: QiwiWallet) -> None:
@@ -292,15 +302,15 @@ class TestWebhooksAPI:
         assert isinstance(config, WebhookInfo)
         assert isinstance(key, str)
 
-    async def test_delete_current_webhook(self, api: QiwiWallet):
+    async def test_delete_current_webhook(self, api: QiwiWallet) -> None:
         config, key = await api.bind_webhook(url="https://45.147.178.166:80//", delete_old=True)
         await api.delete_current_webhook()
 
-        with pytest.raises(ObjectNotFound):
+        with pytest.raises(ObjectNotFoundError):
             await api.get_current_webhook()
 
-    async def test_generate_new_webhook_secret_key(self, api: QiwiWallet):
-        with contextlib.suppress(ObjectNotFound):
+    async def test_generate_new_webhook_secret_key(self, api: QiwiWallet) -> None:
+        with contextlib.suppress(ObjectNotFoundError):
             await api.delete_current_webhook()
 
         webhook = await api.register_webhook(url="https://45.147.178.166:80//")

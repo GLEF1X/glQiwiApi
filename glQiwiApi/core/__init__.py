@@ -3,7 +3,7 @@ from .event_fetching.class_based import (
     AbstractBillHandler,
     AbstractTransactionHandler,
     AbstractTransactionWebhookHandler,
-    ExceptionHandler,
+    ErrorHandler,
     Handler,
 )
 from .event_fetching.filters import BaseFilter, LambdaBasedFilter
@@ -14,7 +14,7 @@ from .event_fetching.webhooks import (
     app,
 )
 from .request_service import RequestService
-from .synchronous import async_as_sync, execute_async_as_sync
+from glQiwiApi.utils.synchronous import async_as_sync, execute_async_as_sync
 
 __all__ = (
     "RequestService",
@@ -25,7 +25,7 @@ __all__ = (
     "AbstractBillHandler",
     "AbstractTransactionHandler",
     "AbstractTransactionWebhookHandler",
-    "ExceptionHandler",
+    "ErrorHandler",
     # synchronous adapters and utils
     "async_as_sync",
     "execute_async_as_sync",

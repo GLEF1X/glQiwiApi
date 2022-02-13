@@ -1,5 +1,5 @@
 from .abc import Pluggable
-from .telegram.polling import TelegramPollingPlugin
-from .telegram.webhook import TelegramWebhookPlugin
+from .aiogram.polling import AiogramPollingPlugin
+from .aiogram.webhook import AiogramWebhookPlugin
 
-__all__ = ("Pluggable", "TelegramPollingPlugin", "TelegramWebhookPlugin")
+__all__ = ("Pluggable", "AiogramPollingPlugin", "AiogramWebhookPlugin")

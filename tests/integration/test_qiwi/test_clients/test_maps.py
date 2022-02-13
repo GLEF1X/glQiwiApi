@@ -1,5 +1,4 @@
-
-from typing import Any, Dict
+from typing import Any, Dict, AsyncIterator
 
 import pytest
 
@@ -12,22 +11,22 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(name="data")
-def maps_data():
-    polygon = Polygon((55.690881, 37.386282), (55.580184, 37.826078))
+def maps_data() -> AsyncIterator[Dict[str, Any]]:
+    polygon = Polygon(latNW=55.690881, lngNW=37.386282, latSE=55.580184, lngSE=37.826078)
     yield {"polygon": polygon, "zoom": 12, "cache_terminals": True}
     del polygon
 
 
 @pytest.fixture(name="maps")
-async def maps_fixture():
+async def maps_fixture() -> AsyncIterator[QiwiMaps]:
     """:class:`QiwiMaps` fixture"""
-    _maps = QiwiMaps()
-    yield _maps
-    await _maps.close()
+    maps = QiwiMaps()
+    yield maps
+    await maps.close()
 
 
 async def test_terminals(maps: QiwiMaps, data: Dict[str, Any]) -> None:
-    result = await maps.terminals(**data)
+    result = await maps.terminals(**data, include_partners=True)
     assert all(isinstance(t, Terminal) for t in result)
 
 

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import ipaddress
 import pathlib
 import ssl
@@ -110,7 +108,6 @@ def get_or_generate_self_signed_certificate(
         f1.write(cert_pem)
         f2.write(key_pem)
     return SSLCertificate(_cert_path=cert_path, _pkey_path=pkey_path)
-
 
 
 @dataclass

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from typing import List, Optional
 
@@ -7,9 +9,13 @@ from glQiwiApi.types.amount import AmountWithCurrency
 from glQiwiApi.types.base import Base, HashableBase
 
 
-class OrderDetails(Base):
-    """object: OrderDetails"""
+class QiwiMasterCardRequisites(Base):
+    status: str
+    cvv: str
+    pan: str
 
+
+class OrderDetails(Base):
     order_id: str = Field(..., alias="id")
     card_alias: str = Field(..., alias="cardAlias")
     status: str
@@ -18,8 +24,6 @@ class OrderDetails(Base):
 
 
 class CardCredentials(Base):
-    """object: CardCredentials"""
-
     qvx_id: int = Field(..., alias="id")
     masked_pan: str = Field(..., alias="maskedPan")
     status: str
@@ -37,15 +41,11 @@ class CardCredentials(Base):
 
 
 class Requisite(Base):
-    """object: Requisite"""
-
     name: str
     value: str
 
 
 class Details(Base):
-    """object: Details"""
-
     info: str
     description: str
     tariff_link: str = Field(..., alias="tariffLink")
@@ -55,8 +55,6 @@ class Details(Base):
 
 
 class CardInfo(Base):
-    """object: CardInfo"""
-
     id_: int = Field(..., alias="id")
     name: str
     alias: str
@@ -67,14 +65,6 @@ class CardInfo(Base):
 
 
 class Card(HashableBase):
-    """
-    object: Card
-    description: Данные выпущенных карт
-    """
-
     details: CardCredentials = Field(..., alias="qvx")
     balance: Optional[AmountWithCurrency] = None
     info: CardInfo
-
-
-__all__ = ("OrderDetails", "Card")

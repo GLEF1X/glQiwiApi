@@ -1,6 +1,19 @@
 import abc
-from typing import Dict, Optional, Any, TypeVar, Generic, ClassVar, Callable, List, Set, \
-    cast, Union, Type, Tuple
+from typing import (
+    Dict,
+    Optional,
+    Any,
+    TypeVar,
+    Generic,
+    ClassVar,
+    Callable,
+    List,
+    Set,
+    cast,
+    Union,
+    Type,
+    Tuple,
+)
 
 from pydantic import BaseModel, BaseConfig, Extra, parse_obj_as
 from pydantic.fields import ModelField
@@ -41,7 +54,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
     __returning_type__: ClassVar[Any] = _sentinel
 
-    request_schema: ClassVar[Dict[str, Any]] = {}
+    json_payload_schema: ClassVar[Dict[str, Any]] = {}
 
     def __class_getitem__(cls, params: Union[Type[Any], Tuple[Type[Any], ...]]) -> Type[Any]:
         """
@@ -80,6 +93,10 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
         json_response = response.json()
 
+        manually_parsed_json = cls.on_json_parse(response)
+        if manually_parsed_json is not _sentinel:
+            return manually_parsed_json
+
         try:
             if issubclass(cls.__returning_type__, BaseModel):
                 return cast(ReturningType, cls.__returning_type__.parse_obj(json_response))
@@ -88,26 +105,33 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
         return cast(ReturningType, parse_obj_as(cls.__returning_type__, json_response))
 
+    @classmethod
+    def on_json_parse(cls, response: HTTPResponse) -> Union[Any, ReturningType]:
+        return _sentinel
+
     def build_request(self, **url_format_kw: Any) -> "Request":
         request_kw: Dict[str, Any] = {
             "endpoint": self.url.format(**url_format_kw, **self._get_runtime_path_values()),
-            "http_method": self.http_method
+            "http_method": self.http_method,
         }
 
-        if self.http_method == 'GET' and self.request_schema:
+        if self.http_method == "GET" and self.json_payload_schema:
             raise TypeError(
                 "Request schema is not compatible with GET http method "
-                "since GET method cannot send json payload"
+                "since GET method cannot transfer_money json payload"
             )
 
         if self.http_method == "GET":
-            request_kw["params"] = self.dict(exclude_none=True, by_alias=True,
-                                             exclude=self._get_exclude_set())
+            request_kw["params"] = self.dict(
+                exclude_none=True, by_alias=True, exclude=self._get_exclude_set()
+            )
 
-        if self.request_schema:
-            request_kw["json_payload"] = self._get_filled_request_schema()
+        if self.json_payload_schema:
+            request_kw["json_payload"] = self._get_filled_json_payload_schema()
         else:
-            request_kw["data"] = self.dict(exclude_none=True, by_alias=True, exclude=self._get_exclude_set())
+            request_kw["data"] = self.dict(
+                exclude_none=True, by_alias=True, exclude=self._get_exclude_set()
+            )
 
         return Request(**_filter_none_values(request_kw))
 
@@ -119,34 +143,36 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
         return to_exclude
 
-    def _get_filled_request_schema(self) -> Dict[str, Any]:
+    def _get_filled_json_payload_schema(self) -> Dict[str, Any]:
         """
         Algorithm of this function firstly takes care of default values,
         if field has no default value for schema it checks values, that were transmitted to method
 
         @return:
         """
-        request_schema = self._get_schema_with_filled_runtime_values_with_default()
-        schema_values = self.dict(exclude_none=True, by_alias=True, exclude=self._get_exclude_set())
+        request_schema = self._get_schema_with_filled_runtime_values()
+        schema_values = self.dict(
+            exclude_none=True, by_alias=True, exclude=self._get_exclude_set()
+        )
 
         for key, field in self.__fields__.items():
             scheme_path: str = field.field_info.extra.get("scheme_path", field.name)
-            path_list = scheme_path.split(".")
+            keychain = scheme_path.split(".")
             try:
                 field_value = schema_values[key]
             except KeyError:
                 continue
-            _substitute_nested_value_in_dictionary(request_schema, path_list, value=field_value)
+            _insert_value_into_dictionary(request_schema, keychain, field_value)
 
         return request_schema
 
-    def _get_schema_with_filled_runtime_values_with_default(self) -> Dict[str, Any]:
+    def _get_schema_with_filled_runtime_values(self) -> Dict[str, Any]:
         scheme_paths: List[str] = [
             field.field_info.extra.get("scheme_path", field.name)
             for field in self.__fields__.values()
             if field.name in self.dict(exclude_none=True)
         ]
-        schema = self.request_schema.copy()
+        schema = self.json_payload_schema.copy()
 
         def apply_runtime_values_to_schema(d: Dict[str, Any]) -> None:
             for k, v in list(d.items()):
@@ -193,7 +219,7 @@ class Request(BaseModel):
     data: Optional[Dict[str, Optional[Any]]] = None
     params: Optional[Dict[str, Optional[Any]]] = None
     json_payload: Optional[Dict[str, Any]] = None
-    headers: Optional[Dict[str, Any]] = None
+    headers: Dict[str, Any] = {}
 
     http_method: str = "GET"
 
@@ -202,20 +228,20 @@ class Request(BaseModel):
 
 
 class RuntimeValue:
-    __slots__ = ('_default', '_default_factory', "is_mandatory")
+    __slots__ = ("_default", "_default_factory", "is_mandatory")
 
-    def __init__(self, default: Optional[Any] = None, default_factory: Optional[Callable[..., Any]] = None,
-                 mandatory: bool = True):
+    def __init__(
+        self,
+        default: Optional[Any] = None,
+        default_factory: Optional[Callable[..., Any]] = None,
+        mandatory: bool = True,
+    ):
         self._default = default
         self._default_factory = default_factory
         self.is_mandatory = mandatory
 
     def has_default(self) -> bool:
-        return (
-                self._default is not None
-                or
-                self._default_factory is not None
-        )
+        return self._default is not None or self._default_factory is not None
 
     def get_default(self) -> Any:
         if self._default is not None:
@@ -224,20 +250,21 @@ class RuntimeValue:
             return self._default_factory()
 
 
-def _substitute_nested_value_in_dictionary(d: Dict[str, _T], path: List[str],
-                                           value: Any) -> None:  # pragma: no cover
-    if not path:
-        return
+def _insert_value_into_dictionary(
+    d: Dict[str, _T], keychain: List[str], value: Any
+) -> None:  # pragma: no cover
+    if not keychain:
+        return None
 
-    if len(path) == 1:
-        d[path[0]] = value
+    if len(keychain) == 1:
+        d[keychain[0]] = value
 
     for k, v in d.items():
         if not isinstance(v, dict):
             continue
-        schema_key = path[0]
+        next_key_from_keychain = keychain[0]
 
-        if k != schema_key:
+        if k != next_key_from_keychain:
             continue
 
-        _substitute_nested_value_in_dictionary(v, path[1:], value=value)
+        _insert_value_into_dictionary(v, keychain[1:], value)

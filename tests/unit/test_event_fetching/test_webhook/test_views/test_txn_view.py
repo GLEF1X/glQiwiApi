@@ -17,7 +17,7 @@ from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
 )
 from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
 from glQiwiApi.qiwi.clients.wallet.types import TransactionWebhook
-from tests.unit.test_dispatcher.mocks import WebhookTestData
+from tests.unit.test_event_fetching.mocks import WebhookTestData
 
 pytestmark = pytest.mark.asyncio
 
@@ -97,9 +97,7 @@ class TestTxnWebhookView:
         )
 
         with caplog.at_level(logging.DEBUG, logger="glQiwiApi.webhooks.transaction"):
-            response = await client.post(
-                "/webhook", json=fake_transaction.json(by_alias=True)
-            )
+            response = await client.post("/webhook", json=fake_transaction.json(by_alias=True))
             assert "Request has being blocked due to invalid signature" in caplog.text
 
         assert response.status == 400
