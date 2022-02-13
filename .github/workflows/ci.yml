@@ -66,11 +66,11 @@ jobs:
         run: |
           poetry run pytest -p no:warnings --cov=glQiwiApi --cov-config .coveragerc --cov-report=xml tests/
         env:
-          API_ACCESS_TOKEN: ${{ secrets.QIWI_API_ACCESS_TOKEN }}
-          SECRET_P2P: ${{ secrets.QIWI_SECRET_P2P }}
-          PHONE_NUMBER: ${{ secrets.QIWI_PHONE_NUMBER }}
-          YOO_API_TOKEN: ${{ secrets.YOOMONEY_API_TOKEN }}
-          YOO_MONEY_TEST_CLIENT_ID: ${{ secrets.YOOMONEY_TEST_CLIENT_ID }}
+          QIWI_API_ACCESS_TOKEN: ${{ secrets.QIWI_API_ACCESS_TOKEN }}
+          QIWI_SECRET_P2P: ${{ secrets.QIWI_SECRET_P2P }}
+          QIWI_PHONE_NUMBER: ${{ secrets.QIWI_PHONE_NUMBER }}
+          YOOMONEY_API_TOKEN: ${{ secrets.YOOMONEY_API_TOKEN }}
+          YOOMONEY_TEST_CLIENT_ID: ${{ secrets.YOOMONEY_TEST_CLIENT_ID }}
 
       - uses: codecov/codecov-action@v1
         with:
