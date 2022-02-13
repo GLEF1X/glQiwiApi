@@ -112,8 +112,8 @@ def get_or_generate_self_signed_certificate(
 
 @dataclass
 class SSLCertificate:
-    _cert_path: Union[str, PathLike[Any]]
-    _pkey_path: Union[str, PathLike[Any]]
+    _cert_path: Union[str, pathlib.Path]
+    _pkey_path: Union[str, pathlib.Path]
 
     def as_ssl_context(self) -> ssl.SSLContext:
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
