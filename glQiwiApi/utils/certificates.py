@@ -24,8 +24,8 @@ except ImportError:  # pragma: no cover
 
 def get_or_generate_self_signed_certificate(
     hostname: str,  # your host machine ip address
-    cert_path: Union[str, PathLike[Any]] = "cert.pem",
-    pkey_path: Union[str, PathLike[Any]] = "pkey.pem",
+    cert_path: Union[str, pathlib.Path] = "cert.pem",
+    pkey_path: Union[str, pathlib.Path] = "pkey.pem",
     ip_addresses: Optional[Iterable[Any]] = None,
     rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
     public_exponent: int = 65537,

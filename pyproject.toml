@@ -49,13 +49,8 @@ typing_extensions = { version = "^4.0.1", python = "<=3.7" }
 
 # Fast
 uvloop = { version = "^0.16.0", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
-aiofiles = { version = "^0.8.0", optional = true }
-types-aiofiles = { version = "^0.8.2", optional = true }
 
 
-# integrations
-aiogram = { version = "^2.19", optional = true }
-cryptography = { version = "^36.0.1", optional = true }  # for self-signed certificates
 
 
 [tool.poetry.dev-dependencies]
@@ -95,10 +90,15 @@ mypy = "^0.931"
 flake8 = "^4.0.1"
 async-timeout = "^4.0.2"
 
+
 # For CI and mypy
 types-orjson = "^3.6.2"
 types-pytz = "^2021.3.3"
+types-aiofiles = "^0.8.2"
 geojson-pydantic = "^0.3.1"
+aiogram = "^2.19"
+cryptography = "^36.0.1"
+aiofiles = "^0.8.0"
 
 
 [tool.black]
