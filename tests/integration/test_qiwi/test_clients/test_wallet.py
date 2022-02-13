@@ -253,10 +253,10 @@ class TestFail:
         ],
     )
     async def test_fetch_statistic_fail(
-            self,
-            api: QiwiWallet,
-            start_date: datetime.datetime,
-            end_date: datetime.datetime,
+        self,
+        api: QiwiWallet,
+        start_date: datetime.datetime,
+        end_date: datetime.datetime,
     ) -> None:
         with pytest.raises(ValueError):
             await api.fetch_statistics(start_date=start_date, end_date=end_date)
