@@ -22,7 +22,6 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.mermaid",
     'sphinxemoji.sphinxemoji'
 ]
 
