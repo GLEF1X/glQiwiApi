@@ -58,7 +58,7 @@ class Bill(HashableBase):
     id: str = Field(..., alias="billId")
     created_at: datetime = Field(..., alias="creationDateTime")
     expire_at: datetime = Field(..., alias="expirationDateTime")
-    pay_url: HttpUrl = Field(..., alias="payUrl")
+    pay_url: str = Field(..., alias="payUrl")
     customer: Optional[Customer] = None
     custom_fields: Optional[CustomFields] = Field(None, alias="customFields")
 
