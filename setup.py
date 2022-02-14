@@ -13,7 +13,7 @@ setuptools.setup(
         exclude=("tests", "examples", "examples.*", "tests", "tests.*", "docs", "benchmarks", "referrer")
     ),
     name="glQiwiApi",  # Replace with your own username
-    version="2.0.0",
+    version="2.0.1",
     author="GLEF1X",
     author_email="glebgar567@gmail.com",
     description="Light and fast wrapper of QIWI and YooMoney api's",
