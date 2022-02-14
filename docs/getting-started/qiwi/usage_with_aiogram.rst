@@ -2,7 +2,8 @@
 Usage with aiogram
 ==================
 
-### Without middleware:
+Without middleware
+------------------
 
 .. code-block:: python
 
@@ -47,8 +48,8 @@ Usage with aiogram
     if __name__ == "__main__":
         executor.start_polling(dp, skip_updates=True)
 
-
-### With middleware:
+With middleware
+---------------
 
 .. code-block:: python
 
