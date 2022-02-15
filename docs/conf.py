@@ -6,7 +6,7 @@ import datetime
 project = "glQiwiApi"
 author = "GLEF1X"
 copyright = f"{datetime.date.today().year}, {author}"
-release = "2.0.1"
+release = "2.0.2"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
