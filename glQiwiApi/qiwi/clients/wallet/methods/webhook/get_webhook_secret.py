@@ -14,5 +14,5 @@ class GetWebhookSecret(QiwiAPIMethod[str]):
     hook_id: str = Field(..., path_runtime_value=True)
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> str:
+    def on_json_parse(cls, response: HTTPResponse) -> str:
         return response.json()["key"]

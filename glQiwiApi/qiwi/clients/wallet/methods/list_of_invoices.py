@@ -17,5 +17,5 @@ class GetListOfInvoices(QiwiAPIMethod[List[Bill]]):
     statuses: str = "READY_FOR_PAY"
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> List[Bill]:
+    def on_json_parse(cls, response: HTTPResponse) -> List[Bill]:
         return parse_obj_as(List[Bill], response.json()["bills"])

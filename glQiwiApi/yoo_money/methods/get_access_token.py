@@ -15,5 +15,5 @@ class GetAccessToken(APIMethod[str]):
     client_secret: Optional[str] = None
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
+    def on_json_parse(cls, response: HTTPResponse) -> str:
         return response.json()["access_token"]

@@ -21,11 +21,8 @@ class RevealCardID(QiwiAPIMethod[str]):
     card_number: str = Field(..., alias="cardNumber")
 
     @classmethod
-    def parse_http_response(cls, response: HTTPResponse) -> str:
-        try:
-            return response.json()["message"]
-        except (JSONDecodeError, TypeError, OrjsonDecodeError):
-            QiwiAPIError(response).raise_exception_matching_error_code()
+    def on_json_parse(cls, response: HTTPResponse) -> str:
+        return response.json()["message"]
 
     def build_request(self, **url_format_kw: Any) -> "Request":
         r = super().build_request(**url_format_kw)

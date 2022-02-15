@@ -21,7 +21,7 @@ Welcome to the glQiwiApi documentation!
     :target: https://frontend.code-inspector.com/public/project/20780/glQiwiApi/dashboard
     :alt: code grade
 
-..  image:: https://codecov.io/gh/GLEF1X/glQiwiApi/branch/dev-1.x/graph/badge.svg?token=OD538HKV15
+..  image:: https://codecov.io/gh/GLEF1X/glQiwiApi/branch/dev-2.x/graph/badge.svg?token=OD538HKV15
     :alt: code coverage
 
 ..  image:: https://github.com/GLEF1X/glQiwiApi/actions/workflows/tests.yml/badge.svg
