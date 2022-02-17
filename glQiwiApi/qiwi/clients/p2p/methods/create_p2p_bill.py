@@ -23,7 +23,7 @@ class CreateP2PBill(QiwiAPIMethod[Bill]):
         "expirationDateTime": RuntimeValue(default_factory=get_default_bill_life_time),
         "comment": RuntimeValue(mandatory=False),
         "customFields": {
-            "paySourcesFilter": RuntimeValue(default="qw"),
+            "paySourcesFilter": RuntimeValue(default=["qw"]),
             "themeCode": RuntimeValue(default="Yvan-YKaSh"),
         },
         "customer": RuntimeValue(mandatory=False),
@@ -51,4 +51,8 @@ class CreateP2PBill(QiwiAPIMethod[Bill]):
         request.json_payload["expirationDateTime"] = datetime_to_iso8601_with_moscow_timezone(
             expire_at
         )
+        pay_source_filter: List[str] = request.json_payload["customFields"]["paySourcesFilter"]
+        request.json_payload["customFields"]["paySourcesFilter"] = " ".join(
+            pay_source_filter
+        ).replace(" ", ",")
         return request
