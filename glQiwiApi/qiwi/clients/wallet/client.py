@@ -92,7 +92,6 @@ from ...exceptions import QiwiAPIError
 AmountType = Union[int, float]
 
 
-
 class QiwiWallet(BaseAPIClient):
     # declarative validators for fields
     phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)

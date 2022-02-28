@@ -231,10 +231,10 @@ class RuntimeValue:
     __slots__ = ("_default", "_default_factory", "is_mandatory")
 
     def __init__(
-            self,
-            default: Optional[Any] = None,
-            default_factory: Optional[Callable[..., Any]] = None,
-            mandatory: bool = True,
+        self,
+        default: Optional[Any] = None,
+        default_factory: Optional[Callable[..., Any]] = None,
+        mandatory: bool = True,
     ):
         self._default = default
         self._default_factory = default_factory
@@ -251,7 +251,7 @@ class RuntimeValue:
 
 
 def _insert_value_into_dictionary(
-        d: Dict[str, _T], keychain: List[str], value: Any
+    d: Dict[str, _T], keychain: List[str], value: Any
 ) -> None:  # pragma: no cover
     if not keychain:
         return None

@@ -55,7 +55,6 @@ class LambdaBasedFilter(BaseFilter[Event]):
 
 
 class ExceptionFilter(BaseFilter[Event]):
-
     def __init__(self, exception: Union[Type[Exception], Tuple[Type[Exception]]]):
         self._exception = exception
 
