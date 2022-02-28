@@ -100,7 +100,6 @@ class Transaction(Base):
     Для пополнений - номер отправителя,
     терминала или название агента пополнения кошелька
     """
-
     sum: AmountWithCurrency
     """Данные о сумме платежа или пополнения."""
 
@@ -122,22 +121,22 @@ class Transaction(Base):
     currency_rate: int = Field(alias="currencyRate")
     """Курс конвертации (если применяется в транзакции)"""
 
-    extras: Optional[Dict[Any, Any]] = Field(None, alias="extras")
+    _extras: Optional[Dict[Any, Any]] = Field(None, alias="extras")
     """Служебная информация"""
 
-    cheque_ready: bool = Field(..., alias="chequeReady")
+    _cheque_ready: bool = Field(False, alias="chequeReady")
     """Специальное поле"""
 
-    bank_document_available: bool = Field(..., alias="bankDocumentAvailable")
+    _bank_document_available: bool = Field(False, alias="bankDocumentAvailable")
     """Специальное поле"""
 
-    repeat_payment_enabled: bool = Field(..., alias="repeatPaymentEnabled")
+    _repeat_payment_enabled: bool = Field(False, alias="repeatPaymentEnabled")
     """Специальное поле"""
 
-    favorite_payment_enabled: bool = Field(..., alias="favoritePaymentEnabled")
+    _favorite_payment_enabled: bool = Field(False, alias="favoritePaymentEnabled")
     """Специальное поле"""
 
-    regular_payment_enabled: bool = Field(..., alias="regularPaymentEnabled")
+    _regular_payment_enabled: bool = Field(False, alias="regularPaymentEnabled")
     """Специальное поле"""
 
     class Config:
