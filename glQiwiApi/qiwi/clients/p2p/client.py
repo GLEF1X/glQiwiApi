@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional, Union, Dict, List
 
+from yarl import URL
+
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient
 from glQiwiApi.core.cache.storage import CacheStorage
 from glQiwiApi.core.request_service import (

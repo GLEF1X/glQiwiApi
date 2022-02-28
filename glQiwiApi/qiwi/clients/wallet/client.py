@@ -91,21 +91,6 @@ from ...exceptions import QiwiAPIError
 
 AmountType = Union[int, float]
 
-ERROR_CODE_MATCHES = {
-    400: "Query syntax error (invalid data format). Can be related to wrong arguments,"
-    " that you have passed to method",
-    401: "Invalid token or API token was expired",
-    403: "No permission for this request(API token has insufficient permissions)",
-    404: "Object was not found or there are no objects with the specified characteristics",
-    423: "Too many requests, the service is temporarily unavailable",
-    422: "The domain / subnet / host is incorrectly specified"
-    "webhook (in the new_url parameter for the webhook URL),"
-    "the hook type or transaction type is incorrectly specified,"
-    "an attempt to create a hook if there is one already created",
-    405: "Error related to the type of API request, contact the developer or open an issue",
-    500: "Internal service error",
-    0: "An error related to using a proxy or library problems",
-}
 
 
 class QiwiWallet(BaseAPIClient):

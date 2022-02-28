@@ -5,20 +5,20 @@ Polling updates
 API internals
 ~~~~~~~~~~~~~
 
-.. automodule:: glQiwiApi.utils.executor
-    :members: start_polling
+.. automodule:: glQiwiApi.core.event_fetching.executor
+    :members: start_polling,start_non_blocking_qiwi_api_polling,configure_app_for_qiwi_webhooks
     :show-inheritance:
     :member-order: bysource
     :undoc-members: True
 
-.. autoclass:: glQiwiApi.utils.executor.BaseExecutor
+.. autoclass:: glQiwiApi.core.event_fetching.executor.BaseExecutor
     :members:
     :show-inheritance:
     :member-order: bysource
     :special-members: __init__
     :undoc-members: True
 
-.. autoclass:: glQiwiApi.utils.executor.PollingExecutor
+.. autoclass:: glQiwiApi.core.event_fetching.executor.PollingExecutor
     :members:
     :show-inheritance:
     :member-order: bysource
@@ -32,18 +32,18 @@ This section explains how to properly poll transactions from QIWI API.
 
 
 *You can't help registering handlers and start polling, so in example above it is shown how to do it rightly.*
-Lets do it with decorators, but you can also do it another, more explicit way, using ``wallet.register_transaction_handler``,
-``wallet.register_bill_handler`` or ``wallet.register_error_handler``
+Lets do it with decorators:
 
-.. literalinclude:: ./../examples/qiwi/polling.py
+.. literalinclude:: code/qiwi/polling.py
     :language: python
-    :emphasize-lines: 14-16
+    :emphasize-lines: 15,21
 
 ️So, we also have to import ``executor`` and pass on our client,
-that contains user-friendly functions ``start_polling`` and ``start_webhook``.
+that contains functions ``start_polling`` and ``start_webhook``.
 
-.. literalinclude:: ./../examples/qiwi/polling.py
+.. literalinclude:: code/polling/qiwi.py
     :language: python
+    :emphasize-lines: 2
 
 
 Events
@@ -51,16 +51,12 @@ Events
 
 Then, you can start polling, but, let's make it clear which arguments you should pass on to ``start_polling`` function.
 You can also specify events like ``on_shutdown`` or ``on_startup``.
-
-.. literalinclude:: ./../examples/qiwi/polling.py
-    :language: python
-    :emphasize-lines: 23
-
 As you can see, in the example we have a function that we pass as an argument to ``on_startup``.
 As you may have guessed, this function will be executed at the beginning of the polling.
 
-.. literalinclude:: ./../examples/qiwi/polling.py
+.. literalinclude:: code/polling/events.py
     :language: python
+    :emphasize-lines: 17,21,26
 
 
 Make aiogram work with glQiwiApi
@@ -70,17 +66,16 @@ Make aiogram work with glQiwiApi
 
 In the example below, we catch all text messages and return the same "Hello" response.
 
-.. literalinclude:: ./../examples/qiwi/aiogram_integration.py
+.. literalinclude:: code/polling/with_aiogram.py
     :language: python
 
-Error handling
-~~~~~~~~~~~~~~
+Alternatively you can run polling at ``on_startup`` event
 
-.. literalinclude:: ./../examples/qiwi/error_handling.py
+.. literalinclude:: code/polling/with_aiogram_non_blocking.py
     :language: python
 
 Example usage without global variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ./../examples/qiwi/polling_without_global_variables.py
+.. literalinclude:: code/polling/without_globals.py
     :language: python

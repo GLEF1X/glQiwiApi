@@ -8,7 +8,7 @@ from aiohttp import web
 
 from glQiwiApi.utils.certificates import SSLCertificate
 
-DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/operation_history/"
+DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/transactions/"
 DEFAULT_QIWI_ROUTE_NAME = "QIWI_TRANSACTIONS"
 
 DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"

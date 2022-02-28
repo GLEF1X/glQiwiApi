@@ -10,7 +10,6 @@ from typing import (
     Tuple,
     TYPE_CHECKING,
     Callable,
-    cast,
 )
 
 from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient

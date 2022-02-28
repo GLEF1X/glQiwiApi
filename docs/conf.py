@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import glQiwiApi
 
 project = "glQiwiApi"
-author = "GLEF1X"
+author = glQiwiApi.__maintainer__
 copyright = f"{datetime.date.today().year}, {author}"
-release = "2.0.3"
+release = glQiwiApi.__version__
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

@@ -77,6 +77,7 @@ Contents
    getting-started/index
    API/index
    polling
+   webhooks
    advanced_features/index
    types/index
 

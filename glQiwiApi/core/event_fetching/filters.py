@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import inspect
-from typing import Any, Awaitable, Callable, Generic, TypeVar, Union, cast
+from typing import Any, Awaitable, Callable, Generic, TypeVar, Union, cast, Type, Tuple
 
 Event = TypeVar("Event")
 
@@ -54,4 +54,13 @@ class LambdaBasedFilter(BaseFilter[Event]):
             return cast(bool, self.function(update))
 
 
-__all__ = ("LambdaBasedFilter", "BaseFilter", "NotFilter", "AndFilter", "Event")
+class ExceptionFilter(BaseFilter[Event]):
+
+    def __init__(self, exception: Union[Type[Exception], Tuple[Type[Exception]]]):
+        self._exception = exception
+
+    async def check(self, update: Event) -> bool:
+        return isinstance(update, self._exception)
+
+
+__all__ = ("LambdaBasedFilter", "BaseFilter", "NotFilter", "AndFilter", "Event", "ExceptionFilter")

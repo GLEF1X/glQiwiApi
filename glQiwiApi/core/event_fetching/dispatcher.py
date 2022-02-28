@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import abc
 import asyncio
-import functools
 import inspect
 import logging
 import operator
@@ -44,23 +43,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 class BaseDispatcher(abc.ABC):
     def __init__(self) -> None:
-        self.error_handler = HandlerCollection(Exception)
-
-    def _wrap_callback_for_error_handling(self, callback: F) -> F:
-        @functools.wraps(callback)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            try:
-                return await callback(*args, **kwargs)
-            except (SkipHandler, CancelHandler) as ex:
-                # reraise exception to handle it on HandlerCollection object
-                # and skip or break processing current event
-                raise ex
-            except Exception as e:
-                if not self.error_handler.is_empty:
-                    return await self.error_handler.notify(e, *args)
-                raise e
-
-        return cast(F, wrapper)
+        self.exception_handler = HandlerCollection(Exception)
 
     async def process_event(self, event: Event, *args: Any) -> None:
         """
@@ -121,9 +104,9 @@ class HandlerCollection(Generic[Event]):
         return decorator
 
     def register_handler(
-        self,
-        event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        *filters: Union[Callable[[Event], bool], BaseFilter[Event]],
+            self,
+            event_handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            *filters: Union[Callable[[Event], bool], BaseFilter[Event]],
     ) -> None:
         """
         Add new event handler.
@@ -160,9 +143,9 @@ class EventHandler(Generic[Event]):
     """
 
     def __init__(
-        self,
-        handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
-        *filters: BaseFilter[Event],
+            self,
+            handler: Union[Callable[..., Awaitable[Any]], Type[Handler[Event]]],
+            *filters: BaseFilter[Event],
     ) -> None:
         self._handler = handler
         self._filters = tuple(filter(lambda f: operator.not_(operator.eq(f, None)), filters))

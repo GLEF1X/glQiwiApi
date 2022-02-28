@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Iterator
+from typing import Any, Dict, List, Optional, Union, Iterator, cast
 
 from pydantic import Field
 
@@ -100,6 +100,7 @@ class Transaction(Base):
     Для пополнений - номер отправителя,
     терминала или название агента пополнения кошелька
     """
+
     sum: AmountWithCurrency
     """Данные о сумме платежа или пополнения."""
 
@@ -121,22 +122,22 @@ class Transaction(Base):
     currency_rate: int = Field(alias="currencyRate")
     """Курс конвертации (если применяется в транзакции)"""
 
-    _extras: Optional[Dict[Any, Any]] = Field(None, alias="extras")
+    extras: Optional[Dict[Any, Any]] = Field(None, alias="extras")
     """Служебная информация"""
 
-    _cheque_ready: bool = Field(..., alias="chequeReady")
+    cheque_ready: bool = Field(..., alias="chequeReady")
     """Специальное поле"""
 
-    _bank_document_available: bool = Field(..., alias="bankDocumentAvailable")
+    bank_document_available: bool = Field(..., alias="bankDocumentAvailable")
     """Специальное поле"""
 
-    _repeat_payment_enabled: bool = Field(..., alias="repeatPaymentEnabled")
+    repeat_payment_enabled: bool = Field(..., alias="repeatPaymentEnabled")
     """Специальное поле"""
 
-    _favorite_payment_enabled: bool = Field(..., alias="favoritePaymentEnabled")
+    favorite_payment_enabled: bool = Field(..., alias="favoritePaymentEnabled")
     """Специальное поле"""
 
-    _regular_payment_enabled: bool = Field(..., alias="regularPaymentEnabled")
+    regular_payment_enabled: bool = Field(..., alias="regularPaymentEnabled")
     """Специальное поле"""
 
     class Config:
@@ -156,11 +157,10 @@ class History(Base):
         return len(self.transactions)
 
     def __str__(self) -> str:
-        start_txn_date: Optional[datetime] = None
-        end_txn_date: Optional[datetime] = None
-        if self.transactions:
-            start_txn_date = self.transactions[0].date
-            end_txn_date = self.transactions[-1].date
+        if not self.transactions:
+            return "Empty history"
+        start_txn_date = self.transactions[0].date
+        end_txn_date = self.transactions[-1].date
         return (
             f"History from {start_txn_date} to {end_txn_date} | "
             f"next transaction id = {self.next_transaction_id} | size = {len(self)}"
@@ -187,7 +187,7 @@ class History(Base):
         )
 
     def __getitem__(self, i: Any) -> Transaction:
-        return self.transactions.__getitem__(i)
+        return cast(Transaction, self.transactions.__getitem__(i))
 
     def __bool__(self) -> bool:
         return bool(self.transactions)

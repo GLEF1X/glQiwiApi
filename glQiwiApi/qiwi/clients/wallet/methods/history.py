@@ -47,7 +47,7 @@ class GetHistory(QiwiAPIMethod[History]):
             )
 
         if (end_date - start_date).total_seconds() <= 0:  # type: ignore
-            raise ValueError("end_date cannot be bigger than start_date")
+            raise ValueError("start_date cannot be bigger than end_date")
 
         return values
 

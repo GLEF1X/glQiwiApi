@@ -56,6 +56,16 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
     json_payload_schema: ClassVar[Dict[str, Any]] = {}
 
+    @property
+    @abc.abstractmethod
+    def url(self) -> str:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def http_method(self) -> str:
+        pass
+
     def __class_getitem__(cls, params: Union[Type[Any], Tuple[Type[Any], ...]]) -> Type[Any]:
         """
         Allows us to get generic class in runtime instead of do it explicitly
@@ -202,16 +212,6 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
         return result
 
-    @property
-    @abc.abstractmethod
-    def url(self) -> str:
-        pass
-
-    @property
-    @abc.abstractmethod
-    def http_method(self) -> str:
-        pass
-
 
 class Request(BaseModel):
     endpoint: str
@@ -231,10 +231,10 @@ class RuntimeValue:
     __slots__ = ("_default", "_default_factory", "is_mandatory")
 
     def __init__(
-        self,
-        default: Optional[Any] = None,
-        default_factory: Optional[Callable[..., Any]] = None,
-        mandatory: bool = True,
+            self,
+            default: Optional[Any] = None,
+            default_factory: Optional[Callable[..., Any]] = None,
+            mandatory: bool = True,
     ):
         self._default = default
         self._default_factory = default_factory
@@ -251,7 +251,7 @@ class RuntimeValue:
 
 
 def _insert_value_into_dictionary(
-    d: Dict[str, _T], keychain: List[str], value: Any
+        d: Dict[str, _T], keychain: List[str], value: Any
 ) -> None:  # pragma: no cover
     if not keychain:
         return None

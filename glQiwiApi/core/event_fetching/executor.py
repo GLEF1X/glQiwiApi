@@ -174,7 +174,7 @@ async def start_non_blocking_qiwi_api_polling(
     on_shutdown: Optional[_EventHandlerType] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
     context: Union[Dict[str, Any], Context, None] = None,
-) -> None:
+) -> asyncio.Task:
     if context is None:
         context = {}
     executor = PollingExecutor(
@@ -187,7 +187,7 @@ async def start_non_blocking_qiwi_api_polling(
         loop=loop,
         context=Context(context),
     )
-    await executor.start_non_blocking_polling()
+    return await executor.start_non_blocking_polling()
 
 
 def configure_app_for_qiwi_webhooks(
@@ -305,16 +305,15 @@ class PollingExecutor(BaseExecutor):
 
     def start_polling(self) -> None:
         try:
-            asyncio.ensure_future(
-                asyncio.gather(self._install_plugins(), self._run_infinite_polling())
-            )
+            self.loop.create_task(self._install_plugins())
+            self.loop.create_task(self._run_infinite_polling())
             adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
             # allow graceful shutdown
             pass
 
-    async def start_non_blocking_polling(self) -> None:
-        asyncio.create_task(self._run_infinite_polling())
+    async def start_non_blocking_polling(self) -> asyncio.Task:
+        return asyncio.create_task(self._run_infinite_polling())
 
     async def _run_infinite_polling(self) -> None:
         default_timeout = self._timeout
