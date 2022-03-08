@@ -4,9 +4,9 @@ import abc
 import inspect
 from copy import deepcopy
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Dict, Callable, Awaitable, Union
+from typing import TYPE_CHECKING as MYPY, Any, Optional, Type, TypeVar, Dict, Callable, Awaitable, Union
 
-if TYPE_CHECKING:
+if MYPY:
     from glQiwiApi.core.request_service import RequestServiceProto  # pragma: no cover
 
 T = TypeVar("T", bound="BaseAPIClient")
@@ -22,10 +22,10 @@ class BaseAPIClient(abc.ABC):
         request_service_factory: Optional[RequestServiceFactoryType] = None,
     ):
         self._request_service_factory = request_service_factory
-        self._request_service: RequestServiceProto
+        self._request_service: RequestServiceProto = None  # type: ignore
 
     async def __aenter__(self):  # type: ignore
-        if not hasattr(self, "_request_service"):
+        if self._request_service is None:
             self._request_service = await self.create_request_service()
         return self
 
