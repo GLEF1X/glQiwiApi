@@ -4,7 +4,17 @@ import abc
 import inspect
 from copy import deepcopy
 from types import TracebackType
-from typing import TYPE_CHECKING as MYPY, Any, Optional, Type, TypeVar, Dict, Callable, Awaitable, Union
+from typing import (
+    TYPE_CHECKING as MYPY,
+    Any,
+    Optional,
+    Type,
+    TypeVar,
+    Dict,
+    Callable,
+    Awaitable,
+    Union,
+)
 
 if MYPY:
     from glQiwiApi.core.request_service import RequestServiceProto  # pragma: no cover
