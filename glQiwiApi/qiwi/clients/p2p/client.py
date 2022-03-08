@@ -1,15 +1,12 @@
 from datetime import datetime
 from typing import Optional, Union, Dict, List
 
-from yarl import URL
-
-from glQiwiApi.core.abc.base_api_client import BaseAPIClient
-from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
 from glQiwiApi.core.request_service import (
     RequestService,
     RequestServiceProto,
-    RequestServiceCacheDecorator,
 )
+from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_bill import CreateP2PBill
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_key_pair import CreateP2PKeyPair
 from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
@@ -30,8 +27,7 @@ class QiwiP2PClient(BaseAPIClient):
     def __init__(
         self,
         secret_p2p: str,
-        request_service: Optional[RequestServiceProto] = None,
-        cache_storage: Optional[CacheStorage] = None,
+        request_service_factory: Optional[RequestServiceFactoryType] = None,
         shim_server_url: Optional[str] = None,
     ) -> None:
         """
@@ -41,20 +37,18 @@ class QiwiP2PClient(BaseAPIClient):
         self._api_access_token = secret_p2p
         self._shim_server_url = shim_server_url
 
-        BaseAPIClient.__init__(self, request_service, cache_storage)
+        BaseAPIClient.__init__(self, request_service_factory)
 
-    def _create_request_service(self) -> RequestServiceProto:
-        rs: RequestServiceProto = RequestService(
-            base_headers={
-                "Authorization": f"Bearer {self._api_access_token}",
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            }
+    async def _create_request_service(self) -> RequestServiceProto:
+        return RequestService(
+            session_holder=AiohttpSessionHolder(
+                headers={
+                    "Authorization": f"Bearer {self._api_access_token}",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                }
+            )
         )
-        if self._cache_storage is not None:
-            rs = RequestServiceCacheDecorator(rs, self._cache_storage)
-
-        return rs
 
     async def get_bill_by_id(self, bill_id: str) -> Bill:
         """

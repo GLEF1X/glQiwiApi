@@ -6,6 +6,9 @@ from typing import Dict, Any, AsyncIterator
 import pytest
 
 from glQiwiApi import QiwiWallet, InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
+from glQiwiApi.core import RequestService
+from glQiwiApi.core.request_service import RequestServiceCacheDecorator
+from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.p2p.types import Bill
 from glQiwiApi.qiwi.clients.wallet.types import (
@@ -55,7 +58,25 @@ def test_create_request_service() -> None:
     cache_storage = InMemoryCacheStorage(
         invalidate_strategy=APIResponsesCacheInvalidationStrategy()
     )
-    wallet = QiwiWallet(**QIWI_WALLET_CREDENTIALS, cache_storage=cache_storage)
+
+    def create_request_service_with_cache(w: QiwiWallet):
+        return RequestServiceCacheDecorator(
+            RequestService(
+                session_holder=AiohttpSessionHolder(
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "Authorization": f"Bearer {w._api_access_token}",
+                        "Host": "edge.qiwi.com",
+                    },
+                )
+            ),
+            cache_storage=cache_storage,
+        )
+
+    wallet = QiwiWallet(
+        **QIWI_WALLET_CREDENTIALS, request_service_factory=create_request_service_with_cache
+    )
     assert wallet._request_service._cache is cache_storage
 
 

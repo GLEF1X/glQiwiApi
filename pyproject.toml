@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.0.4"
+version = "2.0.5"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Gleb Garanin <glebgar567@gmail.com>"
@@ -25,7 +25,7 @@ keywords = [
 license = "MIT"
 classifiers = [
     "License :: OSI Approved :: MIT License",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Stable",
     "Environment :: Console",
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
@@ -93,7 +93,6 @@ async-timeout = "^4.0.2"
 types-orjson = "^3.6.2"
 types-pytz = "^2021.3.3"
 types-aiofiles = "^0.8.2"
-geojson-pydantic = "^0.3.1"
 aiogram = "^2.19"
 cryptography = "^36.0.1"
 aiofiles = "^0.8.0"

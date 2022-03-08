@@ -9,13 +9,12 @@ import typing
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union, Iterable
 
-from glQiwiApi.core.abc.base_api_client import BaseAPIClient
-from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
 from glQiwiApi.core.request_service import (
     RequestService,
     RequestServiceProto,
-    RequestServiceCacheDecorator,
 )
+from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.utils.payload import (
     make_payload,
 )
@@ -40,13 +39,6 @@ from glQiwiApi.yoo_money.types.types import (
     Payment,
 )
 
-HTTP_STATUS_TO_ERROR_MATCHES = {
-    400: "An error related to the type of request to the api,"
-    "you may have passed an invalid API token",
-    401: "A non-existent, expired, or revoked token is specified",
-    403: "An operation has been requested for which the token has no rights",
-}
-
 
 class YooMoneyAPI(BaseAPIClient):
     """
@@ -63,8 +55,7 @@ class YooMoneyAPI(BaseAPIClient):
     def __init__(
         self,
         api_access_token: str,
-        request_service: Optional[RequestServiceProto] = None,
-        cache_storage: Optional[CacheStorage] = None,
+        request_service_factory: Optional[RequestServiceFactoryType] = None,
     ) -> None:
         """
         The constructor accepts a token obtained from the method class get_access_token
@@ -73,20 +64,18 @@ class YooMoneyAPI(BaseAPIClient):
         :param api_access_token: api token for requests
         """
         self._api_access_token = api_access_token
-        BaseAPIClient.__init__(self, request_service, cache_storage)
+        BaseAPIClient.__init__(self, request_service_factory)
 
-    def _create_request_service(self) -> RequestServiceProto:
-        rs: RequestServiceProto = RequestService(
-            base_headers={
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Authorization": f"Bearer {self._api_access_token}",
-                "Host": "yoomoney.ru",
-            }
+    async def _create_request_service(self) -> RequestServiceProto:
+        return RequestService(
+            session_holder=AiohttpSessionHolder(
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Authorization": f"Bearer {self._api_access_token}",
+                    "Host": "yoomoney.ru",
+                }
+            )
         )
-        if self._cache_storage is not None:
-            rs = RequestServiceCacheDecorator(rs, self._cache_storage)
-
-        return rs
 
     @classmethod
     async def build_url_for_auth(
@@ -309,7 +298,7 @@ class YooMoneyAPI(BaseAPIClient):
         )
 
     async def make_cellular_payment(
-        self, pattern_id: str, phone_number: str, amount: typing.SupportsFloat
+        self, pattern_id: str, phone_number: str, amount: Union[int, float, str]
     ) -> Dict[str, Any]:
         return await self._request_service.execute_api_method(
             MakeCellularPayment(pattern_id=pattern_id, phone_number=phone_number, amount=amount)

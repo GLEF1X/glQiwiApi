@@ -49,23 +49,25 @@ class BaseDispatcher(abc.ABC):
         """
         Feed handlers with event.
 
-        :param event: any object that will be translated to handlers
+        :param event: any object that will be propagated to handlers
         """
         coroutines = [h.notify(event, *args) for h in self.__all_handlers__]
-        await asyncio.gather(*coroutines)
+        results = await asyncio.gather(*coroutines, return_exceptions=True)
+        for result in results:
+            if self.exception_handler.is_empty:
+                break
+            if not isinstance(result, Exception):
+                continue
+
+            await self.exception_handler.notify(result, *args)
 
     @property
     @abc.abstractmethod
     def __all_handlers__(self) -> Sequence[HandlerCollection[Any]]:
-        pass
+        """Return all registered handlers except error handlers"""
 
 
 class QiwiDispatcher(BaseDispatcher):
-    """
-    Class, which managing all handlers
-
-    """
-
     def __init__(self) -> None:
         super().__init__()
         self.transaction_handler = HandlerCollection(Transaction, TransactionWebhook)
@@ -73,7 +75,6 @@ class QiwiDispatcher(BaseDispatcher):
 
     @property
     def __all_handlers__(self) -> Sequence[HandlerCollection[Any]]:
-        """Return all registered handlers except error handlers"""
         return self.bill_handler, self.transaction_handler
 
 

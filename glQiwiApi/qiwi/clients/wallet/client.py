@@ -4,13 +4,12 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Sequence
 
-from glQiwiApi.core.abc.base_api_client import BaseAPIClient
-from glQiwiApi.core.cache.storage import CacheStorage
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
 from glQiwiApi.core.request_service import (
     RequestService,
     RequestServiceProto,
-    RequestServiceCacheDecorator,
 )
+from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.wallet.methods.authenticate_wallet import AuthenticateWallet
 from glQiwiApi.qiwi.clients.wallet.methods.check_restriction import GetRestrictions
@@ -93,39 +92,35 @@ AmountType = Union[int, float]
 
 
 class QiwiWallet(BaseAPIClient):
-    # declarative validators for fields
-    phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)
+    _phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)
     _api_access_token = String(optional=False)
 
     def __init__(
         self,
         api_access_token: str,
         phone_number: Optional[str] = None,
-        request_service: Optional[RequestServiceProto] = None,
-        cache_storage: Optional[CacheStorage] = None,
+        request_service_factory: Optional[RequestServiceFactoryType] = None,
     ) -> None:
         """
         :param api_access_token: QIWI API token received from https://qiwi.com/api
         :param phone_number: your phone number starting with +
         """
         self._api_access_token = api_access_token
-        self.phone_number = phone_number
+        self._phone_number = phone_number
 
-        BaseAPIClient.__init__(self, request_service, cache_storage)
+        BaseAPIClient.__init__(self, request_service_factory)
 
-    def _create_request_service(self) -> RequestServiceProto:
-        rs: RequestServiceProto = RequestService(
-            base_headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "Authorization": f"Bearer {self._api_access_token}",
-                "Host": "edge.qiwi.com",
-            }
+    async def _create_request_service(self) -> RequestServiceProto:
+        return RequestService(
+            session_holder=AiohttpSessionHolder(
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Authorization": f"Bearer {self._api_access_token}",
+                    "Host": "edge.qiwi.com",
+                }
+            )
         )
-        if self._cache_storage is not None:
-            rs = RequestServiceCacheDecorator(rs, self._cache_storage)
-
-        return rs
 
     async def get_profile(
         self,
@@ -192,7 +187,7 @@ class QiwiWallet(BaseAPIClient):
         """
         return await self._request_service.execute_api_method(
             GetIdentification(),
-            phone_number=self.phone_number,
+            phone_number=self._phone_number,
         )
 
     async def get_limits(self, limit_types: Sequence[str] = ALL_LIMIT_TYPES) -> Dict[str, Limit]:
@@ -388,7 +383,7 @@ class QiwiWallet(BaseAPIClient):
     async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
         resp: List[Balance] = await self._request_service.execute_api_method(
             GetBalances(),
-            phone_number=self.phone_number,
+            phone_number=self._phone_number,
         )
         return resp[account_number - 1].balance  # type: ignore
 
@@ -543,7 +538,7 @@ class QiwiWallet(BaseAPIClient):
         You can choose these rights when creating a new api token, to use api QIWI Master
         """
         return await self._request_service.execute_api_method(
-            BuyQIWIMasterPackage(phone_number=self.phone_number)
+            BuyQIWIMasterPackage(phone_number=self._phone_number)
         )
 
     async def issue_qiwi_master_card(
@@ -745,6 +740,6 @@ class QiwiWallet(BaseAPIClient):
 
     @property
     def phone_number_without_plus_sign(self) -> str:
-        if self.phone_number is None:
+        if self._phone_number is None:
             raise RuntimeError("Phone number is empty")
-        return self.phone_number[1:]
+        return self._phone_number[1:]

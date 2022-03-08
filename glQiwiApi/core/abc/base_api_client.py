@@ -1,35 +1,32 @@
 from __future__ import annotations
 
 import abc
+import inspect
 from copy import deepcopy
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Dict
-
-from glQiwiApi.core.cache.storage import CacheStorage
+from typing import TYPE_CHECKING, Any, Optional, Type, TypeVar, Dict, Callable, Awaitable, Union
 
 if TYPE_CHECKING:
     from glQiwiApi.core.request_service import RequestServiceProto  # pragma: no cover
 
-W = TypeVar("W", bound="BaseAPIClient")
+T = TypeVar("T", bound="BaseAPIClient")
+
+RequestServiceFactoryType = Callable[
+    ..., Union[Awaitable["RequestServiceProto"], "RequestServiceProto"]
+]
 
 
 class BaseAPIClient(abc.ABC):
     def __init__(
         self,
-        request_service: Optional[RequestServiceProto] = None,
-        cache_storage: Optional[CacheStorage] = None,
+        request_service_factory: Optional[RequestServiceFactoryType] = None,
     ):
-        self._cache_storage = cache_storage
-        self._request_service: RequestServiceProto = (
-            request_service or self._create_request_service()
-        )
-
-    @abc.abstractmethod
-    def _create_request_service(self) -> RequestServiceProto:
-        pass
+        self._request_service_factory = request_service_factory
+        self._request_service: RequestServiceProto
 
     async def __aenter__(self):  # type: ignore
-        await self._request_service.warmup()
+        if not hasattr(self, "_request_service"):
+            self._request_service = await self.create_request_service()
         return self
 
     async def __aexit__(
@@ -41,9 +38,24 @@ class BaseAPIClient(abc.ABC):
         await self.close()
 
     async def close(self) -> None:
+        if self._request_service is None:
+            return None
+
         await self._request_service.shutdown()
 
-    def __deepcopy__(self: W, memo: Dict[Any, Any]) -> W:
+    async def create_request_service(self) -> RequestServiceProto:
+        if self._request_service_factory is not None:
+            if inspect.iscoroutinefunction(self._request_service_factory):
+                return await self._request_service_factory(self)  # type: ignore
+            return self._request_service_factory(self)  # type: ignore
+
+        return await self._create_request_service()
+
+    @abc.abstractmethod
+    async def _create_request_service(self) -> RequestServiceProto:
+        pass
+
+    def __deepcopy__(self: T, memo: Dict[Any, Any]) -> T:
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result

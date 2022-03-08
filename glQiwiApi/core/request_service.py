@@ -56,14 +56,10 @@ class RequestService:
     def __init__(
         self,
         session_holder: Optional[AbstractSessionHolder[Any]] = None,
-        base_headers: Optional[Dict[str, Any]] = None,
-        **session_holder_kw: Any,
     ) -> None:
         if session_holder is None:
-            session_holder = AiohttpSessionHolder(headers=base_headers)
+            session_holder = AiohttpSessionHolder()
         self._session_holder = session_holder
-
-        self._session_holder.update_session_kwargs(**session_holder_kw)
 
     async def execute_api_method(self, method: APIMethod[T], **url_kw: Any) -> T:
         request = method.build_request(**url_kw)

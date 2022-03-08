@@ -1,8 +1,9 @@
 import typing
 
-from glQiwiApi.core.abc.base_api_client import BaseAPIClient
+from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
 from glQiwiApi.core.cache.storage import CacheStorage
 from glQiwiApi.core.request_service import RequestService, RequestServiceProto
+from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.qiwi.clients.maps.methods.get_partners import GetPartners
 from glQiwiApi.qiwi.clients.maps.methods.get_terminals import GetTerminals
 from glQiwiApi.qiwi.clients.maps.types.polygon import Polygon
@@ -19,17 +20,18 @@ class QiwiMaps(BaseAPIClient):
 
     def __init__(
         self,
-        request_service: typing.Optional[RequestServiceProto] = None,
-        cache_storage: typing.Optional[CacheStorage] = None,
+        request_service_factory: typing.Optional[RequestServiceFactoryType] = None,
     ) -> None:
-        super().__init__(request_service, cache_storage)
+        super().__init__(request_service_factory)
 
-    def _create_request_service(self) -> RequestServiceProto:
+    async def _create_request_service(self) -> RequestServiceProto:
         return RequestService(
-            base_headers={
-                "Content-type": "application/json",
-                "Accept": "application/json",
-            }
+            session_holder=AiohttpSessionHolder(
+                headers={
+                    "Content-type": "application/json",
+                    "Accept": "application/json",
+                }
+            )
         )
 
     async def terminals(
