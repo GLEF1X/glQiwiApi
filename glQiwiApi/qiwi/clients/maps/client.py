@@ -1,7 +1,6 @@
 import typing
 
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
-from glQiwiApi.core.cache.storage import CacheStorage
 from glQiwiApi.core.request_service import RequestService, RequestServiceProto
 from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.qiwi.clients.maps.methods.get_partners import GetPartners

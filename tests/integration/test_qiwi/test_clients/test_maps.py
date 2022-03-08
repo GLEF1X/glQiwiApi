@@ -20,9 +20,8 @@ def maps_data() -> AsyncIterator[Dict[str, Any]]:
 @pytest.fixture(name="maps")
 async def maps_fixture() -> AsyncIterator[QiwiMaps]:
     """:class:`QiwiMaps` fixture"""
-    maps = QiwiMaps()
-    yield maps
-    await maps.close()
+    async with QiwiMaps() as maps:
+        yield maps
 
 
 async def test_terminals(maps: QiwiMaps, data: Dict[str, Any]) -> None:

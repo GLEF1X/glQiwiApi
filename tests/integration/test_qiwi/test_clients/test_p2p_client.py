@@ -13,9 +13,8 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture(name="api")
 async def api_fixture() -> AsyncIterator[QiwiP2PClient]:
-    p2p_client = QiwiP2PClient(**QIWI_P2P_CREDENTIALS)
-    yield p2p_client
-    await p2p_client.close()
+    async with QiwiP2PClient(**QIWI_P2P_CREDENTIALS) as p2p:
+        yield p2p
 
 
 @pytest.mark.parametrize(
