@@ -5,7 +5,7 @@ from glQiwiApi.yoo_money.types import Payment
 
 
 class ProcessPayment(APIMethod[Payment]):
-    http_method: ClassVar[str] = "GET"
+    http_method: ClassVar[str] = "POST"
     url: ClassVar[str] = "https://yoomoney.ru/api/process-payment"
 
     request_id: str
