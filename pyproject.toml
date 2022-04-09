@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.0.5"
+version = "2.0.6"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Gleb Garanin <glebgar567@gmail.com>"
@@ -41,7 +41,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pytz = "2021.3"
+pytz = "2022.1"
 aiohttp = "^3.8.0"
 wheel = "^0.36.2"
 pydantic = "^1.9.0"
@@ -84,7 +84,7 @@ pytest-benchmark = { version = "^3.4.1", extras = ["histogram"] }
 # development
 black = { version = "^22.1.0", python = ">=3.6" }
 isort = "^5.8.0"
-mypy = "^0.931"
+mypy = "^0.942"
 flake8 = "^4.0.1"
 async-timeout = "^4.0.2"
 
