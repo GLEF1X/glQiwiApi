@@ -51,8 +51,9 @@ class CreateP2PBill(QiwiAPIMethod[Bill]):
         request.json_payload["expirationDateTime"] = datetime_to_iso8601_with_moscow_timezone(
             expire_at
         )
-        pay_source_filter: List[str] = request.json_payload["customFields"]["paySourcesFilter"]
-        request.json_payload["customFields"]["paySourcesFilter"] = " ".join(
-            pay_source_filter
-        ).replace(" ", ",")
+        pay_source_filter = request.json_payload["customFields"]["paySourcesFilter"]
+        if isinstance(pay_source_filter, list):
+            request.json_payload["customFields"]["paySourcesFilter"] = " ".join(
+                pay_source_filter
+            ).replace(" ", ",")
         return request
