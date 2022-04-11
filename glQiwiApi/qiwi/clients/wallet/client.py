@@ -111,6 +111,8 @@ class QiwiWallet(BaseAPIClient):
         BaseAPIClient.__init__(self, request_service_factory)
 
     async def _create_request_service(self) -> RequestServiceProto:
+        from glQiwiApi import __version__
+
         return RequestService(
             session_holder=AiohttpSessionHolder(
                 headers={
@@ -118,6 +120,7 @@ class QiwiWallet(BaseAPIClient):
                     "Accept": "application/json",
                     "Authorization": f"Bearer {self._api_access_token}",
                     "Host": "edge.qiwi.com",
+                    "User-Agent": f"glQiwiApi/{__version__}"
                 }
             )
         )
