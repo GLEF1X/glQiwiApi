@@ -18,8 +18,7 @@ def default_cache_storage() -> CacheStorage:
     return InMemoryCacheStorage(invalidate_strategy=APIResponsesCacheInvalidationStrategy())
 
 
-__version__ = "2.0.7"
-__maintainer__ = "GLEF1X"
+__version__ = "2.0.8"
 
 __all__ = (
     # clients

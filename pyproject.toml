@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.0.7"
+version = "2.0.8"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
-    "Gleb Garanin <glebgar567@gmail.com>"
+    "Glib Garanin <glebgar567@gmail.com>"
 ]
 repository = "https://github.com/GLEF1X/glQiwiApi"
 documentation = "https://glqiwiapi.readthedocs.io/en/latest/"
@@ -43,7 +43,6 @@ classifiers = [
 python = "^3.7"
 pytz = "2022.1"
 aiohttp = "^3.8.0"
-wheel = "^0.36.2"
 pydantic = "^1.9.0"
 typing_extensions = { version = "^4.0.1", python = "<=3.7" }
 
@@ -84,7 +83,7 @@ pytest-benchmark = { version = "^3.4.1", extras = ["histogram"] }
 # development
 black = { version = "^22.1.0", python = ">=3.6" }
 isort = "^5.8.0"
-mypy = "^0.942"
+mypy = "^0.950"
 flake8 = "^4.0.1"
 async-timeout = "^4.0.2"
 
@@ -93,8 +92,8 @@ async-timeout = "^4.0.2"
 types-orjson = "^3.6.2"
 types-pytz = "^2021.3.3"
 types-aiofiles = "^0.8.2"
-aiogram = "^2.19"
-cryptography = "^36.0.1"
+aiogram = "^2.20"
+cryptography = "^37.0.1"
 aiofiles = "^0.8.0"
 
 [tool.poetry.extras]
@@ -147,34 +146,6 @@ known_third_party = [
     "pydantic",
     "pytest"
 ]
-
-[[tool.towncrier.section]]
-path = ""
-
-[[tool.towncrier.type]]
-directory = "feature"
-name = "Features"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "bugfix"
-name = "Bugfixes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "doc"
-name = "Improved Documentation"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "removal"
-name = "Deprecations and Removals"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "misc"
-name = "Misc"
-showcontent = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
