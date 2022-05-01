@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Iterator, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Union, Iterator, TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, Field, root_validator, ValidationError
 
@@ -203,11 +203,11 @@ class OperationDetails(Response):
     id: str = Field(..., alias="operation_id")
     status: str
     amount: float
+    amount_due: Optional[float] = None
     currency: str = Field(..., alias="amount_currency")
-    available_operations: List[str]
     operation_date: datetime = Field(..., alias="datetime")
     operation_type: str = Field(..., alias="type")
-    direction: str
+    direction: Literal["in", "out"]
     title: str
     details: Optional[str] = None
     digital_goods: Optional[Dict[str, DigitalGoods]] = None
