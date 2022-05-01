@@ -5,7 +5,7 @@ import datetime
 import glQiwiApi
 
 project = "glQiwiApi"
-author = glQiwiApi.__maintainer__
+author = "GLEF1X"
 copyright = f"{datetime.date.today().year}, {author}"
 release = glQiwiApi.__version__
 
