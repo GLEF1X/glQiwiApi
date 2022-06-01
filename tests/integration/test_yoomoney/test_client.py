@@ -1,11 +1,11 @@
 import datetime
-from typing import Dict, Any, AsyncIterator
+from typing import Any, AsyncIterator, Dict
 
 import pytest
 
 from glQiwiApi import YooMoneyAPI
-from glQiwiApi.yoo_money.types import Operation, AccountInfo, OperationDetails
-from tests.settings import YOO_MONEY_TEST_CLIENT_ID, YOO_MONEY_CREDENTIALS
+from glQiwiApi.yoo_money.types import AccountInfo, Operation, OperationDetails
+from tests.settings import YOO_MONEY_CREDENTIALS, YOO_MONEY_TEST_CLIENT_ID
 
 pytestmark = pytest.mark.asyncio
 

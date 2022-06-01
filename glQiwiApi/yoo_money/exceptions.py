@@ -1,4 +1,4 @@
-from typing import TypeVar, NoReturn, Optional, List, Any
+from typing import Any, List, NoReturn, Optional, TypeVar
 
 
 class YooMoneyError(Exception):

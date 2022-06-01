@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import ClassVar, Union, Optional, Iterable, Any
+from typing import Any, ClassVar, Iterable, Optional, Union
 
 from pydantic import conint
 

@@ -2,13 +2,10 @@ from __future__ import annotations
 
 from contextlib import suppress
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
-from glQiwiApi.core.request_service import (
-    RequestService,
-    RequestServiceProto,
-)
+from glQiwiApi.core.request_service import RequestService, RequestServiceProto
 from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.wallet.methods.authenticate_wallet import AuthenticateWallet
@@ -22,7 +19,7 @@ from glQiwiApi.qiwi.clients.wallet.methods.get_balances import GetBalances
 from glQiwiApi.qiwi.clients.wallet.methods.get_cards import GetBoundedCards
 from glQiwiApi.qiwi.clients.wallet.methods.get_cross_rates import GetCrossRates
 from glQiwiApi.qiwi.clients.wallet.methods.get_identification import GetIdentification
-from glQiwiApi.qiwi.clients.wallet.methods.get_limits import GetLimits, ALL_LIMIT_TYPES
+from glQiwiApi.qiwi.clients.wallet.methods.get_limits import ALL_LIMIT_TYPES, GetLimits
 from glQiwiApi.qiwi.clients.wallet.methods.get_receipt import GetReceipt
 from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT, GetHistory
 from glQiwiApi.qiwi.clients.wallet.methods.list_of_invoices import GetListOfInvoices
@@ -55,6 +52,9 @@ from glQiwiApi.qiwi.clients.wallet.methods.webhook.send_test_notification import
 from glQiwiApi.types.amount import AmountWithCurrency
 from glQiwiApi.types.arbitrary import File
 from glQiwiApi.utils.validators import PhoneNumber, String
+
+from ...exceptions import QiwiAPIError
+from ..p2p.types import Bill, InvoiceStatus
 from .methods.get_nickname import GetNickName
 from .methods.qiwi_master.block_card import BlockQiwiMasterCard
 from .methods.qiwi_master.get_card_requisites import GetQiwiMasterCardRequisites
@@ -62,31 +62,29 @@ from .methods.qiwi_master.get_statement import GetQiwiMasterStatement
 from .methods.qiwi_master.rename_card import RenameQiwiMasterCard
 from .methods.qiwi_master.unblock_card import UnblockQiwiMasterCard
 from .types import (
+    Balance,
+    Card,
+    Commission,
     CrossRate,
-    PaymentDetails,
+    History,
+    Identification,
+    Limit,
     OrderDetails,
+    PaymentDetails,
     PaymentInfo,
     PaymentMethod,
-    UserProfile,
     Restriction,
+    Source,
     Statistic,
     Transaction,
     TransactionType,
+    UserProfile,
     WebhookInfo,
-    Limit,
-    Balance,
-    Card,
-    Identification,
-    Commission,
-    History,
-    Source,
 )
 from .types.balance import AvailableBalance
 from .types.mobile_operator import MobileOperator
 from .types.nickname import NickName
 from .types.qiwi_master import QiwiMasterCardRequisites
-from ..p2p.types import Bill, InvoiceStatus
-from ...exceptions import QiwiAPIError
 
 AmountType = Union[int, float]
 
@@ -120,7 +118,7 @@ class QiwiWallet(BaseAPIClient):
                     "Accept": "application/json",
                     "Authorization": f"Bearer {self._api_access_token}",
                     "Host": "edge.qiwi.com",
-                    "User-Agent": f"glQiwiApi/{__version__}"
+                    "User-Agent": f"glQiwiApi/{__version__}",
                 }
             )
         )

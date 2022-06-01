@@ -1,5 +1,5 @@
 import time
-from typing import ClassVar, Dict, Any, Optional
+from typing import Any, ClassVar, Dict, Optional
 
 from pydantic import Field, validator
 

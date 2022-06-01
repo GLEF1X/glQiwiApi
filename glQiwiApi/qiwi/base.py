@@ -2,7 +2,7 @@ import abc
 import types
 from http import HTTPStatus
 from json import JSONDecodeError
-from typing import TypeVar, Generic, Any, Sequence, ClassVar, cast
+from typing import Any, ClassVar, Generic, Sequence, TypeVar, cast
 
 from glQiwiApi.core.abc.api_method import APIMethod, ReturningType, _sentinel
 from glQiwiApi.core.session.holder import HTTPResponse

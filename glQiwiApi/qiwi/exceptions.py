@@ -1,5 +1,5 @@
 from json import JSONDecodeError
-from typing import Dict, Any, Optional, ClassVar, NoReturn, Union, List, cast
+from typing import Any, ClassVar, Dict, List, NoReturn, Optional, Union, cast
 
 try:
     from orjson import JSONDecodeError as OrjsonJSONDecodeError

@@ -1,3 +1,5 @@
+from glQiwiApi.utils.synchronous import async_as_sync, execute_async_as_sync
+
 from .abc.base_api_client import BaseAPIClient
 from .event_fetching.class_based import (
     AbstractBillHandler,
@@ -14,7 +16,6 @@ from .event_fetching.webhooks import (
     app,
 )
 from .request_service import RequestService
-from glQiwiApi.utils.synchronous import async_as_sync, execute_async_as_sync
 
 __all__ = (
     "RequestService",

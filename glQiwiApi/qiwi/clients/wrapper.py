@@ -1,47 +1,36 @@
 from datetime import datetime
-from typing import (
-    Optional,
-    Union,
-    Any,
-    Type,
-    TypeVar,
-    Dict,
-    List,
-    Tuple,
-    TYPE_CHECKING,
-    Callable,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
 from glQiwiApi.qiwi.clients.p2p.types import (
-    PairOfP2PKeys,
     Bill,
-    RefundedBill,
-    InvoiceStatus,
     Customer,
+    InvoiceStatus,
+    PairOfP2PKeys,
+    RefundedBill,
 )
-from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet, AmountType
+from glQiwiApi.qiwi.clients.wallet.client import AmountType, QiwiWallet
 from glQiwiApi.qiwi.clients.wallet.methods.get_limits import ALL_LIMIT_TYPES
 from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT
 from glQiwiApi.qiwi.clients.wallet.types import (
-    PaymentInfo,
+    Balance,
+    Card,
+    Commission,
+    CrossRate,
+    History,
+    Identification,
+    Limit,
     OrderDetails,
     PaymentDetails,
+    PaymentInfo,
     PaymentMethod,
-    CrossRate,
-    Balance,
-    TransactionType,
-    Statistic,
-    UserProfile,
-    Card,
-    Limit,
-    Identification,
     Restriction,
-    Transaction,
     Source,
-    History,
+    Statistic,
+    Transaction,
+    TransactionType,
+    UserProfile,
     WebhookInfo,
-    Commission,
 )
 from glQiwiApi.qiwi.clients.wallet.types.balance import AvailableBalance
 from glQiwiApi.qiwi.clients.wallet.types.mobile_operator import MobileOperator

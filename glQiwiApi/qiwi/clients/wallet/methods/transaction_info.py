@@ -1,6 +1,5 @@
 from typing import ClassVar
 
-
 from pydantic import Field
 
 from glQiwiApi.qiwi.base import QiwiAPIMethod

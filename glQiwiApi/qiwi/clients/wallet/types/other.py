@@ -3,7 +3,7 @@ from typing import Union
 from pydantic import Field, validator
 
 from glQiwiApi.types.amount import CurrencyModel
-from glQiwiApi.types.base import HashableBase, Base
+from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.utils.currency_util import Currency
 
 

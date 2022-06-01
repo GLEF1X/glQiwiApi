@@ -1,5 +1,5 @@
 import re
-from typing import List, Any, cast, ClassVar
+from typing import Any, ClassVar, List, cast
 
 from glQiwiApi.core.abc.api_method import APIMethod, Request, ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse
@@ -25,13 +25,15 @@ class BuildAuthURL(APIMethod[str]):
                 "response_type": "code",
                 "redirect_uri": self.redirect_uri,
                 "scope": " ".join(self.scopes),
-            }
+            },
         )
 
     @classmethod
     def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
         try:
-            return cast(str, re.findall(YOO_MONEY_LINK_REGEXP, response.body.decode("utf-8"))[0])  # pragma: no cover
+            return cast(
+                str, re.findall(YOO_MONEY_LINK_REGEXP, response.body.decode("utf-8"))[0]
+            )  # pragma: no cover
         except IndexError:
             raise Exception(
                 "Could not find the authorization link in the response from "

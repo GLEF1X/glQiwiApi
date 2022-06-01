@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import ClassVar, List, Optional, Dict, Any
+from typing import Any, ClassVar, Dict, List, Optional
 
-from pydantic import root_validator, Field
+from pydantic import Field, root_validator
 
 from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod

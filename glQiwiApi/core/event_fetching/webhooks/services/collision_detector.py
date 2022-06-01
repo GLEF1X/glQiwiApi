@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Generic, TypeVar, Set
+from typing import Any, Generic, Set, TypeVar
 
 T = TypeVar("T")
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import inspect
-from typing import Any, Awaitable, Callable, Generic, TypeVar, Union, cast, Type, Tuple
+from typing import Any, Awaitable, Callable, Generic, Tuple, Type, TypeVar, Union, cast
 
 Event = TypeVar("Event")
 

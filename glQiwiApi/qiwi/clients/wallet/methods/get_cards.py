@@ -1,4 +1,4 @@
-from typing import List, ClassVar, Optional
+from typing import ClassVar, List, Optional
 
 from pydantic import Field
 

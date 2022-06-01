@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, cast
 
 from glQiwiApi.qiwi.clients.wallet.types.transaction import Transaction
 from glQiwiApi.types.amount import AmountWithCurrency
+
 from .base import Handler
 
 if TYPE_CHECKING:

@@ -1,11 +1,11 @@
 import uuid
-from typing import ClassVar, Dict, Any, Optional
+from typing import Any, ClassVar, Dict, Optional
 
 from pydantic import Field
 
 from glQiwiApi.core.abc.api_method import RuntimeValue
 from glQiwiApi.qiwi.base import QiwiAPIMethod
-from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo, PaymentMethod, PaymentDetails
+from glQiwiApi.qiwi.clients.wallet.types import PaymentDetails, PaymentInfo, PaymentMethod
 from glQiwiApi.types.amount import AmountWithCurrency
 
 

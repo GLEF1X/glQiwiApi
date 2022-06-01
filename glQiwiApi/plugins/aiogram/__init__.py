@@ -1,2 +1,2 @@
-from .webhook import AiogramWebhookPlugin
 from .polling import AiogramPollingPlugin
+from .webhook import AiogramWebhookPlugin

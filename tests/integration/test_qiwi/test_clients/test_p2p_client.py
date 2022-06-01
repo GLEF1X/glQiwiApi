@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from typing import Dict, Any, AsyncIterator
+from typing import Any, AsyncIterator, Dict
 
 import pytest
 

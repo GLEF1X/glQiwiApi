@@ -1,6 +1,7 @@
 import abc
 import logging
-from typing import Any, Generic, Type, TypeVar, TYPE_CHECKING as MYPY
+from typing import TYPE_CHECKING as MYPY
+from typing import Any, Generic, Type, TypeVar
 
 from aiohttp import web
 from aiohttp.web_request import Request

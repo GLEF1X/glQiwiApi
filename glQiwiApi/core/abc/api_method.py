@@ -1,21 +1,21 @@
 import abc
 from typing import (
-    Dict,
-    Optional,
     Any,
-    TypeVar,
-    Generic,
-    ClassVar,
     Callable,
+    ClassVar,
+    Dict,
+    Generic,
     List,
+    Optional,
     Set,
-    cast,
-    Union,
-    Type,
     Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
 )
 
-from pydantic import BaseModel, BaseConfig, Extra, parse_obj_as
+from pydantic import BaseConfig, BaseModel, Extra, parse_obj_as
 from pydantic.fields import ModelField
 from pydantic.generics import GenericModel
 

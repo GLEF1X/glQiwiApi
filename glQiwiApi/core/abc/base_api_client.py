@@ -4,17 +4,8 @@ import abc
 import inspect
 from copy import deepcopy
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING as MYPY,
-    Any,
-    Optional,
-    Type,
-    TypeVar,
-    Dict,
-    Callable,
-    Awaitable,
-    Union, Tuple,
-)
+from typing import TYPE_CHECKING as MYPY
+from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, Type, TypeVar, Union
 
 if MYPY:
     from glQiwiApi.core.request_service import RequestServiceProto  # pragma: no cover
@@ -38,7 +29,9 @@ class APIClientMeta(abc.ABCMeta):
     I have to write this metaclass to avoid additional viscous boilerplate code.
     """
 
-    def __new__(mcs: Type[_C], name: str, bases: Tuple[Any, ...], attrs: Dict[str, Any], **kwargs: Any) -> _C:
+    def __new__(
+        mcs: Type[_C], name: str, bases: Tuple[Any, ...], attrs: Dict[str, Any], **kwargs: Any
+    ) -> _C:
         for key, attribute in attrs.items():
             is_name_mangled = key.startswith("__")
             if is_name_mangled:
@@ -66,8 +59,8 @@ class APIClientMeta(abc.ABCMeta):
 
 class BaseAPIClient(metaclass=APIClientMeta):
     def __init__(
-            self,
-            request_service_factory: Optional[RequestServiceFactoryType] = None,
+        self,
+        request_service_factory: Optional[RequestServiceFactoryType] = None,
     ):
         self._request_service_factory = request_service_factory
         self._request_service: RequestServiceProto = None  # type: ignore
@@ -78,10 +71,10 @@ class BaseAPIClient(metaclass=APIClientMeta):
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 

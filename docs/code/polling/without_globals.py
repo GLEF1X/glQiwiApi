@@ -1,8 +1,7 @@
 import logging
 from typing import cast
 
-from aiogram import Bot, Dispatcher
-from aiogram import types
+from aiogram import Bot, Dispatcher, types
 
 from glQiwiApi import QiwiWrapper
 from glQiwiApi.core.event_fetching import executor
@@ -44,16 +43,14 @@ def run_application() -> None:
     qiwi_dp = QiwiDispatcher()
 
     executor.start_polling(
-        wallet, qiwi_dp,
+        wallet,
+        qiwi_dp,
         AiogramPollingPlugin(dp),
         on_startup=on_startup,
         skip_updates=True,
-        context={
-            "dp": dp,
-            "qiwi_dp": qiwi_dp
-        }
+        context={"dp": dp, "qiwi_dp": qiwi_dp},
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_application()

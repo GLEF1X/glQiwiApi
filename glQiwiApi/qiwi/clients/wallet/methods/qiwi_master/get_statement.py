@@ -5,7 +5,7 @@ from pydantic import Field
 
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
-from glQiwiApi.types.arbitrary import File, BinaryIOInput
+from glQiwiApi.types.arbitrary import BinaryIOInput, File
 
 
 class GetQiwiMasterStatement(QiwiAPIMethod[File]):

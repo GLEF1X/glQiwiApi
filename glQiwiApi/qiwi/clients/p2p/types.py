@@ -4,9 +4,9 @@ import base64
 import hashlib
 import hmac
 from datetime import datetime
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from pydantic import Extra, Field, BaseConfig, HttpUrl
+from pydantic import BaseConfig, Extra, Field, HttpUrl
 
 from glQiwiApi.types.amount import HashablePlainAmount, PlainAmount
 from glQiwiApi.types.base import HashableBase

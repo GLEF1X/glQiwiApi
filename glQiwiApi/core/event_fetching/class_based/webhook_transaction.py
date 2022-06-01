@@ -4,6 +4,7 @@ import abc
 from typing import Optional
 
 from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook, WebhookPayment
+
 from .base import Handler
 
 

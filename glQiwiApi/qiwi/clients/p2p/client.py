@@ -1,18 +1,15 @@
 from datetime import datetime
-from typing import Optional, Union, Dict, List
+from typing import Dict, List, Optional, Union
 
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
-from glQiwiApi.core.request_service import (
-    RequestService,
-    RequestServiceProto,
-)
+from glQiwiApi.core.request_service import RequestService, RequestServiceProto
 from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_bill import CreateP2PBill
 from glQiwiApi.qiwi.clients.p2p.methods.create_p2p_key_pair import CreateP2PKeyPair
 from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
 from glQiwiApi.qiwi.clients.p2p.methods.refund_bill import RefundBill
 from glQiwiApi.qiwi.clients.p2p.methods.reject_p2p_bill import RejectP2PBill
-from glQiwiApi.qiwi.clients.p2p.types import Bill, PairOfP2PKeys, RefundedBill, Customer
+from glQiwiApi.qiwi.clients.p2p.types import Bill, Customer, PairOfP2PKeys, RefundedBill
 from glQiwiApi.types.amount import PlainAmount
 from glQiwiApi.utils.validators import String
 

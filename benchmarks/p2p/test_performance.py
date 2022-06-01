@@ -17,7 +17,6 @@ c = AioQiwiP2P(auth_key=os.getenv("SECRET_P2P"))
 # test_create_bill_with_pyQiwiP2P     112.2819 (1.23)     135.0227 (1.31)     123.7498 (1.30)     9.9919 (1.85)     127.5926 (1.38)     17.2723 (2.09)          2;0   8.0808 (0.77)          5          10
 
 
-
 async def create_bill_with_glQiwiApi():
     await wrapper.create_p2p_bill(amount=1)
 

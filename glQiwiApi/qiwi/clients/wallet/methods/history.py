@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any, ClassVar
+from typing import Any, ClassVar, Dict, List, Optional
 
-from pydantic import root_validator, conint, Field
+from pydantic import Field, conint, root_validator
 
 from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod
-from glQiwiApi.qiwi.clients.wallet.types import History, TransactionType, Source
+from glQiwiApi.qiwi.clients.wallet.types import History, Source, TransactionType
 from glQiwiApi.utils.date_conversion import datetime_to_iso8601_with_moscow_timezone
 
 MAX_HISTORY_LIMIT = 50

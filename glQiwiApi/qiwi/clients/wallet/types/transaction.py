@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Iterator, cast
+from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from pydantic import Field
 

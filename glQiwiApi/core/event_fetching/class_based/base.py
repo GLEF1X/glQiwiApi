@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union, Dict
+from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar, Union
 
 if TYPE_CHECKING:
     from glQiwiApi.types.base import Base  # NOQA # pragma: no cover

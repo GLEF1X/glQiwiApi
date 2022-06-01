@@ -1,4 +1,4 @@
-from typing import List, ClassVar
+from typing import ClassVar, List
 
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import Balance

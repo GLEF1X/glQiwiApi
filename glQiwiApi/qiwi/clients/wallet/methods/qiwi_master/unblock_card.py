@@ -1,4 +1,4 @@
-from typing import Dict, Any, ClassVar
+from typing import Any, ClassVar, Dict
 
 from pydantic import Field
 

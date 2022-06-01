@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Iterator, TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, root_validator, ValidationError
+from pydantic import BaseModel, Field, ValidationError, root_validator
 
 from glQiwiApi.types.base import Base
 

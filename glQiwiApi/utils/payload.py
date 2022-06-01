@@ -1,10 +1,5 @@
 import re
-from typing import (
-    Any,
-    Dict,
-    TypeVar,
-    cast,
-)
+from typing import Any, Dict, TypeVar, cast
 
 from pydantic import BaseModel
 

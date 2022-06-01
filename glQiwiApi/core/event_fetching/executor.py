@@ -7,7 +7,7 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union, cast, Awaitable
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Union, cast
 
 from aiohttp import web
 from aiohttp.web import _run_app  # noqa
@@ -16,12 +16,12 @@ from glQiwiApi import QiwiWrapper
 from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
 from glQiwiApi.core.event_fetching.webhooks.app import configure_app
 from glQiwiApi.core.event_fetching.webhooks.config import WebhookConfig
-from glQiwiApi.utils.synchronous import adapter
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.plugins.abc import Pluggable
 from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
 from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT
 from glQiwiApi.qiwi.clients.wallet.types import History
+from glQiwiApi.utils.synchronous import adapter
 
 logger = logging.getLogger("glQiwiApi.executor")
 

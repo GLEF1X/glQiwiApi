@@ -1,4 +1,4 @@
-from typing import Any, Dict, AsyncIterator
+from typing import Any, AsyncIterator, Dict
 
 import pytest
 

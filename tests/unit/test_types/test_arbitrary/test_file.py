@@ -5,7 +5,7 @@ from typing import Any, Callable, Generator
 import pytest
 from _pytest.fixtures import SubRequest
 
-from glQiwiApi.types.arbitrary import PlainPathInput, PathlibPathInput, BinaryIOInput, File
+from glQiwiApi.types.arbitrary import BinaryIOInput, File, PathlibPathInput, PlainPathInput
 
 lazy_fixture: Callable[..., Any] = pytest.lazy_fixture  # type: ignore  # noqa
 

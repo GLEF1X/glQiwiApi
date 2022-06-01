@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Dict, ClassVar, Any, Sequence
+from typing import Any, ClassVar, Dict, Sequence
 
 from pydantic import Field
 

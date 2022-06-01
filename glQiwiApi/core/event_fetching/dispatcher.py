@@ -13,18 +13,19 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Sequence,
     Type,
     TypeVar,
     Union,
     cast,
-    Sequence,
 )
 
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
-from .filters import BaseFilter, LambdaBasedFilter
-from .. import Handler
+
 from ...qiwi.clients.wallet.types.transaction import Transaction
 from ...qiwi.clients.wallet.types.webhooks import TransactionWebhook
+from .. import Handler
+from .filters import BaseFilter, LambdaBasedFilter
 
 logger = logging.getLogger("glQiwiApi.dispatcher")
 

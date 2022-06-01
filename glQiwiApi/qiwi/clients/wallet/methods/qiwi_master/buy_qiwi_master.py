@@ -1,5 +1,5 @@
 import time
-from typing import ClassVar, Any, Dict
+from typing import Any, ClassVar, Dict
 
 from pydantic import Field
 

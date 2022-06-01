@@ -1,4 +1,4 @@
-from typing import Dict, ClassVar
+from typing import ClassVar, Dict
 
 from glQiwiApi.core.abc.api_method import APIMethod
 

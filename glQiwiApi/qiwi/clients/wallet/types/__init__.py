@@ -3,13 +3,13 @@ from .balance import Balance
 from .commission import Commission
 from .identification import Identification
 from .limit import Limit
-from .other import CrossRate, PaymentMethod, PaymentDetails
+from .other import CrossRate, PaymentDetails, PaymentMethod
 from .partner import Partner
 from .payment_info import PaymentInfo, QiwiPayment
 from .qiwi_master import Card, OrderDetails
 from .restriction import Restriction
 from .stats import Statistic
-from .transaction import Source, Transaction, TransactionStatus, TransactionType, History
+from .transaction import History, Source, Transaction, TransactionStatus, TransactionType
 from .webhooks import TransactionWebhook, WebhookInfo
 
 __all__ = (

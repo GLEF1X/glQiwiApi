@@ -2,7 +2,6 @@ import logging
 
 from aiohttp import web
 
-
 from glQiwiApi.core.event_fetching.webhooks.dto.errors import WebhookAPIError
 from glQiwiApi.core.event_fetching.webhooks.views.base import BaseWebhookView
 from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook

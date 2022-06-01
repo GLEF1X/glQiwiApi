@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, Bot
+from aiogram import Bot, Dispatcher
 from aiogram.types import Message
 from aiogram.utils import executor
 
@@ -27,5 +27,5 @@ async def on_startup(dp: Dispatcher):
     await start_non_blocking_qiwi_api_polling(wallet, qiwi_dp)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     executor.start_polling(dp, on_startup=on_startup)

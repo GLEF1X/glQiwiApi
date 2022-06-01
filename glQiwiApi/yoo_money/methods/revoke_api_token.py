@@ -1,4 +1,4 @@
-from typing import Any, Dict, ClassVar
+from typing import Any, ClassVar, Dict
 
 from glQiwiApi.core.abc.api_method import APIMethod, ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse

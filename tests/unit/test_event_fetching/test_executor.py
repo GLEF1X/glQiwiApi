@@ -1,15 +1,18 @@
 import asyncio
 from datetime import datetime
-from typing import NoReturn, Optional, List
+from typing import List, NoReturn, Optional
 
 import async_timeout
 import pytest
 
 from glQiwiApi import QiwiWallet
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
-from glQiwiApi.core.event_fetching.executor import Context, start_non_blocking_qiwi_api_polling
-from glQiwiApi.core.event_fetching.executor import ExecutorEvent
-from glQiwiApi.qiwi.clients.wallet.types import Transaction, TransactionType, Source, History
+from glQiwiApi.core.event_fetching.executor import (
+    Context,
+    ExecutorEvent,
+    start_non_blocking_qiwi_api_polling,
+)
+from glQiwiApi.qiwi.clients.wallet.types import History, Source, Transaction, TransactionType
 from glQiwiApi.yoo_money.methods.operation_history import MAX_HISTORY_LIMIT
 
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+
 import glQiwiApi
 
 project = "glQiwiApi"
@@ -23,7 +24,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
-    'sphinxemoji.sphinxemoji'
+    "sphinxemoji.sphinxemoji",
 ]
 
 htmlhelp_basename = project

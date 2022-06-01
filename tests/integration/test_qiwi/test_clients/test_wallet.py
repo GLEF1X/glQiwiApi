@@ -1,33 +1,33 @@
 import asyncio
 import contextlib
 import datetime
-from typing import Dict, Any, AsyncIterator
+from typing import Any, AsyncIterator, Dict
 
 import pytest
 
-from glQiwiApi import QiwiWallet, InMemoryCacheStorage, APIResponsesCacheInvalidationStrategy
+from glQiwiApi import APIResponsesCacheInvalidationStrategy, InMemoryCacheStorage, QiwiWallet
 from glQiwiApi.core import RequestService
 from glQiwiApi.core.request_service import RequestServiceCacheDecorator
 from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.p2p.types import Bill
 from glQiwiApi.qiwi.clients.wallet.types import (
-    TransactionType,
-    Transaction,
-    Identification,
-    Card,
-    UserProfile,
-    Statistic,
     Balance,
-    Restriction,
+    Card,
     Commission,
     CrossRate,
-    WebhookInfo,
+    Identification,
+    Restriction,
     Source,
+    Statistic,
+    Transaction,
+    TransactionType,
+    UserProfile,
+    WebhookInfo,
 )
 from glQiwiApi.qiwi.clients.wallet.types.balance import AvailableBalance
 from glQiwiApi.qiwi.clients.wallet.types.nickname import NickName
-from glQiwiApi.qiwi.exceptions import ObjectNotFoundError, MobileOperatorCannotBeDeterminedError
+from glQiwiApi.qiwi.exceptions import MobileOperatorCannotBeDeterminedError, ObjectNotFoundError
 from glQiwiApi.types.amount import AmountWithCurrency, CurrencyModel
 from glQiwiApi.types.arbitrary import File
 from tests.settings import QIWI_WALLET_CREDENTIALS

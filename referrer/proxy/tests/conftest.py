@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Any
+from typing import Any, AsyncGenerator
 
 import pytest
 from asgi_lifespan import LifespanManager

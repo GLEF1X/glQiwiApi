@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, Bot
+from aiogram import Bot, Dispatcher
 from aiogram.types import Message
 
 from glQiwiApi import QiwiWallet
@@ -25,5 +25,5 @@ async def handle_message(msg: Message):
     await msg.answer(text="Hello world")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     executor.start_polling(wallet, qiwi_dp, AiogramPollingPlugin(dp))

@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, validator, BaseConfig
+from pydantic import BaseConfig, BaseModel, Field, validator
 
 from glQiwiApi.types.base import Base, HashableBase
 
