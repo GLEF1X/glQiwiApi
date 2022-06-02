@@ -1,37 +1,21 @@
-version: '3.9'
+version: "3.8"
 
 services:
-  backend:
-    container_name: refferer-gasket
-    restart: always
-    build:
-      context: .
-      dockerfile: python-deploy/Dockerfile
-    environment:
-      GUNICORN_WORKERS: 1  # you can increment it if the throughput is poor for your use case
-    expose:
-      - "5000"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-        cache-disabled: "false"
-    privileged: false
-
   nginx:
-    container_name: nginx
-    build:
-      context: nginx-delpoy
-      dockerfile: Dockerfile
-    environment:
-      DOMAIN_NAME_OR_IP: ${DOMAIN_NAME_OR_IP:-qiwi-proxy.us-east-2.elasticbeanstalk.com} # "proxy" by default if env variable is unset or empty
-      UID: 2000
-      GID: 2000
     ports:
       - "80:80"
       - "443:443"
-    restart: on-failure
-    depends_on:
-      - backend
-    stop_signal: SIGQUIT
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: .
+    container_name: nginx
+    environment:
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+      - DOMAIN_NAME=referrerproxy-env.eba-cxcmwwm7.us-east-1.elasticbeanstalk.com
+    healthcheck:
+      test: [ "CMD", "curl", "--silent", "--fail", "http://localhost" ]
+      interval: 45s
+      timeout: 5s
+      retries: 3
+

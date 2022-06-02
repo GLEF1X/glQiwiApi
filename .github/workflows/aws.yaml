@@ -45,8 +45,8 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: Proxy
-          environment_name: Proxy-env
-          version_label: "Proxy-${{ steps.format-time.outputs.replaced }}"
+          application_name: "Referrer proxy"
+          environment_name: Referrerproxy-env
+          version_label: "Referrerproxy-${{ steps.format-time.outputs.replaced }}"
           region: ${{ secrets.AWS_REGION }}
           deployment_package: ./referrer/proxy/deploy.zip
