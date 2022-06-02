@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Union
+from urllib.parse import urljoin, urlparse
 
 from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFactoryType
 from glQiwiApi.core.request_service import RequestService, RequestServiceProto
@@ -11,11 +12,37 @@ from glQiwiApi.qiwi.clients.p2p.methods.refund_bill import RefundBill
 from glQiwiApi.qiwi.clients.p2p.methods.reject_p2p_bill import RejectP2PBill
 from glQiwiApi.qiwi.clients.p2p.types import Bill, Customer, PairOfP2PKeys, RefundedBill
 from glQiwiApi.types.amount import PlainAmount
+from glQiwiApi.utils.compat import remove_suffix
+from glQiwiApi.utils.deprecated import warn_deprecated
 from glQiwiApi.utils.validators import String
 
 
 class NoShimUrlWasProvidedError(Exception):
     pass
+
+
+DEPRECATED_SHIM_URL_SUFFIXES = ("{0}", "{}")
+
+
+def _parse_shim_url(shim_url: Optional[str]) -> Optional[str]:
+    if shim_url is None:
+        return None
+
+    shim_url = urlparse(shim_url)
+
+    if any(shim_url.path.endswith(suffix) for suffix in DEPRECATED_SHIM_URL_SUFFIXES):
+        new_format_url_example = str(shim_url.geturl())
+        for suffix in DEPRECATED_SHIM_URL_SUFFIXES:
+            new_format_url_example = remove_suffix(new_format_url_example, suffix)
+
+        warn_deprecated(
+            "Old-style urls that were used like format-like strings are deprecated "
+            f"use plain path like this - {new_format_url_example} instead."
+        )
+
+        shim_url = urlparse(new_format_url_example)
+
+    return str(shim_url.geturl())
 
 
 class QiwiP2PClient(BaseAPIClient):
@@ -31,10 +58,9 @@ class QiwiP2PClient(BaseAPIClient):
         :param secret_p2p: QIWI P2P secret key received from https://p2p.qiwi.com/
         :param shim_server_url:
         """
+        super().__init__(request_service_factory)
         self._api_access_token = secret_p2p
-        self._shim_server_url = shim_server_url
-
-        BaseAPIClient.__init__(self, request_service_factory)
+        self._shim_server_url = _parse_shim_url(shim_server_url)
 
     async def _create_request_service(self) -> RequestServiceProto:
         return RequestService(
@@ -51,12 +77,11 @@ class QiwiP2PClient(BaseAPIClient):
         """
         Method for checking the status of a p2p transaction.\n
         Possible transaction types: \n
-        WAITING	Bill is waiting for pay	\n
-        PAID	Bill was paid	\n
+        WAITING	    Bill is waiting for pay	\n
+        PAID	    Bill was paid	\n
         REJECTED	Bill was rejected\n
         EXPIRED	The bill has expired. Invoice not paid\n
-        Docs:
-        https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
+        Docs: https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
 
         :param bill_id:
         :return: status of bill
@@ -71,12 +96,11 @@ class QiwiP2PClient(BaseAPIClient):
         """
         Method for checking the status of a p2p transaction.\n
         Possible transaction types: \n
-        WAITING	Bill is waiting for pay	\n
-        PAID	Bill was paid	\n
+        WAITING	    Bill is waiting for pay	\n
+        PAID	    Bill was paid	\n
         REJECTED	Bill was rejected\n
         EXPIRED	The bill has expired. Invoice not paid\n
-        Docs:
-        https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
+        Docs: https://developer.qiwi.com/ru/p2p-payments/?shell#invoice-status
 
         :param bill_id:
         :return: status of bill
@@ -175,10 +199,14 @@ class QiwiP2PClient(BaseAPIClient):
             RefundBill(bill_id=bill_id, refund_id=refund_id, json_bill_data=json_bill_data)
         )
 
-    def create_shim_url(self, invoice_uid: str) -> str:
+    def create_shim_url(self, bill_or_invoice_uid: Union[Bill, str]) -> str:
         if self._shim_server_url is None:
             raise NoShimUrlWasProvidedError(
                 "QiwiP2PClient has no shim endpoint -> can't create shim endpoint for bill"
             )
 
-        return self._shim_server_url.format(invoice_uid)
+        invoice_uid = bill_or_invoice_uid
+        if isinstance(bill_or_invoice_uid, Bill):
+            invoice_uid = bill_or_invoice_uid.invoice_uid
+
+        return urljoin(self._shim_server_url, invoice_uid)

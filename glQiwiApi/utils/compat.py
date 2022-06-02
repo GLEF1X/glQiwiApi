@@ -1,5 +1,18 @@
 import sys
-from typing import Any, AsyncContextManager
+from typing import Any, AnyStr, AsyncContextManager
+
+if sys.version_info >= (3, 9):
+
+    def remove_suffix(input_string: AnyStr, suffix: AnyStr) -> AnyStr:
+        return input_string.removesuffix(suffix)
+
+else:
+
+    def remove_suffix(input_string: AnyStr, suffix: AnyStr) -> AnyStr:
+        """Backport for python 3.9 str.removesuffix(...)"""
+        if suffix and input_string.endswith(suffix):
+            return input_string[: -len(suffix)]
+        return input_string
 
 
 class ModuleNotInstalledException(Exception):

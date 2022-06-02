@@ -4,43 +4,32 @@ import base64
 import hashlib
 import hmac
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
-from pydantic import BaseConfig, Extra, Field, HttpUrl
+from pydantic import BaseConfig, Extra, Field
 
 from glQiwiApi.types.amount import HashablePlainAmount, PlainAmount
 from glQiwiApi.types.base import HashableBase
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
-if TYPE_CHECKING:
-    from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient  # noqa
-
 
 class Customer(HashableBase):
-    """Object: Customer"""
-
     phone_number: Optional[str] = Field(None, alias="phone")
     email: Optional[str] = None
     account: Optional[str] = None
 
 
 class BillStatus(HashableBase):
-    """Object: BillStatus"""
-
     value: str
     changed_datetime: Optional[datetime] = Field(None, alias="changedDateTime")
 
 
 class CustomFields(HashableBase):
-    """Object: CustomFields"""
-
     pay_sources_filter: Optional[str] = Field(None, alias="paySourcesFilter")
     theme_code: Optional[str] = Field(None, alias="themeCode")
 
 
 class BillError(HashableBase):
-    """Object: BillError"""
-
     service_name: str = Field(..., alias="serviceName")
     error_code: str = Field(..., alias="errorCode")
     description: str
@@ -50,8 +39,6 @@ class BillError(HashableBase):
 
 
 class Bill(HashableBase):
-    """Object: Bill"""
-
     amount: HashablePlainAmount
     status: BillStatus
     site_id: str = Field(..., alias="siteId")
@@ -88,8 +75,6 @@ class BillWebhookPayload(Bill):
 
 
 class BillWebhook(HashableBase):
-    """Object: BillWebhook"""
-
     version: str = Field(..., alias="version")
     bill: BillWebhookPayload = Field(..., alias="bill")
 
