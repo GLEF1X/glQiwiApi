@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Literal, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
 from glQiwiApi.types.base import Base
-
-if TYPE_CHECKING:
-    from glQiwiApi import YooMoneyAPI  # noqa
+from glQiwiApi.utils.compat import Literal
 
 
 class JsonErr(BaseModel):
