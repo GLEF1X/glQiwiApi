@@ -77,6 +77,8 @@ def test_create_request_service() -> None:
     wallet = QiwiWallet(
         **QIWI_WALLET_CREDENTIALS, request_service_factory=create_request_service_with_cache
     )
+    wallet.create_request_service()
+
     assert wallet._request_service._cache is cache_storage
 
 
