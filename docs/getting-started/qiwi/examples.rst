@@ -144,7 +144,7 @@ Currently, It's solved by reverse proxy, that deployed directly to AWS beanstalk
     async def main():
         async with QiwiP2PClient(
                 secret_p2p="Your secret p2p api key",
-                shim_server_url="qiwi-proxy.us-east-2.elasticbeanstalk.com/proxy/p2p/{0}"
+                shim_server_url="http://referrerproxy-env.eba-cxcmwwm7.us-east-1.elasticbeanstalk.com//proxy/p2p/{0}"
             ) as client:
             bill = await client.create_p2p_bill(amount=1)
             print(bill.shim_url)  # url to proxy
