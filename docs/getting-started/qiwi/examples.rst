@@ -147,7 +147,7 @@ Currently, It's solved by reverse proxy, that deployed directly to AWS beanstalk
                 shim_server_url="http://referrerproxy-env.eba-cxcmwwm7.us-east-1.elasticbeanstalk.com/proxy/p2p/"
             ) as client:
             bill = await client.create_p2p_bill(amount=1)
-            print(bill.shim_url)  # url to proxy
+            shim_url = client.create_shim_url(bill)
 
 
     asyncio.run(main())
