@@ -21,5 +21,5 @@ async def handle_exception(err: QiwiAPIError, ctx: Context):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     executor.start_polling(wallet, qiwi_dp)

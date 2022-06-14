@@ -22,5 +22,5 @@ async def on_shutdown(ctx: Context):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     executor.start_polling(wallet, qiwi_dp, on_startup=on_startup, on_shutdown=on_shutdown)

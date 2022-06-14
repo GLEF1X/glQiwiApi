@@ -20,7 +20,7 @@ class TransferMoneyToCard(QiwiAPIMethod[PaymentInfo]):
     }
 
     private_card_id: str = Field(..., path_runtime_value=True)
-    amount: Union[int, float] = Field(..., scheme_path="sum.amount")
+    amount: float = Field(..., scheme_path="sum.amount")
     card_number: str = Field(..., scheme_path="fields.account")
     kwargs: Dict[str, Any] = {}  # parameters for cards with ID 1960, 21012
 

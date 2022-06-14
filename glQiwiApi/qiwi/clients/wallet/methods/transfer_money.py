@@ -26,6 +26,6 @@ class TransferMoney(QiwiAPIMethod[PaymentInfo]):
             return v
         return f"+{v}"
 
-    amount: int = Field(..., scheme_path="sum.amount")
+    amount: float = Field(..., scheme_path="sum.amount")
     to_wallet: str = Field(..., scheme_path="fields.account")
     comment: Optional[str] = Field(None, scheme_path="comment")
