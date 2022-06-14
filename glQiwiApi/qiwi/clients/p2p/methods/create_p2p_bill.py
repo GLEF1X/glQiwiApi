@@ -33,7 +33,7 @@ class CreateP2PBill(QiwiAPIMethod[Bill]):
     expire_at: Optional[datetime] = Field(
         scheme_path="expirationDateTime",
     )
-    amount: Union[int, float, str] = Field(..., scheme_path="amount.value")
+    amount: float = Field(..., scheme_path="amount.value")
     comment: Optional[str] = Field(None, scheme_path="comment")
     theme_code: Optional[str] = Field(None, scheme_path="customFields.themeCode")
     pay_source_filter: Optional[List[str]] = Field(
