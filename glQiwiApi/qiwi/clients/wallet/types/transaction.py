@@ -173,14 +173,14 @@ class History(Base):
             ),
         )
 
-    def sorted_by_date(self, *, from_later_to_earliest: bool = False) -> History:
+    def sorted_by_date(self, *, from_latest_to_earliest: bool = False) -> History:
         return self.copy(
             exclude={'transactions'},
             update=dict(
                 transactions=sorted(
                     self.transactions,
                     key=lambda txn: txn.date,  # type: ignore
-                    reverse=from_later_to_earliest,
+                    reverse=from_latest_to_earliest,
                 )
             ),
         )
