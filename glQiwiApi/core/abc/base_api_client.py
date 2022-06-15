@@ -10,13 +10,13 @@ from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, Type, TypeVa
 if MYPY:
     from glQiwiApi.core.request_service import RequestServiceProto  # pragma: no cover
 
-T = TypeVar("T", bound="BaseAPIClient")
+T = TypeVar('T', bound='BaseAPIClient')
 
 RequestServiceFactoryType = Callable[
-    ..., Union[Awaitable["RequestServiceProto"], "RequestServiceProto"]
+    ..., Union[Awaitable['RequestServiceProto'], 'RequestServiceProto']
 ]
 
-_C = TypeVar("_C", bound=Type["APIClientMeta"])
+_C = TypeVar('_C', bound=Type['APIClientMeta'])
 
 
 class APIClientMeta(abc.ABCMeta):
@@ -33,14 +33,14 @@ class APIClientMeta(abc.ABCMeta):
         mcs: Type[_C], name: str, bases: Tuple[Any, ...], attrs: Dict[str, Any], **kwargs: Any
     ) -> _C:
         for key, attribute in attrs.items():
-            is_name_mangled = key.startswith("__")
+            is_name_mangled = key.startswith('__')
             if is_name_mangled:
                 continue
 
             if not inspect.iscoroutinefunction(attribute):
                 continue
 
-            if key in ("close", "_create_request_service", "create_request_service"):
+            if key in ('close', '_create_request_service', 'create_request_service'):
                 continue
 
             def wrapper(m) -> Any:

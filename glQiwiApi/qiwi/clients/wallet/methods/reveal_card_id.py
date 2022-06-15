@@ -15,16 +15,16 @@ except ImportError:
 
 
 class RevealCardID(QiwiAPIMethod[str]):
-    http_method: ClassVar[str] = "POST"
-    url: ClassVar[str] = "https://qiwi.com/card/detect.action"
+    http_method: ClassVar[str] = 'POST'
+    url: ClassVar[str] = 'https://qiwi.com/card/detect.action'
 
-    card_number: str = Field(..., alias="cardNumber")
+    card_number: str = Field(..., alias='cardNumber')
 
     @classmethod
     def on_json_parse(cls, response: HTTPResponse) -> str:
-        return response.json()["message"]
+        return response.json()['message']
 
-    def build_request(self, **url_format_kw: Any) -> "Request":
+    def build_request(self, **url_format_kw: Any) -> 'Request':
         r = super().build_request(**url_format_kw)
-        r.headers["Content-Type"] = "application/x-www-form-urlencoded"
+        r.headers['Content-Type'] = 'application/x-www-form-urlencoded'
         return r

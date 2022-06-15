@@ -11,5 +11,3 @@ Custom(arbitrary) types
 
 .. automodule:: glQiwiApi.types.arbitrary.inputs
     :members:
-
-

@@ -12,9 +12,9 @@ lazy_fixture: Callable[..., Any] = pytest.lazy_fixture  # type: ignore  # noqa
 
 @pytest.fixture()
 def path_to_test_file(tmpdir_factory: pytest.TempdirFactory) -> pathlib.Path:
-    path = pathlib.Path(tmpdir_factory.mktemp("data").join("test.txt"))
-    with path.open("wb") as f:
-        f.write(b"test")
+    path = pathlib.Path(tmpdir_factory.mktemp('data').join('test.txt'))
+    with path.open('wb') as f:
+        f.write(b'test')
     return path
 
 
@@ -30,7 +30,7 @@ def pathlib_input(path_to_test_file: pathlib.Path) -> PathlibPathInput:
 
 @pytest.fixture()
 def binary_io_input(path_to_test_file: pathlib.Path) -> Generator[BinaryIOInput, None, None]:
-    opened_file = path_to_test_file.open("wb+")
+    opened_file = path_to_test_file.open('wb+')
     yield BinaryIOInput(opened_file)
     opened_file.close()
 
@@ -41,10 +41,10 @@ def file(request: SubRequest) -> File:
 
 
 @pytest.mark.parametrize(
-    "file",
+    'file',
     [
-        lazy_fixture("plain_path_input"),
-        lazy_fixture("pathlib_input"),
+        lazy_fixture('plain_path_input'),
+        lazy_fixture('pathlib_input'),
     ],
     indirect=True,
 )
@@ -53,17 +53,17 @@ def test_get_filename(file: File, path_to_test_file: pathlib.Path) -> None:
     assert filename == path_to_test_file.name
 
 
-@pytest.mark.parametrize("file", [lazy_fixture("binary_io_input")], indirect=True)
+@pytest.mark.parametrize('file', [lazy_fixture('binary_io_input')], indirect=True)
 def test_fail_to_get_filename_cause_binary_input(file: File) -> None:
     with pytest.raises(TypeError):
         file.get_filename()
 
 
 @pytest.mark.parametrize(
-    "file",
+    'file',
     [
-        lazy_fixture("plain_path_input"),
-        lazy_fixture("pathlib_input"),
+        lazy_fixture('plain_path_input'),
+        lazy_fixture('pathlib_input'),
     ],
     indirect=True,
 )
@@ -72,18 +72,18 @@ def test_get_path(file: File) -> None:
     assert isinstance(path, str) is True
 
 
-@pytest.mark.parametrize("file", [lazy_fixture("binary_io_input")], indirect=True)
+@pytest.mark.parametrize('file', [lazy_fixture('binary_io_input')], indirect=True)
 def test_fail_to_get_path_cause_input_is_binary(file: File) -> None:
     with pytest.raises(TypeError):
         file.get_path()
 
 
 @pytest.mark.parametrize(
-    "file",
+    'file',
     [
-        lazy_fixture("plain_path_input"),
-        lazy_fixture("pathlib_input"),
-        lazy_fixture("binary_io_input"),
+        lazy_fixture('plain_path_input'),
+        lazy_fixture('pathlib_input'),
+        lazy_fixture('binary_io_input'),
     ],
     indirect=True,
 )
@@ -93,11 +93,11 @@ def test_get_binary(file: File) -> None:
 
 
 @pytest.mark.parametrize(
-    "file",
+    'file',
     [
-        lazy_fixture("plain_path_input"),
-        lazy_fixture("pathlib_input"),
-        lazy_fixture("binary_io_input"),
+        lazy_fixture('plain_path_input'),
+        lazy_fixture('pathlib_input'),
+        lazy_fixture('binary_io_input'),
     ],
     indirect=True,
 )
@@ -107,11 +107,11 @@ def test_save(file: File, path_to_test_file: pathlib.Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "file",
+    'file',
     [
-        lazy_fixture("plain_path_input"),
-        lazy_fixture("pathlib_input"),
-        lazy_fixture("binary_io_input"),
+        lazy_fixture('plain_path_input'),
+        lazy_fixture('pathlib_input'),
+        lazy_fixture('binary_io_input'),
     ],
     indirect=True,
 )

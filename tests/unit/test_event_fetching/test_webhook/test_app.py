@@ -22,7 +22,7 @@ class TestAiohttpServer:
             app,
             WebhookConfig(
                 encryption=EncryptionConfig(
-                    secret_p2p_key="", base64_encryption_key=test_data.base64_key_to_compare_hash
+                    secret_p2p_key='', base64_encryption_key=test_data.base64_key_to_compare_hash
                 )
             ),
         )
@@ -35,18 +35,18 @@ class TestAiohttpServer:
         app.middlewares.append(ip_filter_middleware(ip_filter))
 
         async def handler(_: Request):
-            return web.json_response({"ok": True})
+            return web.json_response({'ok': True})
 
-        app.router.add_route("POST", "/webhook", handler)
+        app.router.add_route('POST', '/webhook', handler)
         client: TestClient = await aiohttp_client(app)
 
-        resp = await client.post("/webhook")
+        resp = await client.post('/webhook')
         assert resp.status == 401
 
-        resp = await client.post("/webhook", headers={"X-Forwarded-For": "79.142.16.2"})
+        resp = await client.post('/webhook', headers={'X-Forwarded-For': '79.142.16.2'})
         assert resp.status == 200
 
         resp = await client.post(
-            "/webhook", headers={"X-Forwarded-For": "79.142.16.2,91.213.51.238"}
+            '/webhook', headers={'X-Forwarded-For': '79.142.16.2,91.213.51.238'}
         )
         assert resp.status == 200

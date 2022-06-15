@@ -17,9 +17,9 @@ from glQiwiApi.utils.compat import json
 if MYPY:
     from glQiwiApi.types.base import HashableBase  # noqa
 
-Event = TypeVar("Event", bound="HashableBase")
+Event = TypeVar('Event', bound='HashableBase')
 
-logger = logging.getLogger("glQiwiApi.webhooks.base")
+logger = logging.getLogger('glQiwiApi.webhooks.base')
 
 
 class BaseWebhookView(web.View, Generic[Event]):
@@ -48,7 +48,7 @@ class BaseWebhookView(web.View, Generic[Event]):
         pass
 
     async def get(self) -> web.Response:
-        return web.Response(text="")
+        return web.Response(text='')
 
     async def post(self) -> web.Response:
         event = await self._parse_raw_request()
@@ -56,7 +56,7 @@ class BaseWebhookView(web.View, Generic[Event]):
         try:
             self._collision_detector.remember_processed_object(event)
         except UnexpectedCollision:
-            logger.debug("Detect collision on event %s", event)
+            logger.debug('Detect collision on event %s', event)
             return await self.ok_response()
 
         self._validate_event_signature(event)
@@ -75,8 +75,8 @@ class BaseWebhookView(web.View, Generic[Event]):
                 raise ValueError()
         except ValueError:
             raise web.HTTPBadRequest(
-                text=WebhookAPIError(status="Validation error").json(),
-                content_type="application/json",
+                text=WebhookAPIError(status='Validation error').json(),
+                content_type='application/json',
             )
 
     @abc.abstractmethod

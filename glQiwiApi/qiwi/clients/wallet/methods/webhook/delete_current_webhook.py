@@ -5,8 +5,8 @@ from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
 class DeleteWebhook(QiwiAPIMethod[Dict[Any, Any]]):
-    url: ClassVar[str] = "https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}"
-    http_method: ClassVar[str] = "DELETE"
+    url: ClassVar[str] = 'https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}'
+    http_method: ClassVar[str] = 'DELETE'
 
     hook_id: str
 

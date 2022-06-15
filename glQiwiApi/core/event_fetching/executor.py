@@ -23,18 +23,18 @@ from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT
 from glQiwiApi.qiwi.clients.wallet.types import History
 from glQiwiApi.utils.synchronous import adapter
 
-logger = logging.getLogger("glQiwiApi.executor")
+logger = logging.getLogger('glQiwiApi.executor')
 
 TIMEOUT_IF_EXCEPTION = 40
 DEFAULT_TIMEOUT = 5
-WALLET_CTX_KEY = "wallet"
+WALLET_CTX_KEY = 'wallet'
 
 
 class _NoUpdatesToExecute(Exception):
     """Internal exception to determine that history is empty"""
 
 
-_EventHandlerType = Callable[["Context"], Union[None, Awaitable[None]]]
+_EventHandlerType = Callable[['Context'], Union[None, Awaitable[None]]]
 
 
 @dataclass
@@ -61,11 +61,11 @@ class ExecutorEvent:
         self.context = context
         self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
 
-    def __iadd__(self, handler: Callable[..., Any]) -> "ExecutorEvent":
+    def __iadd__(self, handler: Callable[..., Any]) -> 'ExecutorEvent':
         self._handlers.append(_HandlerSpec(handler))
         return self
 
-    def __isub__(self, handler: Callable[..., Any]) -> "ExecutorEvent":
+    def __isub__(self, handler: Callable[..., Any]) -> 'ExecutorEvent':
         self._handlers.remove(_HandlerSpec(handler))
         return self
 
@@ -230,7 +230,7 @@ class BaseExecutor(abc.ABC):
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
         self._loop = cast(
-            asyncio.AbstractEventLoop, getattr(self, "_loop", asyncio.get_event_loop())
+            asyncio.AbstractEventLoop, getattr(self, '_loop', asyncio.get_event_loop())
         )
         # There is a issue, connected with aiohttp.web application, because glQiwiApi wants to have the same interface
         # for polling and webhooks on_startup & on_shutdown callbacks,
@@ -247,11 +247,11 @@ class BaseExecutor(abc.ABC):
             asyncio.set_event_loop(self._loop)
 
     async def welcome(self) -> None:
-        logger.info("Executor has started work!")
+        logger.info('Executor has started work!')
         await self._on_startup.fire()
 
     async def goodbye(self) -> None:
-        logger.info("Goodbye!")
+        logger.info('Goodbye!')
         await self._on_shutdown.fire()
 
     async def _install_plugins(self, ctx: Optional[Dict[Any, Any]] = None) -> None:
@@ -269,7 +269,7 @@ class BaseExecutor(abc.ABC):
         await asyncio.shield(asyncio.gather(*callbacks))
 
     async def _shutdown_plugins(self) -> None:
-        logger.debug("Shutting down plugins")
+        logger.debug('Shutting down plugins')
         shutdown_tasks = [asyncio.create_task(plugin.shutdown()) for plugin in self._plugins]
         await asyncio.gather(*shutdown_tasks)
 
@@ -326,7 +326,7 @@ class PollingExecutor(BaseExecutor):
                     self._set_timeout(default_timeout)
                 except Exception as ex:
                     self._set_timeout(TIMEOUT_IF_EXCEPTION)
-                    logger.error("Handle !r. Sleeping %s seconds", ex, self._timeout)
+                    logger.error('Handle !r. Sleeping %s seconds', ex, self._timeout)
                 await asyncio.sleep(self._timeout)
         finally:
             await asyncio.shield(asyncio.gather(self.goodbye(), self._wallet.close()))
@@ -339,7 +339,7 @@ class PollingExecutor(BaseExecutor):
         if self.offset is None:
             first_update = history[0]
             self.offset = first_update.id - 1
-        logger.debug("Current transaction offset is %d", self.offset)
+        logger.debug('Current transaction offset is %d', self.offset)
         await self.process_updates(history)
 
     async def _fetch_history(self) -> History:
@@ -357,7 +357,7 @@ class PollingExecutor(BaseExecutor):
             ).sorted_by_date()
 
         if len(history) == MAX_HISTORY_LIMIT:
-            logger.debug("History is out of max history transaction limit")
+            logger.debug('History is out of max history transaction limit')
             first_txn_by_date = history[-1]
             self.get_updates_from = first_txn_by_date.date
 
@@ -459,8 +459,8 @@ class WebhookExecutor(BaseExecutor):
 
         if config.encryption.secret_p2p_key is None:
             raise RuntimeError(
-                "Secret p2p token is empty, cannot setup webhook without it. "
-                "Please, provide token to work with webhooks."
+                'Secret p2p token is empty, cannot setup webhook without it. '
+                'Please, provide token to work with webhooks.'
             )
 
         await self._set_base64_encryption_key_for_config(config)
@@ -471,9 +471,9 @@ class WebhookExecutor(BaseExecutor):
             if config.hook_registration.host_or_ip_address is None:
                 raise RuntimeError(
                     "You didn't transmit neither base64 "
-                    "encryption key to WebhookConfig nor host or ip address to bind new webhook."
-                    "To fix it, pass on WebhookConfig.hook_registration.host_or_ip_address or "
-                    "WebhookConfig.encryption.base64_encryption_key to executor.start_webhook(...)"
+                    'encryption key to WebhookConfig nor host or ip address to bind new webhook.'
+                    'To fix it, pass on WebhookConfig.hook_registration.host_or_ip_address or '
+                    'WebhookConfig.encryption.base64_encryption_key to executor.start_webhook(...)'
                 )
             _, base64_encryption_key = await self._wallet.bind_webhook(
                 url=WebhookURL.create(
@@ -493,4 +493,4 @@ def _parse_timeout(timeout: Union[float, int]) -> float:  # pragma: no cover
     elif isinstance(timeout, int):
         return float(timeout)
     else:
-        raise TypeError(f"Timeout must be float or int. You have passed on {type(timeout)}")
+        raise TypeError(f'Timeout must be float or int. You have passed on {type(timeout)}')

@@ -13,7 +13,7 @@ class CurrencyModel(HashableBase):
     rounding: Union[int, float]
     symbol: str
     symbol_native: str
-    iso_format: Optional[str] = Field(..., alias="isoformat")
+    iso_format: Optional[str] = Field(..., alias='isoformat')
 
     def __str__(self) -> str:
         return self.code
@@ -27,7 +27,7 @@ class AmountWithCurrency(Base):
     amount: float
     currency: Union[CurrencyModel, str]  # string if currency util couldn't parse it
 
-    @validator("currency", pre=True)
+    @validator('currency', pre=True)
     def humanize_pay_currency(cls, v):  # type: ignore
         from glQiwiApi.utils.currency_util import Currency
 

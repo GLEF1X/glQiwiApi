@@ -24,17 +24,17 @@ except ImportError:  # pragma: no cover
 
 def get_or_generate_self_signed_certificate(
     hostname: str,  # your host machine ip address
-    cert_path: Union[str, pathlib.Path] = "cert.pem",
-    pkey_path: Union[str, pathlib.Path] = "pkey.pem",
+    cert_path: Union[str, pathlib.Path] = 'cert.pem',
+    pkey_path: Union[str, pathlib.Path] = 'pkey.pem',
     ip_addresses: Optional[Iterable[Any]] = None,
-    rsa_private_key: Optional["RSAPrivateKeyWithSerialization"] = None,
+    rsa_private_key: Optional['RSAPrivateKeyWithSerialization'] = None,
     public_exponent: int = 65537,
     key_size: int = 2048,
     backend: Optional[Any] = None,
     serial_number: int = 1000,
     expire_days: int = 3650,
-    *name_attributes: "x509.NameAttribute",
-) -> "SSLCertificate":
+    *name_attributes: 'x509.NameAttribute',
+) -> 'SSLCertificate':
     """
     Generates self signed certificate for a hostname, and optional IP addresses.
 
@@ -48,7 +48,7 @@ def get_or_generate_self_signed_certificate(
         from cryptography.x509.oid import NameOID
     except ImportError:  # pragma: no cover
         raise ImportError(  # pragma: no cover
-            "You need to install cryptography package for generating self-signed cert"
+            'You need to install cryptography package for generating self-signed cert'
         )
 
     if pathlib.Path(cert_path).is_file() and pathlib.Path(pkey_path).is_file():
@@ -104,7 +104,7 @@ def get_or_generate_self_signed_certificate(
         encryption_algorithm=serialization.NoEncryption(),
     )
 
-    with open(cert_path, "wb+") as f1, open(pkey_path, "wb") as f2:
+    with open(cert_path, 'wb+') as f1, open(pkey_path, 'wb') as f2:
         f1.write(cert_pem)
         f2.write(key_pem)
     return SSLCertificate(_cert_path=cert_path, _pkey_path=pkey_path)
@@ -120,6 +120,6 @@ class SSLCertificate:
         context.load_cert_chain(self._cert_path, self._pkey_path)
         return context
 
-    def as_input_file(self) -> "InputFile":
-        with open(self._cert_path, "rb") as file:
+    def as_input_file(self) -> 'InputFile':
+        with open(self._cert_path, 'rb') as file:
             return InputFile(BytesIO(file.read()))

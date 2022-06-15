@@ -5,32 +5,32 @@ import datetime
 
 import glQiwiApi
 
-project = "glQiwiApi"
-author = "GLEF1X"
-copyright = f"{datetime.date.today().year}, {author}"
+project = 'glQiwiApi'
+author = 'GLEF1X'
+copyright = f'{datetime.date.today().year}, {author}'
 release = glQiwiApi.__version__
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+templates_path = ['_templates']
 
-html_theme = "furo"
-html_logo = "_static/logo.png"
-html_static_path = ["_static"]
+html_theme = 'furo'
+html_logo = '_static/logo.png'
+html_static_path = ['_static']
 todo_include_todos = True
 
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autodoc.typehints",
-    "sphinx.ext.doctest",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.viewcode",
-    "sphinxemoji.sphinxemoji",
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc.typehints',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    'sphinxemoji.sphinxemoji',
 ]
 
 htmlhelp_basename = project
 html_theme_options = {}
 html_css_files = [
-    "stylesheets/extra.css",
+    'stylesheets/extra.css',
 ]
 
 rst_prolog = f"""
@@ -39,29 +39,29 @@ rst_prolog = f"""
 """
 
 language = None
-locale_dirs = ["locales"]
+locale_dirs = ['locales']
 
 exclude_patterns = []
-source_suffix = ".rst"
-master_doc = "index"
+source_suffix = '.rst'
+master_doc = 'index'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
 
 latex_documents = [
-    (master_doc, f"{project}.tex", f"{project} Documentation", author, "manual"),
+    (master_doc, f'{project}.tex', f'{project} Documentation', author, 'manual'),
 ]
 
-man_pages = [(master_doc, project, f"{project} Documentation", [author], 1)]
+man_pages = [(master_doc, project, f'{project} Documentation', [author], 1)]
 
 texinfo_documents = [
     (
         master_doc,
         project,
-        f"{project} Documentation",
+        f'{project} Documentation',
         author,
         project,
-        "Modern and fully asynchronous framework for Telegram Bot API",
-        "Miscellaneous",
+        'Modern and fully asynchronous framework for Telegram Bot API',
+        'Miscellaneous',
     ),
 ]

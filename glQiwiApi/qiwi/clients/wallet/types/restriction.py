@@ -4,8 +4,8 @@ from glQiwiApi.types.base import HashableBase
 
 
 class Restriction(HashableBase):
-    code: str = Field(..., alias="restrictionCode")
-    description: str = Field(..., alias="restrictionDescription")
+    code: str = Field(..., alias='restrictionCode')
+    description: str = Field(..., alias='restrictionDescription')
 
 
-__all__ = ("Restriction",)
+__all__ = ('Restriction',)

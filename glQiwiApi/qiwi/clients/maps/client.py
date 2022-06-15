@@ -27,8 +27,8 @@ class QiwiMaps(BaseAPIClient):
         return RequestService(
             session_holder=AiohttpSessionHolder(
                 headers={
-                    "Content-type": "application/json",
-                    "Accept": "application/json",
+                    'Content-type': 'application/json',
+                    'Accept': 'application/json',
                 }
             )
         )

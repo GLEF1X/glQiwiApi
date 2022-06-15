@@ -30,16 +30,16 @@ def configure_app(
     """
 
     generic_dependencies: t.Dict[str, t.Any] = {
-        "dispatcher": dispatcher,
-        "collision_detector": HashBasedCollisionDetector(),
+        'dispatcher': dispatcher,
+        'collision_detector': HashBasedCollisionDetector(),
     }
 
     app.router.add_view(
         handler=inject_dependencies(
             QiwiBillWebhookView,
             {
-                "event_cls": BillWebhook,
-                "encryption_key": webhook_config.encryption.secret_p2p_key,
+                'event_cls': BillWebhook,
+                'encryption_key': webhook_config.encryption.secret_p2p_key,
                 **generic_dependencies,
             },
         ),
@@ -51,8 +51,8 @@ def configure_app(
         handler=inject_dependencies(
             QiwiTransactionWebhookView,
             {
-                "event_cls": TransactionWebhook,
-                "encryption_key": webhook_config.encryption.base64_encryption_key,
+                'event_cls': TransactionWebhook,
+                'encryption_key': webhook_config.encryption.base64_encryption_key,
                 **generic_dependencies,
             },
         ),

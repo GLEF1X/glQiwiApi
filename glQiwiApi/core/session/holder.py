@@ -10,8 +10,8 @@ from aiohttp import ClientResponse
 
 from glQiwiApi.utils.compat import json
 
-_SessionType = TypeVar("_SessionType", bound=Any)
-_SessionHolderType = TypeVar("_SessionHolderType", bound="AbstractSessionHolder[Any]")
+_SessionType = TypeVar('_SessionType', bound=Any)
+_SessionHolderType = TypeVar('_SessionHolderType', bound='AbstractSessionHolder[Any]')
 
 
 @dataclass

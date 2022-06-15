@@ -9,15 +9,15 @@ from glQiwiApi.types.amount import PlainAmount
 
 
 class RefundBill(QiwiAPIMethod[RefundedBill]):
-    http_method: ClassVar[str] = "POST"
-    url: ClassVar[str] = "https://api.qiwi.com/partner/bill/v1/bills/{bill_id}/refunds/{refund_id}"
+    http_method: ClassVar[str] = 'POST'
+    url: ClassVar[str] = 'https://api.qiwi.com/partner/bill/v1/bills/{bill_id}/refunds/{refund_id}'
 
     bill_id: str = Field(..., path_runtime_value=True)
     refund_id: str = Field(..., path_runtime_value=True)
 
     json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]]
 
-    def build_request(self, **url_format_kw: Any) -> "Request":
+    def build_request(self, **url_format_kw: Any) -> 'Request':
         json_payload = self.json_bill_data
         if isinstance(self.json_bill_data, PlainAmount):
             json_payload = self.json_bill_data.json(encoder=self.Config.json_dumps)  # type: ignore

@@ -10,7 +10,7 @@
 <img src="https://github.com/GLEF1X/glQiwiApi/blob/dev-2.x/demo.gif"/>
 </h2>
 
-**glQiwiApi 2.x has breaking changes** 
+**glQiwiApi 2.x has breaking changes**
 
 ## 🌎Official api resources:
 
@@ -22,7 +22,7 @@
 ```bash
 hint: smaller is better
 glQiwiApi      90.9925 (1.0)      103.3993 (1.0)       95.4082 (1.0)      5.3941 (1.0)       92.4023 (1.0)       8.2798 (1.0)
-pyQiwiP2P     112.2819 (1.23)     135.0227 (1.31)     123.7498 (1.30)     9.9919 (1.85)     127.5926 (1.38)     17.2723 (2.09) 
+pyQiwiP2P     112.2819 (1.23)     135.0227 (1.31)     123.7498 (1.30)     9.9919 (1.85)     127.5926 (1.38)     17.2723 (2.09)
 ```
 
 ## 🐦Dependencies

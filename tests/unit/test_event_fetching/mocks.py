@@ -1,6 +1,6 @@
 import dataclasses
 
-TEST_BASE64_WEBHOOK_KEY = "JcyVhjHCvHQwufz+IHXolyqHgEc5MoayBfParl6Guoc="
+TEST_BASE64_WEBHOOK_KEY = 'JcyVhjHCvHQwufz+IHXolyqHgEc5MoayBfParl6Guoc='
 
 
 @dataclasses.dataclass()

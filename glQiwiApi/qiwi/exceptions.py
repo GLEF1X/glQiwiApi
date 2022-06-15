@@ -10,23 +10,23 @@ from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.utils.compat import json
 
 HTTP_STATUS_MATCH_TO_ERROR = {
-    400: "Query syntax error (invalid data format). Can be related to wrong arguments,"
-    " that you have passed to method",
-    401: "Wrong API token or token expired",
-    403: "No permission for this request(API token has insufficient permissions)",
-    404: "Object was not found or there are no objects with the specified characteristics",
-    423: "Too many requests, the service is temporarily unavailable",
-    422: "The domain / subnet / host is incorrectly specified"
-    "webhook (in the new_url parameter for the webhook URL),"
-    "the hook type or transaction type is incorrectly specified,"
-    "an attempt to create a hook if there is one already created",
-    405: "Error related to the type of API request, contact the developer or open an issue",
-    500: "Internal service error",
+    400: 'Query syntax error (invalid data format). Can be related to wrong arguments,'
+    ' that you have passed to method',
+    401: 'Wrong API token or token expired',
+    403: 'No permission for this request(API token has insufficient permissions)',
+    404: 'Object was not found or there are no objects with the specified characteristics',
+    423: 'Too many requests, the service is temporarily unavailable',
+    422: 'The domain / subnet / host is incorrectly specified'
+    'webhook (in the new_url parameter for the webhook URL),'
+    'the hook type or transaction type is incorrectly specified,'
+    'an attempt to create a hook if there is one already created',
+    405: 'Error related to the type of API request, contact the developer or open an issue',
+    500: 'Internal service error',
 }
 
 
 class QiwiAPIError(Exception):
-    __slots__ = "http_response", "_custom_message", "_deserialize_cache", "error_code", "message"
+    __slots__ = 'http_response', '_custom_message', '_deserialize_cache', 'error_code', 'message'
 
     description_en: ClassVar[Optional[str]] = None
     description_ru: ClassVar[Optional[str]] = None
@@ -69,23 +69,23 @@ class QiwiAPIError(Exception):
 
     def __str__(self) -> str:
         representation = (
-            "{message}\n"
-            "    * {status_code} HTTP status code\n"
-            "    * raw response {raw_response}"
+            '{message}\n'
+            '    * {status_code} HTTP status code\n'
+            '    * raw response {raw_response}'
         )
         deserialized_response = self._deserialize_response()
 
         try:
             raw_response: str = json.dumps(deserialized_response, indent=4, ensure_ascii=False)  # type: ignore
         except Exception:
-            raw_response = self.http_response.body.decode("utf-8")
+            raw_response = self.http_response.body.decode('utf-8')
 
         formatted_representation = representation.format(
             status_code=self.http_response.status_code,
             message=self._compose_error_message(),
             raw_response=raw_response,
         )
-        if deserialized_response.get("errorCode") is not None:
+        if deserialized_response.get('errorCode') is not None:
             formatted_representation += (
                 f"\n    * error code = {deserialized_response['errorCode']}"
             )
@@ -104,27 +104,27 @@ class QiwiAPIError(Exception):
         """
         if self._custom_message or self.description_ru or self.description_en:
             return self._custom_message or self.description_ru or self.description_en  # type: ignore
-        return HTTP_STATUS_MATCH_TO_ERROR.get(self.http_response.status_code, "")
+        return HTTP_STATUS_MATCH_TO_ERROR.get(self.http_response.status_code, '')
 
     def _scaffold_error_code(self) -> Optional[str]:
         r = self._deserialize_response()
-        err_code = r.get("errorCode")
+        err_code = r.get('errorCode')
         if isinstance(err_code, str):
             return err_code
 
-        err_code = r.get("code")
+        err_code = r.get('code')
         if isinstance(err_code, str):
-            return err_code.replace("QWPRC-", "")  # type: ignore
+            return err_code.replace('QWPRC-', '')  # type: ignore
 
         return None
 
     def _scaffold_error_message(self) -> Optional[str]:
         r = self._deserialize_response()
-        return r.get("message") or r.get("description")
+        return r.get('message') or r.get('description')
 
     def _scaffold_service_name(self) -> Optional[str]:
         r = self._deserialize_response()
-        return r.get("serviceName")
+        return r.get('serviceName')
 
     def _deserialize_response(self) -> Dict[str, Any]:
         """
@@ -145,60 +145,60 @@ class QiwiAPIError(Exception):
 
 class InternalQIWIError(QiwiAPIError):
     _error_code_match = [3, 749, 750]
-    description_en = "Technical error. Repeat the request later"
-    description_ru = "Техническая ошибка. Повторите платеж позже."
+    description_en = 'Technical error. Repeat the request later'
+    description_ru = 'Техническая ошибка. Повторите платеж позже.'
 
 
 class IncorrectDataFormat(QiwiAPIError):
     _error_code_match = 4
-    description_en = "Incorrect format of phone or account number. Check the data"
-    description_ru = "Некорректный формат телефона или счета. Проверьте данные."
+    description_en = 'Incorrect format of phone or account number. Check the data'
+    description_ru = 'Некорректный формат телефона или счета. Проверьте данные.'
 
 
 class NoSuchNumber(QiwiAPIError):
     _error_code_match = 5
-    description_en = "No such number. Check the data and try again"
-    description_ru = "Данного номера не существует. Проверьте данные и попробуйте еще раз."
+    description_en = 'No such number. Check the data and try again'
+    description_ru = 'Данного номера не существует. Проверьте данные и попробуйте еще раз.'
 
 
 class BankSideReceiptError(QiwiAPIError):
     _error_code_match = 8
     description_en = "Technical problem on the recipient's bank side. Try again later"
-    description_ru = "Техническая проблема на стороне банка-получателя. Попробуйте позже."
+    description_ru = 'Техническая проблема на стороне банка-получателя. Попробуйте позже.'
 
 
 class PaymentUnavailableInYourCountry(QiwiAPIError):
     _error_code_match = 131
-    description_en = "Payment type unavailable for your country"
-    description_ru = "Платеж недоступен для вашей страны"
+    description_en = 'Payment type unavailable for your country'
+    description_ru = 'Платеж недоступен для вашей страны'
 
 
 class NotEnoughFundsError(QiwiAPIError):
     _error_code_match = [220, 407]
-    description_en = "Not enough funds. Replenish your wallet"
-    description_ru = "Недостаточно средств. Пополните кошелек"
+    description_en = 'Not enough funds. Replenish your wallet'
+    description_ru = 'Недостаточно средств. Пополните кошелек'
 
 
 class PaymentRejected(QiwiAPIError):
     _error_code_match = [7000, 7600]
     description_en = "Payment rejected. Check card's details and repeat the payment or try to contact the bank that issued the card"
-    description_ru = "Платеж отклонен. Проверьте реквизиты карты и повторите платеж или обратитесь в банк, выпустивший карту"
+    description_ru = 'Платеж отклонен. Проверьте реквизиты карты и повторите платеж или обратитесь в банк, выпустивший карту'
 
 
 class ValidationError(QiwiAPIError):
-    _error_code_match = [303, 254, 241, "validation.error", 558, "internal.invoicing.error"]
+    _error_code_match = [303, 254, 241, 'validation.error', 558, 'internal.invoicing.error']
 
 
 class ObjectNotFoundError(QiwiAPIError):
-    _error_code_contains = "not.found"
+    _error_code_contains = 'not.found'
 
 
 class ReceiptNotAvailable(QiwiAPIError):
-    _error_code_contains = "cheque.not.available"
+    _error_code_contains = 'cheque.not.available'
     description_en = (
-        "It is impossible to receive a check due to the fact that "
-        "the transaction for this ID has not been completed,"
-        "that is, an error occurred during the transaction"
+        'It is impossible to receive a check due to the fact that '
+        'the transaction for this ID has not been completed,'
+        'that is, an error occurred during the transaction'
     )
 
 
@@ -207,9 +207,9 @@ class OperationLimitExceededError(QiwiAPIError):
 
 
 class ObjectAlreadyExistsError(QiwiAPIError):
-    _error_code_contains = ["already.exists"]
-    description_ru = "Объект, который вы хотите создать уже был создан ранее"
-    description_en = "Object that you want to create was have already been created earlier"
+    _error_code_contains = ['already.exists']
+    description_ru = 'Объект, который вы хотите создать уже был создан ранее'
+    description_en = 'Object that you want to create was have already been created earlier'
 
 
 class MobileOperatorCannotBeDeterminedError(QiwiAPIError):
@@ -218,5 +218,5 @@ class MobileOperatorCannotBeDeterminedError(QiwiAPIError):
 
 class InsufficientTokenRightsError(QiwiAPIError):
     _error_code_match = [309]
-    description_ru = "Недостаточно прав для выполнения данного действия. Чтобы решить эту проблему вам нужно перевыпустить токен с достаточными правами для выполнения нужного вам API метода на сайте QIWI."
-    description_en = "There are insufficient rights to execute this API method. In order to solve this problem you should regenerate API token with sufficient rights."
+    description_ru = 'Недостаточно прав для выполнения данного действия. Чтобы решить эту проблему вам нужно перевыпустить токен с достаточными правами для выполнения нужного вам API метода на сайте QIWI.'
+    description_en = 'There are insufficient rights to execute this API method. In order to solve this problem you should regenerate API token with sufficient rights.'

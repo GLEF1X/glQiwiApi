@@ -13,22 +13,22 @@ from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
 
 def check_ip(ip_filter: IPFilter, request: web.Request) -> Tuple[str, bool]:
     # Try to resolve client IP over reverse proxy
-    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    forwarded_for = request.headers.get('X-Forwarded-For', '')
     if forwarded_for:
-        forwarded_for, *_ = forwarded_for.split(",", maxsplit=1)
+        forwarded_for, *_ = forwarded_for.split(',', maxsplit=1)
         return forwarded_for, forwarded_for in ip_filter
 
-    peer_name = cast(Transport, request.transport).get_extra_info("peername")
+    peer_name = cast(Transport, request.transport).get_extra_info('peername')
     # When reverse proxy is not configured IP address can be resolved from incoming connection
     if peer_name:
         host, _ = peer_name
         return host, host in ip_filter
 
     # Potentially impossible case
-    return "", False  # pragma: no cover
+    return '', False  # pragma: no cover
 
 
-View = TypeVar("View", bound=Type[AbstractView])
+View = TypeVar('View', bound=Type[AbstractView])
 
 
 def inject_dependencies(view: View, dependencies: Mapping[str, Any]) -> View:
@@ -46,7 +46,7 @@ def inject_dependencies(view: View, dependencies: Mapping[str, Any]) -> View:
 @no_type_check
 def partial_class(name, cls, *args, **kwds):
     new_cls = type(
-        name, (cls,), {"__init__": functools.partialmethod(cls.__init__, *args, **kwds)}
+        name, (cls,), {'__init__': functools.partialmethod(cls.__init__, *args, **kwds)}
     )
 
     # The following is copied nearly ad verbatim from `namedtuple's` source.
@@ -57,7 +57,7 @@ def partial_class(name, cls, *args, **kwds):
     # defined for arguments greater than 0 (IronPython).
     """
     try:
-        new_cls.__module__ = sys._getframe(1).f_globals.get("__name__", "__main__")  # noqa
+        new_cls.__module__ = sys._getframe(1).f_globals.get('__name__', '__main__')  # noqa
     except (AttributeError, ValueError):  # pragma: no cover
         pass
 

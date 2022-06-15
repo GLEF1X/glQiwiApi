@@ -11,7 +11,7 @@ from glQiwiApi.core.cache.exceptions import CacheExpiredError, CacheValidationEr
 if TYPE_CHECKING:
     from glQiwiApi.core.cache.storage import CacheStorage
 
-INFINITE = float("inf")
+INFINITE = float('inf')
 
 
 class CacheInvalidationStrategy(abc.ABC):
@@ -70,11 +70,11 @@ class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
 
 
 class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
-    _validation_criteria = ("params", "json", "data", "headers")
+    _validation_criteria = ('params', 'json', 'data', 'headers')
 
     def __init__(self, cache_time_in_seconds: Union[float, int] = INFINITE):
         super().__init__(cache_time_in_seconds)
-        self._uncached = ("https://api.qiwi.com/partner/bill", "/sinap/api/v2/terms/")
+        self._uncached = ('https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/')
 
     @property
     def is_cache_disabled(self) -> bool:
@@ -94,14 +94,14 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
             if not isinstance(value, CachedAPIRequest):
                 continue
             if (
-                value.method == "GET"
+                value.method == 'GET'
                 and value.payload.headers == item.headers  # noqa: W503
                 and value.payload.params == item.params  # noqa: W503
             ):
                 return True
             else:
-                if value.method == "GET":
+                if value.method == 'GET':
                     return False
-                keys = (k for k in self._validation_criteria if k != "headers")
+                keys = (k for k in self._validation_criteria if k != 'headers')
                 return any(getattr(item, key) == getattr(value.payload, key) for key in keys)
         return False

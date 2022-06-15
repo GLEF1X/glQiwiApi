@@ -11,34 +11,34 @@ from tests.settings import QIWI_P2P_CREDENTIALS
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(name="api")
+@pytest.fixture(name='api')
 async def api_fixture() -> AsyncIterator[QiwiP2PClient]:
     async with QiwiP2PClient(**QIWI_P2P_CREDENTIALS) as p2p:
         yield p2p
 
 
 @pytest.mark.parametrize(
-    "payload",
+    'payload',
     [
-        {"amount": 1},
-        {"amount": 1, "comment": "test_comment"},
+        {'amount': 1},
+        {'amount': 1, 'comment': 'test_comment'},
         {
-            "amount": 1,
-            "comment": "test_comment",
-            "expire_at": datetime.datetime.now() + datetime.timedelta(hours=5),
+            'amount': 1,
+            'comment': 'test_comment',
+            'expire_at': datetime.datetime.now() + datetime.timedelta(hours=5),
         },
         {
-            "amount": 1,
-            "comment": "test_comment",
-            "expire_at": datetime.datetime.now() + datetime.timedelta(hours=5),
-            "bill_id": str(uuid.uuid4()),
+            'amount': 1,
+            'comment': 'test_comment',
+            'expire_at': datetime.datetime.now() + datetime.timedelta(hours=5),
+            'bill_id': str(uuid.uuid4()),
         },
     ],
 )
 async def test_create_p2p_bill(api: QiwiP2PClient, payload: Dict[str, Any]) -> None:
     result = await api.create_p2p_bill(**payload)
     assert isinstance(result, Bill)
-    assert payload["amount"] == result.amount.value
+    assert payload['amount'] == result.amount.value
 
 
 async def test_check_p2p_bill_status(api: QiwiP2PClient) -> None:
@@ -69,7 +69,7 @@ async def test_reject_p2p_bill(api: QiwiP2PClient) -> None:
 async def test_reject_bill_alias(api: QiwiP2PClient) -> None:
     b = await api.create_p2p_bill(amount=1)
     rejected_bill = await api.reject_bill(b)
-    assert rejected_bill.status.value == "REJECTED"
+    assert rejected_bill.status.value == 'REJECTED'
 
 
 async def test_check_bill_status_alias(api: QiwiP2PClient) -> None:

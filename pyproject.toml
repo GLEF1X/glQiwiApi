@@ -83,7 +83,7 @@ pytest-benchmark = { version = "^3.4.1", extras = ["histogram"] }
 # development
 black = { version = "^22.1.0", python = ">=3.6" }
 isort = "^5.8.0"
-mypy = "^0.960"
+mypy = "^0.961"
 flake8 = "^4.0.1"
 async-timeout = "^4.0.2"
 
@@ -118,6 +118,7 @@ docs = [
 [tool.black]
 line-length = 99
 target-version = ['py37', 'py38', 'py39']
+skip-string-normalization = true
 exclude = '''
 (
     \.eggs

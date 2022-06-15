@@ -23,10 +23,10 @@ class ValidationError(Exception):
 
 
 PHONE_NUMBER_PATTERN: Pattern[str] = re.compile(
-    r"^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$"
+    r'^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$'
 )
 
-_FieldType = TypeVar("_FieldType", bound=Any)
+_FieldType = TypeVar('_FieldType', bound=Any)
 
 
 class Field(ABC, Generic[_FieldType]):
@@ -34,7 +34,7 @@ class Field(ABC, Generic[_FieldType]):
         self._validators = validators
 
     def __set_name__(self, owner: Type[Any], name: str) -> None:
-        self.private_name = "_" + name
+        self.private_name = '_' + name
 
     def __get__(self, obj: Any, objtype: Optional[Type[Any]] = None) -> _FieldType:
         return cast(_FieldType, getattr(obj, self.private_name))
@@ -82,13 +82,13 @@ class StringValidator(AbstractValidator):
 
     def _validate(self, value: Any) -> None:
         if not isinstance(value, str):
-            raise ValidationError(f"Expected {value!r} to be an str")
+            raise ValidationError(f'Expected {value!r} to be an str')
         if self.minsize is not None and len(value) < self.minsize:
-            raise ValidationError(f"Expected {value!r} to be no smaller than {self.minsize!r}")
+            raise ValidationError(f'Expected {value!r} to be no smaller than {self.minsize!r}')
         if self.maxsize is not None and len(value) > self.maxsize:
-            raise ValidationError(f"Expected {value!r} to be no bigger than {self.maxsize!r}")
+            raise ValidationError(f'Expected {value!r} to be no bigger than {self.maxsize!r}')
         if self.predicate is not None and not self.predicate(value):
-            raise ValidationError(f"Expected {self.predicate} to be true for {value!r}")
+            raise ValidationError(f'Expected {self.predicate} to be true for {value!r}')
 
 
 class PhoneNumberValidator(StringValidator):
@@ -97,17 +97,17 @@ class PhoneNumberValidator(StringValidator):
         phone_number_match: Optional[Match[Any]] = re.fullmatch(PHONE_NUMBER_PATTERN, value)
         if not phone_number_match:
             raise ValidationError(
-                "Failed to verify parameter `phone_number` by regex. "
-                "Please, enter the correct phone number."
+                'Failed to verify parameter `phone_number` by regex. '
+                'Please, enter the correct phone number.'
             )
-        if not value.startswith("+"):  # type: ignore
-            raise ValidationError(f"Expected {value!r} starts with + sign")
+        if not value.startswith('+'):  # type: ignore
+            raise ValidationError(f'Expected {value!r} starts with + sign')
 
 
 class IntegerValidator(AbstractValidator):
     def _validate(self, value: _FieldType) -> None:
         if not isinstance(value, int):
-            raise ValidationError(f"Expected {value!r} to be an integer")
+            raise ValidationError(f'Expected {value!r} to be an integer')
 
 
 @overload

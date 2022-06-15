@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class AbstractBillHandler(Handler[Bill], abc.ABC):
     @property
     def wallet(self) -> QiwiP2PClient:
-        return cast(QiwiP2PClient, self.context["wallet"])
+        return cast(QiwiP2PClient, self.context['wallet'])
 
     @property
     def bill_id(self) -> str:

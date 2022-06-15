@@ -10,9 +10,9 @@ from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionH
 from glQiwiApi.utils.compat import Protocol
 from glQiwiApi.utils.payload import make_payload
 
-logger = logging.getLogger("glQiwiApi.RequestService")
+logger = logging.getLogger('glQiwiApi.RequestService')
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 
 class RequestServiceProto(Protocol):
@@ -84,7 +84,7 @@ class RequestService:
         params: Optional[Any] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        prepared_payload = make_payload(**locals(), exclude=("kwargs",))
+        prepared_payload = make_payload(**locals(), exclude=('kwargs',))
         response = await self.send_request(**prepared_payload)
         return response.json()
 
@@ -176,7 +176,7 @@ class RequestServiceCacheDecorator(RequestServiceProto):
     async def _cache_response(self, response: Any, method: str, **kwargs: Any) -> None:
         await self._cache.update(
             **{
-                kwargs["endpoint"]: CachedAPIRequest(
+                kwargs['endpoint']: CachedAPIRequest(
                     payload=Payload(**kwargs), response=response, method=method
                 )
             }

@@ -9,8 +9,8 @@ from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
 class BlockQiwiMasterCard(QiwiAPIMethod[Dict[str, Any]]):
-    url: ClassVar[str] = "/cards/v2/persons/{phone_number}/cards/{card_id}/block"
-    http_method: ClassVar[str] = "GET"
+    url: ClassVar[str] = '/cards/v2/persons/{phone_number}/cards/{card_id}/block'
+    http_method: ClassVar[str] = 'GET'
 
     arbitrary_allowed_response_status_codes: ClassVar[Sequence[int]] = (http.HTTPStatus.ACCEPTED,)
 

@@ -65,16 +65,16 @@ class YooMoneyAPI(BaseAPIClient):
         return RequestService(
             session_holder=AiohttpSessionHolder(
                 headers={
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Authorization": f"Bearer {self._api_access_token}",
-                    "Host": "yoomoney.ru",
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': f'Bearer {self._api_access_token}',
+                    'Host': 'yoomoney.ru',
                 }
             )
         )
 
     @classmethod
     async def build_url_for_auth(
-        cls, scopes: List[str], client_id: str, redirect_uri: str = "https://example.com"
+        cls, scopes: List[str], client_id: str, redirect_uri: str = 'https://example.com'
     ) -> str:
         """
         Method to get the link for further authorization and obtaining a token
@@ -109,7 +109,7 @@ class YooMoneyAPI(BaseAPIClient):
         cls,
         code: str,
         client_id: str,
-        redirect_uri: str = "https://example.com",
+        redirect_uri: str = 'https://example.com',
         client_secret: Optional[str] = None,
     ) -> str:
         """
@@ -198,24 +198,24 @@ class YooMoneyAPI(BaseAPIClient):
         """
         payload = make_payload(
             **{
-                "receiver": receiver,
-                "quickpay-form": quick_pay_form,
-                "targets": targets,
-                "paymentType": payment_type,
-                "sum": amount,
-                "formcomment": form_comment,
-                "short-dest": short_dest,
-                "label": label,
-                "comment": comment,
-                "successURL": success_url,
-                "need-fio": need_fio,
-                "need-email": need_email,
-                "need-phone": need_phone,
-                "need-address": need_address,
+                'receiver': receiver,
+                'quickpay-form': quick_pay_form,
+                'targets': targets,
+                'paymentType': payment_type,
+                'sum': amount,
+                'formcomment': form_comment,
+                'short-dest': short_dest,
+                'label': label,
+                'comment': comment,
+                'successURL': success_url,
+                'need-fio': need_fio,
+                'need-email': need_email,
+                'need-phone': need_phone,
+                'need-address': need_address,
             }
         )
-        base_url = "https://yoomoney.ru/quickpay/confirm.xml?"
-        params = "".join(f"&{key}={value}" for key, value in payload.items())
+        base_url = 'https://yoomoney.ru/quickpay/confirm.xml?'
+        params = ''.join(f'&{key}={value}' for key, value in payload.items())
         return base_url + params
 
     async def retrieve_account_info(self) -> AccountInfo:
@@ -303,7 +303,7 @@ class YooMoneyAPI(BaseAPIClient):
         self,
         to_account: str,
         amount: Union[int, float],
-        pattern_id: str = "p2p",
+        pattern_id: str = 'p2p',
         protect: bool = False,
         comment_for_history: Optional[str] = None,
         comment: Optional[str] = None,
@@ -358,7 +358,7 @@ class YooMoneyAPI(BaseAPIClient):
         self,
         to_account: str,
         amount: Union[int, float],
-        pattern_id: str = "p2p",
+        pattern_id: str = 'p2p',
         comment_for_history: Optional[str] = None,
         comment_for_receiver: Optional[str] = None,
         protect: bool = False,

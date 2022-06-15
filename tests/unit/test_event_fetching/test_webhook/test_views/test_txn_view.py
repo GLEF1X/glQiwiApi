@@ -28,7 +28,7 @@ async def application(test_data: WebhookTestData, loop: AbstractEventLoop):
     app = Application()
     handler_event = asyncio.Event()
 
-    app["handler_event"] = handler_event
+    app['handler_event'] = handler_event
 
     @dp.transaction_handler()
     async def handle_txn_webhook(_: TransactionWebhook):
@@ -38,14 +38,14 @@ async def application(test_data: WebhookTestData, loop: AbstractEventLoop):
         handler=inject_dependencies(
             QiwiTransactionWebhookView,
             {
-                "event_cls": TransactionWebhook,
-                "dispatcher": dp,
-                "encryption_key": test_data.base64_key_to_compare_hash,
-                "collision_detector": HashBasedCollisionDetector(),
+                'event_cls': TransactionWebhook,
+                'dispatcher': dp,
+                'encryption_key': test_data.base64_key_to_compare_hash,
+                'collision_detector': HashBasedCollisionDetector(),
             },
         ),
-        path="/webhook",
-        name="txn_webhook",
+        path='/webhook',
+        name='txn_webhook',
     )
     return app
 
@@ -59,10 +59,10 @@ class TestTxnWebhookView:
         caplog: LogCaptureFixture,
     ):
         client: TestClient = await aiohttp_client(application)
-        response = await client.post("/webhook", json=test_data.transaction_webhook_json)
+        response = await client.post('/webhook', json=test_data.transaction_webhook_json)
         assert response.status == 200
-        assert await response.text() == "ok"
-        assert application["handler_event"].is_set() is True
+        assert await response.text() == 'ok'
+        assert application['handler_event'].is_set() is True
 
     async def test_with_invalid_payload(
         self,
@@ -78,32 +78,32 @@ class TestTxnWebhookView:
         # Copy transaction to update hash to fake and test that service will transfer_money unsuccessfull response
         fake_transaction = txn.copy(
             update={
-                "hash": "fake hash",
-                "payment": {
+                'hash': 'fake hash',
+                'payment': {
                     **txn.payment.dict(by_alias=True),
-                    "sum": {
-                        "currency": txn.payment.sum.currency.code,
-                        "amount": txn.payment.sum.amount,
+                    'sum': {
+                        'currency': txn.payment.sum.currency.code,
+                        'amount': txn.payment.sum.amount,
                     },
-                    "total": {
-                        "currency": txn.payment.sum.currency.code,
-                        "amount": txn.payment.sum.amount,
+                    'total': {
+                        'currency': txn.payment.sum.currency.code,
+                        'amount': txn.payment.sum.amount,
                     },
                 },
-                "hookId": txn.id,
-                "test": txn.is_experimental,
+                'hookId': txn.id,
+                'test': txn.is_experimental,
             },
             deep=True,
         )
 
-        with caplog.at_level(logging.DEBUG, logger="glQiwiApi.webhooks.transaction"):
-            response = await client.post("/webhook", json=fake_transaction.json(by_alias=True))
-            assert "Request has being blocked due to invalid signature" in caplog.text
+        with caplog.at_level(logging.DEBUG, logger='glQiwiApi.webhooks.transaction'):
+            response = await client.post('/webhook', json=fake_transaction.json(by_alias=True))
+            assert 'Request has being blocked due to invalid signature' in caplog.text
 
         assert response.status == 400
         webhook_api_err = WebhookAPIError.parse_obj(await response.json())
-        assert webhook_api_err.status == "Invalid hash of transaction."
-        assert application["handler_event"].is_set() is False
+        assert webhook_api_err.status == 'Invalid hash of transaction.'
+        assert application['handler_event'].is_set() is False
 
     async def test_logs_when_collision_was(
         self,
@@ -113,20 +113,20 @@ class TestTxnWebhookView:
         caplog: LogCaptureFixture,
     ):
         client: TestClient = await aiohttp_client(application)
-        handler_event: asyncio.Event = application["handler_event"]
+        handler_event: asyncio.Event = application['handler_event']
 
-        resp = await client.post("/webhook", json=test_data.transaction_webhook_json)
+        resp = await client.post('/webhook', json=test_data.transaction_webhook_json)
 
         assert resp.status == 200
         assert handler_event.is_set() is True
 
         handler_event.clear()
 
-        with caplog.at_level(level=logging.DEBUG, logger="glQiwiApi.webhooks.base"):
+        with caplog.at_level(level=logging.DEBUG, logger='glQiwiApi.webhooks.base'):
             response_when_send_the_same_txn = await client.post(
-                "/webhook", json=test_data.transaction_webhook_json
+                '/webhook', json=test_data.transaction_webhook_json
             )
-            assert "Detect collision on event" in caplog.text
+            assert 'Detect collision on event' in caplog.text
 
         assert response_when_send_the_same_txn.status == 200
         assert handler_event.is_set() is False
@@ -135,10 +135,10 @@ class TestTxnWebhookView:
         self, aiohttp_client: AiohttpClient, test_data: WebhookTestData, application: Application
     ):
         client: TestClient = await aiohttp_client(application)
-        handler_event: asyncio.Event = application["handler_event"]
+        handler_event: asyncio.Event = application['handler_event']
 
-        resp = await client.post("/webhook", json="{'hello': 'world'}")
+        resp = await client.post('/webhook', json="{'hello': 'world'}")
 
         assert resp.status == 400
-        assert WebhookAPIError.parse_obj(await resp.json()).status == "Validation error"
+        assert WebhookAPIError.parse_obj(await resp.json()).status == 'Validation error'
         assert handler_event.is_set() is False

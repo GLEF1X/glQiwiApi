@@ -30,7 +30,7 @@ async def test_close(session_holder: AiohttpSessionHolder) -> None:
 async def test_update_session_kwargs(session_holder: AiohttpSessionHolder) -> None:
     conn = TCPConnector()
     session_holder.update_session_kwargs(connector=conn)
-    assert session_holder._session_kwargs.get("connector") == conn
+    assert session_holder._session_kwargs.get('connector') == conn
 
 
 async def test_context_manager_of_holder(session_holder: AiohttpSessionHolder) -> None:

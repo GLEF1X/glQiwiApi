@@ -13,4 +13,4 @@ class Partner(Base):
     maps: Optional[List[str]] = None
 
 
-__all__ = ("Partner",)
+__all__ = ('Partner',)

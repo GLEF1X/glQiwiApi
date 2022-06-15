@@ -14,9 +14,9 @@ if t.TYPE_CHECKING:
 ListOfRoutes = t.List[web.ResourceRoute]
 SubApps = t.List[t.Tuple[str, web.Application, ListOfRoutes]]
 
-DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX = "/tg/webhooks"
-DEFAULT_TELEGRAM_WEBHOOK_PATH = "/bot/{token}"
-DEFAULT_TELEGRAM_WEBHOOK_ROUTE_NAME = "webhook_handler"
+DEFAULT_TELEGRAM_WEBHOOK_PATH_PREFIX = '/tg/webhooks'
+DEFAULT_TELEGRAM_WEBHOOK_PATH = '/bot/{token}'
+DEFAULT_TELEGRAM_WEBHOOK_ROUTE_NAME = 'webhook_handler'
 
 # This one was created only for testing purposes
 run_app = _run_app
@@ -57,14 +57,14 @@ class AiogramWebhookPlugin(Pluggable):
 
         self._app = web.Application()
         self._app_config = app_config
-        self._app.router.add_route("*", self._path, WebhookRequestHandler, name=route_name)
-        self._app["BOT_DISPATCHER"] = self._dispatcher
+        self._app.router.add_route('*', self._path, WebhookRequestHandler, name=route_name)
+        self._app['BOT_DISPATCHER'] = self._dispatcher
         self._set_webhook_kwargs = kwargs
 
         if self._app_config.ssl_certificate is None:
             raise SSLCertificateIsMissingError(
                 "Webhooks won't work without ssl_certificate. "
-                "To fix it, please transmit ssl_certificate to ApplicationConfig to TelegramWebhookPlugin"
+                'To fix it, please transmit ssl_certificate to ApplicationConfig to TelegramWebhookPlugin'
             )
 
     async def install(self, ctx: t.Dict[t.Any, t.Any]) -> None:

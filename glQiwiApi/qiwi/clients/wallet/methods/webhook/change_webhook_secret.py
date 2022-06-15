@@ -8,11 +8,11 @@ from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
 class GenerateWebhookSecret(QiwiAPIMethod[str]):
-    url: ClassVar[str] = "https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}/newkey"
-    http_method: ClassVar[str] = "POST"
+    url: ClassVar[str] = 'https://edge.qiwi.com/payment-notifier/v1/hooks/{hook_id}/newkey'
+    http_method: ClassVar[str] = 'POST'
 
     hook_id: str = Field(..., path_runtime_value=True)
 
     @classmethod
     def on_json_parse(cls, response: HTTPResponse) -> ReturningType:
-        return response.json()["key"]
+        return response.json()['key']

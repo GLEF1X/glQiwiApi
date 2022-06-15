@@ -19,11 +19,11 @@ class SomeView(web.View):
         self.b = b
 
     async def post(self):
-        return web.json_response(data={"ok": True})
+        return web.json_response(data={'ok': True})
 
 
 def test_inject_dependencies():
-    dependencies = {"a": A(), "b": B()}
+    dependencies = {'a': A(), 'b': B()}
     patched_view = inject_dependencies(SomeView, dependencies)
-    assert patched_view("hello").a == dependencies["a"]  # type: ignore  # noqa
-    assert patched_view("hello").b == dependencies["b"]  # type: ignore  # noqa
+    assert patched_view('hello').a == dependencies['a']  # type: ignore  # noqa
+    assert patched_view('hello').b == dependencies['b']  # type: ignore  # noqa

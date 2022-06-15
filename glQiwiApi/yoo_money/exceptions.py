@@ -6,7 +6,7 @@ class YooMoneyError(Exception):
         super().__init__(error_code)
 
 
-_T = TypeVar("_T")
+_T = TypeVar('_T')
 
 
 def match_error(err_code: str) -> NoReturn:
@@ -14,14 +14,14 @@ def match_error(err_code: str) -> NoReturn:
 
 
 class _MatchErrorMixin:
-    match = ""
+    match = ''
     explanation: str
 
     __subclasses: List[Any] = []
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super(_MatchErrorMixin, cls).__init_subclass__(**kwargs)
-        if not hasattr(cls, f"_{cls.__name__}__group"):
+        if not hasattr(cls, f'_{cls.__name__}__group'):
             cls.__subclasses.append(cls)
 
     @classmethod
@@ -58,8 +58,8 @@ class PaymentError(YooMoneyError, _MatchErrorMixin):
 
 
 class IllegalParam(BadRequest):
-    match = "illegal_param"
-    explanation = "Invalid value for the {param} parameter."
+    match = 'illegal_param'
+    explanation = 'Invalid value for the {param} parameter.'
 
     @classmethod
     def on_match(cls, err_code: str, explanation: Optional[str] = None) -> Optional[str]:
@@ -69,41 +69,41 @@ class IllegalParam(BadRequest):
 
 
 class ProcessPaymentError(PaymentError):
-    explanation = "Something went wrong while processing payment"
+    explanation = 'Something went wrong while processing payment'
 
 
 class ContractNotFound(ProcessPaymentError):
-    match = "contract_not_found"
-    explanation = "There is no existing unconfirmed payment with the specified request_id"
+    match = 'contract_not_found'
+    explanation = 'There is no existing unconfirmed payment with the specified request_id'
 
 
 class NotEnoughFunds(ProcessPaymentError):
-    match = "not_enough_funds"
-    explanation = "The payer’s account does not have sufficient funds to make the payment. Additional funds should be credited to the account, and a new payment will need to be processed."
+    match = 'not_enough_funds'
+    explanation = 'The payer’s account does not have sufficient funds to make the payment. Additional funds should be credited to the account, and a new payment will need to be processed.'
 
 
 class LimitExceeded(ProcessPaymentError):
-    match = "limit_exceeded"
-    explanation = "One of the operation limits was exceeded:"
-    "For the total amount of operations for the access token granted."
-    "For the total amount of operations over a period of time for the access token granted."
-    "YooMoney restrictions for various types of operations."
+    match = 'limit_exceeded'
+    explanation = 'One of the operation limits was exceeded:'
+    'For the total amount of operations for the access token granted.'
+    'For the total amount of operations over a period of time for the access token granted.'
+    'YooMoney restrictions for various types of operations.'
 
 
 class MoneySourceNotAvailable(ProcessPaymentError):
-    match = "money_source_not_available"
-    explanation = "The requested payment method (money_source) is not available for this payment."
+    match = 'money_source_not_available'
+    explanation = 'The requested payment method (money_source) is not available for this payment.'
 
 
 class PaymentRefused(ProcessPaymentError):
-    match = "payment_refused"
-    explanation = "The payment was refused. Possible reasons:"
-    "The merchant refused to accept the payment (checkOrder request)."
-    "The transfer to a YooMoney user is not possible (for example, the recipient’s wallet has reached the maximum amount allowed)."
+    match = 'payment_refused'
+    explanation = 'The payment was refused. Possible reasons:'
+    'The merchant refused to accept the payment (checkOrder request).'
+    'The transfer to a YooMoney user is not possible (for example, the recipient’s wallet has reached the maximum amount allowed).'
 
 
 class AuthorizationReject(ProcessPaymentError):
-    match = "authorization_reject"
+    match = 'authorization_reject'
     explanation = """Authorization of the payment was refused. Possible reasons:
 
     The bank card expired.
@@ -114,5 +114,5 @@ class AuthorizationReject(ProcessPaymentError):
 
 
 class AccountBlocked(ProcessPaymentError):
-    match = "account_blocked"
+    match = 'account_blocked'
     explanation = """The user’s account has been blocked. In order to unblock the account, the user must be redirected to the address specified in the account_unblock_uri field."""

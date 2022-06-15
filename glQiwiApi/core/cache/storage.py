@@ -48,7 +48,7 @@ class CacheStorage(abc.ABC):
 
 
 class InMemoryCacheStorage(CacheStorage):
-    __slots__ = ("_data", "_invalidate_strategy")
+    __slots__ = ('_data', '_invalidate_strategy')
 
     def __init__(self, invalidate_strategy: Optional[CacheInvalidationStrategy] = None):
         CacheStorage.__init__(self, invalidate_strategy)

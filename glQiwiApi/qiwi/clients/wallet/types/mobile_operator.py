@@ -7,7 +7,7 @@ from glQiwiApi.types.base import Base
 
 class Code(Base):
     value: str
-    name: str = Field(..., alias="_name")
+    name: str = Field(..., alias='_name')
 
 
 class MobileOperator(Base):

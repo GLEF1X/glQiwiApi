@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, TypeVar, Union
 if TYPE_CHECKING:
     from glQiwiApi.types.base import Base  # NOQA # pragma: no cover
 
-T = TypeVar("T", bound=Union[Exception, "Base"])
+T = TypeVar('T', bound=Union[Exception, 'Base'])
 
 
 class BaseHandlerMixin(Generic[T]):

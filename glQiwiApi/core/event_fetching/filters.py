@@ -4,7 +4,7 @@ import abc
 import inspect
 from typing import Any, Awaitable, Callable, Generic, Tuple, Type, TypeVar, Union, cast
 
-Event = TypeVar("Event")
+Event = TypeVar('Event')
 
 
 class BaseFilter(abc.ABC, Generic[Event]):
@@ -42,7 +42,7 @@ class NotFilter(BaseFilter[Event]):
 
 class LambdaBasedFilter(BaseFilter[Event]):
     def __init__(self, func: Callable[[Event], Union[bool, Awaitable[bool]]]) -> None:
-        self.name = f"Filter around <{func!r}>"
+        self.name = f'Filter around <{func!r}>'
 
         self.function = func
         self.awaitable: bool = inspect.iscoroutinefunction(func) or inspect.isawaitable(func)
@@ -62,4 +62,4 @@ class ExceptionFilter(BaseFilter[Event]):
         return isinstance(update, self._exception)
 
 
-__all__ = ("LambdaBasedFilter", "BaseFilter", "NotFilter", "AndFilter", "Event", "ExceptionFilter")
+__all__ = ('LambdaBasedFilter', 'BaseFilter', 'NotFilter', 'AndFilter', 'Event', 'ExceptionFilter')

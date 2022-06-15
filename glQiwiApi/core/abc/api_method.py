@@ -22,8 +22,8 @@ from pydantic.generics import GenericModel
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.utils.compat import json
 
-ReturningType = TypeVar("ReturningType")
-_T = TypeVar("_T")
+ReturningType = TypeVar('ReturningType')
+_T = TypeVar('_T')
 _sentinel = object()
 
 
@@ -35,7 +35,7 @@ def _filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:
     return {k: v for k, v in d.items() if v}
 
 
-DEFAULT_EXCLUDE = {"request_schema", "endpoint", "http_method"}
+DEFAULT_EXCLUDE = {'request_schema', 'endpoint', 'http_method'}
 
 
 class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
@@ -78,7 +78,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
             return super().__class_getitem__(params)
 
         if not params and cls is not Tuple:
-            raise TypeError(f"Parameter list to {cls.__qualname__}[...] cannot be empty")
+            raise TypeError(f'Parameter list to {cls.__qualname__}[...] cannot be empty')
 
         key = params  # just alias
 
@@ -99,7 +99,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
     @classmethod
     def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
         if cls.__returning_type__ is _sentinel or cls.__returning_type__ is ReturningType:  # type: ignore
-            raise RuntimeError(f"{cls.__qualname__}: __returning_type__ is missing")
+            raise RuntimeError(f'{cls.__qualname__}: __returning_type__ is missing')
 
         json_response = response.json()
 
@@ -119,27 +119,27 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
     def on_json_parse(cls, response: HTTPResponse) -> Union[Any, ReturningType]:
         return _sentinel
 
-    def build_request(self, **url_format_kw: Any) -> "Request":
+    def build_request(self, **url_format_kw: Any) -> 'Request':
         request_kw: Dict[str, Any] = {
-            "endpoint": self.url.format(**url_format_kw, **self._get_runtime_path_values()),
-            "http_method": self.http_method,
+            'endpoint': self.url.format(**url_format_kw, **self._get_runtime_path_values()),
+            'http_method': self.http_method,
         }
 
-        if self.http_method == "GET" and self.json_payload_schema:
+        if self.http_method == 'GET' and self.json_payload_schema:
             raise TypeError(
-                "Request schema is not compatible with GET http method "
-                "since GET method cannot transfer_money json payload"
+                'Request schema is not compatible with GET http method '
+                'since GET method cannot transfer_money json payload'
             )
 
-        if self.http_method == "GET":
-            request_kw["params"] = self.dict(
+        if self.http_method == 'GET':
+            request_kw['params'] = self.dict(
                 exclude_none=True, by_alias=True, exclude=self._get_exclude_set()
             )
 
         if self.json_payload_schema:
-            request_kw["json_payload"] = self._get_filled_json_payload_schema()
+            request_kw['json_payload'] = self._get_filled_json_payload_schema()
         else:
-            request_kw["data"] = self.dict(
+            request_kw['data'] = self.dict(
                 exclude_none=True, by_alias=True, exclude=self._get_exclude_set()
             )
 
@@ -148,7 +148,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
     def _get_exclude_set(self) -> Set[str]:
         to_exclude: Set[str] = DEFAULT_EXCLUDE.copy()
         for key, field in self.__fields__.items():
-            if field.field_info.extra.get("path_runtime_value", False):
+            if field.field_info.extra.get('path_runtime_value', False):
                 to_exclude.add(key)
 
         return to_exclude
@@ -166,8 +166,8 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
         )
 
         for key, field in self.__fields__.items():
-            scheme_path: str = field.field_info.extra.get("scheme_path", field.name)
-            keychain = scheme_path.split(".")
+            scheme_path: str = field.field_info.extra.get('scheme_path', field.name)
+            keychain = scheme_path.split('.')
             try:
                 field_value = schema_values[key]
             except KeyError:
@@ -178,7 +178,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
     def _get_schema_with_filled_runtime_values(self) -> Dict[str, Any]:
         scheme_paths: List[str] = [
-            field.field_info.extra.get("scheme_path", field.name)
+            field.field_info.extra.get('scheme_path', field.name)
             for field in self.__fields__.values()
             if field.name in self.dict(exclude_none=True)
         ]
@@ -204,7 +204,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
 
         for field_name, value in self.dict().items():
             field: ModelField = self.__fields__[field_name]
-            is_path_runtime_value = field.field_info.extra.get("path_runtime_value", False)
+            is_path_runtime_value = field.field_info.extra.get('path_runtime_value', False)
             if not is_path_runtime_value:
                 continue
 
@@ -221,14 +221,14 @@ class Request(BaseModel):
     json_payload: Optional[Dict[str, Any]] = None
     headers: Dict[str, Any] = {}
 
-    http_method: str = "GET"
+    http_method: str = 'GET'
 
     class Config(BaseConfig):
         arbitrary_types_allowed = True
 
 
 class RuntimeValue:
-    __slots__ = ("_default", "_default_factory", "is_mandatory")
+    __slots__ = ('_default', '_default_factory', 'is_mandatory')
 
     def __init__(
         self,

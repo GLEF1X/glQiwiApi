@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class AbstractTransactionHandler(Handler[Transaction], abc.ABC):
     @property
     def wallet(self) -> QiwiWallet:
-        return cast(QiwiWallet, self.context["wallet"])
+        return cast(QiwiWallet, self.context['wallet'])
 
     @property
     def transaction_id(self) -> int:

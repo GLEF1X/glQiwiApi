@@ -6,10 +6,10 @@ from glQiwiApi.core.abc.api_method import RuntimeValue
 
 
 @pytest.mark.parametrize(
-    "rv,expected",
+    'rv,expected',
     [
-        (RuntimeValue(default="hello"), True),
-        (RuntimeValue(default_factory=lambda: "world"), True),
+        (RuntimeValue(default='hello'), True),
+        (RuntimeValue(default_factory=lambda: 'world'), True),
         (RuntimeValue(), False),
     ],
 )
@@ -18,10 +18,10 @@ def test_has_default(rv: RuntimeValue, expected: bool) -> None:
 
 
 @pytest.mark.parametrize(
-    "rv,expected",
+    'rv,expected',
     [
-        (RuntimeValue(default="hello"), "hello"),
-        (RuntimeValue(default_factory=lambda: "world"), "world"),
+        (RuntimeValue(default='hello'), 'hello'),
+        (RuntimeValue(default_factory=lambda: 'world'), 'world'),
         (RuntimeValue(), None),
     ],
 )

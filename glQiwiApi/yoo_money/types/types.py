@@ -10,7 +10,7 @@ from glQiwiApi.utils.compat import Literal
 
 
 class JsonErr(BaseModel):
-    error_code: str = Field(..., alias="error")
+    error_code: str = Field(..., alias='error')
 
 
 class Response(Base):
@@ -111,7 +111,7 @@ class DigitalGoods(Response):
     https://yoomoney.ru/docs/wallet/process-payments/process-payment#digital-goods
     """
 
-    article_id: str = Field(..., alias="merchantArticleId")
+    article_id: str = Field(..., alias='merchantArticleId')
     serial: str
     secret: str
 
@@ -119,7 +119,7 @@ class DigitalGoods(Response):
 class Operation(Response):
     """object: Operation"""
 
-    id: str = Field(..., alias="operation_id")
+    id: str = Field(..., alias='operation_id')
     """Идентификатор операции."""
 
     status: str
@@ -131,7 +131,7 @@ class Operation(Response):
      перевод не принят получателем или ожидает ввода кода протекции.
     """
 
-    operation_date: datetime = Field(..., alias="datetime")
+    operation_date: datetime = Field(..., alias='datetime')
     """
     Дата и время совершения операции в формате строки
     в ISO формате с часовым поясом UTC.
@@ -152,7 +152,7 @@ class Operation(Response):
     amount: Union[int, float]
     """Сумма операции."""
 
-    operation_type: str = Field(..., alias="type")
+    operation_type: str = Field(..., alias='type')
     """Тип операции. Возможные значения:
     payment-shop — исходящий платеж в магазин;
     outgoing-transfer — исходящий P2P-перевод любого типа;
@@ -192,20 +192,20 @@ class OperationDetails(Response):
     def _extract_amount_and_comment_by_operation_type(
         cls, values: Dict[str, Any]
     ) -> Dict[str, Any]:
-        operation_type: str = values["type"]
-        if operation_type == "payment":
-            values["amount"] = values["amount_due"]
-            values["comment"] = values["message"]
+        operation_type: str = values['type']
+        if operation_type == 'payment':
+            values['amount'] = values['amount_due']
+            values['comment'] = values['message']
         return values
 
-    id: str = Field(..., alias="operation_id")
+    id: str = Field(..., alias='operation_id')
     status: str
     amount: float
     amount_due: Optional[float] = None
-    currency: str = Field(..., alias="amount_currency")
-    operation_date: datetime = Field(..., alias="datetime")
-    operation_type: str = Field(..., alias="type")
-    direction: Literal["in", "out"]
+    currency: str = Field(..., alias='amount_currency')
+    operation_date: datetime = Field(..., alias='datetime')
+    operation_type: str = Field(..., alias='type')
+    direction: Literal['in', 'out']
     title: str
     details: Optional[str] = None
     digital_goods: Optional[Dict[str, DigitalGoods]] = None
@@ -214,7 +214,7 @@ class OperationDetails(Response):
     answer_datetime: Optional[str] = None
     expires: Optional[datetime] = None
     protection_code: Optional[str] = None
-    is_secure: bool = Field(default=False, alias="codepro")
+    is_secure: bool = Field(default=False, alias='codepro')
     recipient_type: Optional[str] = None
     recipient: Optional[str] = None
     sender: Optional[str] = None
@@ -231,7 +231,7 @@ class Wallet(BaseModel):
 class Item(Response):
     """object: Item"""
 
-    item_id: str = Field(..., alias="id")
+    item_id: str = Field(..., alias='id')
     """
     Идентификатор привязанной к счету банковской карты.
     Его необходимо указать в методе process-payment для
@@ -243,7 +243,7 @@ class Item(Response):
     Поле присутствует только для привязанной банковской карты.
     Может отсутствовать, если неизвестен.
     """
-    item_type: str = Field(..., alias="type")
+    item_type: str = Field(..., alias='type')
     """
     Тип карты. Может отсутствовать, если неизвестен. Возможные значения:
     Visa;
@@ -388,7 +388,7 @@ class Payment(Response):
     при передаче аргументов
     """
 
-    def initialize(self, protection_code: Optional[str]) -> "Payment":
+    def initialize(self, protection_code: Optional[str]) -> 'Payment':
         self.protection_code = protection_code
         return self
 

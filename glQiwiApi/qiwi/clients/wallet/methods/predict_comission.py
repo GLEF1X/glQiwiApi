@@ -8,16 +8,16 @@ from glQiwiApi.qiwi.clients.wallet.types import Commission
 
 
 class PredictCommission(QiwiAPIMethod[Commission]):
-    http_method: ClassVar[str] = "POST"
-    url: ClassVar[str] = "https://edge.qiwi.com/sinap/providers/{private_card_id}/onlineCommission"
+    http_method: ClassVar[str] = 'POST'
+    url: ClassVar[str] = 'https://edge.qiwi.com/sinap/providers/{private_card_id}/onlineCommission'
 
     json_payload_schema: ClassVar[Dict[str, Any]] = {
-        "account": RuntimeValue(),
-        "paymentMethod": {"type": "Account", "accountId": "643"},
-        "purchaseTotals": {"total": {"amount": RuntimeValue(), "currency": "643"}},
+        'account': RuntimeValue(),
+        'paymentMethod': {'type': 'Account', 'accountId': '643'},
+        'purchaseTotals': {'total': {'amount': RuntimeValue(), 'currency': '643'}},
     }
 
     private_card_id: str = Field(..., path_runtime_value=True)
 
-    invoice_amount: Union[str, int, float] = Field(..., scheme_path="purchaseTotals.total.amount")
-    to_account: str = Field(..., scheme_path="account")
+    invoice_amount: Union[str, int, float] = Field(..., scheme_path='purchaseTotals.total.amount')
+    to_account: str = Field(..., scheme_path='account')

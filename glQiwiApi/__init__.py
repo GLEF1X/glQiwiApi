@@ -19,16 +19,16 @@ def default_cache_storage() -> CacheStorage:
     return InMemoryCacheStorage(invalidate_strategy=APIResponsesCacheInvalidationStrategy())
 
 
-__version__ = "2.11"
+__version__ = '2.11'
 
 __all__ = (
     # clients
-    "YooMoneyAPI",
-    "QiwiMaps",
-    "QiwiWallet",
-    "QiwiP2PClient",
-    "QiwiWrapper",
+    'YooMoneyAPI',
+    'QiwiMaps',
+    'QiwiWallet',
+    'QiwiP2PClient',
+    'QiwiWrapper',
     # other
-    "__version__",
-    "default_cache_storage",
+    '__version__',
+    'default_cache_storage',
 )

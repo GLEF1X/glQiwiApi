@@ -30,7 +30,7 @@ class File:
 
     def save(self, path: StrOrBytesPath, chunk_size: int = CHUNK_SIZE) -> None:
         file_descriptor = self.get_underlying_file_descriptor()
-        with open(path, "wb") as fp:
+        with open(path, 'wb') as fp:
             while True:
                 data = file_descriptor.read(chunk_size)
                 if not data:
@@ -45,7 +45,7 @@ class File:
         self, path: StrOrBytesPath, chunk_size: int = CHUNK_SIZE
     ) -> None:
         file_descriptor = self.get_underlying_file_descriptor()
-        async with aiofiles.open(path, "wb") as fp:
+        async with aiofiles.open(path, 'wb') as fp:
             while True:
                 data = file_descriptor.read(chunk_size)
                 if not data:
@@ -60,10 +60,10 @@ class File:
         try:
             return self.get_filename()
         except TypeError:
-            return "<File(binary stream underlies)>"
+            return '<File(binary stream underlies)>'
 
     def __del__(self) -> None:
-        if not hasattr(self, "_input"):
+        if not hasattr(self, '_input'):
             return
 
         if inspect.iscoroutinefunction(self._input.close()):  # type: ignore  # noqa

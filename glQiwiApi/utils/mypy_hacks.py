@@ -1,7 +1,7 @@
 import functools
 from typing import Callable, TypeVar
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 
 def lru_cache(maxsize: int = 128, typed: bool = False) -> Callable[[T], T]:

@@ -9,8 +9,8 @@ from glQiwiApi.types.base import Base
 class Statistic(Base):
     """object: Statistic"""
 
-    incoming: List[AmountWithCurrency] = Field(alias="incomingTotal")
-    out: List[AmountWithCurrency] = Field(alias="outgoingTotal")
+    incoming: List[AmountWithCurrency] = Field(alias='incomingTotal')
+    out: List[AmountWithCurrency] = Field(alias='outgoingTotal')
 
 
-__all__ = ["Statistic"]
+__all__ = ['Statistic']

@@ -10,11 +10,11 @@ from glQiwiApi.utils.currency_util import Currency
 class CrossRate(HashableBase):
     """Курс валюты"""
 
-    rate_from: Union[str, CurrencyModel] = Field(..., alias="from")
-    rate_to: Union[str, CurrencyModel] = Field(..., alias="to")
+    rate_from: Union[str, CurrencyModel] = Field(..., alias='from')
+    rate_to: Union[str, CurrencyModel] = Field(..., alias='to')
     rate: float
 
-    @validator("rate_from", "rate_to", pre=True)
+    @validator('rate_from', 'rate_to', pre=True)
     def humanize_rates(cls, v):  # type: ignore
         if not isinstance(v, str):
             return v
@@ -44,10 +44,10 @@ class PaymentDetails(Base):
     city: str
     """Город местонахождения получателя"""
 
-    info: str = "Коммерческие организации"
+    info: str = 'Коммерческие организации'
     """Константное значение"""
 
-    is_commercial: str = "1"
+    is_commercial: str = '1'
     """Служебная информация"""
 
     to_name: str
@@ -69,7 +69,7 @@ class PaymentDetails(Base):
     goal: str
     """Назначение платежа"""
 
-    urgent: str = "0"
+    urgent: str = '0'
     """
     Признак срочного платежа (0 - нет, 1 - да).
     Срочный платеж выполняется от 10 минут.
@@ -89,11 +89,11 @@ class PaymentDetails(Base):
     from_name_f: str
     """	Фамилия плательщика"""
 
-    requestProtocol: str = "qw1"
+    requestProtocol: str = 'qw1'
     """Служебная информация, константа"""
 
-    toServiceId: str = "1717"
+    toServiceId: str = '1717'
     """Служебная информация, константа"""
 
 
-__all__ = ("CrossRate", "PaymentDetails", "PaymentMethod")
+__all__ = ('CrossRate', 'PaymentDetails', 'PaymentMethod')

@@ -7,9 +7,9 @@ import pathlib
 from types import TracebackType
 from typing import Any, BinaryIO, Generic, Optional, Type, TypeVar
 
-InputType = TypeVar("InputType")
+InputType = TypeVar('InputType')
 
-__all__ = ("AbstractInput", "PlainPathInput", "PathlibPathInput", "BinaryIOInput")
+__all__ = ('AbstractInput', 'PlainPathInput', 'PathlibPathInput', 'BinaryIOInput')
 
 
 class AbstractInput(abc.ABC, Generic[InputType]):
@@ -52,8 +52,8 @@ class AbstractInput(abc.ABC, Generic[InputType]):
 class PlainPathInput(AbstractInput[str]):
     def get_file(self) -> BinaryIO:
         if pathlib.Path(self._input).is_file() is False:
-            raise TypeError(f"Input {self._input} is not a file!")
-        descriptor = open(self._input, "rb")
+            raise TypeError(f'Input {self._input} is not a file!')
+        descriptor = open(self._input, 'rb')
         self._file_descriptor = descriptor
         return descriptor
 
@@ -66,7 +66,7 @@ class PlainPathInput(AbstractInput[str]):
 
 class PathlibPathInput(AbstractInput[pathlib.Path]):
     def get_file(self) -> BinaryIO:
-        descriptor = open(self._input, "rb")
+        descriptor = open(self._input, 'rb')
         self._file_descriptor = descriptor
         return descriptor
 

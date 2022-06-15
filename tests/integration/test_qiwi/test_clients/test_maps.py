@@ -10,14 +10,14 @@ from glQiwiApi.qiwi.clients.wallet.types import Partner
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture(name="data")
+@pytest.fixture(name='data')
 def maps_data() -> AsyncIterator[Dict[str, Any]]:
     polygon = Polygon(latNW=55.690881, lngNW=37.386282, latSE=55.580184, lngSE=37.826078)
-    yield {"polygon": polygon, "zoom": 12, "cache_terminals": True}
+    yield {'polygon': polygon, 'zoom': 12, 'cache_terminals': True}
     del polygon
 
 
-@pytest.fixture(name="maps")
+@pytest.fixture(name='maps')
 async def maps_fixture() -> AsyncIterator[QiwiMaps]:
     """:class:`QiwiMaps` fixture"""
     async with QiwiMaps() as maps:

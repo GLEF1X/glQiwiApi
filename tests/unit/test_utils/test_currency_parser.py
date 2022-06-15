@@ -9,4 +9,4 @@ def test_parse_described_currencies():
 
 
 def test_parse_non_existent_currency():
-    assert Currency().get(currency_code="dsfgsgdsfg") is None
+    assert Currency().get(currency_code='dsfgsgdsfg') is None

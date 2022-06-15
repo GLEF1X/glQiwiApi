@@ -16,8 +16,8 @@ from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 
 qiwi_dp = QiwiDispatcher()
 
-dp = Dispatcher(Bot("BOT TOKEN"))
-wallet = QiwiWallet(api_access_token="wallet api token")
+dp = Dispatcher(Bot('BOT TOKEN'))
+wallet = QiwiWallet(api_access_token='wallet api token')
 
 
 @qiwi_dp.bill_handler()
@@ -35,17 +35,17 @@ configure_app(
         app,
         WebhookConfig(
             encryption=EncryptionConfig(
-                secret_p2p_key="secret p2p token, который был зарегистрирован с указанием айпи. "
-                "Например http://айпи:8080/webhooks/qiwi/bills/"
+                secret_p2p_key='secret p2p token, который был зарегистрирован с указанием айпи. '
+                'Например http://айпи:8080/webhooks/qiwi/bills/'
             ),
-            hook_registration=HookRegistrationConfig(host_or_ip_address="айпи:8080"),
+            hook_registration=HookRegistrationConfig(host_or_ip_address='айпи:8080'),
         ),
     ),
-    "/bot",
+    '/bot',
 )
 
 logging.basicConfig(level=logging.DEBUG)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # Порт может быть любым
     web.run_app(app, port=8080)

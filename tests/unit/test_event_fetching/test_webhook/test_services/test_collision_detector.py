@@ -15,7 +15,7 @@ class UnhashableTestClass:
         return False
 
 
-@pytest.fixture(name="detector")
+@pytest.fixture(name='detector')
 def collision_detector_fixture() -> HashBasedCollisionDetector:
     return HashBasedCollisionDetector()
 

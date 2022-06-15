@@ -114,11 +114,11 @@ class QiwiWallet(BaseAPIClient):
         return RequestService(
             session_holder=AiohttpSessionHolder(
                 headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "Authorization": f"Bearer {self._api_access_token}",
-                    "Host": "edge.qiwi.com",
-                    "User-Agent": f"glQiwiApi/{__version__}",
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': f'Bearer {self._api_access_token}',
+                    'Host': 'edge.qiwi.com',
+                    'User-Agent': f'glQiwiApi/{__version__}',
                 }
             )
         )
@@ -315,10 +315,10 @@ class QiwiWallet(BaseAPIClient):
             учитываются все источники платежа.
         """
         kw = {
-            "start_date": start_date,
-            "end_date": end_date,
-            "operation": operation,
-            "sources": sources,
+            'start_date': start_date,
+            'end_date': end_date,
+            'operation': operation,
+            'sources': sources,
         }
 
         return await self._request_service.execute_api_method(
@@ -348,7 +348,7 @@ class QiwiWallet(BaseAPIClient):
         self,
         transaction_id: Union[str, int],
         transaction_type: TransactionType,
-        file_format: str = "PDF",
+        file_format: str = 'PDF',
     ) -> File:
         """
         Method for receiving a receipt in byte format or file. \n
@@ -487,7 +487,7 @@ class QiwiWallet(BaseAPIClient):
         :param invoice_amount:
         :return: Commission object
         """
-        card_code = "99" if len(to_account) <= 15 else None
+        card_code = '99' if len(to_account) <= 15 else None
         if card_code is None:
             card_code = await self.detect_card_id(to_account)
 
@@ -543,7 +543,7 @@ class QiwiWallet(BaseAPIClient):
         )
 
     async def issue_qiwi_master_card(
-        self, card_alias: str = "qvc-cpa", over_the_limit: bool = False
+        self, card_alias: str = 'qvc-cpa', over_the_limit: bool = False
     ) -> OrderDetails:  # pragma: no cover
         """
         Issuing a new card using the Qiwi Master API
@@ -558,12 +558,12 @@ class QiwiWallet(BaseAPIClient):
         https://developer.qiwi.com/ru/qiwi-wallet-personal/#qiwi-master-issue-card
         """
         order_details = await self._confirm_qiwi_master_purchase_order(card_alias)
-        if not over_the_limit or order_details.status == "COMPLETED":
+        if not over_the_limit or order_details.status == 'COMPLETED':
             return order_details
         return await self._buy_new_qiwi_master_card(order_id=order_details.order_id)
 
     async def _confirm_qiwi_master_purchase_order(
-        self, card_alias: str = "qvc-cpa"
+        self, card_alias: str = 'qvc-cpa'
     ) -> OrderDetails:  # pragma: no cover
         details = await self._create_card_purchase_order(card_alias)
         return await self._request_service.execute_api_method(
@@ -571,7 +571,7 @@ class QiwiWallet(BaseAPIClient):
         )
 
     async def _create_card_purchase_order(
-        self, card_alias: str = "qvc-cpa"
+        self, card_alias: str = 'qvc-cpa'
     ) -> OrderDetails:  # pragma: no cover
         return await self._request_service.execute_api_method(
             CreateCardPurchaseOrder(card_alias=card_alias),
@@ -622,7 +622,7 @@ class QiwiWallet(BaseAPIClient):
             GetNickName(), phone_number=self.phone_number_without_plus_sign
         )
 
-    async def list_of_invoices(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
+    async def list_of_invoices(self, rows: int, statuses: str = 'READY_FOR_PAY') -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
 
@@ -742,5 +742,5 @@ class QiwiWallet(BaseAPIClient):
     @property
     def phone_number_without_plus_sign(self) -> str:
         if self._phone_number is None:
-            raise RuntimeError("Phone number is empty")
+            raise RuntimeError('Phone number is empty')
         return self._phone_number[1:]

@@ -5,5 +5,5 @@ from glQiwiApi.yoo_money.types import AccountInfo
 
 
 class RetrieveAccountInfo(APIMethod[AccountInfo]):
-    http_method: ClassVar[str] = "POST"
-    url: ClassVar[str] = "https://yoomoney.ru/api/account-info"
+    http_method: ClassVar[str] = 'POST'
+    url: ClassVar[str] = 'https://yoomoney.ru/api/account-info'

@@ -1,4 +1,4 @@
-# pip install pytest-benchmark
+# pip install pytest-benchmark pyqiwip2p
 import os
 
 import pytest
@@ -7,9 +7,9 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from glQiwiApi import QiwiP2PClient
 
-wrapper = QiwiP2PClient(secret_p2p=os.getenv("SECRET_P2P"))
+wrapper = QiwiP2PClient(secret_p2p=os.getenv('SECRET_P2P'))
 
-c = AioQiwiP2P(auth_key=os.getenv("SECRET_P2P"))
+c = AioQiwiP2P(auth_key=os.getenv('SECRET_P2P'))
 
 
 # Results on my machine (smaller is better)

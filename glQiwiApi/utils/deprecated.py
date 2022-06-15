@@ -6,8 +6,8 @@ import inspect
 import warnings
 from typing import Any, Callable, Generic, Optional, Type, TypeVar, Union, cast
 
-_T = TypeVar("_T")
-_F = TypeVar("_F")
+_T = TypeVar('_T')
+_F = TypeVar('_F')
 DeprecatedFunc = Union[Callable[..., _F], Callable[[Callable[..., _F]], _F]]
 
 
@@ -32,16 +32,16 @@ def deprecated(reason: Union[str, Callable[..., _F]], stacklevel: int = 2) -> De
         def decorator(func: Callable[..., _F]) -> Callable[..., _F]:
 
             if inspect.isclass(func):
-                msg = "Call to deprecated class {name} ({reason})."
+                msg = 'Call to deprecated class {name} ({reason}).'
             else:
-                msg = "Call to deprecated function {name} ({reason})."
+                msg = 'Call to deprecated function {name} ({reason}).'
 
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> _F:
                 warn_deprecated(
                     msg.format(name=func.__name__, reason=reason), stacklevel=stacklevel
                 )
-                warnings.simplefilter("default", DeprecationWarning)
+                warnings.simplefilter('default', DeprecationWarning)
                 return func(*args, **kwargs)
 
             return wrapper
@@ -61,9 +61,9 @@ def deprecated(reason: Union[str, Callable[..., _F]], stacklevel: int = 2) -> De
         func1 = reason  # type: ignore
 
         if inspect.isclass(func1):
-            msg1 = "Call to deprecated class {name}."
+            msg1 = 'Call to deprecated class {name}.'
         else:
-            msg1 = "Call to deprecated function {name}."
+            msg1 = 'Call to deprecated function {name}.'
 
         @functools.wraps(func1)
         def wrapper1(*args: Any, **kwargs: Any) -> _F:
@@ -76,9 +76,9 @@ def deprecated(reason: Union[str, Callable[..., _F]], stacklevel: int = 2) -> De
 
 
 def warn_deprecated(message: str, warning: Any = DeprecationWarning, stacklevel: int = 2) -> None:
-    warnings.simplefilter("always", warning)
+    warnings.simplefilter('always', warning)
     warnings.warn(message, category=warning, stacklevel=stacklevel)
-    warnings.simplefilter("default", warning)
+    warnings.simplefilter('default', warning)
 
 
 def renamed_argument(
@@ -109,12 +109,12 @@ def renamed_argument(
             """
             Returns updated version of kwargs.
             """
-            routine_type = "coroutine" if is_coroutine else "function"
+            routine_type = 'coroutine' if is_coroutine else 'function'
             if old_name in kwargs:
                 warn_deprecated(
                     f"In {routine_type} '{func.__name__}' argument '{old_name}' "
                     f"is renamed to '{new_name}' "
-                    f"and will be removed in aiogram {until_version}",
+                    f'and will be removed in aiogram {until_version}',
                     stacklevel=stacklevel,
                 )
                 kwargs = kwargs.copy()
@@ -140,8 +140,8 @@ def renamed_argument(
     return decorator
 
 
-_VT = TypeVar("_VT")
-_OwnerCls = TypeVar("_OwnerCls")
+_VT = TypeVar('_VT')
+_OwnerCls = TypeVar('_OwnerCls')
 
 
 class DeprecatedReadOnlyClassVar(Generic[_OwnerCls, _VT]):
@@ -159,7 +159,7 @@ class DeprecatedReadOnlyClassVar(Generic[_OwnerCls, _VT]):
     >>> MyClass.some_attribute  # does warning.warn with `Warning message` and returns 15 in the current case
     """
 
-    __slots__ = "_new_value_getter", "_warning_message"
+    __slots__ = '_new_value_getter', '_warning_message'
 
     def __init__(self, warning_message: str, new_value_getter: Callable[[Type[_OwnerCls]], _VT]):
         self._warning_message = warning_message

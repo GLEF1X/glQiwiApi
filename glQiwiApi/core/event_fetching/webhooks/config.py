@@ -8,22 +8,22 @@ from aiohttp import web
 
 from glQiwiApi.utils.certificates import SSLCertificate
 
-DEFAULT_QIWI_WEBHOOK_PATH = "/webhooks/qiwi/transactions/"
-DEFAULT_QIWI_ROUTE_NAME = "QIWI_TRANSACTIONS"
+DEFAULT_QIWI_WEBHOOK_PATH = '/webhooks/qiwi/transactions/'
+DEFAULT_QIWI_ROUTE_NAME = 'QIWI_TRANSACTIONS'
 
-DEFAULT_QIWI_BILLS_WEBHOOK_PATH = "/webhooks/qiwi/bills/"
-DEFAULT_QIWI_BILLS_ROUTE_NAME = "QIWI_BILLS"
+DEFAULT_QIWI_BILLS_WEBHOOK_PATH = '/webhooks/qiwi/bills/'
+DEFAULT_QIWI_BILLS_ROUTE_NAME = 'QIWI_BILLS'
 
 
 @dataclass()
 class ApplicationConfig:
     base_app: Optional[web.Application] = None
 
-    host: str = "localhost"
-    "server host"
+    host: str = 'localhost'
+    'server host'
 
     port: int = 8080
-    "server port that open for tcp/ip trans."
+    'server port that open for tcp/ip trans.'
 
     ssl_certificate: Optional[SSLCertificate] = None
 

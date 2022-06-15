@@ -17,15 +17,15 @@ class Balance(HashableBase):
 
     alias: str
     title: str
-    fs_alias: str = Field(alias="fsAlias")
-    bank_alias: str = Field(alias="bankAlias")
-    has_balance: bool = Field(alias="hasBalance")
+    fs_alias: str = Field(alias='fsAlias')
+    bank_alias: str = Field(alias='bankAlias')
+    has_balance: bool = Field(alias='hasBalance')
     balance: Optional[AmountWithCurrency] = None
     currency: CurrencyModel
-    account_type: Optional[Dict[str, Any]] = Field(None, alias="type")
-    is_default_account: bool = Field(alias="defaultAccount")
+    account_type: Optional[Dict[str, Any]] = Field(None, alias='type')
+    is_default_account: bool = Field(alias='defaultAccount')
 
-    @validator("currency", pre=True)
+    @validator('currency', pre=True)
     def humanize_pay_currency(cls, v):  # type: ignore
         if not isinstance(v, int):
             return v

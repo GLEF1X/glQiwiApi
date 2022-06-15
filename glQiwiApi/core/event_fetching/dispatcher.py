@@ -27,7 +27,7 @@ from ...qiwi.clients.wallet.types.webhooks import TransactionWebhook
 from .. import Handler
 from .filters import BaseFilter, LambdaBasedFilter
 
-logger = logging.getLogger("glQiwiApi.dispatcher")
+logger = logging.getLogger('glQiwiApi.dispatcher')
 
 
 class SkipHandler(Exception):
@@ -38,8 +38,8 @@ class CancelHandler(Exception):
     pass
 
 
-Event = TypeVar("Event")
-F = TypeVar("F", bound=Callable[..., Any])
+Event = TypeVar('Event')
+F = TypeVar('F', bound=Callable[..., Any])
 
 
 class BaseDispatcher(abc.ABC):

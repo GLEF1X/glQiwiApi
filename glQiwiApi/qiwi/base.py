@@ -13,7 +13,7 @@ try:
 except ImportError:
     from json import JSONDecodeError as OrjsonDecodeError
 
-T = TypeVar("T", bound=Any)
+T = TypeVar('T', bound=Any)
 
 
 class QiwiAPIMethod(APIMethod[T], abc.ABC, Generic[T]):

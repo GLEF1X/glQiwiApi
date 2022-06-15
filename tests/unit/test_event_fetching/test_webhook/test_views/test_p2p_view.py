@@ -42,20 +42,20 @@ class TestBillWebhookView:
             handler=inject_dependencies(
                 QiwiBillWebhookViewWithoutSignatureValidation,
                 {
-                    "event_cls": BillWebhook,
-                    "dispatcher": dp,
-                    "encryption_key": test_data.base64_key_to_compare_hash,
-                    "collision_detector": HashBasedCollisionDetector(),
+                    'event_cls': BillWebhook,
+                    'dispatcher': dp,
+                    'encryption_key': test_data.base64_key_to_compare_hash,
+                    'collision_detector': HashBasedCollisionDetector(),
                 },
             ),
-            path="/webhook",
-            name="bill_webhook",
+            path='/webhook',
+            name='bill_webhook',
         )
 
         client: TestClient = await aiohttp_client(app)
-        response = await client.post("/webhook", json=test_data.bill_webhook_json)
+        response = await client.post('/webhook', json=test_data.bill_webhook_json)
 
         assert response.status == 200
-        assert await response.json() == {"error": "0"}
+        assert await response.json() == {'error': '0'}
 
         assert event_handled_by_handler.is_set() is True

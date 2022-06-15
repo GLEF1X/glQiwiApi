@@ -42,7 +42,7 @@ from glQiwiApi.utils.deprecated import deprecated
 if TYPE_CHECKING:
     from glQiwiApi.ext.webhook_url import WebhookURL
 
-_T = TypeVar("_T", bound="QiwiWrapper")
+_T = TypeVar('_T', bound='QiwiWrapper')
 
 
 class QiwiWrapper:
@@ -55,8 +55,8 @@ class QiwiWrapper:
         secret_p2p: Optional[str] = None,
         shim_server_url: Optional[str] = None,
     ) -> None:
-        self._qiwi_wallet = QiwiWallet(api_access_token or "", phone_number)
-        self._p2p_client = QiwiP2PClient(secret_p2p or "", shim_server_url=shim_server_url)
+        self._qiwi_wallet = QiwiWallet(api_access_token or '', phone_number)
+        self._p2p_client = QiwiP2PClient(secret_p2p or '', shim_server_url=shim_server_url)
 
     async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
         return await self._qiwi_wallet.get_balance(account_number=account_number)
@@ -243,7 +243,7 @@ class QiwiWrapper:
         self,
         transaction_id: Union[str, int],
         transaction_type: TransactionType,
-        file_format: str = "PDF",
+        file_format: str = 'PDF',
     ) -> File:
         """
         Method for receiving a receipt in byte format or file. \n
@@ -330,13 +330,13 @@ class QiwiWrapper:
         return await self._qiwi_wallet.set_default_balance(currency_alias)
 
     @deprecated(  # type: ignore
-        "QiwiWrapper.to_wallet(...) method is outdated, please use QiwiWrapper.transfer_money(...)"
+        'QiwiWrapper.to_wallet(...) method is outdated, please use QiwiWrapper.transfer_money(...)'
     )
     async def to_wallet(
         self,
         to_number: str,
         amount: Union[AmountType, str],
-        currency: str = "643",
+        currency: str = '643',
         comment: Optional[str] = None,
     ) -> PaymentInfo:
         return await self.transfer_money(to_phone_number=to_number, amount=amount, comment=comment)
@@ -360,7 +360,7 @@ class QiwiWrapper:
         return await self._qiwi_wallet.transfer_money(to_phone_number, amount, comment)
 
     @deprecated(  # type: ignore
-        "QiwiWrapper.to_card(...) method is outdated, please use QiwiWrapper.transfer_money_to_card(...)"
+        'QiwiWrapper.to_card(...) method is outdated, please use QiwiWrapper.transfer_money_to_card(...)'
     )
     async def to_card(self, trans_sum: Union[float, int], to_card: str) -> PaymentInfo:
         return await self.transfer_money_to_card(card_number=to_card, amount=trans_sum)
@@ -423,7 +423,7 @@ class QiwiWrapper:
         """
         return await self._qiwi_wallet.buy_qiwi_master_package()
 
-    async def issue_qiwi_master_card(self, card_alias: str = "qvc-cpa") -> Optional[OrderDetails]:
+    async def issue_qiwi_master_card(self, card_alias: str = 'qvc-cpa') -> Optional[OrderDetails]:
         """
         Issuing a new card using the Qiwi Master API
 
@@ -487,7 +487,7 @@ class QiwiWrapper:
 
     async def bind_webhook(
         self,
-        url: Union[str, "WebhookURL"],
+        url: Union[str, 'WebhookURL'],
         transactions_type: int = 2,
         *,
         send_test_notification: bool = False,
@@ -574,7 +574,7 @@ class QiwiWrapper:
             amount, bill_id, comment, life_time, theme_code, pay_source_filter, customer
         )
 
-    async def retrieve_bills(self, rows: int, statuses: str = "READY_FOR_PAY") -> List[Bill]:
+    async def retrieve_bills(self, rows: int, statuses: str = 'READY_FOR_PAY') -> List[Bill]:
         """
         A method for getting a list of your wallet's outstanding bills.
 
@@ -643,7 +643,7 @@ class QiwiWrapper:
     def create_shim_url(self, invoice_uid: str) -> str:
         return self._p2p_client.create_shim_url(invoice_uid)
 
-    async def __aenter__(self) -> "QiwiWrapper":
+    async def __aenter__(self) -> 'QiwiWrapper':
         await self._qiwi_wallet.__aenter__()  # type: ignore
         await self._p2p_client.__aenter__()  # type: ignore
         return self
@@ -666,6 +666,6 @@ class QiwiWrapper:
         **kwargs: Any,
     ) -> _T:
         if not isinstance(api_access_token, str) and not isinstance(secret_p2p, str):  # noqa: W503
-            raise RuntimeError("Unable to initialize QiwiWrapper instance without any tokens")
+            raise RuntimeError('Unable to initialize QiwiWrapper instance without any tokens')
 
         return super().__new__(cls)

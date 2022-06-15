@@ -9,9 +9,9 @@ from glQiwiApi.plugins import AiogramPollingPlugin
 from glQiwiApi.qiwi.clients.wallet.types import Transaction
 
 qiwi_dp = QiwiDispatcher()
-wallet = QiwiWallet(api_access_token="token", phone_number="+phone number")
+wallet = QiwiWallet(api_access_token='token', phone_number='+phone number')
 
-dp = Dispatcher(Bot("BOT TOKEN"))
+dp = Dispatcher(Bot('BOT TOKEN'))
 
 
 @qiwi_dp.transaction_handler()
@@ -22,8 +22,8 @@ async def handle_transaction(t: Transaction, ctx: Context):
 
 @dp.message_handler()
 async def handle_message(msg: Message):
-    await msg.answer(text="Hello world")
+    await msg.answer(text='Hello world')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     executor.start_polling(wallet, qiwi_dp, AiogramPollingPlugin(dp))

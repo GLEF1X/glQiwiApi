@@ -7,7 +7,7 @@ from glQiwiApi.qiwi.clients.wallet.types import Transaction
 from glQiwiApi.qiwi.exceptions import QiwiAPIError
 
 qiwi_dp = QiwiDispatcher()
-wallet = QiwiWallet(api_access_token="token", phone_number="+phone number")
+wallet = QiwiWallet(api_access_token='token', phone_number='+phone number')
 
 
 @qiwi_dp.transaction_handler()
@@ -21,5 +21,5 @@ async def handle_exception(err: QiwiAPIError, ctx: Context):
     pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     executor.start_polling(wallet, qiwi_dp)

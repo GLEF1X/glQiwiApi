@@ -11,12 +11,12 @@ from glQiwiApi.types.arbitrary import BinaryIOInput, File
 class GetReceipt(QiwiAPIMethod[File]):
     url: ClassVar[
         str
-    ] = "https://edge.qiwi.com/payment-history/v1/transactions/{transaction_id}/cheque/file"
-    http_method: ClassVar[str] = "GET"
+    ] = 'https://edge.qiwi.com/payment-history/v1/transactions/{transaction_id}/cheque/file'
+    http_method: ClassVar[str] = 'GET'
 
     transaction_id: Union[str, int] = Field(..., path_runtime_value=True)
-    transaction_type: TransactionType = Field(..., alias="type")
-    file_format: str = Field(alias="format", default="PDF")
+    transaction_type: TransactionType = Field(..., alias='type')
+    file_format: str = Field(alias='format', default='PDF')
 
     class Config:
         use_enum_values = True

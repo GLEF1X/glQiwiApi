@@ -9,9 +9,9 @@ from glQiwiApi.qiwi.clients.wallet.types import CrossRate
 
 
 class GetCrossRates(QiwiAPIMethod[List[CrossRate]]):
-    url: ClassVar[str] = "https://edge.qiwi.com/sinap/crossRates"
-    http_method: ClassVar[str] = "GET"
+    url: ClassVar[str] = 'https://edge.qiwi.com/sinap/crossRates'
+    http_method: ClassVar[str] = 'GET'
 
     @classmethod
     def on_json_parse(cls, response: HTTPResponse) -> List[CrossRate]:
-        return parse_obj_as(List[CrossRate], response.json()["result"])
+        return parse_obj_as(List[CrossRate], response.json()['result'])

@@ -21,7 +21,7 @@ class NoShimUrlWasProvidedError(Exception):
     pass
 
 
-DEPRECATED_SHIM_URL_SUFFIXES = ("{0}", "{}")
+DEPRECATED_SHIM_URL_SUFFIXES = ('{0}', '{}')
 
 
 def _parse_shim_url(shim_url: Optional[str]) -> Optional[str]:
@@ -36,8 +36,8 @@ def _parse_shim_url(shim_url: Optional[str]) -> Optional[str]:
             new_format_url_example = remove_suffix(new_format_url_example, suffix)
 
         warn_deprecated(
-            "Old-style urls that were used like format-like strings are deprecated "
-            f"use plain path like this - {new_format_url_example} instead."
+            'Old-style urls that were used like format-like strings are deprecated '
+            f'use plain path like this - {new_format_url_example} instead.'
         )
 
         shim_url = urlparse(new_format_url_example)
@@ -66,9 +66,9 @@ class QiwiP2PClient(BaseAPIClient):
         return RequestService(
             session_holder=AiohttpSessionHolder(
                 headers={
-                    "Authorization": f"Bearer {self._api_access_token}",
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
+                    'Authorization': f'Bearer {self._api_access_token}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                 }
             )
         )
@@ -90,7 +90,7 @@ class QiwiP2PClient(BaseAPIClient):
 
     async def check_if_bill_was_paid(self, bill: Bill) -> bool:
         bill_status = await self.get_bill_status(bill.id)
-        return bill_status == "PAID"
+        return bill_status == 'PAID'
 
     async def get_bill_status(self, bill_id: str) -> str:
         """

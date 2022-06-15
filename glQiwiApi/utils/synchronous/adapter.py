@@ -10,9 +10,9 @@ class AdaptiveExecutor(futures.ThreadPoolExecutor):
     """object: AdaptiveExecutor"""
 
     def __init__(self, max_workers=None, **kwargs):
-        super().__init__(max_workers, "sync_adapter_", **kwargs)
+        super().__init__(max_workers, 'sync_adapter_', **kwargs)
         self.max_workers = max_workers
-        self.is_from_running_loop = ContextVar("Adapter_", default=False)
+        self.is_from_running_loop = ContextVar('Adapter_', default=False)
 
 
 def execute_async_as_sync(func, *args, **kwargs):
@@ -24,7 +24,7 @@ def execute_async_as_sync(func, *args, **kwargs):
     :param kwargs: kwargs, which need your async func
     """
     try:
-        shutdown_callback = kwargs.pop("__shutdown__callback__")
+        shutdown_callback = kwargs.pop('__shutdown__callback__')
     except KeyError:
         shutdown_callback = None
     loop, executor = _construct_executor_and_loop()

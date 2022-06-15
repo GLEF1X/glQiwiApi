@@ -18,7 +18,7 @@ from glQiwiApi.yoo_money.methods.operation_history import MAX_HISTORY_LIMIT
 
 class TestExecutorEvent:
     async def test_fire(self):
-        context = Context({"api_key": "fake_api_key"})
+        context = Context({'api_key': 'fake_api_key'})
 
         async def init_event(ctx: Context) -> NoReturn:
             assert ctx == context
@@ -32,7 +32,7 @@ class TestExecutorEvent:
             await event.fire()
 
     async def test_fire_sync_handlers(self):
-        context = Context({"api_key": "fake_api_key"})
+        context = Context({'api_key': 'fake_api_key'})
 
         event = ExecutorEvent(context)
 
@@ -47,7 +47,7 @@ class TestExecutorEvent:
 
 
 class WalletStub(QiwiWallet):
-    def __init__(self, fake_transaction: Transaction, api_access_token: str = ""):
+    def __init__(self, fake_transaction: Transaction, api_access_token: str = ''):
         super().__init__(api_access_token)
         self._fake_transaction = fake_transaction
 
@@ -65,7 +65,7 @@ class WalletStub(QiwiWallet):
 
 
 async def test_start_non_blocking_qiwi_api_polling(transaction: Transaction) -> None:
-    c = Context({"api_key": "my_api_key"})
+    c = Context({'api_key': 'my_api_key'})
     wallet = WalletStub(transaction)
     dp = QiwiDispatcher()
 
@@ -74,12 +74,12 @@ async def test_start_non_blocking_qiwi_api_polling(transaction: Transaction) -> 
 
     @dp.transaction_handler()
     async def handle_transaction(txn: Transaction, ctx: Context):
-        assert ctx["api_key"] == "my_api_key"
+        assert ctx['api_key'] == 'my_api_key'
         assert ctx.wallet == wallet
         handled_transaction_event.set()
 
     async def on_startup(ctx: Context):
-        assert ctx["api_key"] == "my_api_key"
+        assert ctx['api_key'] == 'my_api_key'
         assert ctx.wallet == wallet
         handle_on_startup.set()
 

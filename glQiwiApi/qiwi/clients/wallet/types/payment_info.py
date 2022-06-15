@@ -29,7 +29,7 @@ class PaymentInfo(Base):
     """object: PaymentInfo"""
 
     id: int
-    amount: AmountWithCurrency = Field(..., alias="sum")
+    amount: AmountWithCurrency = Field(..., alias='sum')
     terms: str
     fields: Fields
     source: str
@@ -38,16 +38,16 @@ class PaymentInfo(Base):
 
 
 class PaymentMethod(Base):
-    type: str = "Account"
-    account_id: int = Field(643, alias="accountId")
+    type: str = 'Account'
+    account_id: int = Field(643, alias='accountId')
 
 
 class QiwiPayment(Base):
     id: int
     sum: AmountWithCurrency
-    method: PaymentMethod = Field(..., alias="paymentMethod")
+    method: PaymentMethod = Field(..., alias='paymentMethod')
     fields: Dict[Any, Any]
     comment: Optional[str] = None
 
 
-__all__ = ["PaymentInfo", "QiwiPayment"]
+__all__ = ['PaymentInfo', 'QiwiPayment']

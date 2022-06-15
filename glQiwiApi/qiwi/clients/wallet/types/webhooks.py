@@ -15,30 +15,30 @@ from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 class WebhookPayment(HashableBase):
     """Scheme of webhook payment object"""
 
-    account: str = Field(..., alias="account")
-    comment: str = Field(..., alias="comment")
-    date: datetime = Field(..., alias="date")
-    error_code: str = Field(..., alias="errorCode")
-    person_id: int = Field(..., alias="personId")
-    provider: int = Field(..., alias="provider")
-    sign_fields: str = Field(..., alias="signFields")
-    status: str = Field(..., alias="status")
-    txn_id: str = Field(..., alias="txnId")
-    type: str = Field(..., alias="type")
-    commission: Optional[HashableSum] = Field(default=None, alias="calc_commission")
-    sum: HashableSum = Field(..., alias="sum")
-    total: HashableSum = Field(..., alias="total")
+    account: str = Field(..., alias='account')
+    comment: str = Field(..., alias='comment')
+    date: datetime = Field(..., alias='date')
+    error_code: str = Field(..., alias='errorCode')
+    person_id: int = Field(..., alias='personId')
+    provider: int = Field(..., alias='provider')
+    sign_fields: str = Field(..., alias='signFields')
+    status: str = Field(..., alias='status')
+    txn_id: str = Field(..., alias='txnId')
+    type: str = Field(..., alias='type')
+    commission: Optional[HashableSum] = Field(default=None, alias='calc_commission')
+    sum: HashableSum = Field(..., alias='sum')
+    total: HashableSum = Field(..., alias='total')
 
 
 class TransactionWebhook(HashableBase):
     """Object: TransactionWebhook"""
 
-    hash: Optional[str] = Field(default=None, alias="hash")
-    id: str = Field(..., alias="hookId")
-    message_id: Optional[str] = Field(default=None, alias="messageId")
-    is_experimental: bool = Field(..., alias="test")
-    version: str = Field(..., alias="version")
-    payment: Optional[WebhookPayment] = Field(default=None, alias="payment")
+    hash: Optional[str] = Field(default=None, alias='hash')
+    id: str = Field(..., alias='hookId')
+    message_id: Optional[str] = Field(default=None, alias='messageId')
+    is_experimental: bool = Field(..., alias='test')
+    version: str = Field(..., alias='version')
+    payment: Optional[WebhookPayment] = Field(default=None, alias='payment')
 
     signature: Optional[str] = None
     """
@@ -48,11 +48,11 @@ class TransactionWebhook(HashableBase):
 
     def verify_signature(self, webhook_base64_key: str) -> None:
         if self.signature is None:
-            raise WebhookSignatureUnverifiedError("Signature attribute is None")
+            raise WebhookSignatureUnverifiedError('Signature attribute is None')
 
-        webhook_key = base64.b64decode(bytes(webhook_base64_key, "utf-8"))
+        webhook_key = base64.b64decode(bytes(webhook_base64_key, 'utf-8'))
         generated_hash = hmac.new(
-            webhook_key, self.signature.encode("utf-8"), hashlib.sha256
+            webhook_key, self.signature.encode('utf-8'), hashlib.sha256
         ).hexdigest()
         if generated_hash != self.hash:
             raise WebhookSignatureUnverifiedError()
@@ -68,17 +68,17 @@ class TransactionWebhook(HashableBase):
         @param values:
         @return:
         """
-        payment = cast(Optional[Dict[Any, Any]], values.get("payment"))
+        payment = cast(Optional[Dict[Any, Any]], values.get('payment'))
         if payment is None:
             return values
 
-        sign_fields = payment.get("signFields")
+        sign_fields = payment.get('signFields')
         if sign_fields is None:
-            raise ValueError("Cannot generate signature, sign fields is empty")
+            raise ValueError('Cannot generate signature, sign fields is empty')
 
-        sign_fields_list = cast(str, sign_fields).split(",")
-        webhook_signature = "|".join(
-            str(_get_sign_field(payment, sign_field.split("."))) for sign_field in sign_fields_list
+        sign_fields_list = cast(str, sign_fields).split(',')
+        webhook_signature = '|'.join(
+            str(_get_sign_field(payment, sign_field.split('.'))) for sign_field in sign_fields_list
         )
         values.update(signature=webhook_signature)
         return values
@@ -111,16 +111,16 @@ class HookParameters(Base):
 
 
 class WebhookTransactionType(str, enum.Enum):
-    IN = "IN"
-    OUT = "OUT"
-    BOTH = "BOTH"
+    IN = 'IN'
+    OUT = 'OUT'
+    BOTH = 'BOTH'
 
 
 class WebhookInfo(Base):
-    id: str = Field(..., alias="hookId")
-    type: str = Field(..., alias="hookType")
-    txn_type: WebhookTransactionType = Field(..., alias="txnType")
-    hook_parameters: HookParameters = Field(..., alias="hookParameters")
+    id: str = Field(..., alias='hookId')
+    type: str = Field(..., alias='hookType')
+    txn_type: WebhookTransactionType = Field(..., alias='txnType')
+    hook_parameters: HookParameters = Field(..., alias='hookParameters')
 
 
-__all__ = ("WebhookInfo", "TransactionWebhook", "WebhookPayment")
+__all__ = ('WebhookInfo', 'TransactionWebhook', 'WebhookPayment')
