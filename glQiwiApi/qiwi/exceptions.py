@@ -214,3 +214,9 @@ class ObjectAlreadyExistsError(QiwiAPIError):
 
 class MobileOperatorCannotBeDeterminedError(QiwiAPIError):
     pass
+
+
+class InsufficientTokenRightsError(QiwiAPIError):
+    _error_code_match = [309]
+    description_ru = "Недостаточно прав для выполнения данного действия. Чтобы решить эту проблему вам нужно перевыпустить токен с достаточными правами для выполнения нужного вам API метода на сайте QIWI."
+    description_en = "There are insufficient rights to execute this API method. In order to solve this problem you should regenerate API token with sufficient rights."
