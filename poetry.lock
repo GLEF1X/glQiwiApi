@@ -897,7 +897,7 @@ Sphinx = "*"
 
 [[package]]
 name = "sphinx-substitution-extensions"
-version = "2020.9.30.0"
+version = "2022.2.16"
 description = "Extensions for Sphinx which allow for substitutions."
 category = "main"
 optional = true
@@ -905,11 +905,11 @@ python-versions = "*"
 
 [package.dependencies]
 docutils = ">=0.15"
-sphinx = ">=2.0.0"
-sphinx-prompt = ">=0.1"
+sphinx = ">=4.0.0"
 
 [package.extras]
-dev = ["autoflake (==1.4)", "black (==20.8b1)", "check-manifest (==0.43)", "doc8 (==0.8.1)", "flake8-commas (==2.0.0)", "flake8-quotes (==3.2.0)", "flake8 (==3.8.3)", "isort (==5.5.4)", "mypy (==0.782)", "pip-check-reqs (==2.1.1)", "pydocstyle (==5.1.1)", "pyenchant (==3.1.1)", "pygithub (==1.53)", "pylint (==2.6.0)", "pyroma (==2.6)", "pytest-cov (==2.10.1)", "pytest (==6.1.0)", "twine (==3.2.0)", "vulture (==2.1)"]
+dev = ["autoflake (==1.4)", "black (==22.1.0)", "check-manifest (==0.47)", "doc8 (==0.10.1)", "flake8-commas (==2.1.0)", "flake8-quotes (==3.3.1)", "flake8 (==4.0.1)", "isort (==5.10.1)", "mypy (==0.931)", "pip-check-reqs (==2.3.2)", "pydocstyle (==6.1.1)", "pyenchant (==3.2.2)", "pylint (==2.12.2)", "pyroma (==3.2)", "pytest-cov (==3.0.0)", "pytest (==7.0.1)", "types-docutils (==0.17.5)", "vulture (==2.3)"]
+prompt = ["sphinx-prompt (>=0.1)"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -1133,7 +1133,7 @@ fast = ["uvloop", "aiofiles"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "3c414f4d9a865764b4fd87777002df4048324cc68b19a482a913c8ee6bcccfa6"
+content-hash = "bbfbd5047af4dbdf2472cb9b0de0e2aec80d4e613125539a1f003c7c5d67ef23"
 
 [metadata.files]
 aiofiles = [
@@ -1833,8 +1833,8 @@ sphinx-prompt = [
     {file = "sphinx_prompt-1.5.0-py3-none-any.whl", hash = "sha256:fa4e90d8088b5a996c76087d701fc7e31175f8b9dc4aab03a507e45051067162"},
 ]
 sphinx-substitution-extensions = [
-    {file = "Sphinx Substitution Extensions-2020.9.30.0.tar.gz", hash = "sha256:578afc04eb4f701d9a922f8b75f678d3a1a897fa7a172a9226b92f17553f177a"},
-    {file = "Sphinx_Substitution_Extensions-2020.9.30.0-py3-none-any.whl", hash = "sha256:02e543fb64c82a168031d6f64af5d11bdf91d3f06480ffe399c11be87453729f"},
+    {file = "Sphinx Substitution Extensions-2022.2.16.tar.gz", hash = "sha256:ff7d05bd00e8b2d7eb8a403b9f317d70411d4e9b6812bf91534a50df22190c75"},
+    {file = "Sphinx_Substitution_Extensions-2022.2.16-py3-none-any.whl", hash = "sha256:5a8ca34dac3984486344e95c36e3ed4766d402a71bdee7390d600f153db9795b"},
 ]
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
