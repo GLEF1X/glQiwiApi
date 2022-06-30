@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 from glQiwiApi.types.base import Base, HashableBase
 
 
@@ -19,7 +19,7 @@ class OrderDetails(Base):
     order_id: str = Field(..., alias='id')
     card_alias: str = Field(..., alias='cardAlias')
     status: str
-    price: Optional[AmountWithCurrency] = None
+    price: Optional[Amount] = None
     card_id: Optional[str] = Field(alias='cardId', default=None)
 
 
@@ -42,7 +42,7 @@ class CardCredentials(Base):
 
 class Requisite(Base):
     name: str
-    value: str
+    amount: str
 
 
 class Details(Base):
@@ -58,7 +58,7 @@ class CardInfo(Base):
     id_: int = Field(..., alias='id')
     name: str
     alias: str
-    price: AmountWithCurrency
+    price: Amount
     period: str
     type_: str = Field(..., alias='type')
     details: Details
@@ -66,5 +66,5 @@ class CardInfo(Base):
 
 class Card(HashableBase):
     details: CardCredentials = Field(..., alias='qvx')
-    balance: Optional[AmountWithCurrency] = None
+    balance: Optional[Amount] = None
     info: CardInfo

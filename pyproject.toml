@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.11"
+version = "2.12"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Glib Garanin <glebgar567@gmail.com>"
@@ -64,6 +64,7 @@ pymdown-extensions = { version = "^9.4", optional = true }
 markdown-include = { version = "^0.6", optional = true }
 sphinxemoji = { version = "*", optional = true }
 sphinx-notfound-page = { version = "*", optional = true }
+python-iso4217 = "^0.0.3"
 
 
 

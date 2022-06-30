@@ -2,11 +2,10 @@ import ipaddress
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from glQiwiApi.types.amount import AmountWithCurrency, CurrencyModel
+from glQiwiApi.types.amount import Amount, Currency
 from glQiwiApi.types.base import Base
-from glQiwiApi.utils.currency_util import Currency
 
 
 class PassInfo(Base):
@@ -48,7 +47,7 @@ class AuthInfo(Base):
 class SmsNotification(Base):
     """object: SmsNotification"""
 
-    price: AmountWithCurrency
+    price: Amount
     enabled: bool
     active: bool
     end_date: Optional[datetime] = Field(None, alias='endDate')
@@ -95,7 +94,7 @@ class ContractInfo(Base):
 class UserInfo(Base):
     """object: UserInfo"""
 
-    default_pay_currency: CurrencyModel = Field(..., alias='defaultPayCurrency')
+    default_pay_currency: Currency = Field(..., alias='defaultPayCurrency')
     default_pay_source: Optional[int] = Field(None, alias='defaultPaySource')
     default_pay_account_alias: Optional[str] = Field(None, alias='defaultPayAccountAlias')
     email: Optional[str] = None
@@ -104,12 +103,6 @@ class UserInfo(Base):
     operator: str
     phone_hash: str = Field(alias='phoneHash')
     promo_enabled: Optional[bool] = Field(None, alias='promoEnabled')
-
-    @validator('default_pay_currency', pre=True)
-    def humanize_pay_currency(cls, v):  # type: ignore
-        if not isinstance(v, int):
-            return v
-        return Currency.get(str(v))
 
 
 class UserProfile(Base):

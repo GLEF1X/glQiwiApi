@@ -49,7 +49,7 @@ from glQiwiApi.qiwi.clients.wallet.methods.webhook.register_webhook import Regis
 from glQiwiApi.qiwi.clients.wallet.methods.webhook.send_test_notification import (
     SendTestWebhookNotification,
 )
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 from glQiwiApi.types.arbitrary import File
 from glQiwiApi.utils.validators import PhoneNumber, String
 
@@ -381,7 +381,7 @@ class QiwiWallet(BaseAPIClient):
             GetBalances(), phone_number=self.phone_number_without_plus_sign
         )
 
-    async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
+    async def get_balance(self, *, account_number: int = 1) -> Amount:
         resp: List[Balance] = await self._request_service.execute_api_method(
             GetBalances(),
             phone_number=self._phone_number,
@@ -506,7 +506,7 @@ class QiwiWallet(BaseAPIClient):
 
     async def payment_by_payment_details(
         self,
-        payment_sum: AmountWithCurrency,
+        payment_sum: Amount,
         payment_method: PaymentMethod,
         fields: PaymentDetails,
         payment_id: Optional[str] = None,

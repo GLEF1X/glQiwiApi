@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import Field
 
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 from glQiwiApi.types.base import Base
 
 
@@ -29,7 +29,7 @@ class PaymentInfo(Base):
     """object: PaymentInfo"""
 
     id: int
-    amount: AmountWithCurrency = Field(..., alias='sum')
+    amount: Amount = Field(..., alias='sum')
     terms: str
     fields: Fields
     source: str
@@ -44,7 +44,7 @@ class PaymentMethod(Base):
 
 class QiwiPayment(Base):
     id: int
-    sum: AmountWithCurrency
+    sum: Amount
     method: PaymentMethod = Field(..., alias='paymentMethod')
     fields: Dict[Any, Any]
     comment: Optional[str] = None

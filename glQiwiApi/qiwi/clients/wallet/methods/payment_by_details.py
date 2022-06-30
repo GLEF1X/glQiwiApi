@@ -6,7 +6,7 @@ from pydantic import Field
 from glQiwiApi.core.abc.api_method import RuntimeValue
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import PaymentDetails, PaymentInfo, PaymentMethod
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 
 
 class MakePaymentByDetails(QiwiAPIMethod[PaymentInfo]):
@@ -20,7 +20,7 @@ class MakePaymentByDetails(QiwiAPIMethod[PaymentInfo]):
         'fields': RuntimeValue(),
     }
 
-    payment_sum: AmountWithCurrency = Field(..., scheme_path='sum')
+    payment_sum: Amount = Field(..., scheme_path='sum')
     payment_method: PaymentMethod = Field(..., scheme_path='paymentMethod')
     details: PaymentDetails = Field(..., scheme_path='fields')
     payment_id: Optional[str] = Field(None, scheme_path='id')

@@ -4,7 +4,7 @@ import abc
 from typing import TYPE_CHECKING, cast
 
 from glQiwiApi.qiwi.clients.wallet.types.transaction import Transaction
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 
 from .base import Handler
 
@@ -22,5 +22,5 @@ class AbstractTransactionHandler(Handler[Transaction], abc.ABC):
         return self.event.id
 
     @property
-    def transaction_sum(self) -> AmountWithCurrency:
+    def transaction_sum(self) -> Amount:
         return self.event.sum

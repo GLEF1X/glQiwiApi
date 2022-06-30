@@ -18,7 +18,7 @@ class DetectMobileNumber(QiwiAPIMethod[MobileOperator]):
     @classmethod
     def parse_http_response(cls, response: HTTPResponse) -> ReturningType:
         mobile_operator: MobileOperator = super().parse_http_response(response)
-        if mobile_operator.code.value == '2' or mobile_operator.code.name == 'ERROR':
+        if mobile_operator.code.amount == '2' or mobile_operator.code.name == 'ERROR':
             raise MobileOperatorCannotBeDeterminedError(
                 response, custom_message=mobile_operator.message
             )

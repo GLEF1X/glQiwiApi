@@ -1,57 +1,30 @@
-from typing import Optional, Union
+import inspect
+from typing import Any, Dict, cast
 
-from pydantic import BaseConfig, BaseModel, Field, validator
+from iso4217 import Currency as _Currency
+from iso4217 import find_currency
+from pydantic import root_validator
 
 from glQiwiApi.types.base import Base, HashableBase
 
 
-class CurrencyModel(HashableBase):
-    code: str
-    decimal_digits: int
-    name: str
-    name_plural: str
-    rounding: Union[int, float]
-    symbol: str
-    symbol_native: str
-    iso_format: Optional[str] = Field(..., alias='isoformat')
+class Currency(HashableBase, _Currency):
+    __root__: int
 
-    def __str__(self) -> str:
-        return self.code
-
-    class Config(BaseConfig):
-        frozen = True
-        allow_mutation = False
+    @root_validator(skip_on_failure=True)
+    def humanize(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        currency_numeric_code: int = cast(int, values.get('__root__'))
+        # inspect.getfullargspec(_Currency.__init__) will contain `self`,
+        # so we cut it off and get original currency cls's constructor input names
+        args = inspect.getfullargspec(_Currency.__init__).args[1:]
+        currency = find_currency(numeric_code=currency_numeric_code)
+        return {k: getattr(currency, k, None) for k in args}
 
 
-class AmountWithCurrency(Base):
+class Amount(Base):
     amount: float
-    currency: Union[CurrencyModel, str]  # string if currency util couldn't parse it
-
-    @validator('currency', pre=True)
-    def humanize_pay_currency(cls, v):  # type: ignore
-        from glQiwiApi.utils.currency_util import Currency
-
-        if not isinstance(v, int):
-            try:
-                v = int(v)
-            except ValueError:
-                return v
-        return Currency.get(str(v))
+    currency: Currency
 
 
-class HashableSum(HashableBase, AmountWithCurrency):
-    ...
-
-
-class PlainAmount(BaseModel):
-    value: float
-    currency: str
-
-
-class HashablePlainAmount(HashableBase, PlainAmount):
-    ...
-
-
-class Type(BaseModel):
-    id: str
-    title: str
+class HashableAmount(Amount, HashableBase):
+    pass

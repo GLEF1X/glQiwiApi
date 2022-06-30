@@ -35,7 +35,7 @@ from glQiwiApi.qiwi.clients.wallet.types import (
 from glQiwiApi.qiwi.clients.wallet.types.balance import AvailableBalance
 from glQiwiApi.qiwi.clients.wallet.types.mobile_operator import MobileOperator
 from glQiwiApi.qiwi.clients.wallet.types.nickname import NickName
-from glQiwiApi.types.amount import AmountWithCurrency, PlainAmount
+from glQiwiApi.types.amount import Amount
 from glQiwiApi.types.arbitrary import File
 from glQiwiApi.utils.deprecated import deprecated
 
@@ -58,7 +58,7 @@ class QiwiWrapper:
         self._qiwi_wallet = QiwiWallet(api_access_token or '', phone_number)
         self._p2p_client = QiwiP2PClient(secret_p2p or '', shim_server_url=shim_server_url)
 
-    async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
+    async def get_balance(self, *, account_number: int = 1) -> Amount:
         return await self._qiwi_wallet.get_balance(account_number=account_number)
 
     async def get_nickname(self) -> NickName:
@@ -394,7 +394,7 @@ class QiwiWrapper:
 
     async def payment_by_payment_details(
         self,
-        payment_sum: AmountWithCurrency,
+        payment_sum: Amount,
         payment_method: PaymentMethod,
         fields: PaymentDetails,
         payment_id: Optional[str] = None,
@@ -605,7 +605,7 @@ class QiwiWrapper:
         self,
         bill_id: Union[str, int],
         refund_id: Union[str, int],
-        json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
+        json_bill_data: Union[Amount, Dict[str, Union[str, int]]],
     ) -> RefundedBill:
         """
         The method allows you to make a refund on a paid invoice.

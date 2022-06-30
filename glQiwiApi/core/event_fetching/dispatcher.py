@@ -48,7 +48,7 @@ class BaseDispatcher(abc.ABC):
 
     async def process_event(self, event: Event, *args: Any) -> None:
         """
-        Feed handlers with event.
+        Feed handlers withf\\ event.
 
         :param event: any object that will be propagated to handlers
         """

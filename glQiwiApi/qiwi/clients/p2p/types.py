@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseConfig, Extra, Field
 
-from glQiwiApi.types.amount import HashablePlainAmount, PlainAmount
+from glQiwiApi.types.amount import Amount, HashableAmount
 from glQiwiApi.types.base import HashableBase
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
@@ -20,7 +20,7 @@ class Customer(HashableBase):
 
 
 class BillStatus(HashableBase):
-    value: str
+    amount: str
     changed_datetime: Optional[datetime] = Field(None, alias='changedDateTime')
 
 
@@ -39,7 +39,7 @@ class BillError(HashableBase):
 
 
 class Bill(HashableBase):
-    amount: HashablePlainAmount
+    amount: HashableAmount
     status: BillStatus
     site_id: str = Field(..., alias='siteId')
     id: str = Field(..., alias='billId')
@@ -61,7 +61,7 @@ class Bill(HashableBase):
 class RefundedBill(HashableBase):
     """object: RefundedBill"""
 
-    amount: PlainAmount
+    amount: Amount
     datetime: datetime
     refund_id: str = Field(..., alias='refundId')
     status: str
@@ -85,7 +85,7 @@ class BillWebhook(HashableBase):
         webhook_key = base64.b64decode(bytes(secret_p2p_key, 'utf-8'))
         bill = self.bill
 
-        invoice_params = f'{bill.amount.currency}|{bill.amount.value}|{bill.id}|{bill.site_id}|{bill.status.value}'
+        invoice_params = f'{bill.amount.currency}|{bill.amount.amount}|{bill.id}|{bill.site_id}|{bill.status.amount}'
         generated_signature = hmac.new(
             webhook_key, invoice_params.encode('utf-8'), hashlib.sha256
         ).hexdigest()

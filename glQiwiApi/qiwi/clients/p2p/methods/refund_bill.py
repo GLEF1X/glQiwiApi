@@ -5,7 +5,7 @@ from pydantic import Field
 from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.p2p.types import RefundedBill
-from glQiwiApi.types.amount import PlainAmount
+from glQiwiApi.types.amount import Amount
 
 
 class RefundBill(QiwiAPIMethod[RefundedBill]):
@@ -15,11 +15,11 @@ class RefundBill(QiwiAPIMethod[RefundedBill]):
     bill_id: str = Field(..., path_runtime_value=True)
     refund_id: str = Field(..., path_runtime_value=True)
 
-    json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]]
+    json_bill_data: Union[Amount, Dict[str, Union[str, int]]]
 
     def build_request(self, **url_format_kw: Any) -> 'Request':
         json_payload = self.json_bill_data
-        if isinstance(self.json_bill_data, PlainAmount):
+        if isinstance(self.json_bill_data, Amount):
             json_payload = self.json_bill_data.json(encoder=self.Config.json_dumps)  # type: ignore
 
         return Request(

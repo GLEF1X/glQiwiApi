@@ -11,7 +11,7 @@ from glQiwiApi.qiwi.clients.p2p.methods.get_bill_by_id import GetBillByID
 from glQiwiApi.qiwi.clients.p2p.methods.refund_bill import RefundBill
 from glQiwiApi.qiwi.clients.p2p.methods.reject_p2p_bill import RejectP2PBill
 from glQiwiApi.qiwi.clients.p2p.types import Bill, Customer, PairOfP2PKeys, RefundedBill
-from glQiwiApi.types.amount import PlainAmount
+from glQiwiApi.types.amount import Amount
 from glQiwiApi.utils.compat import remove_suffix
 from glQiwiApi.utils.deprecated import warn_deprecated
 from glQiwiApi.utils.validators import String
@@ -105,7 +105,7 @@ class QiwiP2PClient(BaseAPIClient):
         :param bill_id:
         :return: status of bill
         """
-        return (await self.get_bill_by_id(bill_id)).status.value
+        return (await self.get_bill_by_id(bill_id)).status.amount
 
     async def create_p2p_bill(
         self,
@@ -175,7 +175,7 @@ class QiwiP2PClient(BaseAPIClient):
         self,
         bill_id: Union[str, int],
         refund_id: Union[str, int],
-        json_bill_data: Union[PlainAmount, Dict[str, Union[str, int]]],
+        json_bill_data: Union[Amount, Dict[str, Union[str, int]]],
     ) -> RefundedBill:
         """
         The method allows you to make a refund on a paid invoice.
