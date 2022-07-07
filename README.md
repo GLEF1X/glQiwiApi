@@ -7,10 +7,8 @@
 ![codecov](https://codecov.io/gh/GLEF1X/glQiwiApi/branch/dev-2.x/graph/badge.svg?token=OD538HKV15)
 ![CI](https://github.com/GLEF1X/glQiwiApi/actions/workflows/tests.yml/badge.svg) ![mypy](https://img.shields.io/badge/%20type_checker-mypy-%231674b1?style=flat) [![Downloads](https://pepy.tech/badge/glqiwiapi/month)](https://pepy.tech/project/glqiwiapi) [![Downloads](https://pepy.tech/badge/glqiwiapi)](https://pepy.tech/project/glqiwiapi)
 
-<img src="https://github.com/GLEF1X/glQiwiApi/blob/dev-2.x/demo.gif"/>
+<img src="https://github.com/GLEF1X/glQiwiApi/blob/dev-2.x/docs/static/demo.gif"/>
 </h2>
-
-**glQiwiApi 2.x has breaking changes**
 
 ## 🌎Official api resources:
 
