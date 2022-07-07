@@ -148,6 +148,60 @@ known_third_party = [
     "pytest"
 ]
 
+[tool.mypy]
+plugins = "pydantic.mypy"
+python_version = 3.8
+show_error_codes = true
+show_error_context = true
+pretty = true
+ignore_missing_imports = false
+warn_unused_configs = true
+disallow_subclassing_any = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+follow_imports_for_stubs = true
+namespace_packages = true
+show_absolute_path = true
+
+[[ tool.mypy.overrides ]]
+module = "uvloop"
+ignore_missing_imports = true
+
+[tool.coverage]
+exclude_lines ="""
+    pragma: no cover
+    @abstractmethod
+    @abc.abstractmethod
+    type: ignore
+    raise NotImplementedError
+    def __repr__
+    def __str__
+    class .*\bProtocol):
+    pass"""
+omit = """
+    glQiwiApi/ext/*
+    */site-packages/*
+    */tests/*
+    */.eggs/*
+    glQiwiApi/utils/mypy_hacks.py
+    glQiwiApi/utils/compat.py
+    glQiwiApi/utils/payload.py
+    glQiwiApi/qiwi/clients/wrapper.py
+    glQiwiApi/utils/deprecated.py
+    glQiwiApi/utils/date_conversion.py
+    glQiwiApi/utils/synchronous.py
+    glQiwiApi/core/cache
+"""
+
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
