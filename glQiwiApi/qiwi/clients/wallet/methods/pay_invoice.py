@@ -8,7 +8,7 @@ from glQiwiApi.qiwi.clients.p2p.types import InvoiceStatus
 
 
 class PayInvoice(QiwiAPIMethod[InvoiceStatus]):
-    url: ClassVar[str] = 'https://edge.qiwi.com/checkout-api/api/bill/search'
+    url: ClassVar[str] = 'https://edge.qiwi.com/checkout-api/invoice/pay/wallet'
     http_method: ClassVar[str] = 'POST'
 
     json_payload_schema: ClassVar[Dict[str, Any]] = {
