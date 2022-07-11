@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseConfig, Extra, Field
 
-from glQiwiApi.types.amount import HashablePlainAmount, PlainAmount
+from glQiwiApi.types.amount import Amount, HashableAmount
 from glQiwiApi.types.base import HashableBase
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
@@ -39,7 +39,7 @@ class BillError(HashableBase):
 
 
 class Bill(HashableBase):
-    amount: HashablePlainAmount
+    amount: HashableAmount
     status: BillStatus
     site_id: str = Field(..., alias='siteId')
     id: str = Field(..., alias='billId')
@@ -61,13 +61,13 @@ class Bill(HashableBase):
 class RefundedBill(HashableBase):
     """object: RefundedBill"""
 
-    amount: PlainAmount
+    value: Amount
     datetime: datetime
     refund_id: str = Field(..., alias='refundId')
     status: str
 
     def __str__(self) -> str:
-        return f'№{self.refund_id} {self.status} {self.amount} {self.datetime}'
+        return f'№{self.refund_id} {self.status} {self.value} {self.datetime}'
 
 
 class BillWebhookPayload(Bill):
@@ -79,13 +79,13 @@ class BillWebhook(HashableBase):
     bill: BillWebhookPayload = Field(..., alias='bill')
 
     def __repr__(self) -> str:
-        return f'#{self.bill.id} {self.bill.amount} {self.bill.status} '
+        return f'#{self.bill.id} {self.bill.value} {self.bill.status} '
 
     def verify_signature(self, sha256_signature: str, secret_p2p_key: str) -> None:
         webhook_key = base64.b64decode(bytes(secret_p2p_key, 'utf-8'))
         bill = self.bill
 
-        invoice_params = f'{bill.amount.currency}|{bill.amount.value}|{bill.id}|{bill.site_id}|{bill.status.value}'
+        invoice_params = f'{bill.value.currency}|{bill.value.value}|{bill.id}|{bill.site_id}|{bill.status.value}'
         generated_signature = hmac.new(
             webhook_key, invoice_params.encode('utf-8'), hashlib.sha256
         ).hexdigest()

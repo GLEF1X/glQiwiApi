@@ -1,15 +1,14 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from glQiwiApi.types.amount import AmountWithCurrency, CurrencyModel
+from glQiwiApi.types.amount import Amount, Currency
 from glQiwiApi.types.base import HashableBase
-from glQiwiApi.utils.currency_util import Currency
 
 
 class AvailableBalance(HashableBase):
     alias: str
-    currency: Union[str, CurrencyModel]
+    currency: Currency
 
 
 class Balance(HashableBase):
@@ -20,13 +19,7 @@ class Balance(HashableBase):
     fs_alias: str = Field(alias='fsAlias')
     bank_alias: str = Field(alias='bankAlias')
     has_balance: bool = Field(alias='hasBalance')
-    balance: Optional[AmountWithCurrency] = None
-    currency: CurrencyModel
+    balance: Optional[Amount] = None
+    currency: Currency
     account_type: Optional[Dict[str, Any]] = Field(None, alias='type')
     is_default_account: bool = Field(alias='defaultAccount')
-
-    @validator('currency', pre=True)
-    def humanize_pay_currency(cls, v):  # type: ignore
-        if not isinstance(v, int):
-            return v
-        return Currency.get(str(v))

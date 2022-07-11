@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, cast
 
 from glQiwiApi.core.event_fetching.class_based.base import Handler
 from glQiwiApi.qiwi.clients.p2p.types import Bill
-from glQiwiApi.types.amount import PlainAmount
+from glQiwiApi.types.amount import Amount
 
 if TYPE_CHECKING:
     from glQiwiApi.qiwi.clients.p2p.client import QiwiP2PClient
@@ -21,8 +21,8 @@ class AbstractBillHandler(Handler[Bill], abc.ABC):
         return self.event.id
 
     @property
-    def bill_sum(self) -> PlainAmount:
-        return self.event.amount
+    def bill_sum(self) -> Amount:
+        return self.event.value
 
     @property
     def pay_url(self) -> str:

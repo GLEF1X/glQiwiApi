@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from pydantic import Field
 
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 from glQiwiApi.types.base import Base
 
 
@@ -100,13 +100,13 @@ class Transaction(Base):
     Для пополнений - номер отправителя,
     терминала или название агента пополнения кошелька
     """
-    sum: AmountWithCurrency
+    sum: Amount
     """Данные о сумме платежа или пополнения."""
 
-    commission: AmountWithCurrency
+    commission: Amount
     """Данные о комиссии"""
 
-    total: AmountWithCurrency
+    total: Amount
     """Общие данные о платеже в формате объекта Sum"""
 
     provider: Provider

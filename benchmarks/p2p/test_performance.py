@@ -1,5 +1,6 @@
 # pip install pytest-benchmark pyqiwip2p
 import os
+from typing import Any, Callable, Dict, Tuple
 
 import pytest
 from pyqiwip2p.AioQiwip2p import AioQiwiP2P
@@ -26,7 +27,9 @@ async def create_bill_with_pyQiwiP2P():
 
 
 @pytest.fixture()
-def aio_benchmark(benchmark: BenchmarkFixture) -> BenchmarkFixture:
+def aio_benchmark(
+    benchmark: BenchmarkFixture,
+) -> Callable[[Any, Tuple[Any, ...], Dict[str, Any]], None]:
     import asyncio
     import threading
 

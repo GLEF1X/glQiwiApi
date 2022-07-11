@@ -4,7 +4,7 @@ import pytest
 
 from glQiwiApi.qiwi.clients.wallet.types import Transaction, TransactionStatus, TransactionWebhook
 from glQiwiApi.qiwi.clients.wallet.types.transaction import Provider, TransactionType
-from glQiwiApi.types.amount import AmountWithCurrency
+from glQiwiApi.types.amount import Amount
 
 
 @pytest.fixture()
@@ -17,10 +17,10 @@ def transaction() -> Transaction:
         statusText='hello',
         trmTxnId='world',
         account='+38908234234',
-        sum=AmountWithCurrency(amount=999, currency='643'),
-        total=AmountWithCurrency(amount=999, currency='643'),
+        sum=Amount(value=999, currency='643'),
+        total=Amount(value=999, currency='643'),
         provider=Provider(),
-        commission=AmountWithCurrency(amount=999, currency='643'),
+        commission=Amount(value=999, currency='643'),
         currencyRate=643,
         type=TransactionType.OUT,
         comment='my_comment',

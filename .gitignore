@@ -16,7 +16,7 @@ htmlcov
 
 .benchmarks
 
-glQiwiApi/t.py
+glQiwiApi/playground.py.py
 *.pem
 # Distribution / packaging
 .Python

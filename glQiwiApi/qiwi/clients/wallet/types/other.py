@@ -1,27 +1,15 @@
-from typing import Union
+from pydantic import Field
 
-from pydantic import Field, validator
-
-from glQiwiApi.types.amount import CurrencyModel
+from glQiwiApi.types.amount import Currency
 from glQiwiApi.types.base import Base, HashableBase
-from glQiwiApi.utils.currency_util import Currency
 
 
 class CrossRate(HashableBase):
     """Курс валюты"""
 
-    rate_from: Union[str, CurrencyModel] = Field(..., alias='from')
-    rate_to: Union[str, CurrencyModel] = Field(..., alias='to')
+    rate_from: Currency = Field(..., alias='from')
+    rate_to: Currency = Field(..., alias='to')
     rate: float
-
-    @validator('rate_from', 'rate_to', pre=True)
-    def humanize_rates(cls, v):  # type: ignore
-        if not isinstance(v, str):
-            return v
-        cur = Currency.get(v)
-        if not cur:
-            return v
-        return cur
 
 
 class PaymentMethod(Base):

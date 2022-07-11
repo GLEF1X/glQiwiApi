@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from asyncio import AbstractEventLoop
 
@@ -82,12 +81,12 @@ class TestTxnWebhookView:
                 'payment': {
                     **txn.payment.dict(by_alias=True),
                     'sum': {
-                        'currency': txn.payment.sum.currency.code,
-                        'amount': txn.payment.sum.amount,
+                        'currency': txn.payment.sum.currency.numeric_code,
+                        'amount': txn.payment.sum.value,
                     },
                     'total': {
-                        'currency': txn.payment.sum.currency.code,
-                        'amount': txn.payment.sum.amount,
+                        'currency': txn.payment.sum.currency.numeric_code,
+                        'amount': txn.payment.sum.value,
                     },
                 },
                 'hookId': txn.id,

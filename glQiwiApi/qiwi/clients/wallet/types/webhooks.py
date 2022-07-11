@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from pydantic import Field, root_validator
 
-from glQiwiApi.types.amount import HashableSum
+from glQiwiApi.types.amount import HashableAmount
 from glQiwiApi.types.base import Base, HashableBase
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 
@@ -25,9 +25,9 @@ class WebhookPayment(HashableBase):
     status: str = Field(..., alias='status')
     txn_id: str = Field(..., alias='txnId')
     type: str = Field(..., alias='type')
-    commission: Optional[HashableSum] = Field(default=None, alias='calc_commission')
-    sum: HashableSum = Field(..., alias='sum')
-    total: HashableSum = Field(..., alias='total')
+    commission: Optional[HashableAmount] = Field(default=None, alias='calc_commission')
+    sum: HashableAmount = Field(..., alias='sum')
+    total: HashableAmount = Field(..., alias='total')
 
 
 class TransactionWebhook(HashableBase):

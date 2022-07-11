@@ -174,7 +174,7 @@ async def start_non_blocking_qiwi_api_polling(
     on_shutdown: Optional[_EventHandlerType] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
     context: Union[Dict[str, Any], Context, None] = None,
-) -> asyncio.Task:
+) -> asyncio.Task[None]:
     if context is None:
         context = {}
     executor = PollingExecutor(
@@ -312,7 +312,7 @@ class PollingExecutor(BaseExecutor):
             # allow graceful shutdown
             pass
 
-    async def start_non_blocking_polling(self) -> asyncio.Task:
+    async def start_non_blocking_polling(self) -> asyncio.Task[None]:
         return asyncio.create_task(self._run_infinite_polling())
 
     async def _run_infinite_polling(self) -> None:
