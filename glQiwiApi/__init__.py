@@ -7,13 +7,6 @@ from .core.cache import APIResponsesCacheInvalidationStrategy, InMemoryCacheStor
 from .core.cache.storage import CacheStorage
 from .yoo_money import YooMoneyAPI
 
-try:
-    import uvloop
-
-    uvloop.install()  # pragma: no cover
-except ImportError:
-    pass
-
 
 def default_cache_storage() -> CacheStorage:
     return InMemoryCacheStorage(invalidate_strategy=APIResponsesCacheInvalidationStrategy())
