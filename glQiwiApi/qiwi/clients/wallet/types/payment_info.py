@@ -29,7 +29,7 @@ class PaymentInfo(Base):
     """object: PaymentInfo"""
 
     id: int
-    amount: Amount = Field(..., alias='sum')
+    value: Amount = Field(..., alias='sum')
     terms: str
     fields: Fields
     source: str

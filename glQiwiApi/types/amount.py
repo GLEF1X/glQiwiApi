@@ -22,7 +22,7 @@ class Currency(HashableBase, _Currency):
 
 
 class Amount(Base):
-    amount: float
+    value: float
     currency: Currency
 
 

@@ -4,7 +4,6 @@ import ssl
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from io import BytesIO
-from os import PathLike
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Union, cast
 
 if TYPE_CHECKING:

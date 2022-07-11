@@ -200,7 +200,7 @@ class OperationDetails(Response):
 
     id: str = Field(..., alias='operation_id')
     status: str
-    amount: float
+    value: float
     amount_due: Optional[float] = None
     currency: str = Field(..., alias='amount_currency')
     operation_date: datetime = Field(..., alias='datetime')

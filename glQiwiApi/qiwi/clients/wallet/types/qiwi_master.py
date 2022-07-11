@@ -41,8 +41,8 @@ class CardCredentials(Base):
 
 
 class Requisite(Base):
-    name: str
-    amount: str
+    value: str
+    value: str
 
 
 class Details(Base):

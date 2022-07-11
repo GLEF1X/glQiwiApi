@@ -28,7 +28,7 @@ from glQiwiApi.qiwi.clients.wallet.types import (
 from glQiwiApi.qiwi.clients.wallet.types.balance import AvailableBalance
 from glQiwiApi.qiwi.clients.wallet.types.nickname import NickName
 from glQiwiApi.qiwi.exceptions import MobileOperatorCannotBeDeterminedError, ObjectNotFoundError
-from glQiwiApi.types.amount import Amount, CurrencyModel
+from glQiwiApi.types.amount import Amount, Currency
 from glQiwiApi.types.arbitrary import File
 from tests.settings import QIWI_WALLET_CREDENTIALS
 
@@ -51,7 +51,7 @@ async def api_fixture() -> AsyncIterator[QiwiWallet]:
 async def test_get_balance(api: QiwiWallet) -> None:
     result = await api.get_balance()
     assert isinstance(result, Amount)
-    assert isinstance(result.currency, CurrencyModel)
+    assert isinstance(result.currency, Currency)
 
 
 def test_create_request_service() -> None:

@@ -164,7 +164,7 @@ class QiwiWrapper:
         """
 
         def obsolete_check_transaction(txn: Transaction) -> bool:
-            if txn.sum.amount < amount or txn.type != transaction_type.value:
+            if txn.sum.value < amount or txn.type != transaction_type.value:
                 return False
             if txn.comment == comment and txn.to_account == sender:
                 return True

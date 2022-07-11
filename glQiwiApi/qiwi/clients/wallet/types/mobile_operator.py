@@ -6,7 +6,7 @@ from glQiwiApi.types.base import Base
 
 
 class Code(Base):
-    amount: str
+    value: str
     name: str = Field(..., alias='_name')
 
 

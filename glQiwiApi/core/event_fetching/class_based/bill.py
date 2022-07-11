@@ -22,7 +22,7 @@ class AbstractBillHandler(Handler[Bill], abc.ABC):
 
     @property
     def bill_sum(self) -> Amount:
-        return self.event.amount
+        return self.event.value
 
     @property
     def pay_url(self) -> str:

@@ -38,7 +38,7 @@ async def api_fixture() -> AsyncIterator[QiwiP2PClient]:
 async def test_create_p2p_bill(api: QiwiP2PClient, payload: Dict[str, Any]) -> None:
     result = await api.create_p2p_bill(**payload)
     assert isinstance(result, Bill)
-    assert payload['amount'] == result.amount.amount
+    assert payload['amount'] == result.value.value
 
 
 async def test_check_p2p_bill_status(api: QiwiP2PClient) -> None:
@@ -69,7 +69,7 @@ async def test_reject_p2p_bill(api: QiwiP2PClient) -> None:
 async def test_reject_bill_alias(api: QiwiP2PClient) -> None:
     b = await api.create_p2p_bill(amount=1)
     rejected_bill = await api.reject_bill(b)
-    assert rejected_bill.status.amount == 'REJECTED'
+    assert rejected_bill.status.value == 'REJECTED'
 
 
 async def test_check_bill_status_alias(api: QiwiP2PClient) -> None:
