@@ -877,11 +877,18 @@ transifex = ["transifex_client (>=0.11)"]
 
 [[package]]
 name = "sphinx-notfound-page"
-version = "0.8"
+version = "0.8.3"
 description = "Sphinx extension to build a 404 page with absolute URLs"
 category = "main"
 optional = true
 python-versions = "*"
+
+[package.dependencies]
+sphinx = ">=1.8"
+
+[package.extras]
+doc = ["sphinx", "sphinx-prompt", "sphinx-tabs", "sphinx-rtd-theme", "sphinxemoji", "sphinx-autoapi", "sphinx-notfound-page"]
+test = ["tox"]
 
 [[package]]
 name = "sphinx-prompt"
@@ -1839,8 +1846,8 @@ sphinx-intl = [
     {file = "sphinx_intl-2.0.1-py3.8.egg", hash = "sha256:2ff97cba0e4e43249e339a3c29dd2f5b63c25ce794050aabca320ad95f5c5b55"},
 ]
 sphinx-notfound-page = [
-    {file = "sphinx-notfound-page-0.8.tar.gz", hash = "sha256:39bf5b99e1fbf6164631ecac2b58038f08e0ab9278c563076aadd1cf04b6bb7a"},
-    {file = "sphinx_notfound_page-0.8-py3-none-any.whl", hash = "sha256:1901e01df9931922e87ef1f967042322b06a65790132cbd393861261e023b974"},
+    {file = "sphinx-notfound-page-0.8.3.tar.gz", hash = "sha256:f728403280026b84c234540bebbed7f710b9ea582e7348a35a5becefe4024332"},
+    {file = "sphinx_notfound_page-0.8.3-py2.py3-none-any.whl", hash = "sha256:c4867b345afccef72de71fb410c412540dfbb5c2de0dc06bde70b331b8f30469"},
 ]
 sphinx-prompt = [
     {file = "sphinx_prompt-1.5.0-py3-none-any.whl", hash = "sha256:fa4e90d8088b5a996c76087d701fc7e31175f8b9dc4aab03a507e45051067162"},
