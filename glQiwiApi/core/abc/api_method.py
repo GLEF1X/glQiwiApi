@@ -128,7 +128,7 @@ class APIMethod(abc.ABC, GenericModel, Generic[ReturningType]):
         if self.http_method == 'GET' and self.json_payload_schema:
             raise TypeError(
                 'Request schema is not compatible with GET http method '
-                'since GET method cannot transfer_money json payload'
+                'because GET method cannot transfer json payload'
             )
 
         if self.http_method == 'GET':
