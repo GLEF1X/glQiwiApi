@@ -267,7 +267,7 @@ class MoneySource(BaseModel):
     Каждый метод содержит набор атрибутов.
     """
 
-    wallet: Wallet
+    wallet: Optional[Wallet] = None
     """платеж со счета пользователя"""
     cards: Optional[Card] = None
     """платеж с банковских карт, привязанных к счету"""
