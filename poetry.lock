@@ -396,14 +396,14 @@ testing = ["coverage", "pyyaml"]
 
 [[package]]
 name = "markdown-include"
-version = "0.6.0"
+version = "0.7.0"
 description = "This is an extension to Python-Markdown which provides an \"include\" function, similar to that found in LaTeX (and also the C pre-processor and Fortran). I originally wrote it for my FORD Fortran auto-documentation generator."
 category = "main"
 optional = true
 python-versions = "*"
 
 [package.dependencies]
-markdown = "*"
+markdown = ">=3.0"
 
 [[package]]
 name = "markupsafe"
@@ -1140,7 +1140,7 @@ fast = ["uvloop", "aiofiles"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "8d450698d30757d9c854f8d61f9349c1d69602d4ece30bd4adebda79c3b55058"
+content-hash = "940ceb4de00d6e65cd9d42ec5a8da823c44c6ea6106c6c213c86a33303fc3327"
 
 [metadata.files]
 aiofiles = [
@@ -1543,7 +1543,7 @@ markdown = [
     {file = "Markdown-3.3.5.tar.gz", hash = "sha256:26e9546bfbcde5fcd072bd8f612c9c1b6e2677cb8aadbdf65206674f46dde069"},
 ]
 markdown-include = [
-    {file = "markdown-include-0.6.0.tar.gz", hash = "sha256:6f5d680e36f7780c7f0f61dca53ca581bd50d1b56137ddcd6353efafa0c3e4a2"},
+    {file = "markdown_include-0.7.0-py3-none-any.whl", hash = "sha256:a06183b7c7225e73112737acdc6fe0ac0686c39457234eeb5ede23881fed001d"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},
