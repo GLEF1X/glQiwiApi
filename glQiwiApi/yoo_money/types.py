@@ -7,10 +7,7 @@ from pydantic import BaseModel, Field, ValidationError, root_validator
 
 from glQiwiApi.types.base import Base
 from glQiwiApi.utils.compat import Literal
-
-
-class JsonErr(BaseModel):
-    error_code: str = Field(..., alias='error')
+from glQiwiApi.yoo_money.exceptions import YooMoneyError, YooMoneyErrorSchema
 
 
 class Response(Base):
@@ -18,13 +15,11 @@ class Response(Base):
 
     @root_validator(pre=True)
     def _check_error(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        from glQiwiApi.yoo_money.exceptions import match_error
-
         try:
-            err = JsonErr.parse_obj(values)
+            err_schema = YooMoneyErrorSchema.parse_obj(values)
         except ValidationError:
             return values
-        match_error(err.error_code)
+        YooMoneyError.raise_most_appropriate_error(err_schema)
         return values
 
 
