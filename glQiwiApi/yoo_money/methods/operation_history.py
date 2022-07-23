@@ -6,7 +6,7 @@ from pydantic import conint
 from glQiwiApi.core.abc.api_method import APIMethod, Request
 from glQiwiApi.utils.date_conversion import datetime_to_utc_in_iso_format
 from glQiwiApi.utils.payload import filter_dictionary_none_values
-from glQiwiApi.yoo_money.types.types import OperationHistory
+from glQiwiApi.yoo_money.types import OperationHistory
 
 MAX_HISTORY_LIMIT = 100
 

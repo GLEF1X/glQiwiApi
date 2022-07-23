@@ -25,8 +25,8 @@ from glQiwiApi.yoo_money.methods.reject_incoming_transfer import RejectIncomingT
 from glQiwiApi.yoo_money.methods.request_payment import RequestPayment
 from glQiwiApi.yoo_money.methods.retrieve_account_info import RetrieveAccountInfo
 from glQiwiApi.yoo_money.methods.revoke_api_token import RevokeAPIToken
-from glQiwiApi.yoo_money.types import AccountInfo
-from glQiwiApi.yoo_money.types.types import (
+from glQiwiApi.yoo_money.types import (
+    AccountInfo,
     IncomingTransaction,
     OperationDetails,
     OperationHistory,
