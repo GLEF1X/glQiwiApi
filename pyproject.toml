@@ -61,7 +61,7 @@ Sphinx-Substitution-Extensions = { version = ">=2020.9.30,<2023.0.0", optional =
 towncrier = { version = "^21.3.0", optional = true }
 pygments = { version = "^2.4", optional = true }
 pymdown-extensions = { version = "^9.4", optional = true }
-markdown-include = { version = "^0.6", optional = true }
+markdown-include = { version = ">=0.6,<0.8", optional = true }
 sphinxemoji = { version = "*", optional = true }
 sphinx-notfound-page = { version = "*", optional = true }
 
