@@ -1068,7 +1068,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-pytz"
-version = "2022.1.1"
+version = "2022.1.2"
 description = "Typing stubs for pytz"
 category = "dev"
 optional = false
@@ -1140,7 +1140,7 @@ fast = ["uvloop", "aiofiles"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "ebaf9765f1af18c398a32e5de1e37d1ac5ddfb722b17ca5fe8fc62a7a74e0bb1"
+content-hash = "9d23ce24709c4b279747788fd585e648ded19cb8b2d200c6ebe760178a9efee0"
 
 [metadata.files]
 aiofiles = [
@@ -1942,8 +1942,8 @@ types-orjson = [
     {file = "types_orjson-3.6.2-py3-none-any.whl", hash = "sha256:22ee9a79236b6b0bfb35a0684eded62ad930a88a56797fa3c449b026cf7dbfe4"},
 ]
 types-pytz = [
-    {file = "types-pytz-2022.1.1.tar.gz", hash = "sha256:4e7add70886dc2ee6ee7535c8184a26eeb0ac9dbafae9962cb882d74b9f67330"},
-    {file = "types_pytz-2022.1.1-py3-none-any.whl", hash = "sha256:581467742f32f15fff1098698b11fd511057a2a8a7568d33b604083f2b03c24f"},
+    {file = "types-pytz-2022.1.2.tar.gz", hash = "sha256:1a8b25c225c5e6bd8468aa9eb45ddd3b337f6716d4072ad0aa4ef1e41478eebc"},
+    {file = "types_pytz-2022.1.2-py3-none-any.whl", hash = "sha256:8aa9fd2af9dee5f5bd7221c6804c9addeafa7ebc0008f544d4ace02b066818a4"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
