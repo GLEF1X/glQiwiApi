@@ -1,0 +1,3 @@
+[submodule "qiwi-referrer-proxy"]
+	path = qiwi-referrer-proxy
+	url = https://github.com/GLEF1X/qiwi-referrer-proxy.git
