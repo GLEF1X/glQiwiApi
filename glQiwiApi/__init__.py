@@ -12,7 +12,7 @@ def default_cache_storage() -> CacheStorage:
     return InMemoryCacheStorage(invalidate_strategy=APIResponsesCacheInvalidationStrategy())
 
 
-__version__ = '2.12a1'
+__version__ = '2.12'
 
 __all__ = (
     # clients
