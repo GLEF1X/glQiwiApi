@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError, root_validator
+from pydantic import BaseModel, Field, root_validator
 
 from glQiwiApi.types.base import Base
 from glQiwiApi.utils.compat import Literal
@@ -15,11 +15,10 @@ class Response(Base):
 
     @root_validator(pre=True)
     def _check_error(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            err_schema = YooMoneyErrorSchema.parse_obj(values)
-        except ValidationError:
+        if values.get('error') is None:
             return values
-        YooMoneyError.raise_most_appropriate_error(err_schema)
+
+        YooMoneyError.raise_most_appropriate_error(YooMoneyErrorSchema(error_code=values['error']))
         return values
 
 
