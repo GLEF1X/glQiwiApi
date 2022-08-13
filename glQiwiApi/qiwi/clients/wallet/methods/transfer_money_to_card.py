@@ -10,7 +10,7 @@ from glQiwiApi.qiwi.clients.wallet.types import PaymentInfo
 
 class TransferMoneyToCard(QiwiAPIMethod[PaymentInfo]):
     http_method: ClassVar[str] = 'POST'
-    url: ClassVar[str] = 'https://edge.qiwi.com/sinap/api/v2/terms/{private_card_id}'
+    url: ClassVar[str] = 'https://edge.qiwi.com/sinap/api/v2/terms/{private_card_id}/payments'
 
     json_payload_schema: ClassVar[Dict[str, Any]] = {
         'id': RuntimeValue(default_factory=lambda: str(int(time.time() * 1000))),
