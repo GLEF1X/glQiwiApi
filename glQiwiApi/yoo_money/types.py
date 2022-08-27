@@ -143,7 +143,7 @@ class Operation(Response):
     - out (расход).
     """
 
-    amount: Union[int, float]
+    amount: float
     """Сумма операции."""
 
     operation_type: str = Field(..., alias='type')
