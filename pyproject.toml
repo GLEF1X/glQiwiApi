@@ -91,7 +91,7 @@ async-timeout = "^4.0.2"
 # For CI and mypy
 types-orjson = "^3.6.2"
 types-pytz = "^2022.1.1"
-types-aiofiles = "^0.8.10"
+types-aiofiles = "^0.8.11"
 aiogram = "^2.21"
 cryptography = "^37.0.4"
 aiofiles = "^0.8.0"
