@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.14"
+version = "2.15"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Glib Garanin <glebgar567@gmail.com>"
