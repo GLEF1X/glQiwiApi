@@ -188,7 +188,7 @@ class QiwiWallet(BaseAPIClient):
         """
         return await self._request_service.execute_api_method(
             GetIdentification(),
-            phone_number=self._phone_number,
+            phone_number=self.phone_number_without_plus_sign,
         )
 
     async def get_limits(self, limit_types: Sequence[str] = ALL_LIMIT_TYPES) -> Dict[str, Limit]:
@@ -384,7 +384,7 @@ class QiwiWallet(BaseAPIClient):
     async def get_balance(self, *, account_number: int = 1) -> AmountWithCurrency:
         resp: List[Balance] = await self._request_service.execute_api_method(
             GetBalances(),
-            phone_number=self._phone_number,
+            phone_number=self.phone_number_without_plus_sign,
         )
         return resp[account_number - 1].balance  # type: ignore
 
@@ -539,7 +539,7 @@ class QiwiWallet(BaseAPIClient):
         You can choose these rights when creating a new api token, to use api QIWI Master
         """
         return await self._request_service.execute_api_method(
-            BuyQIWIMasterPackage(phone_number=self._phone_number)
+            BuyQIWIMasterPackage(phone_number=self.phone_number_without_plus_sign)
         )
 
     async def issue_qiwi_master_card(

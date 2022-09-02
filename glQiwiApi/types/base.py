@@ -1,5 +1,3 @@
-from typing import Hashable
-
 from pydantic import BaseConfig, BaseModel
 
 from glQiwiApi.utils.compat import json
