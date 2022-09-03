@@ -340,8 +340,7 @@ class QiwiWallet(BaseAPIClient):
         :return: Transaction object
         """
         return await self._request_service.execute_api_method(
-            GetTransactionInfo(transaction_id=transaction_id, transaction_type=transaction_type),
-            transaction_id=transaction_id,
+            GetTransactionInfo(transaction_id=transaction_id, transaction_type=transaction_type)
         )
 
     async def get_receipt(
