@@ -1065,7 +1065,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "types-aiofiles"
-version = "0.8.11"
+version = "22.1.0"
 description = "Typing stubs for aiofiles"
 category = "dev"
 optional = false
@@ -1153,7 +1153,7 @@ fast = ["uvloop", "aiofiles"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "9ba14cf80004fdc8e2bd06c80ea0ac4d8e305a316efedd4c089136fe9725799f"
+content-hash = "eeef3fef9614a7d21879e061450cf342b810ce4def9b89386d128cd244c0fbed"
 
 [metadata.files]
 aiofiles = [
@@ -1957,8 +1957,8 @@ typed-ast = [
     {file = "typed_ast-1.5.4.tar.gz", hash = "sha256:39e21ceb7388e4bb37f4c679d72707ed46c2fbf2a5609b8b8ebc4b067d977df2"},
 ]
 types-aiofiles = [
-    {file = "types-aiofiles-0.8.11.tar.gz", hash = "sha256:1f93aa68e47de1379f45eef9acd34faa0f9341628921cd6aede666e6e559a5a8"},
-    {file = "types_aiofiles-0.8.11-py3-none-any.whl", hash = "sha256:be6715fffd1c7f84c9316000ba8bbc66a884246dbd2902c163ebc2d67315206b"},
+    {file = "types-aiofiles-22.1.0.tar.gz", hash = "sha256:8ae2e1d2f99b62754cffe6a8761fd6eeb8a0675569dc73818248e5bc30cb9074"},
+    {file = "types_aiofiles-22.1.0-py3-none-any.whl", hash = "sha256:460c3b1c7fa24ec5f2c7d46cf3a849f07c7007a57fc19884be17e5159351fc39"},
 ]
 types-orjson = [
     {file = "types-orjson-3.6.2.tar.gz", hash = "sha256:cf9afcc79a86325c7aff251790338109ed6f6b1bab09d2d4262dd18c85a3c638"},
