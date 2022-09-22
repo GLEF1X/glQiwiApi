@@ -16,7 +16,7 @@ class GetHistory(QiwiAPIMethod[History]):
     url: ClassVar[str] = 'https://edge.qiwi.com/payment-history/v2/persons/{phone_number}/payments'
 
     rows: conint(le=MAX_HISTORY_LIMIT, strict=True, gt=0) = MAX_HISTORY_LIMIT
-    transaction_type: TransactionType = Field(TransactionType.ALL, alias='type')
+    transaction_type: TransactionType = Field(TransactionType.ALL, alias='operation')
     sources: Optional[List[Source]] = Field(None)
     start_date: Optional[datetime] = Field(None, alias='startDate')
     end_date: Optional[datetime] = Field(None, alias='endDate')
