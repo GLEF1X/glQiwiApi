@@ -47,7 +47,7 @@ pydantic = "^1.10.2"
 typing_extensions = { version = "^4.0.1", python = "<=3.7" }
 
 # Fast
-uvloop = { version = "^0.16.0", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
+uvloop = { version = ">=0.16,<0.18", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
 aiofiles = { version = "^22.1.0", optional = true}
 
 # Docs
