@@ -8,7 +8,7 @@ python-versions = ">=3.7,<4.0"
 
 [[package]]
 name = "aiogram"
-version = "2.22.1"
+version = "2.22.2"
 description = "Is a pretty simple and fully asynchronous framework for Telegram Bot API"
 category = "dev"
 optional = false
@@ -95,7 +95,7 @@ python-versions = ">=3.5"
 dev = ["cloudpickle", "coverage[toml] (>=5.0.2)", "furo", "hypothesis", "mypy (>=0.900,!=0.940)", "pre-commit", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "sphinx", "sphinx-notfound-page", "zope.interface"]
 docs = ["furo", "sphinx", "sphinx-notfound-page", "zope.interface"]
 tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
+tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
 name = "Babel"
@@ -174,7 +174,7 @@ optional = false
 python-versions = ">=3.6.0"
 
 [package.extras]
-unicode_backport = ["unicodedata2"]
+unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "click"
@@ -345,9 +345,9 @@ python-versions = ">=3.6.1,<4.0"
 
 [package.extras]
 colors = ["colorama (>=0.4.3,<0.5.0)"]
-pipfile_deprecated_finder = ["pipreqs", "requirementslib"]
+pipfile-deprecated-finder = ["pipreqs", "requirementslib"]
 plugins = ["setuptools"]
-requirements_deprecated_finder = ["pip-api", "pipreqs"]
+requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
 name = "Jinja2"
@@ -753,7 +753,7 @@ urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
-use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
+use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "setuptools"
@@ -866,7 +866,7 @@ python-versions = ">=3.6"
 sphinx = ">=1.8"
 
 [package.extras]
-code_style = ["pre-commit (==2.12.1)"]
+code-style = ["pre-commit (==2.12.1)"]
 rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme"]
 
 [[package]]
@@ -1153,7 +1153,7 @@ fast = ["uvloop", "aiofiles"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "b60954d34226e70fcaf370646c83aaaf8bcad197a4c0218ca305f79719893d62"
+content-hash = "928361b68fdf51b454c1f95b626c463791dfa57a7334ac5dbef89ec02dab40e9"
 
 [metadata.files]
 aiofiles = [
@@ -1161,8 +1161,8 @@ aiofiles = [
     {file = "aiofiles-22.1.0.tar.gz", hash = "sha256:9107f1ca0b2a5553987a94a3c9959fe5b491fdf731389aa5b7b1bd0733e32de6"},
 ]
 aiogram = [
-    {file = "aiogram-2.22.1-py3-none-any.whl", hash = "sha256:46b38f7e3c3057ed1eb6c46225f50f0a74e3285937a61cb02d708ec200672f34"},
-    {file = "aiogram-2.22.1.tar.gz", hash = "sha256:38bc3fa59b797e444c576d927650abff845620a579b9579ec85cd0a4e19b90a8"},
+    {file = "aiogram-2.22.2-py3-none-any.whl", hash = "sha256:d2c5068cc89fc4012038268e111ca9249f66decce817522ec4d215dd829bc507"},
+    {file = "aiogram-2.22.2.tar.gz", hash = "sha256:02e4120122af423575d48519cb469d15189f5da00a3237e715d492fe6d798bfd"},
 ]
 aiohttp = [
     {file = "aiohttp-3.8.3-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ba71c9b4dcbb16212f334126cc3d8beb6af377f6703d9dc2d9fb3874fd667ee9"},

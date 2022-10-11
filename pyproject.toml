@@ -92,7 +92,7 @@ async-timeout = "^4.0.2"
 types-orjson = "^3.6.2"
 types-pytz = "^2022.4.0"
 types-aiofiles = "^22.1.0"
-aiogram = "^2.21"
+aiogram = "^2.22"
 cryptography = "^38.0.1"
 aiofiles = "^22.1.0"
 
