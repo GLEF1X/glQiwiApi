@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.17.post1"
+version = "2.16"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Glib Garanin <glebgar567@gmail.com>"
@@ -43,14 +43,14 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pytz = "*"
-aiohttp = "^3.7.0"
-pydantic = "^1.10"
+pytz = { version = "2022.2.1", python = "<3.9"}
+aiohttp = "^3.7.3"
+pydantic = "^1"
 typing_extensions = { version = "^4.0.1", python = "<=3.7" }
 
 # Fast
-uvloop = { version = ">=0.16,<0.18", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
-aiofiles = { version = "*", optional = true}
+uvloop = { version = "*", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
+aiofiles = { version = "^22.1.0", optional = true}
 
 # Docs
 Sphinx = { version = "^4.3.2", optional = true }
@@ -85,14 +85,14 @@ pytest-benchmark = { version = "^4.0.0", extras = ["histogram"] }
 # development
 black = { version = "^22.6.0", python = ">=3.6" }
 isort = "^5.8.0"
-mypy = "^0.982"
+mypy = "^0.971"
 flake8 = "^5.0.4"
 async-timeout = "^4.0.2"
 
 
 # For CI and mypy
 types-orjson = "^3.6.2"
-types-pytz = "^2022.4.0"
+types-pytz = "^2022.1.1"
 types-aiofiles = "^22.1.0"
 aiogram = "^2.21"
 cryptography = "^38.0.1"

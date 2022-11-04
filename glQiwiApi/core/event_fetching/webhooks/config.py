@@ -66,7 +66,7 @@ class HookRegistrationConfig:
 @dataclass
 class WebhookConfig:
     encryption: EncryptionConfig
-    hook_registration: HookRegistrationConfig = HookRegistrationConfig()
-    app: ApplicationConfig = ApplicationConfig()
-    routes: RoutesConfig = RoutesConfig()
-    security: SecurityConfig = SecurityConfig()
+    hook_registration: HookRegistrationConfig = field(default_factory=HookRegistrationConfig)
+    app: ApplicationConfig = field(default_factory=ApplicationConfig)
+    routes: RoutesConfig = field(default_factory=RoutesConfig)
+    security: SecurityConfig = field(default_factory=SecurityConfig)
