@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glQiwiApi"
-version = "2.16"
+version = "2.17.post1"
 description = "The ultrarapid and multifunctional wrapper over QIWI and YooMoney"
 authors = [
     "Glib Garanin <glebgar567@gmail.com>"
@@ -34,6 +34,8 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Framework :: AsyncIO",
     "Typing :: Typed",
@@ -41,14 +43,14 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pytz = "2022.4"
-aiohttp = "^3.8.3"
-pydantic = "^1.10.2"
+pytz = "*"
+aiohttp = "^3.7.0"
+pydantic = "^1.10"
 typing_extensions = { version = "^4.0.1", python = "<=3.7" }
 
 # Fast
 uvloop = { version = ">=0.16,<0.18", markers = "sys_platform == 'darwin' or sys_platform == 'linux'", optional = true }
-aiofiles = { version = "^22.1.0", optional = true}
+aiofiles = { version = "*", optional = true}
 
 # Docs
 Sphinx = { version = "^4.3.2", optional = true }
@@ -71,14 +73,14 @@ sphinx-notfound-page = { version = "*", optional = true }
 # tests
 pytest-mock = "^3.8.2"
 pytest = "^7.0.1"
-pytest-asyncio = "^0.19.0"
+pytest-asyncio = "^0.20.1"
 pytest-cov = "^4.0.0"
 pytest-lazy-fixture = "^0.6.3"
 pytest-aiohttp = "^1.0.4"
 timeout-decorator = "^0.5.0"
 asynctest = "^0.13.0"
 pytest-timeout = "^2.1.0"
-pytest-benchmark = { version = "^3.4.1", extras = ["histogram"] }
+pytest-benchmark = { version = "^4.0.0", extras = ["histogram"] }
 
 # development
 black = { version = "^22.6.0", python = ">=3.6" }
