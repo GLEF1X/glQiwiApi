@@ -1,4 +1,4 @@
-name: Publish to pypy
+name: Publish to the Pypi
 
 on:
   push:
@@ -13,19 +13,23 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          pip install -U pip virtualenv poetry
-          poetry config virtualenvs.create false
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.2.1
+          virtualenvs-create: false
+          installer-parallel: true
+
       - name: Build
         run: |
           poetry build
       - name: Try install wheel
         run: |
+          pip install -U virtualenv
           mkdir -p try_install
           cd try_install
           virtualenv venv
@@ -50,7 +54,7 @@ jobs:
           path: dist
 
       - name: Publish a Python distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
