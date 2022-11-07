@@ -1,27 +1,12 @@
-import sys
 from datetime import datetime, timezone
 from typing import Optional
 
 DEFAULT_QIWI_TIMEZONE = 'Europe/Moscow'
 
-if sys.version_info < (3, 9, 0):
-    try:
-        import pytz
-    except ImportError:
-        raise RuntimeError(
-            'glQiwiApi requires `pytz` package for python < 3.9'
-            'as an alternative to a new builtin `zoneinfo`. '
-            'Please install pytz using pip install pytz.'
-        )
-
-    def to_moscow(obj: datetime) -> datetime:
-        return obj.astimezone(pytz.timezone(DEFAULT_QIWI_TIMEZONE))
-
-else:
+try:
     import zoneinfo
-
-    def to_moscow(obj: datetime) -> datetime:
-        return obj.astimezone(zoneinfo.ZoneInfo(DEFAULT_QIWI_TIMEZONE))
+except ImportError:
+    import backports.zoneinfo as zoneinfo
 
 
 def datetime_to_utc_in_iso_format(obj: datetime) -> str:
@@ -37,4 +22,4 @@ def datetime_to_iso8601_with_moscow_timezone(obj: Optional[datetime]) -> str:
     """
     if not isinstance(obj, datetime):
         return ''  # pragma: no cover
-    return to_moscow(obj).isoformat(timespec='seconds')
+    return obj.astimezone(zoneinfo.ZoneInfo(DEFAULT_QIWI_TIMEZONE)).isoformat(timespec='seconds')

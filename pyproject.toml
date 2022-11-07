@@ -43,7 +43,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pytz = { version = "2022.6", python = "<3.9"}
+"backports.zoneinfo" = { version = "^0.2.1", extras = ["tzdata"], python = "<3.9"}
 aiohttp = "^3.8.3"
 pydantic = "^1.10.2"
 typing_extensions = { version = "^4.0.1", python = "<=3.7" }
