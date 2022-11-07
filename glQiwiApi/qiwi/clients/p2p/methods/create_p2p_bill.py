@@ -23,7 +23,7 @@ class CreateP2PBill(QiwiAPIMethod[Bill]):
         'expirationDateTime': RuntimeValue(default_factory=get_default_bill_life_time),
         'comment': RuntimeValue(mandatory=False),
         'customFields': {
-            'paySourcesFilter': RuntimeValue(default=['qw']),
+            'paySourcesFilter': RuntimeValue(default=['qw', 'card']),
             'themeCode': RuntimeValue(default='Yvan-YKaSh'),
         },
         'customer': RuntimeValue(mandatory=False),
