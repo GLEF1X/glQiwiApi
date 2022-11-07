@@ -103,7 +103,7 @@ jobs:
       - name: Test with pytest
         run: |
           flags=""
-          [[ "$IS_PYPY" == "false" ]] && flags="$flags --cov=aiogram --cov-config .coveragerc --cov-report=xml"
+          [[ "$IS_PYPY" == "false" ]] && flags="$flags --cov=glQiwiApi --cov-config .coveragerc --cov-report=xml"
           poetry run pytest -p no:warnings $flags tests/
         env:
           QIWI_API_ACCESS_TOKEN: ${{ secrets.QIWI_API_ACCESS_TOKEN }}
