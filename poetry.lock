@@ -117,9 +117,6 @@ category = "main"
 optional = false
 python-versions = ">=3.6"
 
-[package.dependencies]
-tzdata = {version = "*", optional = true, markers = "extra == \"tzdata\""}
-
 [package.extras]
 tzdata = ["tzdata"]
 
@@ -1188,7 +1185,7 @@ fast = ["uvloop", "aiofiles"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "c843d4f2e24d601d02b1602a44caab2be59bbb576e8e132daa648119dc3c51f0"
+content-hash = "03290b2d86f12c4398b9794f684fe363109a0916325be3f9d2e8302ec334d383"
 
 [metadata.files]
 aiofiles = [
