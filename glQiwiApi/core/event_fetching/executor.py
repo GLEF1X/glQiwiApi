@@ -9,7 +9,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Union, cast
 
-import pytz
+try:
+    import zoneinfo
+except ImportError:
+    import backports.zoneinfo as zoneinfo
+
 from aiohttp import web
 from aiohttp.web import _run_app  # noqa
 
@@ -297,7 +301,7 @@ class PollingExecutor(BaseExecutor):
             context=context,
         )
         self.offset: Optional[int] = None
-        self.get_updates_from = datetime.now(pytz.utc).astimezone(pytz.timezone('Europe/Moscow'))
+        self.get_updates_from = datetime.utcnow().astimezone(zoneinfo.ZoneInfo('Europe/Moscow'))
         self._timeout = _parse_timeout(timeout)
         self.skip_updates = skip_updates
         self._wallet = wallet
@@ -344,7 +348,7 @@ class PollingExecutor(BaseExecutor):
         await self.process_updates(history)
 
     async def _fetch_history(self) -> History:
-        end_date = datetime.now(pytz.utc).astimezone(pytz.timezone('Europe/Moscow'))
+        end_date = datetime.utcnow().astimezone(zoneinfo.ZoneInfo('Europe/Moscow'))
         if isinstance(self._wallet, QiwiWallet):
             history = (
                 await self._wallet.history(start_date=self.get_updates_from, end_date=end_date)
