@@ -4,7 +4,7 @@ from typing import Any, ClassVar, List, cast
 from glQiwiApi.core.abc.api_method import APIMethod, Request, ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse
 
-YOO_MONEY_LINK_REGEXP = re.compile(r'https?://yoomoney.ru/oauth2/authorize[?]requestid=\w+')
+YOO_MONEY_LINK_REGEXP = re.compile(r'https%3A%2F%2Fyoomoney.ru%2Foauth2%2Fauthorize%3Frequestid%3D\w+')
 
 
 class BuildAuthURL(APIMethod[str]):
