@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Union, cast
 
+from glQiwiApi.utils.date_conversion import localize_datetime_according_to_moscow_timezone
+
 try:
     import zoneinfo
 except ImportError:
@@ -301,7 +303,7 @@ class PollingExecutor(BaseExecutor):
             context=context,
         )
         self.offset: Optional[int] = None
-        self.get_updates_from = datetime.utcnow().astimezone(zoneinfo.ZoneInfo('Europe/Moscow'))
+        self.get_updates_from = localize_datetime_according_to_moscow_timezone(datetime.now())
         self._timeout = _parse_timeout(timeout)
         self.skip_updates = skip_updates
         self._wallet = wallet
@@ -348,7 +350,7 @@ class PollingExecutor(BaseExecutor):
         await self.process_updates(history)
 
     async def _fetch_history(self) -> History:
-        end_date = datetime.utcnow().astimezone(zoneinfo.ZoneInfo('Europe/Moscow'))
+        end_date = localize_datetime_according_to_moscow_timezone(datetime.now())
         if isinstance(self._wallet, QiwiWallet):
             history = (
                 await self._wallet.history(start_date=self.get_updates_from, end_date=end_date)
