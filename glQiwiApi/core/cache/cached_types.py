@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 
 class Payload:
+    __slots__ = ('headers', 'json', 'params', 'data')
+
     def __init__(
         self,
         headers: Optional[Dict[Any, Any]] = None,

@@ -3,7 +3,6 @@ from typing import Any, ClassVar, Dict, Sequence
 
 from pydantic import Field
 
-from glQiwiApi.core.abc.api_method import ReturningType
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 

@@ -13,7 +13,6 @@ from glQiwiApi.core.abc.base_api_client import BaseAPIClient, RequestServiceFact
 from glQiwiApi.core.request_service import RequestService, RequestServiceProto
 from glQiwiApi.core.session import AiohttpSessionHolder
 from glQiwiApi.utils.payload import make_payload
-from glQiwiApi.utils.validators import String
 from glQiwiApi.yoo_money.methods.acccept_incoming_transfer import AcceptIncomingTransfer
 from glQiwiApi.yoo_money.methods.build_auth_url import BuildAuthURL
 from glQiwiApi.yoo_money.methods.get_access_token import GetAccessToken
@@ -36,16 +35,7 @@ from glQiwiApi.yoo_money.types import (
 
 
 class YooMoneyAPI(BaseAPIClient):
-    """
-    That class implements processing requests to YooMoney
-    It is convenient in that it does not just give json such objects,
-    and all this converts into pydantic models.
-    To work with this class, you need to register a token,
-    using the guide on the official github of the project
-
-    """
-
-    _api_access_token = String(optional=False)
+    __slots__ = ('_api_access_token',)
 
     def __init__(
         self,

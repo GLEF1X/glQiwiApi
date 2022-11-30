@@ -15,6 +15,8 @@ INFINITE = float('inf')
 
 
 class CacheInvalidationStrategy(abc.ABC):
+    __slots__ = ()
+
     @abc.abstractmethod
     async def process_update(self, **kwargs: Any) -> None:
         pass
@@ -35,6 +37,8 @@ class CacheInvalidationStrategy(abc.ABC):
 
 
 class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
+    __slots__ = ()
+
     async def process_update(self, **kwargs: Any) -> None:
         pass
 
@@ -47,6 +51,8 @@ class UnrealizedCacheInvalidationStrategy(CacheInvalidationStrategy):
 
 
 class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
+    __slots__ = ('_cache_time',)
+
     def __init__(self, cache_time_in_seconds: Union[float, int] = INFINITE):
         self._cache_time = cache_time_in_seconds
 
@@ -71,10 +77,11 @@ class CacheInvalidationByTimerStrategy(CacheInvalidationStrategy):
 
 class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
     _validation_criteria = ('params', 'json', 'data', 'headers')
+    __slots__ = ('_cant_be_cached',)
 
     def __init__(self, cache_time_in_seconds: Union[float, int] = INFINITE):
         super().__init__(cache_time_in_seconds)
-        self._uncached = ('https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/')
+        self._cant_be_cached = ('https://api.qiwi.com/partner/bill', '/sinap/api/v2/terms/')
 
     @property
     def is_cache_disabled(self) -> bool:
@@ -83,7 +90,7 @@ class APIResponsesCacheInvalidationStrategy(CacheInvalidationByTimerStrategy):
     async def process_update(self, **kwargs: Any) -> None:
         await super().process_update(**kwargs)
         for key in kwargs.keys():
-            if any(key.startswith(coincidence) for coincidence in self._uncached):
+            if any(key.startswith(coincidence) for coincidence in self._cant_be_cached):
                 raise CacheValidationError()
 
     async def check_is_contains_similar(self, storage: CacheStorage, item: Any) -> bool:

@@ -48,6 +48,8 @@ _T = TypeVar('_T', bound='QiwiWrapper')
 class QiwiWrapper:
     """For backward compatibility with glQiwiApi <= 1.1.4"""
 
+    __slots__ = ('_qiwi_wallet', '_p2p_client')
+
     def __init__(
         self,
         api_access_token: Optional[str] = None,

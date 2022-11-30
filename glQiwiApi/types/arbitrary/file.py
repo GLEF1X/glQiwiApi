@@ -16,6 +16,8 @@ _OpenFile = Union[StrOrBytesPath, int]
 
 
 class File:
+    __slots__ = ('_input',)
+
     def __init__(self, input: AbstractInput[Any]) -> None:
         self._input = input
 

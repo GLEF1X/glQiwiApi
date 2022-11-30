@@ -14,7 +14,6 @@ from glQiwiApi.qiwi.clients.p2p.types import Bill, Customer, PairOfP2PKeys, Refu
 from glQiwiApi.types.amount import PlainAmount
 from glQiwiApi.utils.compat import remove_suffix
 from glQiwiApi.utils.deprecated import warn_deprecated
-from glQiwiApi.utils.validators import String
 
 
 class NoShimUrlWasProvidedError(Exception):
@@ -46,7 +45,7 @@ def _parse_shim_url(shim_url: Optional[str]) -> Optional[str]:
 
 
 class QiwiP2PClient(BaseAPIClient):
-    _api_access_token = String(optional=False)
+    __slots__ = ('_api_access_token', '_shim_server_url')
 
     def __init__(
         self,

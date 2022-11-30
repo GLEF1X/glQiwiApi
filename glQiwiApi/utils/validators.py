@@ -30,6 +30,8 @@ _FieldType = TypeVar('_FieldType', bound=Any)
 
 
 class Field(ABC, Generic[_FieldType]):
+    __slots__ = ('_validators',)
+
     def __init__(self, *validators: Callable[[_FieldType], None]):
         self._validators = validators
 
@@ -49,6 +51,8 @@ class Field(ABC, Generic[_FieldType]):
 
 
 class AbstractValidator(ABC):
+    __slots__ = ('_optional',)
+
     def __init__(self, optional: bool = False):
         self._optional = optional
 
@@ -66,6 +70,8 @@ class AbstractValidator(ABC):
 
 
 class StringValidator(AbstractValidator):
+    __slots__ = ('minsize', 'maxsize', 'predicate', '_optional')
+
     def __init__(
         self,
         *,
@@ -92,6 +98,8 @@ class StringValidator(AbstractValidator):
 
 
 class PhoneNumberValidator(StringValidator):
+    __slots__ = ()
+
     def _validate(self, value: Optional[str]) -> None:
         StringValidator._validate(self, value)
         phone_number_match: Optional[Match[Any]] = re.fullmatch(PHONE_NUMBER_PATTERN, value)
@@ -105,6 +113,8 @@ class PhoneNumberValidator(StringValidator):
 
 
 class IntegerValidator(AbstractValidator):
+    __slots__ = ()
+
     def _validate(self, value: _FieldType) -> None:
         if not isinstance(value, int):
             raise ValidationError(f'Expected {value!r} to be an integer')

@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types
 from glQiwiApi import QiwiWrapper
 from glQiwiApi.core.event_fetching import executor
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
-from glQiwiApi.core.event_fetching.executor import Context
+from glQiwiApi.core.event_fetching.executor import HandlerContext
 from glQiwiApi.plugins import AiogramPollingPlugin
 from glQiwiApi.qiwi.clients.wallet.types import Transaction
 
@@ -20,16 +20,16 @@ async def aiogram_message_handler(msg: types.Message):
     await msg.answer(text='Привет😇')
 
 
-async def qiwi_transaction_handler(update: Transaction, ctx: Context):
+async def qiwi_transaction_handler(update: Transaction, ctx: HandlerContext):
     print(update)
 
 
-def on_startup(ctx: Context) -> None:
+def on_startup(ctx: HandlerContext) -> None:
     logger.info('This message logged on startup')
     register_handlers(ctx)
 
 
-def register_handlers(ctx: Context):
+def register_handlers(ctx: HandlerContext):
     ctx['qiwi_dp'].transaction_handler()(qiwi_transaction_handler)
     dispatcher = cast(Dispatcher, ctx['dp'])
     dispatcher.register_message_handler(aiogram_message_handler)

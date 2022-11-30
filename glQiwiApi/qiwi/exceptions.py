@@ -144,18 +144,24 @@ class QiwiAPIError(Exception):
 
 
 class InternalQIWIError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = [3, 749, 750]
     description_en = 'Technical error. Repeat the request later'
     description_ru = 'Техническая ошибка. Повторите платеж позже.'
 
 
 class IncorrectDataFormat(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = 4
     description_en = 'Incorrect format of phone or account number. Check the data'
     description_ru = 'Некорректный формат телефона или счета. Проверьте данные.'
 
 
 class NoSuchNumber(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = 5
     description_en = 'No such number. Check the data and try again'
     description_ru = 'Данного номера не существует. Проверьте данные и попробуйте еще раз.'
@@ -168,32 +174,44 @@ class BankSideReceiptError(QiwiAPIError):
 
 
 class PaymentUnavailableInYourCountry(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = 131
     description_en = 'Payment type unavailable for your country'
     description_ru = 'Платеж недоступен для вашей страны'
 
 
 class NotEnoughFundsError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = [220, 407]
     description_en = 'Not enough funds. Replenish your wallet'
     description_ru = 'Недостаточно средств. Пополните кошелек'
 
 
 class PaymentRejected(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = [7000, 7600]
     description_en = "Payment rejected. Check card's details and repeat the payment or try to contact the bank that issued the card"
     description_ru = 'Платеж отклонен. Проверьте реквизиты карты и повторите платеж или обратитесь в банк, выпустивший карту'
 
 
 class ValidationError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = [303, 254, 241, 'validation.error', 558, 'internal.invoicing.error']
 
 
 class ObjectNotFoundError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_contains = 'not.found'
 
 
 class ReceiptNotAvailable(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_contains = 'cheque.not.available'
     description_en = (
         'It is impossible to receive a check due to the fact that '
@@ -203,20 +221,26 @@ class ReceiptNotAvailable(QiwiAPIError):
 
 
 class OperationLimitExceededError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = [705, 704, 700, 716, 717]
 
 
 class ObjectAlreadyExistsError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_contains = ['already.exists']
     description_ru = 'Объект, который вы хотите создать уже был создан ранее'
     description_en = 'Object that you want to create was have already been created earlier'
 
 
 class MobileOperatorCannotBeDeterminedError(QiwiAPIError):
-    pass
+    __slots__ = ()
 
 
 class InsufficientTokenRightsError(QiwiAPIError):
+    __slots__ = ()
+
     _error_code_match = [309]
     description_ru = 'Недостаточно прав для выполнения данного действия. Чтобы решить эту проблему вам нужно перевыпустить токен с достаточными правами для выполнения нужного вам API метода на сайте QIWI.'
     description_en = 'There are insufficient rights to execute this API method. In order to solve this problem you should regenerate API token with sufficient rights.'

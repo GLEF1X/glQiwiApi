@@ -5,16 +5,7 @@ from glQiwiApi.types.amount import CurrencyModel
 
 
 class Currency:
-    """
-        Class with many currencies
-    import glQiwiApi.types.basics    >>> usd = Currency.get('840')
-        >>> usd
-        ... CurrencyModel(code='USD', decimal_digits=2, name='US Dollar', name_plural='US dollars',
-        ...                   rounding=0, symbol='$', symbol_native='$')
-
-        >>> usd.symbol
-        ... '$'
-    """
+    __slots__ = ()
 
     @classmethod
     def get(cls, currency_code: Union[str, int]) -> Optional[CurrencyModel]:

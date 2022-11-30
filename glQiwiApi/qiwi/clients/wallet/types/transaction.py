@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Dict, Iterator, List, Optional, Union, cast
+from functools import total_ordering
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Union, cast
 
 from pydantic import Field
 
@@ -56,6 +57,7 @@ class Provider(Base):
     """сайт провайдера"""
 
 
+@total_ordering
 class Transaction(Base):
     """object: Transaction"""
 
@@ -139,11 +141,20 @@ class Transaction(Base):
     _regular_payment_enabled: bool = Field(False, alias='regularPaymentEnabled')
     """Специальное поле"""
 
+    def __lt__(self, other: Transaction) -> bool:
+        if not isinstance(other, Transaction):
+            return NotImplemented
+
+        return self.date < other.date
+
+    def __str__(self) -> str:
+        return self.date.isoformat()
+
     class Config:
         use_enum_values = True
 
 
-class History(Base):
+class History(Base, Sequence[Transaction]):
     transactions: List[Transaction] = Field(..., alias='data')
     next_transaction_date: Optional[datetime] = Field(None, alias='nextTxnDate')
     next_transaction_id: Optional[int] = Field(None, alias='nextTxnId')
@@ -155,6 +166,12 @@ class History(Base):
     def __len__(self) -> int:
         return len(self.transactions)
 
+    def __contains__(self, item: Any) -> bool:
+        if not isinstance(item, Transaction):
+            return NotImplemented
+
+        return item in self.transactions
+
     def __str__(self) -> str:
         if not self.transactions:
             return 'Empty history'
@@ -165,24 +182,16 @@ class History(Base):
             f'next transaction id = {self.next_transaction_id} | size = {len(self)}'
         )
 
-    def sorted_by_id(self) -> History:
-        return self.copy(
-            exclude={'transactions'},
-            update=dict(
-                transactions=sorted(self.transactions, key=lambda txn: txn.id)  # type: ignore
-            ),
-        )
+    def sort(
+        self, key: Optional[Callable[[Transaction], Any]] = None, reverse: bool = False
+    ) -> History:
+        kwargs = {}
+        if key is not None:
+            kwargs['key'] = key
 
-    def sorted_by_date(self, *, from_latest_to_earliest: bool = False) -> History:
         return self.copy(
             exclude={'transactions'},
-            update=dict(
-                transactions=sorted(
-                    self.transactions,
-                    key=lambda txn: txn.date,  # type: ignore
-                    reverse=from_latest_to_earliest,
-                )
-            ),
+            update=dict(transactions=sorted(self.transactions, reverse=reverse, **kwargs)),
         )
 
     def __getitem__(self, i: Any) -> Transaction:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Dict, Generic, Mapping, Optional, Set, Type, TypeVar, cast
+from typing import Any, Dict, Generic, Mapping, Optional, Type, TypeVar, cast
 
 import aiohttp
 from aiohttp import ClientResponse
@@ -32,6 +32,8 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
     Holder is lazy and allocates in his own state
     session on first call, not on instantiation.
     """
+
+    __slots__ = ('_session', '_session_kwargs')
 
     def __init__(self, **kwargs: Any) -> None:
         self._session: Optional[_SessionType] = None
@@ -68,6 +70,8 @@ class AbstractSessionHolder(abc.ABC, Generic[_SessionType]):
 
 
 class AiohttpSessionHolder(AbstractSessionHolder[aiohttp.ClientSession]):
+    __slots__ = ()
+
     def __init__(self, **kwargs: Any):
         AbstractSessionHolder.__init__(self, **kwargs)
 

@@ -1,6 +1,6 @@
-from typing import Any, ClassVar, Dict, List, Sequence
+from typing import Any, ClassVar, Dict, Sequence
 
-from glQiwiApi.core.abc.api_method import Request, ReturningType
+from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
 from glQiwiApi.qiwi.clients.wallet.types import Limit
