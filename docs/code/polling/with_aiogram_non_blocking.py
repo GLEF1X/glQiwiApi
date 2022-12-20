@@ -4,7 +4,10 @@ from aiogram.utils import executor
 
 from glQiwiApi import QiwiWallet
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
-from glQiwiApi.core.event_fetching.executor import Context, start_non_blocking_qiwi_api_polling
+from glQiwiApi.core.event_fetching.executor import (
+    HandlerContext,
+    start_non_blocking_qiwi_api_polling,
+)
 from glQiwiApi.qiwi.clients.wallet.types import Transaction
 
 qiwi_dp = QiwiDispatcher()
@@ -14,7 +17,7 @@ dp = Dispatcher(Bot('BOT TOKEN'))
 
 
 @qiwi_dp.transaction_handler()
-async def handle_transaction(t: Transaction, ctx: Context):
+async def handle_transaction(t: Transaction, ctx: HandlerContext):
     """Handle transaction here"""
 
 

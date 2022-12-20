@@ -48,6 +48,8 @@ class RequestServiceProto(Protocol):
 
 
 class RequestService:
+    __slots__ = ('_session_holder',)
+
     def __init__(
         self,
         session_holder: Optional[AbstractSessionHolder[Any]] = None,
@@ -151,6 +153,8 @@ class RequestServiceLoggingDecorator(RequestServiceProto):
 
 
 class RequestServiceCacheDecorator(RequestServiceProto):
+    __slots__ = ('_cache', '_request_service')
+
     def __init__(
         self,
         request_service: RequestServiceProto,

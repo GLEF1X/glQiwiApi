@@ -17,6 +17,8 @@ class QiwiMaps(BaseAPIClient):
 
     """
 
+    __slots__ = ()
+
     def __init__(
         self,
         request_service_factory: typing.Optional[RequestServiceFactoryType] = None,

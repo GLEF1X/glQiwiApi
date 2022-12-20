@@ -22,6 +22,8 @@ class YooMoneyError(Exception):
 
     """
 
+    __slots__ = ('error_schema',)
+
     match_error_code: ClassVar[Optional[str]] = None
     _explanation: ClassVar[Optional[str]] = None
 

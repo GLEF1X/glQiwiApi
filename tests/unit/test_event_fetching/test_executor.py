@@ -8,8 +8,8 @@ import pytest
 from glQiwiApi import QiwiWallet
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
 from glQiwiApi.core.event_fetching.executor import (
-    Context,
     ExecutorEvent,
+    HandlerContext,
     start_non_blocking_qiwi_api_polling,
 )
 from glQiwiApi.qiwi.clients.wallet.types import History, Source, Transaction, TransactionType
@@ -18,9 +18,9 @@ from glQiwiApi.yoo_money.methods.operation_history import MAX_HISTORY_LIMIT
 
 class TestExecutorEvent:
     async def test_fire(self):
-        context = Context({'api_key': 'fake_api_key'})
+        context = HandlerContext({'api_key': 'fake_api_key'})
 
-        async def init_event(ctx: Context) -> NoReturn:
+        async def init_event(ctx: HandlerContext) -> NoReturn:
             assert ctx == context
             raise RuntimeError()
 
@@ -32,11 +32,11 @@ class TestExecutorEvent:
             await event.fire()
 
     async def test_fire_sync_handlers(self):
-        context = Context({'api_key': 'fake_api_key'})
+        context = HandlerContext({'api_key': 'fake_api_key'})
 
         event = ExecutorEvent(context)
 
-        def on_event(ctx: Context) -> NoReturn:
+        def on_event(ctx: HandlerContext) -> NoReturn:
             assert ctx == context
             raise RuntimeError()
 
@@ -65,7 +65,7 @@ class WalletStub(QiwiWallet):
 
 
 async def test_start_non_blocking_qiwi_api_polling(transaction: Transaction) -> None:
-    c = Context({'api_key': 'my_api_key'})
+    c = HandlerContext({'api_key': 'my_api_key'})
     wallet = WalletStub(transaction)
     dp = QiwiDispatcher()
 
@@ -73,12 +73,12 @@ async def test_start_non_blocking_qiwi_api_polling(transaction: Transaction) -> 
     handle_on_startup = asyncio.Event()
 
     @dp.transaction_handler()
-    async def handle_transaction(txn: Transaction, ctx: Context):
+    async def handle_transaction(txn: Transaction, ctx: HandlerContext):
         assert ctx['api_key'] == 'my_api_key'
         assert ctx.wallet == wallet
         handled_transaction_event.set()
 
-    async def on_startup(ctx: Context):
+    async def on_startup(ctx: HandlerContext):
         assert ctx['api_key'] == 'my_api_key'
         assert ctx.wallet == wallet
         handle_on_startup.set()

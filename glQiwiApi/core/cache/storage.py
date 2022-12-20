@@ -1,5 +1,6 @@
 import abc
-from typing import Any, Dict, List, Optional
+import weakref
+from typing import Any, Dict, List, MutableMapping, Optional
 
 from glQiwiApi.core.cache.constants import VALUE_PLACEHOLDER
 from glQiwiApi.core.cache.exceptions import CacheExpiredError, CacheValidationError
@@ -11,6 +12,8 @@ from glQiwiApi.core.cache.utils import embed_cache_time
 
 
 class CacheStorage(abc.ABC):
+    __slots__ = ('_invalidate_strategy',)
+
     def __init__(self, invalidate_strategy: Optional[CacheInvalidationStrategy] = None):
         if invalidate_strategy is None:
             invalidate_strategy = UnrealizedCacheInvalidationStrategy()
@@ -48,11 +51,11 @@ class CacheStorage(abc.ABC):
 
 
 class InMemoryCacheStorage(CacheStorage):
-    __slots__ = ('_data', '_invalidate_strategy')
+    __slots__ = ('_data',)
 
     def __init__(self, invalidate_strategy: Optional[CacheInvalidationStrategy] = None):
         CacheStorage.__init__(self, invalidate_strategy)
-        self._data: Dict[Any, Any] = {}
+        self._data: MutableMapping[Any, Any] = weakref.WeakValueDictionary()
 
     async def clear(self) -> None:
         await self._invalidate_strategy.process_delete()
@@ -87,4 +90,4 @@ class InMemoryCacheStorage(CacheStorage):
         return await self._invalidate_strategy.check_is_contains_similar(self, item)
 
     def __del__(self) -> None:
-        del self._data
+        self._data.clear()

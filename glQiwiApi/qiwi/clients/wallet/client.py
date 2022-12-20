@@ -51,7 +51,6 @@ from glQiwiApi.qiwi.clients.wallet.methods.webhook.send_test_notification import
 )
 from glQiwiApi.types.amount import AmountWithCurrency
 from glQiwiApi.types.arbitrary import File
-from glQiwiApi.utils.validators import PhoneNumber, String
 
 from ...exceptions import QiwiAPIError
 from ..p2p.types import Bill, InvoiceStatus
@@ -90,8 +89,7 @@ AmountType = Union[int, float]
 
 
 class QiwiWallet(BaseAPIClient):
-    _phone_number = PhoneNumber(maxsize=15, minsize=11, optional=True)
-    _api_access_token = String(optional=False)
+    __slots__ = ('_api_access_token', '_phone_number')
 
     def __init__(
         self,

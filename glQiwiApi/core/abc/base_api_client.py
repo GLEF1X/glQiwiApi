@@ -29,6 +29,8 @@ class APIClientMeta(abc.ABCMeta):
     I have to write this metaclass to avoid additional viscous boilerplate code.
     """
 
+    __slots__ = ()
+
     def __new__(
         mcs: Type[_C], name: str, bases: Tuple[Any, ...], attrs: Dict[str, Any], **kwargs: Any
     ) -> _C:
@@ -58,6 +60,8 @@ class APIClientMeta(abc.ABCMeta):
 
 
 class BaseAPIClient(metaclass=APIClientMeta):
+    __slots__ = ('_request_service_factory', '_request_service')
+
     def __init__(
         self,
         request_service_factory: Optional[RequestServiceFactoryType] = None,
