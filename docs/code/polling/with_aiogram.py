@@ -4,7 +4,7 @@ from aiogram.types import Message
 from glQiwiApi import QiwiWallet
 from glQiwiApi.core.event_fetching import executor
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
-from glQiwiApi.core.event_fetching.executor import Context
+from glQiwiApi.core.event_fetching.executor import HandlerContext
 from glQiwiApi.plugins import AiogramPollingPlugin
 from glQiwiApi.qiwi.clients.wallet.types import Transaction
 
@@ -15,7 +15,7 @@ dp = Dispatcher(Bot('BOT TOKEN'))
 
 
 @qiwi_dp.transaction_handler()
-async def handle_transaction(t: Transaction, ctx: Context):
+async def handle_transaction(t: Transaction, ctx: HandlerContext):
     """Handle transaction here"""
     ctx.wallet  # this way you can use QiwiWallet instance to avoid global variables
 

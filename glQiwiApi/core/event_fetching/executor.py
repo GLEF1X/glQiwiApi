@@ -56,7 +56,7 @@ class _HandlerSpec:
 class ExecutorEvent:
     def __init__(
         self,
-        context: Context,
+        context: HandlerContext,
         init_handlers: Iterable[Optional[_EventHandlerType]] = (),
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
@@ -94,7 +94,7 @@ def start_webhook(
     on_startup: Optional[_EventHandlerType] = None,
     on_shutdown: Optional[_EventHandlerType] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
-    context: Union[Dict[str, Any], Context, None] = None,
+    context: Union[Dict[str, Any], HandlerContext, None] = None,
 ) -> None:
     """
     Blocking function that listens for webhooks.
@@ -121,7 +121,7 @@ def start_webhook(
         on_shutdown=on_shutdown,
         on_startup=on_startup,
         loop=loop,
-        context=Context(context),
+        context=HandlerContext(context),
     )
     executor.start_webhook(config=webhook_config)
 
@@ -135,7 +135,7 @@ def start_polling(
     on_startup: Optional[_EventHandlerType] = None,
     on_shutdown: Optional[_EventHandlerType] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
-    context: Union[Dict[str, Any], Context, None] = None,
+    context: Union[Dict[str, Any], HandlerContext, None] = None,
 ) -> None:
     """
     Setup for long-polling mode. Support only `glQiwiApi.types.Transaction` as event.
@@ -167,7 +167,7 @@ def start_polling(
         on_startup=on_startup,
         on_shutdown=on_shutdown,
         loop=loop,
-        context=Context(context),
+        context=HandlerContext(context),
     )
     executor.start_polling()
 
@@ -180,7 +180,7 @@ async def start_non_blocking_qiwi_api_polling(
     on_startup: Optional[_EventHandlerType] = None,
     on_shutdown: Optional[_EventHandlerType] = None,
     loop: Optional[asyncio.AbstractEventLoop] = None,
-    context: Union[Dict[str, Any], Context, None] = None,
+    context: Union[Dict[str, Any], HandlerContext, None] = None,
 ) -> asyncio.Task:
     if context is None:
         context = {}
@@ -192,7 +192,7 @@ async def start_non_blocking_qiwi_api_polling(
         on_startup=on_startup,
         on_shutdown=on_shutdown,
         loop=loop,
-        context=Context(context),
+        context=HandlerContext(context),
     )
     return await executor.start_non_blocking_polling()
 
@@ -203,11 +203,11 @@ def configure_app_for_qiwi_webhooks(
     app: web.Application,
     cfg: WebhookConfig,
 ) -> web.Application:
-    executor = WebhookExecutor(wallet, dispatcher, context=Context({}))
+    executor = WebhookExecutor(wallet, dispatcher, context=HandlerContext({}))
     return executor.add_routes_for_webhook(app, cfg)
 
 
-class Context(Dict[str, Any]):
+class HandlerContext(Dict[str, Any]):
     def __getattr__(self, item: str) -> Any:
         return self[item]
 
@@ -216,6 +216,7 @@ class Context(Dict[str, Any]):
         return cast(Union[QiwiWallet, QiwiWrapper], self[WALLET_CTX_KEY])
 
 
+# for backward compatibility
 Context = HandlerContext
 
 
@@ -224,7 +225,7 @@ class BaseExecutor(abc.ABC):
         self,
         dispatcher: BaseDispatcher,
         *plugins: Pluggable,
-        context: Context,
+        context: HandlerContext,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         on_startup: Optional[Callable[..., Any]] = None,
         on_shutdown: Optional[Callable[..., Any]] = None,
@@ -290,7 +291,7 @@ class PollingExecutor(BaseExecutor):
         wallet: Union[QiwiWallet, QiwiWrapper],
         dispatcher: BaseDispatcher,
         *plugins: Pluggable,
-        context: Context,
+        context: HandlerContext,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         timeout: Union[float, int] = DEFAULT_TIMEOUT,
         skip_updates: bool = False,
@@ -401,7 +402,7 @@ class WebhookExecutor(BaseExecutor):
         wallet: Union[QiwiWallet, QiwiWrapper],
         dispatcher: BaseDispatcher,
         *plugins: Pluggable,
-        context: Context,
+        context: HandlerContext,
         on_startup: Optional[_EventHandlerType] = None,
         on_shutdown: Optional[_EventHandlerType] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,

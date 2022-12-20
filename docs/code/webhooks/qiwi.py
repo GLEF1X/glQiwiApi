@@ -6,7 +6,7 @@ from aiohttp import web
 
 from glQiwiApi import QiwiWallet
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
-from glQiwiApi.core.event_fetching.executor import Context, configure_app_for_qiwi_webhooks
+from glQiwiApi.core.event_fetching.executor import HandlerContext, configure_app_for_qiwi_webhooks
 from glQiwiApi.core.event_fetching.webhooks.config import (
     EncryptionConfig,
     HookRegistrationConfig,
@@ -21,7 +21,7 @@ wallet = QiwiWallet(api_access_token='wallet api token')
 
 
 @qiwi_dp.bill_handler()
-async def handle_webhook(webhook: BillWebhook, ctx: Context):
+async def handle_webhook(webhook: BillWebhook, ctx: HandlerContext):
     # handle bill
     bill = webhook.bill
 
