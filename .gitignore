@@ -143,3 +143,5 @@ dmypy.json
 
 docker_test/*
 docker_test
+
+.ruff_cache/*

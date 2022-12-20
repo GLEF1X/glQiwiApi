@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Union, cast
 if TYPE_CHECKING:
     try:
         from cryptography import x509  # NOQA  # pragma: no cover
-        from cryptography.hazmat.primitives.asymmetric.rsa import (
-            RSAPrivateKeyWithSerialization,  # pragma: no cover; NOQA; NOQA
+        from cryptography.hazmat.primitives.asymmetric.rsa import (  # pragma: no cover; NOQA; NOQA
+            RSAPrivateKeyWithSerialization,
         )
     except ImportError:  # pragma: no cover
         pass

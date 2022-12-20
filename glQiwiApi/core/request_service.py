@@ -10,8 +10,6 @@ from glQiwiApi.core.session.holder import AbstractSessionHolder, AiohttpSessionH
 from glQiwiApi.utils.compat import Protocol
 from glQiwiApi.utils.payload import make_payload
 
-logger = logging.getLogger('glQiwiApi.RequestService')
-
 T = TypeVar('T')
 
 
@@ -43,9 +41,6 @@ class RequestServiceProto(Protocol):
         params: Optional[Any] = None,
         **kwargs: Any,
     ) -> HTTPResponse:
-        ...
-
-    async def warmup(self) -> Any:
         ...
 
     async def shutdown(self) -> None:
@@ -88,9 +83,6 @@ class RequestService:
         response = await self.send_request(**prepared_payload)
         return response.json()
 
-    async def warmup(self) -> Any:
-        return await self._session_holder.get_session()
-
     async def shutdown(self) -> None:
         await self._session_holder.close()
 
@@ -118,6 +110,44 @@ class RequestService:
                 **kwargs,
             )
         )
+
+
+class RequestServiceLoggingDecorator(RequestServiceProto):
+    __slots__ = ('_logger', '_request_service')
+
+    def __init__(self, request_service: RequestServiceProto):
+        self._logger = logging.getLogger("glQiwiApi.request_service")
+        self._request_service = request_service
+
+    async def execute_api_method(self, method: APIMethod[T], **url_kw: Any) -> T:
+        log_extra = {"api_method_instance": method, "url_kwargs": url_kw}
+        api_method_name_including_module = f"{method.__module__}.{method.__class__.__qualname__}"
+        try:
+            session_holder = self._request_service._session_holder
+            session_holder_name = (
+                f"{session_holder.__module__}.{session_holder.__class__.__qualname__}"
+            )
+        except AttributeError:
+            session_holder_name = "unknown"
+
+        self._logger.debug(
+            "[Using %s] Start executing API method %s, and try to reach %s",
+            session_holder_name,
+            api_method_name_including_module,
+            method.url,
+            extra=log_extra,
+        )
+        response = await self._request_service.execute_api_method(method, **url_kw)
+        self._logger.debug(
+            "API method %s was executed successfully",
+            api_method_name_including_module,
+            extra=log_extra,
+        )
+        return response
+
+    async def shutdown(self) -> None:
+        self._logger.debug("Shutdown request service")
+        return await super().shutdown()
 
 
 class RequestServiceCacheDecorator(RequestServiceProto):
@@ -166,9 +196,6 @@ class RequestServiceCacheDecorator(RequestServiceProto):
         return await self._request_service.send_request(
             url, method, cookies, json, data, headers, params, **kwargs
         )
-
-    async def warmup(self) -> Any:
-        return await self._request_service.shutdown()
 
     async def shutdown(self) -> None:
         await self._request_service.shutdown()

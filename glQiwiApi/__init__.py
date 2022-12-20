@@ -24,6 +24,14 @@ try:
 except metadata.PackageNotFoundError:
     __version__ = '99.99.99'
 
+try:
+    import uvloop as _uvloop
+
+    _uvloop.install()
+    del _uvloop
+except ImportError:  # pragma: no cover
+    pass
+
 __all__ = (
     # clients
     'YooMoneyAPI',

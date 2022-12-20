@@ -41,5 +41,5 @@ class OperationHistoryMethod(APIMethod[OperationHistory]):
         return Request(
             endpoint=self.url.format(**url_format_kw, **self._get_runtime_path_values()),
             http_method=self.http_method,
-            data=filter_dictionary_none_values(payload),
+            params=filter_dictionary_none_values(payload),
         )

@@ -216,6 +216,9 @@ class Context(Dict[str, Any]):
         return cast(Union[QiwiWallet, QiwiWrapper], self[WALLET_CTX_KEY])
 
 
+Context = HandlerContext
+
+
 class BaseExecutor(abc.ABC):
     def __init__(
         self,
