@@ -24,7 +24,6 @@ from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
 from glQiwiApi.core.event_fetching.webhooks.app import configure_app
 from glQiwiApi.core.event_fetching.webhooks.config import WebhookConfig
 from glQiwiApi.ext.webhook_url import WebhookURL
-from glQiwiApi.plugins.abc import Pluggable
 from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
 from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT
 from glQiwiApi.qiwi.clients.wallet.types import History
@@ -89,7 +88,6 @@ class ExecutorEvent:
 def start_webhook(
     wallet: Union[QiwiWallet, QiwiWrapper],
     dispatcher: BaseDispatcher,
-    *plugins: Pluggable,
     webhook_config: WebhookConfig,
     on_startup: Optional[_EventHandlerType] = None,
     on_shutdown: Optional[_EventHandlerType] = None,
@@ -105,10 +103,6 @@ def start_webhook(
     :param on_startup: coroutine,which will be executed on startup
     :param on_shutdown: coroutine, which will be executed on shutdown
     :param webhook_config:
-    :param plugins: List of plugins, that will be executed together with polling.
-         For example  builtin TelegramWebhookPlugin or other
-         class, that implement Pluggable abc interface, deal with foreign framework/application
-         in the background
     :param loop:
     :param context: context, that could be transmitted to handlers
     """
@@ -117,7 +111,6 @@ def start_webhook(
     executor = WebhookExecutor(
         wallet,
         dispatcher,
-        *plugins,
         on_shutdown=on_shutdown,
         on_startup=on_startup,
         loop=loop,
@@ -129,7 +122,6 @@ def start_webhook(
 def start_polling(
     wallet: Union[QiwiWallet, QiwiWrapper],
     dispatcher: BaseDispatcher,
-    *plugins: Pluggable,
     skip_updates: bool = False,
     timeout_in_seconds: float = DEFAULT_TIMEOUT,
     on_startup: Optional[_EventHandlerType] = None,
@@ -149,10 +141,6 @@ def start_polling(
          which will be executed on startup
     :param on_shutdown: function or coroutine,
          which will be executed on shutdown
-    :param plugins: List of plugins, that will be executed together with polling.
-         For example  builtin TelegramPollingPlugin or other
-         class, that implement Pluggable abc interface, deal with foreign framework/application
-         in the background
     :param loop:
     :param context: context, that could be transmitted to handlers
     """
@@ -161,7 +149,6 @@ def start_polling(
     executor = PollingExecutor(
         wallet,
         dispatcher,
-        *plugins,
         timeout=timeout_in_seconds,
         skip_updates=skip_updates,
         on_startup=on_startup,
@@ -224,7 +211,6 @@ class BaseExecutor(abc.ABC):
     def __init__(
         self,
         dispatcher: BaseDispatcher,
-        *plugins: Pluggable,
         context: HandlerContext,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         on_startup: Optional[Callable[..., Any]] = None,
@@ -235,7 +221,6 @@ class BaseExecutor(abc.ABC):
         self._on_startup = ExecutorEvent(context, init_handlers=[on_startup], loop=self.loop)
         self._on_shutdown = ExecutorEvent(context, init_handlers=[on_shutdown], loop=self.loop)
         self._dispatcher = dispatcher
-        self._plugins = plugins
         self._context = context
 
     @property
@@ -265,24 +250,12 @@ class BaseExecutor(abc.ABC):
         logger.info('Goodbye!')
         await self._on_shutdown.fire()
 
-    async def _install_plugins(self, ctx: Optional[Dict[Any, Any]] = None) -> None:
-        if ctx is None:
-            ctx = {}
-        incline_tasks = [plugin.install(ctx) for plugin in self._plugins]
-        await asyncio.gather(*incline_tasks)
-
     async def _shutdown(self) -> None:
         """
         On shutdown, executor gracefully cancel all tasks, close event loop
         and call `close` method to clear resources
         """
-        callbacks = [self.goodbye(), self._shutdown_plugins()]
-        await asyncio.shield(asyncio.gather(*callbacks))
-
-    async def _shutdown_plugins(self) -> None:
-        logger.debug('Shutting down plugins')
-        shutdown_tasks = [asyncio.create_task(plugin.shutdown()) for plugin in self._plugins]
-        await asyncio.gather(*shutdown_tasks)
+        await self.goodbye()
 
 
 class PollingExecutor(BaseExecutor):
@@ -290,7 +263,6 @@ class PollingExecutor(BaseExecutor):
         self,
         wallet: Union[QiwiWallet, QiwiWrapper],
         dispatcher: BaseDispatcher,
-        *plugins: Pluggable,
         context: HandlerContext,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         timeout: Union[float, int] = DEFAULT_TIMEOUT,
@@ -300,7 +272,6 @@ class PollingExecutor(BaseExecutor):
     ) -> None:
         super(PollingExecutor, self).__init__(
             dispatcher,
-            *plugins,
             loop=loop,
             on_startup=on_startup,
             on_shutdown=on_shutdown,
@@ -316,7 +287,6 @@ class PollingExecutor(BaseExecutor):
 
     def start_polling(self) -> None:
         try:
-            self.loop.create_task(self._install_plugins())
             self.loop.create_task(self._run_infinite_polling())
             adapter.run_forever_safe(self.loop)
         except (SystemExit, KeyboardInterrupt):  # pragma: no cover
@@ -401,7 +371,6 @@ class WebhookExecutor(BaseExecutor):
         self,
         wallet: Union[QiwiWallet, QiwiWrapper],
         dispatcher: BaseDispatcher,
-        *plugins: Pluggable,
         context: HandlerContext,
         on_startup: Optional[_EventHandlerType] = None,
         on_shutdown: Optional[_EventHandlerType] = None,
@@ -409,7 +378,6 @@ class WebhookExecutor(BaseExecutor):
     ):
         super().__init__(
             dispatcher,
-            *plugins,
             on_startup=on_startup,
             on_shutdown=on_shutdown,
             loop=loop,
@@ -446,7 +414,6 @@ class WebhookExecutor(BaseExecutor):
             webhook_config=supplemented_configuration,
         )
 
-        self.loop.create_task(self._install_plugins())
         try:
             self.loop.run_until_complete(self.welcome())
             self.loop.create_task(
