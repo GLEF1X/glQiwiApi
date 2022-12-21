@@ -1,12 +1,10 @@
-from json import JSONDecodeError
 from typing import Any, ClassVar
 
 from pydantic import Field
 
-from glQiwiApi.core.abc.api_method import Request, ReturningType
+from glQiwiApi.core.abc.api_method import Request
 from glQiwiApi.core.session.holder import HTTPResponse
 from glQiwiApi.qiwi.base import QiwiAPIMethod
-from glQiwiApi.qiwi.exceptions import QiwiAPIError
 
 try:
     from orjson import JSONDecodeError as OrjsonDecodeError
