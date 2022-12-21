@@ -145,3 +145,4 @@ docker_test/*
 docker_test
 
 .ruff_cache/*
+playground.py

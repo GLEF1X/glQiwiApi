@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
+from glQiwiApi.event_fetching.webhooks.services.collision_detector import (
     HashBasedCollisionDetector,
     UnexpectedCollision,
     UnhashableObjectError,

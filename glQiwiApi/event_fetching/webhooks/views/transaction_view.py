@@ -2,8 +2,8 @@ import logging
 
 from aiohttp import web
 
-from glQiwiApi.core.event_fetching.webhooks.dto.errors import WebhookAPIError
-from glQiwiApi.core.event_fetching.webhooks.views.base import BaseWebhookView
+from glQiwiApi.event_fetching.webhooks.dto import WebhookAPIError
+from glQiwiApi.event_fetching.webhooks.views.base import BaseWebhookView
 from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 

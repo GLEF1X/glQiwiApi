@@ -8,7 +8,7 @@ from aiohttp import web
 from aiohttp.abc import AbstractView
 from aiohttp.web_request import Request
 
-from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
+from glQiwiApi.event_fetching.webhooks.services.security.ip import IPFilter
 
 
 def check_ip(ip_filter: IPFilter, request: web.Request) -> Tuple[str, bool]:

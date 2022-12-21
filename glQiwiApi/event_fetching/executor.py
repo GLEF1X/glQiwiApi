@@ -20,9 +20,9 @@ from aiohttp import web
 from aiohttp.web import _run_app  # noqa
 
 from glQiwiApi import QiwiWrapper
-from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
-from glQiwiApi.core.event_fetching.webhooks.app import configure_app
-from glQiwiApi.core.event_fetching.webhooks.config import WebhookConfig
+from glQiwiApi.event_fetching.dispatcher import BaseDispatcher
+from glQiwiApi.event_fetching.webhooks.app import configure_app
+from glQiwiApi.event_fetching.webhooks.config import WebhookConfig
 from glQiwiApi.ext.webhook_url import WebhookURL
 from glQiwiApi.qiwi.clients.wallet.client import QiwiWallet
 from glQiwiApi.qiwi.clients.wallet.methods.history import MAX_HISTORY_LIMIT

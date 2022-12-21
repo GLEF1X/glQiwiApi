@@ -20,11 +20,11 @@ from typing import (
     cast,
 )
 
+from glQiwiApi.event_fetching.class_based.base import Handler
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
+from glQiwiApi.qiwi.clients.wallet.types.transaction import Transaction
+from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook
 
-from ...qiwi.clients.wallet.types.transaction import Transaction
-from ...qiwi.clients.wallet.types.webhooks import TransactionWebhook
-from .. import Handler
 from .filters import BaseFilter, LambdaBasedFilter
 
 logger = logging.getLogger('glQiwiApi.dispatcher')

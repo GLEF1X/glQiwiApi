@@ -2,18 +2,16 @@ import typing as t
 
 from aiohttp import web
 
-from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
-from glQiwiApi.core.event_fetching.webhooks.config import WebhookConfig
-from glQiwiApi.core.event_fetching.webhooks.middlewares.ip import ip_filter_middleware
-from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
+from glQiwiApi.event_fetching.dispatcher import BaseDispatcher
+from glQiwiApi.event_fetching.webhooks.config import WebhookConfig
+from glQiwiApi.event_fetching.webhooks.middlewares.ip import ip_filter_middleware
+from glQiwiApi.event_fetching.webhooks.services.collision_detector import (
     HashBasedCollisionDetector,
 )
-from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
-from glQiwiApi.core.event_fetching.webhooks.utils import inject_dependencies
-from glQiwiApi.core.event_fetching.webhooks.views.bill_view import QiwiBillWebhookView
-from glQiwiApi.core.event_fetching.webhooks.views.transaction_view import (
-    QiwiTransactionWebhookView,
-)
+from glQiwiApi.event_fetching.webhooks.services.security.ip import IPFilter
+from glQiwiApi.event_fetching.webhooks.utils import inject_dependencies
+from glQiwiApi.event_fetching.webhooks.views.bill_view import QiwiBillWebhookView
+from glQiwiApi.event_fetching.webhooks.views.transaction_view import QiwiTransactionWebhookView
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook
 
