@@ -89,7 +89,7 @@ types-orjson = "^3.6.2"
 types-pytz = "^2022.7.0.0"
 types-aiofiles = "^22.1.0"
 aiogram = "^2.21"
-cryptography = "^38.0.4"
+cryptography = ">=38.0.4,<40.0.0"
 aiofiles = "^22.1.0"
 ruff = "^0.0.189"
 
