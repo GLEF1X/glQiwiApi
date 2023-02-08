@@ -4,7 +4,10 @@ from aiogram.utils import executor
 
 from glQiwiApi import QiwiWallet
 from glQiwiApi.core.event_fetching.dispatcher import QiwiDispatcher
-from glQiwiApi.core.event_fetching.executor import HandlerContext, start_non_blocking_qiwi_api_polling
+from glQiwiApi.core.event_fetching.executor import (
+    HandlerContext,
+    start_non_blocking_qiwi_api_polling,
+)
 from glQiwiApi.qiwi.clients.wallet.types import Transaction
 
 qiwi_dp = QiwiDispatcher()
