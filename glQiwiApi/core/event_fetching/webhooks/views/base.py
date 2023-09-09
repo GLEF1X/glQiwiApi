@@ -6,9 +6,9 @@ from typing import Any, Generic, Type, TypeVar
 from aiohttp import web
 from aiohttp.web_request import Request
 
-from glQiwiApi.event_fetching.dispatcher import BaseDispatcher
-from glQiwiApi.event_fetching.webhooks.dto import WebhookAPIError
-from glQiwiApi.event_fetching.webhooks.services.collision_detector import (
+from glQiwiApi.core.event_fetching.dispatcher import BaseDispatcher
+from glQiwiApi.core.event_fetching.webhooks.dto import WebhookAPIError
+from glQiwiApi.core.event_fetching.webhooks.services.collision_detector import (
     AbstractCollisionDetector,
     UnexpectedCollision,
 )

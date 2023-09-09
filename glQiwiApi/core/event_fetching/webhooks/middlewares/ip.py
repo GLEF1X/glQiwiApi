@@ -5,8 +5,8 @@ from aiohttp import web
 from aiohttp.typedefs import Handler
 from aiohttp.web_middlewares import middleware
 
-from glQiwiApi.event_fetching.webhooks.services.security.ip import IPFilter
-from glQiwiApi.event_fetching.webhooks.utils import check_ip
+from glQiwiApi.core.event_fetching.webhooks.services.security.ip import IPFilter
+from glQiwiApi.core.event_fetching.webhooks.utils import check_ip
 
 logger = logging.getLogger('glQiwiApi.webhooks.middlewares')
 

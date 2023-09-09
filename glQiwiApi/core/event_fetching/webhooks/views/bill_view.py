@@ -3,7 +3,7 @@ from typing import cast
 
 from aiohttp import web
 
-from glQiwiApi.event_fetching.webhooks.views.base import BaseWebhookView
+from glQiwiApi.core.event_fetching.webhooks.views.base import BaseWebhookView
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 from glQiwiApi.types.exceptions import WebhookSignatureUnverifiedError
 

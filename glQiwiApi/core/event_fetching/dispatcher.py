@@ -20,7 +20,7 @@ from typing import (
     cast,
 )
 
-from glQiwiApi.event_fetching.class_based.base import Handler
+from glQiwiApi.core.event_fetching.class_based.base import Handler
 from glQiwiApi.qiwi.clients.p2p.types import BillWebhook
 from glQiwiApi.qiwi.clients.wallet.types.transaction import Transaction
 from glQiwiApi.qiwi.clients.wallet.types.webhooks import TransactionWebhook
