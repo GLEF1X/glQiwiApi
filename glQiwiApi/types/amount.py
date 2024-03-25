@@ -39,8 +39,7 @@ class AmountWithCurrency(Base):
         return Currency.get(str(v))
 
 
-class HashableSum(HashableBase, AmountWithCurrency):
-    ...
+class HashableSum(HashableBase, AmountWithCurrency): ...
 
 
 class PlainAmount(BaseModel):
@@ -48,8 +47,7 @@ class PlainAmount(BaseModel):
     currency: str
 
 
-class HashablePlainAmount(HashableBase, PlainAmount):
-    ...
+class HashablePlainAmount(HashableBase, PlainAmount): ...
 
 
 class Type(BaseModel):
