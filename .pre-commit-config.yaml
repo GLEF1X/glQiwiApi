@@ -13,7 +13,7 @@ repos:
       - id: "check-toml"
 
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 22.12.0
     hooks:
       - id: black
         files: &files '^(glQiwiApi|tests|examples|benchmarks|docs)'
