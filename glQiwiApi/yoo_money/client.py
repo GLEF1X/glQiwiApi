@@ -2,6 +2,7 @@
 Provides effortless work with YooMoney API using asynchronous requests.
 
 """
+
 from __future__ import annotations
 
 import asyncio
