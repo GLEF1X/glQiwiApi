@@ -14,8 +14,7 @@ T = TypeVar('T')
 
 
 class RequestServiceProto(Protocol):
-    async def execute_api_method(self, method: APIMethod[T], **url_kw: Any) -> T:
-        ...
+    async def execute_api_method(self, method: APIMethod[T], **url_kw: Any) -> T: ...
 
     async def get_json_content(
         self,
@@ -27,8 +26,7 @@ class RequestServiceProto(Protocol):
         headers: Optional[Any] = None,
         params: Optional[Any] = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
-        ...
+    ) -> Dict[str, Any]: ...
 
     async def send_request(
         self,
@@ -40,11 +38,9 @@ class RequestServiceProto(Protocol):
         headers: Optional[Any] = None,
         params: Optional[Any] = None,
         **kwargs: Any,
-    ) -> HTTPResponse:
-        ...
+    ) -> HTTPResponse: ...
 
-    async def shutdown(self) -> None:
-        ...
+    async def shutdown(self) -> None: ...
 
 
 class RequestService:

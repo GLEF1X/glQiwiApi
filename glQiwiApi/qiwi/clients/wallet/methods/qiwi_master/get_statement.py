@@ -9,9 +9,9 @@ from glQiwiApi.types.arbitrary import BinaryIOInput, File
 
 
 class GetQiwiMasterStatement(QiwiAPIMethod[File]):
-    url: ClassVar[
-        str
-    ] = 'https://edge.qiwi.com/payment-history/v1/persons/{phone_number}/cards/{card_id}/statement'
+    url: ClassVar[str] = (
+        'https://edge.qiwi.com/payment-history/v1/persons/{phone_number}/cards/{card_id}/statement'
+    )
     http_method: ClassVar[str] = 'GET'
 
     card_id: str = Field(..., path_runtime_value=True)
