@@ -10,9 +10,9 @@ from glQiwiApi.utils.date_conversion import datetime_to_iso8601_with_moscow_time
 
 
 class FetchStatistics(QiwiAPIMethod[Statistic]):
-    url: ClassVar[
-        str
-    ] = 'https://edge.qiwi.com/payment-history/v2/persons/{phone_number}/payments/total'
+    url: ClassVar[str] = (
+        'https://edge.qiwi.com/payment-history/v2/persons/{phone_number}/payments/total'
+    )
     http_method: ClassVar[str] = 'GET'
 
     start_date: datetime = Field(default_factory=datetime.now)
