@@ -9,9 +9,9 @@ from glQiwiApi.types.arbitrary import BinaryIOInput, File
 
 
 class GetReceipt(QiwiAPIMethod[File]):
-    url: ClassVar[
-        str
-    ] = 'https://edge.qiwi.com/payment-history/v1/transactions/{transaction_id}/cheque/file'
+    url: ClassVar[str] = (
+        'https://edge.qiwi.com/payment-history/v1/transactions/{transaction_id}/cheque/file'
+    )
     http_method: ClassVar[str] = 'GET'
 
     transaction_id: Union[str, int] = Field(..., path_runtime_value=True)
