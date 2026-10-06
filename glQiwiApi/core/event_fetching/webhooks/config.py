@@ -48,9 +48,9 @@ class RoutesConfig:
 @dataclass()
 class EncryptionConfig:
     secret_p2p_key: str
-    base64_encryption_key: Optional[
-        str
-    ] = None  # taken from QIWI API using QiwiWallet instance by default
+    base64_encryption_key: Optional[str] = (
+        None  # taken from QIWI API using QiwiWallet instance by default
+    )
 
 
 @dataclass()
