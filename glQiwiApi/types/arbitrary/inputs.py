@@ -18,8 +18,7 @@ class AbstractInput(abc.ABC, Generic[InputType]):
         self._file_descriptor: Optional[BinaryIO] = None
 
     @abc.abstractmethod
-    def get_file(self) -> BinaryIO:
-        ...
+    def get_file(self) -> BinaryIO: ...
 
     def get_path(self) -> str:
         raise TypeError(
