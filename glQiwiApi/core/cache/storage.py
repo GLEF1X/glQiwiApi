@@ -33,12 +33,10 @@ class CacheStorage(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def retrieve_all(self) -> List[Any]:
-        ...
+    async def retrieve_all(self) -> List[Any]: ...
 
     @abc.abstractmethod
-    async def contains_similar(self, item: Any) -> bool:
-        ...
+    async def contains_similar(self, item: Any) -> bool: ...
 
     def __getitem__(self, item: Any) -> Any:
         return self.retrieve(item)
