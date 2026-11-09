@@ -1,4 +1,5 @@
 """Main model: Partner"""
+
 from typing import List, Optional
 
 from glQiwiApi.types.base import Base
