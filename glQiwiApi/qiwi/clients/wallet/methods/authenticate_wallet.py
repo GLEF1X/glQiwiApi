@@ -6,9 +6,9 @@ from glQiwiApi.qiwi.base import QiwiAPIMethod
 
 
 class AuthenticateWallet(QiwiAPIMethod[Dict[str, Any]]):
-    url: ClassVar[
-        str
-    ] = 'https://edge.qiwi.com/identification/v1/persons/{phone_number}/identification'
+    url: ClassVar[str] = (
+        'https://edge.qiwi.com/identification/v1/persons/{phone_number}/identification'
+    )
     http_method: ClassVar[str] = 'POST'
 
     passport: str
