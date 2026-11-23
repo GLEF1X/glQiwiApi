@@ -111,13 +111,11 @@ class IntegerValidator(AbstractValidator):
 
 
 @overload
-def String(optional: Literal[True], **options: Any) -> Field[Optional[str]]:
-    ...
+def String(optional: Literal[True], **options: Any) -> Field[Optional[str]]: ...
 
 
 @overload
-def String(optional: Literal[False], **options: Any) -> Field[str]:
-    ...
+def String(optional: Literal[False], **options: Any) -> Field[str]: ...
 
 
 def String(optional: bool = False, **options: Any) -> Union[Field[Optional[str]], Field[str]]:
@@ -129,13 +127,11 @@ def PhoneNumber(**options: Any) -> Field[Optional[str]]:
 
 
 @overload
-def Integer(optional: Literal[True]) -> Field[Optional[int]]:
-    ...
+def Integer(optional: Literal[True]) -> Field[Optional[int]]: ...
 
 
 @overload
-def Integer(optional: Literal[False]) -> Field[int]:
-    ...
+def Integer(optional: Literal[False]) -> Field[int]: ...
 
 
 def Integer(optional: bool = False) -> Union[Field[Optional[int]], Field[int]]:
